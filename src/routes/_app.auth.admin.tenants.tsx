@@ -585,6 +585,8 @@ function TenantsPage() {
           setPolicyTarget(null);
         }}
       />
+
+      <ImportTenantsDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }
