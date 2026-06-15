@@ -747,3 +747,247 @@ function StatCard({
     </Card>
   );
 }
+
+interface AuthPolicyDialogProps {
+  tenant: Tenant | null;
+  existing?: AuthPolicy;
+  onOpenChange: (o: boolean) => void;
+  onSubmit: (p: AuthPolicy) => void;
+}
+
+function AuthPolicyDialog({ tenant, existing, onOpenChange, onSubmit }: AuthPolicyDialogProps) {
+  const [policy, setPolicy] = useState<AuthPolicy>(DEFAULT_POLICY);
+  const [featureInput, setFeatureInput] = useState("");
+
+  useEffect(() => {
+    if (tenant) {
+      setPolicy(existing ?? DEFAULT_POLICY);
+      setFeatureInput("");
+    }
+  }, [tenant, existing]);
+
+  const set = <K extends keyof AuthPolicy>(k: K, v: AuthPolicy[K]) =>
+    setPolicy((p) => ({ ...p, [k]: v }));
+
+  const addFeature = () => {
+    const v = featureInput.trim();
+    if (!v) return;
+    if (policy.sensitiveFeatures.includes(v)) {
+      setFeatureInput("");
+      return;
+    }
+    set("sensitiveFeatures", [...policy.sensitiveFeatures, v]);
+    setFeatureInput("");
+  };
+
+  const removeFeature = (v: string) =>
+    set("sensitiveFeatures", policy.sensitiveFeatures.filter((x) => x !== v));
+
+  const isPersonal = tenant?.type === "个人用户";
+  const isEdit = !!existing;
+
+  return (
+    <Dialog open={!!tenant} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            {isEdit ? "查看 / 编辑认证策略" : "设置认证策略"}
+          </DialogTitle>
+          <DialogDescription>
+            {tenant && (
+              <>
+                租户：<span className="text-foreground font-medium">{tenant.name}</span>
+                <span className="ml-2 font-mono text-xs">{tenant.id}</span>
+                <Badge variant="outline" className="ml-2 font-normal">{tenant.type}</Badge>
+              </>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5 py-2">
+          {/* 实名认证开关 */}
+          <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
+            <div>
+              <Label className="text-sm">开启实名认证</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                关闭后该租户将跳过实名认证流程
+              </p>
+            </div>
+            <TooltipProvider delayDuration={150}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Switch
+                      checked={policy.enabled}
+                      onCheckedChange={(v) => set("enabled", v)}
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {policy.enabled ? "点击关闭实名认证" : "点击开启实名认证"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
+          <fieldset disabled={!policy.enabled} className="space-y-5 disabled:opacity-60">
+            {/* 认证时机 */}
+            <div className="space-y-2">
+              <Label className="text-sm">认证时机</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(["首次登录", "使用敏感功能"] as AuthTiming[]).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => set("timing", t)}
+                    className={
+                      "rounded-md border px-3 py-2.5 text-sm text-left transition-colors " +
+                      (policy.timing === t
+                        ? "border-primary bg-primary/5 text-foreground"
+                        : "border-input hover:bg-accent/50 text-muted-foreground")
+                    }
+                  >
+                    <div className="font-medium text-foreground">{t}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {t === "首次登录" ? "用户首次登录即触发实名认证" : "访问指定敏感功能时触发"}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {policy.timing === "使用敏感功能" && (
+                <div className="mt-3 rounded-md border border-dashed bg-muted/20 p-3 space-y-2">
+                  <Label className="text-xs text-muted-foreground">敏感功能列表</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={featureInput}
+                      onChange={(e) => setFeatureInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addFeature();
+                        }
+                      }}
+                      placeholder="输入敏感功能名称，回车添加，如：发起提现"
+                      className="h-9"
+                    />
+                    <Button type="button" variant="outline" onClick={addFeature}>
+                      <Plus className="h-4 w-4" /> 添加
+                    </Button>
+                  </div>
+                  {policy.sensitiveFeatures.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {policy.sensitiveFeatures.map((f) => (
+                        <Badge
+                          key={f}
+                          variant="secondary"
+                          className="gap-1 pr-1 font-normal"
+                        >
+                          {f}
+                          <button
+                            type="button"
+                            onClick={() => removeFeature(f)}
+                            className="rounded hover:bg-background/60 p-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">尚未添加，至少添加一项敏感功能</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 认证等级 */}
+            <div className="space-y-2">
+              <Label className="text-sm">
+                认证等级
+                <span className="ml-2 text-xs text-muted-foreground font-normal">
+                  （根据租户类型：{tenant?.type ?? "—"}）
+                </span>
+              </Label>
+              <Select value={policy.level} onValueChange={(v) => set("level", v as LevelKey)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LEVEL_OPTIONS.map((l) => (
+                    <SelectItem key={l.key} value={l.key}>
+                      <span className="font-medium">{l.key} · {l.title}</span>
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {isPersonal ? l.personalTag : l.enterpriseTag}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 人工审核配置 */}
+            <div className="rounded-lg border p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm">人工审核配置</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    开启后认证信息需经人工复核
+                  </p>
+                </div>
+                <Switch
+                  checked={policy.manualReview}
+                  onCheckedChange={(v) => set("manualReview", v)}
+                />
+              </div>
+
+              <fieldset disabled={!policy.manualReview} className="grid grid-cols-1 md:grid-cols-2 gap-4 disabled:opacity-60">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">审核超时时间（小时）</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={policy.reviewTimeoutHours}
+                    onChange={(e) => set("reviewTimeoutHours", Math.max(0, Number(e.target.value) || 0))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">认证信息有效期（月，0 表示永久）</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={policy.validityMonths}
+                    onChange={(e) => set("validityMonths", Math.max(0, Number(e.target.value) || 0))}
+                  />
+                </div>
+                <div className="md:col-span-2 flex items-center justify-between rounded-md bg-muted/30 px-3 py-2">
+                  <Label className="text-sm">审核通过后自动激活</Label>
+                  <Switch
+                    checked={policy.autoActivateAfterReview}
+                    onCheckedChange={(v) => set("autoActivateAfterReview", v)}
+                  />
+                </div>
+              </fieldset>
+            </div>
+          </fieldset>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+          <Button
+            onClick={() => {
+              if (policy.enabled && policy.timing === "使用敏感功能" && policy.sensitiveFeatures.length === 0) {
+                toast.error("请至少添加一项敏感功能");
+                return;
+              }
+              onSubmit(policy);
+            }}
+          >
+            {isEdit ? "保存修改" : "保存策略"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
