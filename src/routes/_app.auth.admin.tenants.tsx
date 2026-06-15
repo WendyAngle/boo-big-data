@@ -1199,7 +1199,7 @@ function AuthPolicyDialog({ tenant, existing, onOpenChange, onSubmit }: AuthPoli
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-primary" />
-            {isEdit ? "查看 / 编辑认证策略" : "设置认证策略"}
+            设置认证策略
           </DialogTitle>
           <DialogDescription>
             {tenant && (
