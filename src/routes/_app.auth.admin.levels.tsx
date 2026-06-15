@@ -16,6 +16,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_app/auth/admin/levels")({
   component: LevelsPage,
@@ -96,12 +107,24 @@ const LEVEL_COLORS: Record<LevelKey, string> = {
 
 function LevelsPage() {
   const [levels, setLevels] = useState(LEVELS);
+  const [confirmTarget, setConfirmTarget] = useState<{ key: LevelKey; next: boolean } | null>(null);
 
-  const toggleEnabled = (key: LevelKey) => {
-    setLevels((s) =>
-      s.map((l) => (l.key === key ? { ...l, enabled: !l.enabled } : l))
-    );
+  const requestToggle = (key: LevelKey) => {
+    const current = levels.find((l) => l.key === key);
+    if (!current) return;
+    setConfirmTarget({ key, next: !current.enabled });
   };
+
+  const confirmToggle = () => {
+    if (!confirmTarget) return;
+    setLevels((s) =>
+      s.map((l) => (l.key === confirmTarget.key ? { ...l, enabled: confirmTarget.next } : l))
+    );
+    toast.success(`${confirmTarget.key} 已${confirmTarget.next ? "启用" : "停用"}`);
+    setConfirmTarget(null);
+  };
+
+  const confirmLevel = confirmTarget ? levels.find((l) => l.key === confirmTarget.key) : null;
 
   return (
     <div className="min-h-full bg-gradient-to-br from-background via-background to-muted/30">
@@ -183,7 +206,7 @@ function LevelsPage() {
                   key={l.key}
                   level={l}
                   audience="personal"
-                  onToggle={() => toggleEnabled(l.key)}
+                  onToggle={() => requestToggle(l.key)}
                 />
               ))}
             </div>
@@ -197,13 +220,34 @@ function LevelsPage() {
                   key={l.key}
                   level={l}
                   audience="enterprise"
-                  onToggle={() => toggleEnabled(l.key)}
+                  onToggle={() => requestToggle(l.key)}
                 />
               ))}
             </div>
           </TabsContent>
         </Tabs>
       </div>
+
+      <AlertDialog open={!!confirmTarget} onOpenChange={(o) => !o && setConfirmTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              确认{confirmTarget?.next ? "启用" : "停用"} {confirmTarget?.key} · {confirmLevel?.title}？
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmTarget?.next
+                ? `启用后，该等级将可被租户认证策略选用，当前已配置 ${confirmLevel?.tenants ?? 0} 个租户。`
+                : `停用后，新的认证策略将无法选择该等级，已配置该等级的 ${confirmLevel?.tenants ?? 0} 个租户的存量认证不受影响，但后续无法发起新认证。`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmToggle}>
+              确认{confirmTarget?.next ? "启用" : "停用"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -239,7 +283,18 @@ function LevelDetailCard({
               <div className="text-xs text-muted-foreground">{tag}</div>
             </div>
           </div>
-          <Switch checked={level.enabled} onCheckedChange={onToggle} />
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Switch checked={level.enabled} onCheckedChange={onToggle} />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {level.enabled ? `点击停用 ${level.key} · ${level.title}` : `点击启用 ${level.key} · ${level.title}`}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         <div className="mt-4 text-sm text-foreground/90">{desc}</div>
