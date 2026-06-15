@@ -57,6 +57,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ListPagination } from "@/components/ListPagination";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -173,6 +174,7 @@ function UsersPage() {
   const [editing, setEditing] = useState<AppUser | null>(null);
   const [viewTarget, setViewTarget] = useState<AppUser | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => {
     return data.filter((u) => {
