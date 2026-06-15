@@ -587,24 +587,26 @@ function TenantsPage() {
                     </TableCell>
                     <TableCell>
                       {t.authStatus === "认证失败" ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
+                        <TooltipProvider delayDuration={150}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
                             <Badge
                               variant="outline"
                               className={`${authBadge(t.authStatus)} cursor-help`}
                             >
                               {t.authStatus}
                             </Badge>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
                             <div className="space-y-1">
                               <div className="text-xs font-medium">失败原因</div>
                               <div className="text-xs text-muted-foreground">
                                 {authFailReason(t.id)}
                               </div>
                             </div>
-                          </TooltipContent>
-                        </Tooltip>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       ) : (
                         <Badge variant="outline" className={authBadge(t.authStatus)}>{t.authStatus}</Badge>
                       )}
