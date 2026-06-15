@@ -1,21 +1,32 @@
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ShieldCheck, ChevronDown, LayoutDashboard } from "lucide-react";
+import { ShieldCheck, ChevronDown, LayoutDashboard, Users } from "lucide-react";
 
-const menu = [
+type Leaf = { label: string; to: string; icon?: typeof Users };
+type Group = { label: string; to?: string; children: Leaf[] };
+type Root = { label: string; icon: typeof ShieldCheck; children: Group[] };
+
+const menu: Root[] = [
   {
     label: "实名认证",
     icon: ShieldCheck,
     children: [
-      { label: "管理端", to: "/auth/admin" },
-      { label: "用户端", to: "/auth/user" },
+      {
+        label: "管理端",
+        to: "/auth/admin",
+        children: [{ label: "租户管理", to: "/auth/admin/tenants", icon: Users }],
+      },
+      { label: "用户端", to: "/auth/user", children: [] },
     ],
   },
 ];
 
 export function AppSidebar() {
   const { location } = useRouterState();
-  const [open, setOpen] = useState<Record<string, boolean>>({ 实名认证: true });
+  const [open, setOpen] = useState<Record<string, boolean>>({
+    实名认证: true,
+    管理端: true,
+  });
 
   return (
     <aside className="w-60 shrink-0 border-r border-sidebar-border bg-sidebar flex flex-col">
@@ -25,7 +36,7 @@ export function AppSidebar() {
         </div>
         <span className="font-semibold text-sidebar-foreground tracking-wide">Boo数据平台</span>
       </div>
-      <nav className="p-3 space-y-1 flex-1">
+      <nav className="p-3 space-y-1 flex-1 overflow-y-auto">
         {menu.map((item) => {
           const Icon = item.icon;
           const isOpen = open[item.label];
@@ -41,20 +52,74 @@ export function AppSidebar() {
               </button>
               {isOpen && (
                 <div className="mt-1 ml-6 space-y-0.5 border-l border-sidebar-border pl-3">
-                  {item.children.map((c) => {
-                    const active = location.pathname === c.to;
+                  {item.children.map((g) => {
+                    const hasKids = g.children.length > 0;
+                    const gOpen = open[g.label] ?? true;
+                    const gActive = g.to ? location.pathname === g.to : false;
                     return (
-                      <Link
-                        key={c.to}
-                        to={c.to}
-                        className={`block px-3 py-1.5 rounded-md text-sm transition-colors ${
-                          active
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60"
-                        }`}
-                      >
-                        {c.label}
-                      </Link>
+                      <div key={g.label}>
+                        {g.to ? (
+                          <div className="flex items-center">
+                            <Link
+                              to={g.to}
+                              className={`flex-1 block px-3 py-1.5 rounded-md text-sm transition-colors ${
+                                gActive
+                                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60"
+                              }`}
+                            >
+                              {g.label}
+                            </Link>
+                            {hasKids && (
+                              <button
+                                onClick={() => setOpen((s) => ({ ...s, [g.label]: !gOpen }))}
+                                className="p-1 rounded hover:bg-sidebar-accent/60"
+                                aria-label="toggle"
+                              >
+                                <ChevronDown
+                                  className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${
+                                    gOpen ? "" : "-rotate-90"
+                                  }`}
+                                />
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setOpen((s) => ({ ...s, [g.label]: !gOpen }))}
+                            className="w-full flex items-center px-3 py-1.5 rounded-md text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent/60"
+                          >
+                            <span className="flex-1 text-left">{g.label}</span>
+                            {hasKids && (
+                              <ChevronDown
+                                className={`h-3.5 w-3.5 transition-transform ${gOpen ? "" : "-rotate-90"}`}
+                              />
+                            )}
+                          </button>
+                        )}
+                        {hasKids && gOpen && (
+                          <div className="mt-0.5 ml-4 space-y-0.5 border-l border-sidebar-border pl-3">
+                            {g.children.map((c) => {
+                              const CI = c.icon;
+                              const active = location.pathname === c.to;
+                              return (
+                                <Link
+                                  key={c.to}
+                                  to={c.to}
+                                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                                    active
+                                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                      : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60"
+                                  }`}
+                                >
+                                  {CI && <CI className="h-3.5 w-3.5" />}
+                                  <span>{c.label}</span>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
