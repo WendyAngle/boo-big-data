@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Users,
@@ -20,6 +20,16 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -132,6 +142,8 @@ function TenantsPage() {
   const [pageSize] = useState(10);
   const [delTarget, setDelTarget] = useState<Tenant | null>(null);
   const [data, setData] = useState<Tenant[]>(MOCK);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<Tenant | null>(null);
 
   const filtered = useMemo(() => {
     return data.filter((t) => {
@@ -304,7 +316,7 @@ function TenantsPage() {
             共 <span className="font-semibold text-foreground">{total}</span> 条租户记录
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => toast.info("打开新增租户表单")}>
+            <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
               <Plus className="h-4 w-4" /> 新增租户
             </Button>
             <Button variant="outline" onClick={() => toast.info("打开认证策略配置")}>
@@ -365,7 +377,7 @@ function TenantsPage() {
                         <Button size="sm" variant="ghost" onClick={() => toast.info(`查看 ${t.name}`)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => toast.info(`编辑 ${t.name}`)}>
+                        <Button size="sm" variant="ghost" onClick={() => { setEditing(t); setFormOpen(true); }}>
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDelTarget(t)}>
@@ -443,7 +455,162 @@ function TenantsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <TenantFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        editing={editing}
+        onSubmit={(t) => {
+          if (editing) {
+            setData((d) => d.map((x) => (x.id === editing.id ? { ...t, id: editing.id } : x)));
+            toast.success(`已更新 ${t.name}`);
+          } else {
+            const id = `T${String(202600 + data.length + 1).padStart(6, "0")}`;
+            setData((d) => [{ ...t, id }, ...d]);
+            toast.success(`已新增 ${t.name}`);
+          }
+          setFormOpen(false);
+        }}
+      />
     </div>
+  );
+}
+
+interface TenantFormProps {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  editing: Tenant | null;
+  onSubmit: (t: Tenant) => void;
+}
+
+function TenantFormDialog({ open, onOpenChange, editing, onSubmit }: TenantFormProps) {
+  const empty: Tenant = {
+    id: "",
+    name: "",
+    intro: "",
+    type: "企业用户",
+    industry: INDUSTRIES[0],
+    product: "",
+    coopContent: "",
+    coopStatus: "合作中",
+    authStatus: "待认证",
+  };
+  const [form, setForm] = useState<Tenant>(empty);
+
+  // sync when opened
+  useEffect(() => {
+    if (open) setForm(editing ?? empty);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editing]);
+
+  const set = <K extends keyof Tenant>(k: K, v: Tenant[K]) => setForm((f) => ({ ...f, [k]: v }));
+  const isEdit = !!editing;
+
+  const submit = () => {
+    if (!form.name.trim()) {
+      toast.error("请输入租户名称");
+      return;
+    }
+    onSubmit(form);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? "编辑租户" : "新增租户"}</DialogTitle>
+          <DialogDescription>
+            {isEdit ? `修改 ${editing?.name} 的基础信息与合作/认证状态` : "填写租户基础信息以创建新的接入记录"}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+          {isEdit && (
+            <div className="space-y-1.5 md:col-span-2">
+              <Label>租户ID</Label>
+              <Input value={editing?.id ?? ""} disabled className="font-mono text-xs" />
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <Label>名称 <span className="text-destructive">*</span></Label>
+            <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="如：字节跳动" />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>类型</Label>
+            <Select value={form.type} onValueChange={(v) => set("type", v as TenantType)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="个人用户">个人用户</SelectItem>
+                <SelectItem value="企业用户">企业用户</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>行业</Label>
+            <Select value={form.industry} onValueChange={(v) => set("industry", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {INDUSTRIES.map((i) => (
+                  <SelectItem key={i} value={i}>{i}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>主营产品</Label>
+            <Input value={form.product} onChange={(e) => set("product", e.target.value)} placeholder="如：数据中台" />
+          </div>
+
+          <div className="space-y-1.5 md:col-span-2">
+            <Label>合作内容</Label>
+            <Input value={form.coopContent} onChange={(e) => set("coopContent", e.target.value)} placeholder="如：数据接入 / 联合运营" />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>合作状态</Label>
+            <Select value={form.coopStatus} onValueChange={(v) => set("coopStatus", v as CoopStatus)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="合作中">合作中</SelectItem>
+                <SelectItem value="终止合作">终止合作</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>认证状态</Label>
+            <Select value={form.authStatus} onValueChange={(v) => set("authStatus", v as AuthStatus)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="待认证">待认证</SelectItem>
+                <SelectItem value="认证中">认证中</SelectItem>
+                <SelectItem value="认证成功">认证成功</SelectItem>
+                <SelectItem value="认证失败">认证失败</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5 md:col-span-2">
+            <Label>简介</Label>
+            <Textarea
+              value={form.intro}
+              onChange={(e) => set("intro", e.target.value)}
+              placeholder="租户简介，约 50-200 字"
+              rows={4}
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+          <Button onClick={submit}>{isEdit ? "保存修改" : "创建租户"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
