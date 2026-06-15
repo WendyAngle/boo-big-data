@@ -287,12 +287,11 @@ function buildData(subject: Subject, level: LevelKey, personName: string, tenant
   };
 }
 
-function makeItem(i: number): AuditItem {
-  const subject: Subject = i % 3 === 0 ? "企业" : "个人";
-  const level = LEVELS[i % 4];
-  const provider = PROVIDER_IDS[i % 5];
-  const status = STATUSES[i % 4];
-  const [tid, tname] = TENANT_POOL[i % TENANT_POOL.length];
+function makeItem(tenant: TenantRef, i: number): AuditItem {
+  const subject = tenant.subject;
+  const level = tenant.level as LevelKey; // 仅对非"待认证"租户生成审核单
+  const status = tenantAuthToAuditStatus(tenant.tenantAuth, i);
+  const provider = pickProvider(level, i);
   const personName = PERSON_NAMES[i % PERSON_NAMES.length];
   const d = new Date(2026, 5, 15 - (i % 14), 9 + (i % 9), (i * 7) % 60);
   const submittedAt = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
@@ -306,15 +305,15 @@ function makeItem(i: number): AuditItem {
     : undefined;
   return {
     id: "A" + String(202606000 + i),
-    tenantId: tid + String(i),
-    tenantName: tname,
+    tenantId: tenant.id,
+    tenantName: tenant.name,
     subject,
     applicantName: personName,
     level,
     provider,
     status,
     submittedAt,
-    data: buildData(subject, level, personName, tname),
+    data: buildData(subject, level, personName, tenant.name),
     thirdParty,
     reviewer: status === "已通过" || status === "已驳回" ? "admin@boo" : undefined,
     reviewedAt: status === "已通过" || status === "已驳回" ? submittedAt : undefined,
@@ -322,7 +321,10 @@ function makeItem(i: number): AuditItem {
   };
 }
 
-const INITIAL: AuditItem[] = Array.from({ length: 38 }).map((_, i) => makeItem(i));
+// 仅为已发起认证的租户生成审核单（与租户管理状态一致：剔除"待认证"）
+const INITIAL: AuditItem[] = TENANTS
+  .filter((t) => t.tenantAuth !== "待认证")
+  .map((t, i) => makeItem(t, i));
 
 const REJECT_REASONS = [
   "资料模糊不清，无法识别",
