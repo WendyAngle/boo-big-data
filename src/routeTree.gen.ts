@@ -51,6 +51,11 @@ const AppAuthAdminLevelsRoute = AppAuthAdminLevelsRouteImport.update({
   path: '/levels',
   getParentRoute: () => AppAuthAdminRoute,
 } as any)
+const AppAuthAdminLevelsRoute = AppAuthAdminLevelsRouteImport.update({
+  id: '/levels',
+  path: '/levels',
+  getParentRoute: () => AppAuthAdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
