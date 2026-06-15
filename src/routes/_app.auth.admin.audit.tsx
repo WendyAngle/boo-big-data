@@ -685,6 +685,52 @@ function AuditPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Pass confirmation */}
+      <AlertDialog open={!!passConfirm} onOpenChange={(o) => !o && setPassConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {passConfirm?.kind === "batch"
+                ? `确认批量通过 ${passConfirm.ids.length} 条申请？`
+                : `确认通过申请 ${passConfirm?.kind === "one" ? passConfirm.item.id : ""}？`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {passConfirm?.kind === "batch"
+                ? "通过后将更新所选申请单的认证状态，仅对状态为「待审核 / 审核中」的申请生效，操作不可撤销。"
+                : passConfirm?.kind === "one"
+                  ? `该申请将被标记为「已通过」，申请人 ${passConfirm.item.applicantName}（${passConfirm.item.tenantName}）将收到通知，操作不可撤销。`
+                  : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction className="bg-emerald-600 hover:bg-emerald-700" onClick={confirmPass}>
+              确认通过
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Batch reject confirmation */}
+      <AlertDialog open={!!batchRejectConfirm} onOpenChange={(o) => !o && setBatchRejectConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              确认批量驳回 {batchRejectConfirm?.length ?? 0} 条申请？
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              驳回原因将统一记录为「批量驳回 · 请补充资料」，仅对状态为「待审核 / 审核中」的申请生效，操作不可撤销。如需为单条申请填写具体原因，请在操作列单条驳回。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction className="bg-rose-600 hover:bg-rose-700" onClick={confirmBatchReject}>
+              确认驳回
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
