@@ -404,13 +404,14 @@ function TenantsPage() {
                 <TableHead>合作内容</TableHead>
                 <TableHead>合作状态</TableHead>
                 <TableHead>认证状态</TableHead>
+                <TableHead>认证等级</TableHead>
                 <TableHead className="text-right whitespace-nowrap">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pageData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={11} className="text-center py-12 text-muted-foreground">
                     暂无匹配的租户
                   </TableCell>
                 </TableRow>
@@ -432,6 +433,15 @@ function TenantsPage() {
                     <TableCell>
                       <Badge variant="outline" className={authBadge(t.authStatus)}>{t.authStatus}</Badge>
                     </TableCell>
+                    <TableCell>
+                      {policies[t.id] ? (
+                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-medium tabular-nums">
+                          {policies[t.id].level}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">未设置</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         <TooltipProvider delayDuration={150}>
@@ -444,11 +454,6 @@ function TenantsPage() {
                                 onClick={() => setPolicyTarget(t)}
                               >
                                 <ShieldCheck className="h-4 w-4" />
-                                {policies[t.id] && (
-                                  <span className="ml-1 text-[11px] font-medium tabular-nums">
-                                    {policies[t.id].level}
-                                  </span>
-                                )}
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>查看 / 设置认证策略</TooltipContent>
