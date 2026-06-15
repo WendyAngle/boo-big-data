@@ -586,7 +586,28 @@ function TenantsPage() {
                       <Badge variant="outline" className={coopBadge(t.coopStatus)}>{t.coopStatus}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={authBadge(t.authStatus)}>{t.authStatus}</Badge>
+                      {t.authStatus === "认证失败" ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge
+                              variant="outline"
+                              className={`${authBadge(t.authStatus)} cursor-help`}
+                            >
+                              {t.authStatus}
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <div className="space-y-1">
+                              <div className="text-xs font-medium">失败原因</div>
+                              <div className="text-xs text-muted-foreground">
+                                {authFailReason(t.id)}
+                              </div>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <Badge variant="outline" className={authBadge(t.authStatus)}>{t.authStatus}</Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       {policies[t.id] ? (
