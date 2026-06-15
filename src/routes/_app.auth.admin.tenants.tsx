@@ -51,6 +51,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ListPagination } from "@/components/ListPagination";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -225,6 +226,7 @@ function TenantsPage() {
 
   const [policyTarget, setPolicyTarget] = useState<Tenant | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const filtered = useMemo(() => {
     return data.filter((t) => {
@@ -240,6 +242,90 @@ function TenantsPage() {
   const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const pageData = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const pageIds = pageData.map((t) => t.id);
+  const allPageChecked = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
+  const somePageChecked = pageIds.some((id) => selected.has(id));
+  const togglePageAll = (v: boolean) => {
+    setSelected((s) => {
+      const next = new Set(s);
+      if (v) pageIds.forEach((id) => next.add(id));
+      else pageIds.forEach((id) => next.delete(id));
+      return next;
+    });
+  };
+  const toggleOne = (id: string, v: boolean) => {
+    setSelected((s) => {
+      const next = new Set(s);
+      if (v) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const exportTenants = () => {
+    const rows =
+      selected.size > 0 ? data.filter((t) => selected.has(t.id)) : filtered;
+    if (rows.length === 0) {
+      toast.error("没有可导出的数据");
+      return;
+    }
+    const headers = [
+      "租户ID",
+      "名称",
+      "类型",
+      "行业",
+      "主营产品",
+      "联系人",
+      "联系电话",
+      "合作内容",
+      "合作状态",
+      "认证状态",
+      "认证等级",
+      "简介",
+    ];
+    const csvEscape = (v: unknown) => {
+      const s = String(v ?? "");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [
+      headers.join(","),
+      ...rows.map((t) =>
+        [
+          t.id,
+          t.name,
+          t.type,
+          t.industry,
+          t.product,
+          t.contact,
+          t.contactPhone,
+          t.coopContent,
+          t.coopStatus,
+          t.authStatus,
+          policies[t.id]?.level ?? "",
+          t.intro,
+        ]
+          .map(csvEscape)
+          .join(","),
+      ),
+    ].join("\r\n");
+    const blob = new Blob(["\uFEFF" + lines], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `租户数据_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success(
+      selected.size > 0
+        ? `已导出所选 ${rows.length} 条租户`
+        : `已导出全部 ${rows.length} 条租户`,
+    );
+  };
 
   const stats = useMemo(() => {
     const c = (fn: (t: Tenant) => boolean) => data.filter(fn).length;
@@ -403,8 +489,9 @@ function TenantsPage() {
             <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Upload className="h-4 w-4" /> 导入租户
             </Button>
-            <Button variant="outline" onClick={() => toast.success("已导出当前筛选结果")}>
-              <Download className="h-4 w-4" /> 导出租户
+            <Button variant="outline" onClick={exportTenants}>
+              <Download className="h-4 w-4" />
+              {selected.size > 0 ? `导出所选 (${selected.size})` : "导出租户"}
             </Button>
           </div>
         </div>
@@ -413,6 +500,19 @@ function TenantsPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={
+                      allPageChecked
+                        ? true
+                        : somePageChecked
+                          ? "indeterminate"
+                          : false
+                    }
+                    onCheckedChange={(v) => togglePageAll(!!v)}
+                    aria-label="全选当前页"
+                  />
+                </TableHead>
                 <TableHead className="whitespace-nowrap">租户ID</TableHead>
                 <TableHead>名称</TableHead>
                 <TableHead className="min-w-[220px]">简介</TableHead>
@@ -430,13 +530,20 @@ function TenantsPage() {
             <TableBody>
               {pageData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={13} className="text-center py-12 text-muted-foreground">
                     暂无匹配的租户
                   </TableCell>
                 </TableRow>
               ) : (
                 pageData.map((t) => (
                   <TableRow key={t.id} className="hover:bg-accent/30">
+                    <TableCell className="w-10">
+                      <Checkbox
+                        checked={selected.has(t.id)}
+                        onCheckedChange={(v) => toggleOne(t.id, !!v)}
+                        aria-label={`选择 ${t.name}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{t.id}</TableCell>
                     <TableCell className="font-medium">{t.name}</TableCell>
                     <TableCell className="text-sm text-muted-foreground max-w-[260px] truncate">{t.intro}</TableCell>
