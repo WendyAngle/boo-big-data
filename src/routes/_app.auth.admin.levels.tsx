@@ -351,3 +351,304 @@ function LevelDetailCard({
     </Card>
   );
 }
+
+const PRESET_PERSONAL_FACTORS = [
+  "姓名",
+  "身份证号",
+  "手机号",
+  "人脸识别",
+  "银行卡",
+  "活体检测",
+  "邮箱",
+];
+const PRESET_ENTERPRISE_FACTORS = [
+  "企业名称",
+  "统一社会信用代码",
+  "营业执照",
+  "法人姓名",
+  "法人身份证号",
+  "法人手机号",
+  "法人人脸识别",
+  "对公账户",
+];
+
+function CreateLevelDialog({
+  open,
+  onOpenChange,
+  existingKeys,
+  onCreate,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  existingKeys: LevelKey[];
+  onCreate: (l: LevelDef) => void;
+}) {
+  const suggestedKey = `L${existingKeys.length + 1}` as LevelKey;
+
+  const [key, setKey] = useState<string>(suggestedKey);
+  const [title, setTitle] = useState("");
+  const [enabled, setEnabled] = useState(true);
+
+  const [personalTag, setPersonalTag] = useState("");
+  const [personalDesc, setPersonalDesc] = useState("");
+  const [personalFactors, setPersonalFactors] = useState<string[]>([]);
+
+  const [enterpriseTag, setEnterpriseTag] = useState("");
+  const [enterpriseDesc, setEnterpriseDesc] = useState("");
+  const [enterpriseFactors, setEnterpriseFactors] = useState<string[]>([]);
+
+  // 每次打开重置
+  useState(() => undefined);
+
+  const reset = () => {
+    setKey(`L${existingKeys.length + 1}`);
+    setTitle("");
+    setEnabled(true);
+    setPersonalTag("");
+    setPersonalDesc("");
+    setPersonalFactors([]);
+    setEnterpriseTag("");
+    setEnterpriseDesc("");
+    setEnterpriseFactors([]);
+  };
+
+  const handleSubmit = () => {
+    const trimmedKey = key.trim().toUpperCase();
+    if (!trimmedKey) return toast.error("请填写等级编码");
+    if (existingKeys.includes(trimmedKey as LevelKey))
+      return toast.error(`等级编码 ${trimmedKey} 已存在`);
+    if (!title.trim()) return toast.error("请填写等级名称");
+    if (personalFactors.length === 0 && enterpriseFactors.length === 0)
+      return toast.error("请至少为个人或企业用户配置一项认证要素");
+
+    onCreate({
+      key: trimmedKey as LevelKey,
+      title: title.trim(),
+      personalTag: personalTag.trim() || "—",
+      personalDesc: personalDesc.trim() || "—",
+      personalFactors,
+      enterpriseTag: enterpriseTag.trim() || "—",
+      enterpriseDesc: enterpriseDesc.trim() || "—",
+      enterpriseFactors,
+      tenants: 0,
+      enabled,
+    });
+    reset();
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) reset();
+        onOpenChange(o);
+      }}
+    >
+      <DialogContent className="sm:max-w-[680px] max-h-[88vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Layers className="h-4 w-4 text-primary" /> 新建认证等级
+          </DialogTitle>
+          <DialogDescription>
+            自定义认证等级编码、名称及个人 / 企业用户的认证要素组合，启用后可在租户认证策略中选用。
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5 py-1">
+          {/* 基础信息 */}
+          <section className="space-y-3">
+            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              基础信息
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="lvl-key">等级编码 *</Label>
+                <Input
+                  id="lvl-key"
+                  value={key}
+                  onChange={(e) => setKey(e.target.value)}
+                  placeholder="如 L5"
+                />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="lvl-title">等级名称 *</Label>
+                <Input
+                  id="lvl-title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="如 高强度认证"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2">
+              <div>
+                <div className="text-sm font-medium">启用此等级</div>
+                <div className="text-xs text-muted-foreground">
+                  停用后租户策略将无法选用该等级
+                </div>
+              </div>
+              <Switch checked={enabled} onCheckedChange={setEnabled} />
+            </div>
+          </section>
+
+          {/* 个人用户 */}
+          <FactorSection
+            icon={<User className="h-3.5 w-3.5" />}
+            title="个人用户配置"
+            tag={personalTag}
+            onTagChange={setPersonalTag}
+            tagPlaceholder="如 三要素"
+            desc={personalDesc}
+            onDescChange={setPersonalDesc}
+            descPlaceholder="如 姓名 + 身份证 + 手机号"
+            factors={personalFactors}
+            onFactorsChange={setPersonalFactors}
+            presets={PRESET_PERSONAL_FACTORS}
+          />
+
+          {/* 企业用户 */}
+          <FactorSection
+            icon={<Building2 className="h-3.5 w-3.5" />}
+            title="企业用户配置"
+            tag={enterpriseTag}
+            onTagChange={setEnterpriseTag}
+            tagPlaceholder="如 法人三要素"
+            desc={enterpriseDesc}
+            onDescChange={setEnterpriseDesc}
+            descPlaceholder="如 企业信息 + 法人三要素"
+            factors={enterpriseFactors}
+            onFactorsChange={setEnterpriseFactors}
+            presets={PRESET_ENTERPRISE_FACTORS}
+          />
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            取消
+          </Button>
+          <Button onClick={handleSubmit}>
+            <CheckCircle2 className="h-4 w-4" /> 确认新建
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function FactorSection({
+  icon,
+  title,
+  tag,
+  onTagChange,
+  tagPlaceholder,
+  desc,
+  onDescChange,
+  descPlaceholder,
+  factors,
+  onFactorsChange,
+  presets,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  tag: string;
+  onTagChange: (v: string) => void;
+  tagPlaceholder: string;
+  desc: string;
+  onDescChange: (v: string) => void;
+  descPlaceholder: string;
+  factors: string[];
+  onFactorsChange: (v: string[]) => void;
+  presets: string[];
+}) {
+  const [draft, setDraft] = useState("");
+
+  const addFactor = (v: string) => {
+    const t = v.trim();
+    if (!t) return;
+    if (factors.includes(t)) return;
+    onFactorsChange([...factors, t]);
+    setDraft("");
+  };
+
+  const removeFactor = (v: string) => {
+    onFactorsChange(factors.filter((f) => f !== v));
+  };
+
+  return (
+    <section className="space-y-3 rounded-lg border bg-card/50 p-4">
+      <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+        {icon} {title}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label>简称标签</Label>
+          <Input value={tag} onChange={(e) => onTagChange(e.target.value)} placeholder={tagPlaceholder} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>说明</Label>
+          <Input value={desc} onChange={(e) => onDescChange(e.target.value)} placeholder={descPlaceholder} />
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>认证要素</Label>
+        <div className="flex flex-wrap gap-1.5 min-h-9 rounded-md border bg-background px-2 py-1.5">
+          {factors.length === 0 && (
+            <span className="text-xs text-muted-foreground self-center px-1">
+              未添加任何要素
+            </span>
+          )}
+          {factors.map((f) => (
+            <Badge key={f} variant="secondary" className="text-[11px] gap-1 pr-1">
+              <CheckCircle2 className="h-3 w-3 text-primary" /> {f}
+              <button
+                type="button"
+                onClick={() => removeFactor(f)}
+                className="ml-0.5 rounded-sm hover:bg-muted-foreground/20 p-0.5"
+                aria-label={`移除 ${f}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <Input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addFactor(draft);
+              }
+            }}
+            placeholder="输入要素名称，回车添加"
+          />
+          <Button type="button" variant="outline" onClick={() => addFactor(draft)}>
+            <Plus className="h-4 w-4" /> 添加
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          <span className="text-[11px] text-muted-foreground self-center">推荐：</span>
+          {presets.map((p) => {
+            const active = factors.includes(p);
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => (active ? removeFactor(p) : addFactor(p))}
+                className={`text-[11px] rounded-full border px-2 py-0.5 transition-colors ${
+                  active
+                    ? "bg-primary/10 border-primary/30 text-primary"
+                    : "bg-muted/40 border-border text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {p}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
