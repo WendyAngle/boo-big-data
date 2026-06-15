@@ -117,6 +117,11 @@ const LEVEL_COLORS: Record<LevelKey, string> = {
   L4: "from-emerald-500/15 to-emerald-500/5 border-emerald-500/30 text-emerald-700 dark:text-emerald-300",
 };
 
+const DEFAULT_LEVEL_COLOR =
+  "from-violet-500/15 to-violet-500/5 border-violet-500/30 text-violet-700 dark:text-violet-300";
+
+const getLevelColor = (key: LevelKey) => LEVEL_COLORS[key] ?? DEFAULT_LEVEL_COLOR;
+
 function LevelsPage() {
   const [levels, setLevels] = useState(LEVELS);
   const [confirmTarget, setConfirmTarget] = useState<{ key: LevelKey; next: boolean } | null>(null);
