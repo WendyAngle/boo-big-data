@@ -480,6 +480,43 @@ function AuditPage() {
     setTimeout(() => toast.success("核验通道已重新调用，结果将异步回传"), 800);
   };
 
+  const syncStatus = (t: AuditItem) => {
+    const p = PROVIDERS[t.provider];
+    if (!p.isThirdParty) {
+      toast.error("仅第三方渠道支持同步最新状态");
+      return;
+    }
+    if (t.status !== "审核中") {
+      toast.info("当前申请非「审核中」状态，无需同步");
+      return;
+    }
+    const tid = toast.loading(`正在从「${p.name}」获取最新认证状态…`);
+    setTimeout(() => {
+      // 模拟拉取最新状态：80% 概率仍在审核中，20% 概率回传通过
+      const updated = Math.random() < 0.2;
+      const now = "2026-06-15 14:30";
+      if (updated) {
+        setData((arr) => arr.map((x) => x.id === t.id ? {
+          ...x,
+          status: "已通过",
+          reviewer: `${p.name} 自动回传`,
+          reviewedAt: now,
+          thirdParty: x.thirdParty ? { ...x.thirdParty, conclusion: "PASS", callbackAt: now } : x.thirdParty,
+        } : x));
+        setDetail((d) => d && d.id === t.id ? {
+          ...d,
+          status: "已通过",
+          reviewer: `${p.name} 自动回传`,
+          reviewedAt: now,
+          thirdParty: d.thirdParty ? { ...d.thirdParty, conclusion: "PASS", callbackAt: now } : d.thirdParty,
+        } : d);
+        toast.success("已同步：状态更新为「已通过」", { id: tid });
+      } else {
+        toast.success("已同步：第三方仍在「审核中」，请稍后再试", { id: tid });
+      }
+    }, 900);
+  };
+
   const exportAudits = () => {
     const rows =
       selected.size > 0 ? data.filter((t) => selected.has(t.id)) : filtered;
@@ -781,7 +818,13 @@ function AuditPage() {
                 </DialogDescription>
               </DialogHeader>
 
-              <DetailBody detail={detail} comment={comment} setComment={setComment} onRecheck={() => recheck(detail)} />
+              <DetailBody
+                detail={detail}
+                comment={comment}
+                setComment={setComment}
+                onRecheck={() => recheck(detail)}
+                onSync={() => syncStatus(detail)}
+              />
 
               {(detail.status === "待审核" || detail.status === "审核中") ? (
                 <DialogFooter className="gap-2">
