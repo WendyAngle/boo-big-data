@@ -224,6 +224,7 @@ function TenantsPage() {
   }, []);
 
   const [policyTarget, setPolicyTarget] = useState<Tenant | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return data.filter((t) => {
