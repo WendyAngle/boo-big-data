@@ -183,6 +183,8 @@ function TenantsPage() {
   const [data, setData] = useState<Tenant[]>(MOCK);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Tenant | null>(null);
+  const [policies, setPolicies] = useState<Record<string, AuthPolicy>>({});
+  const [policyTarget, setPolicyTarget] = useState<Tenant | null>(null);
 
   const filtered = useMemo(() => {
     return data.filter((t) => {
@@ -357,9 +359,6 @@ function TenantsPage() {
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
               <Plus className="h-4 w-4" /> 新增租户
-            </Button>
-            <Button variant="outline" onClick={() => toast.info("打开认证策略配置")}>
-              <Settings2 className="h-4 w-4" /> 设置认证策略
             </Button>
             <Button variant="outline" onClick={() => toast.info("打开导入租户")}>
               <Upload className="h-4 w-4" /> 导入租户
