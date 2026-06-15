@@ -8,13 +8,13 @@ import {
   ChevronRight,
   Search,
   Plus,
-  Settings2,
   Upload,
   Download,
   Eye,
   Pencil,
   Trash2,
   RotateCcw,
+  X,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -89,6 +89,43 @@ interface Tenant {
 }
 
 const INDUSTRIES = ["金融", "电商", "制造", "教育", "医疗", "互联网", "物流"];
+
+// 认证等级列表（与 认证等级 页面保持一致）
+type LevelKey = "L1" | "L2" | "L3" | "L4";
+interface LevelOption {
+  key: LevelKey;
+  title: string;
+  personalTag: string;
+  enterpriseTag: string;
+}
+const LEVEL_OPTIONS: LevelOption[] = [
+  { key: "L1", title: "基础认证", personalTag: "二要素", enterpriseTag: "企业 + 法人二要素" },
+  { key: "L2", title: "三要素认证", personalTag: "三要素", enterpriseTag: "法人三要素" },
+  { key: "L3", title: "人脸核身", personalTag: "人脸核身", enterpriseTag: "企业 + 法人人脸核身" },
+  { key: "L4", title: "完整认证", personalTag: "四要素", enterpriseTag: "企业完整认证" },
+];
+
+type AuthTiming = "首次登录" | "使用敏感功能";
+interface AuthPolicy {
+  enabled: boolean;
+  timing: AuthTiming;
+  sensitiveFeatures: string[];
+  level: LevelKey;
+  manualReview: boolean;
+  reviewTimeoutHours: number;
+  autoActivateAfterReview: boolean;
+  validityMonths: number; // 0 = 永久
+}
+const DEFAULT_POLICY: AuthPolicy = {
+  enabled: true,
+  timing: "首次登录",
+  sensitiveFeatures: [],
+  level: "L2",
+  manualReview: false,
+  reviewTimeoutHours: 24,
+  autoActivateAfterReview: true,
+  validityMonths: 12,
+};
 
 const MOCK: Tenant[] = Array.from({ length: 47 }).map((_, i) => {
   const types: TenantType[] = ["个人用户", "企业用户"];
