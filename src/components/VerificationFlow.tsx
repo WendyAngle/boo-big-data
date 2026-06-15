@@ -423,7 +423,7 @@ export function VerificationFlow({ subject }: Props) {
                     <div key={f.key} className="space-y-1.5">
                       <Label className="text-xs flex items-center gap-1.5">
                         <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                        {f.label}
+                        {f.label} <span className="text-destructive">*</span>
                       </Label>
                       <Input
                         value={form[f.key] ?? ""}
