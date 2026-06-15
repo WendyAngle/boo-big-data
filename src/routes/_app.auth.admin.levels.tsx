@@ -181,9 +181,8 @@ function LevelsPage() {
 
       {/* Tabs */}
       <div className="px-8 mt-6 pb-10">
-        <Tabs defaultValue="compare" className="w-full">
+        <Tabs defaultValue="personal" className="w-full">
           <TabsList>
-            <TabsTrigger value="compare">对比视图</TabsTrigger>
             <TabsTrigger value="personal">
               <User className="h-3.5 w-3.5" /> 个人用户
             </TabsTrigger>
@@ -191,86 +190,6 @@ function LevelsPage() {
               <Building2 className="h-3.5 w-3.5" /> 企业用户
             </TabsTrigger>
           </TabsList>
-
-          {/* Compare view */}
-          <TabsContent value="compare" className="mt-4">
-            <Card className="overflow-hidden">
-              <div className="px-5 py-4 border-b bg-muted/30 flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-semibold">个人 vs 企业 认证等级对比</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">逐级递进，下一等级包含上一等级全部要素</div>
-                </div>
-              </div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-20">等级</TableHead>
-                    <TableHead>
-                      <div className="flex items-center gap-1.5"><User className="h-3.5 w-3.5" />个人用户</div>
-                    </TableHead>
-                    <TableHead>
-                      <div className="flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5" />企业用户</div>
-                    </TableHead>
-                    <TableHead className="w-28 text-center">状态</TableHead>
-                    <TableHead className="w-24 text-right">操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {levels.map((l) => (
-                    <TableRow key={l.key} className="align-top">
-                      <TableCell>
-                        <div className={`inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br ${LEVEL_COLORS[l.key]} border font-semibold text-sm`}>
-                          {l.key}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium text-foreground">{l.personalDesc}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">（{l.personalTag}）</div>
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {l.personalFactors.map((f) => (
-                            <Badge key={f} variant="outline" className="text-[10px] font-normal">
-                              <CheckCircle2 className="h-2.5 w-2.5 text-primary" /> {f}
-                            </Badge>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium text-foreground">{l.enterpriseDesc}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">（{l.enterpriseTag}）</div>
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {l.enterpriseFactors.map((f) => (
-                            <Badge key={f} variant="outline" className="text-[10px] font-normal">
-                              <CheckCircle2 className="h-2.5 w-2.5 text-accent" /> {f}
-                            </Badge>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex flex-col items-center gap-1">
-                          <Switch
-                            checked={l.enabled}
-                            onCheckedChange={() => toggleEnabled(l.key)}
-                          />
-                          <span className="text-[10px] text-muted-foreground">
-                            {l.enabled ? "启用中" : "已停用"}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => toast.info(`编辑 ${l.key} 等级`)}
-                        >
-                          <Pencil className="h-3.5 w-3.5" /> 编辑
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </TabsContent>
 
           {/* Personal view */}
           <TabsContent value="personal" className="mt-4">
