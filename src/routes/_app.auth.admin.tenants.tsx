@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Users,
@@ -498,7 +498,7 @@ function TenantFormDialog({ open, onOpenChange, editing, onSubmit }: TenantFormP
   const [form, setForm] = useState<Tenant>(empty);
 
   // sync when opened
-  useMemo(() => {
+  useEffect(() => {
     if (open) setForm(editing ?? empty);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editing]);
