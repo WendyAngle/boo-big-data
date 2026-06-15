@@ -16,6 +16,7 @@ import { Route as AppAuthAdminRouteImport } from './routes/_app.auth.admin'
 import { Route as AppAuthAdminIndexRouteImport } from './routes/_app.auth.admin.index'
 import { Route as AppAuthAdminTenantsRouteImport } from './routes/_app.auth.admin.tenants'
 import { Route as AppAuthAdminLevelsRouteImport } from './routes/_app.auth.admin.levels'
+import { Route as AppAuthAdminLevelsRouteImport } from './routes/_app.auth.admin.levels'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
