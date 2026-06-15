@@ -14,6 +14,7 @@ import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppAuthUserRouteImport } from './routes/_app.auth.user'
 import { Route as AppAuthAdminRouteImport } from './routes/_app.auth.admin'
 import { Route as AppAuthAdminIndexRouteImport } from './routes/_app.auth.admin.index'
+import { Route as AppAuthUserPersonalRouteImport } from './routes/_app.auth.user.personal'
 import { Route as AppAuthAdminTenantsRouteImport } from './routes/_app.auth.admin.tenants'
 import { Route as AppAuthAdminLevelsRouteImport } from './routes/_app.auth.admin.levels'
 
@@ -41,6 +42,11 @@ const AppAuthAdminIndexRoute = AppAuthAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppAuthAdminRoute,
 } as any)
+const AppAuthUserPersonalRoute = AppAuthUserPersonalRouteImport.update({
+  id: '/personal',
+  path: '/personal',
+  getParentRoute: () => AppAuthUserRoute,
+} as any)
 const AppAuthAdminTenantsRoute = AppAuthAdminTenantsRouteImport.update({
   id: '/tenants',
   path: '/tenants',
@@ -55,16 +61,18 @@ const AppAuthAdminLevelsRoute = AppAuthAdminLevelsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/auth/admin': typeof AppAuthAdminRouteWithChildren
-  '/auth/user': typeof AppAuthUserRoute
+  '/auth/user': typeof AppAuthUserRouteWithChildren
   '/auth/admin/levels': typeof AppAuthAdminLevelsRoute
   '/auth/admin/tenants': typeof AppAuthAdminTenantsRoute
+  '/auth/user/personal': typeof AppAuthUserPersonalRoute
   '/auth/admin/': typeof AppAuthAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
-  '/auth/user': typeof AppAuthUserRoute
+  '/auth/user': typeof AppAuthUserRouteWithChildren
   '/auth/admin/levels': typeof AppAuthAdminLevelsRoute
   '/auth/admin/tenants': typeof AppAuthAdminTenantsRoute
+  '/auth/user/personal': typeof AppAuthUserPersonalRoute
   '/auth/admin': typeof AppAuthAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -72,9 +80,10 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/_app/': typeof AppIndexRoute
   '/_app/auth/admin': typeof AppAuthAdminRouteWithChildren
-  '/_app/auth/user': typeof AppAuthUserRoute
+  '/_app/auth/user': typeof AppAuthUserRouteWithChildren
   '/_app/auth/admin/levels': typeof AppAuthAdminLevelsRoute
   '/_app/auth/admin/tenants': typeof AppAuthAdminTenantsRoute
+  '/_app/auth/user/personal': typeof AppAuthUserPersonalRoute
   '/_app/auth/admin/': typeof AppAuthAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
     | '/auth/user'
     | '/auth/admin/levels'
     | '/auth/admin/tenants'
+    | '/auth/user/personal'
     | '/auth/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -92,6 +102,7 @@ export interface FileRouteTypes {
     | '/auth/user'
     | '/auth/admin/levels'
     | '/auth/admin/tenants'
+    | '/auth/user/personal'
     | '/auth/admin'
   id:
     | '__root__'
@@ -101,6 +112,7 @@ export interface FileRouteTypes {
     | '/_app/auth/user'
     | '/_app/auth/admin/levels'
     | '/_app/auth/admin/tenants'
+    | '/_app/auth/user/personal'
     | '/_app/auth/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -145,6 +157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthAdminIndexRouteImport
       parentRoute: typeof AppAuthAdminRoute
     }
+    '/_app/auth/user/personal': {
+      id: '/_app/auth/user/personal'
+      path: '/personal'
+      fullPath: '/auth/user/personal'
+      preLoaderRoute: typeof AppAuthUserPersonalRouteImport
+      parentRoute: typeof AppAuthUserRoute
+    }
     '/_app/auth/admin/tenants': {
       id: '/_app/auth/admin/tenants'
       path: '/tenants'
@@ -178,16 +197,28 @@ const AppAuthAdminRouteWithChildren = AppAuthAdminRoute._addFileChildren(
   AppAuthAdminRouteChildren,
 )
 
+interface AppAuthUserRouteChildren {
+  AppAuthUserPersonalRoute: typeof AppAuthUserPersonalRoute
+}
+
+const AppAuthUserRouteChildren: AppAuthUserRouteChildren = {
+  AppAuthUserPersonalRoute: AppAuthUserPersonalRoute,
+}
+
+const AppAuthUserRouteWithChildren = AppAuthUserRoute._addFileChildren(
+  AppAuthUserRouteChildren,
+)
+
 interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppAuthAdminRoute: typeof AppAuthAdminRouteWithChildren
-  AppAuthUserRoute: typeof AppAuthUserRoute
+  AppAuthUserRoute: typeof AppAuthUserRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
   AppAuthAdminRoute: AppAuthAdminRouteWithChildren,
-  AppAuthUserRoute: AppAuthUserRoute,
+  AppAuthUserRoute: AppAuthUserRouteWithChildren,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
