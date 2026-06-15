@@ -16,6 +16,9 @@ import {
   RotateCcw,
   ChevronRight,
   ShieldCheck,
+  FileSpreadsheet,
+  FileDown,
+  CheckCircle2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -169,6 +172,7 @@ function UsersPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AppUser | null>(null);
   const [viewTarget, setViewTarget] = useState<AppUser | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return data.filter((u) => {
@@ -374,7 +378,7 @@ function UsersPage() {
             >
               <Plus className="h-4 w-4" /> 新增用户
             </Button>
-            <Button variant="outline" onClick={() => toast.info("打开导入用户")}>
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Upload className="h-4 w-4" /> 导入用户
             </Button>
             <Button
@@ -617,6 +621,8 @@ function UsersPage() {
         user={viewTarget}
         onOpenChange={(o) => !o && setViewTarget(null)}
       />
+
+      <ImportUsersDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }
