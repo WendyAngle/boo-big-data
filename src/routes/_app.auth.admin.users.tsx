@@ -195,6 +195,86 @@ function UsersPage() {
   const total = filtered.length;
   const pageData = filtered.slice((page - 1) * pageSize, page * pageSize);
 
+  const pageIds = pageData.map((u) => u.id);
+  const allPageChecked = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
+  const somePageChecked = pageIds.some((id) => selected.has(id));
+  const togglePageAll = (v: boolean) => {
+    setSelected((s) => {
+      const next = new Set(s);
+      if (v) pageIds.forEach((id) => next.add(id));
+      else pageIds.forEach((id) => next.delete(id));
+      return next;
+    });
+  };
+  const toggleOne = (id: string, v: boolean) => {
+    setSelected((s) => {
+      const next = new Set(s);
+      if (v) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const exportUsers = () => {
+    const rows =
+      selected.size > 0 ? data.filter((u) => selected.has(u.id)) : filtered;
+    if (rows.length === 0) {
+      toast.error("没有可导出的数据");
+      return;
+    }
+    const headers = [
+      "用户ID",
+      "昵称/姓名",
+      "手机号码",
+      "邮箱",
+      "性别",
+      "角色",
+      "所属租户",
+      "状态",
+      "创建时间",
+      "备注",
+    ];
+    const csvEscape = (v: unknown) => {
+      const s = String(v ?? "");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [
+      headers.join(","),
+      ...rows.map((u) =>
+        [
+          u.id,
+          u.name,
+          u.phone,
+          u.email,
+          u.gender,
+          u.role,
+          u.tenantName,
+          u.status,
+          u.createdAt,
+          u.remark,
+        ]
+          .map(csvEscape)
+          .join(","),
+      ),
+    ].join("\r\n");
+    const blob = new Blob(["\uFEFF" + lines], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `用户数据_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success(
+      selected.size > 0
+        ? `已导出所选 ${rows.length} 条用户`
+        : `已导出全部 ${rows.length} 条用户`,
+    );
+  };
+
   const stats = useMemo(() => {
     const c = (fn: (u: AppUser) => boolean) => data.filter(fn).length;
     return {
@@ -385,9 +465,10 @@ function UsersPage() {
             </Button>
             <Button
               variant="outline"
-              onClick={() => toast.success("已导出当前筛选结果")}
+              onClick={exportUsers}
             >
-              <Download className="h-4 w-4" /> 导出用户
+              <Download className="h-4 w-4" />
+              {selected.size > 0 ? `导出所选 (${selected.size})` : "导出用户"}
             </Button>
           </div>
         </div>
@@ -396,6 +477,19 @@ function UsersPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={
+                      allPageChecked
+                        ? true
+                        : somePageChecked
+                          ? "indeterminate"
+                          : false
+                    }
+                    onCheckedChange={(v) => togglePageAll(!!v)}
+                    aria-label="全选当前页"
+                  />
+                </TableHead>
                 <TableHead className="whitespace-nowrap">用户ID</TableHead>
                 <TableHead>昵称 / 姓名</TableHead>
                 <TableHead className="whitespace-nowrap">手机号码</TableHead>
@@ -411,13 +505,20 @@ function UsersPage() {
             <TableBody>
               {pageData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={11} className="text-center py-12 text-muted-foreground">
                     暂无匹配的用户
                   </TableCell>
                 </TableRow>
               ) : (
                 pageData.map((u) => (
                   <TableRow key={u.id} className="hover:bg-accent/30">
+                    <TableCell className="w-10">
+                      <Checkbox
+                        checked={selected.has(u.id)}
+                        onCheckedChange={(v) => toggleOne(u.id, !!v)}
+                        aria-label={`选择 ${u.name}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{u.id}</TableCell>
                     <TableCell className="font-medium">{u.name}</TableCell>
                     <TableCell className="font-mono text-xs tabular-nums">{u.phone}</TableCell>
