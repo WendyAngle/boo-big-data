@@ -18,6 +18,7 @@ import {
   FileSpreadsheet,
   FileDown,
   CheckCircle2,
+  FileText,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
