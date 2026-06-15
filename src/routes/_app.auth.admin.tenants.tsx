@@ -718,6 +718,170 @@ interface TenantFormProps {
   onSubmit: (t: Tenant) => void;
 }
 
+interface TenantDetailDialogProps {
+  tenant: Tenant | null;
+  policy: AuthPolicy | undefined;
+  onOpenChange: (o: boolean) => void;
+  onEditPolicy: () => void;
+}
+
+function TenantDetailDialog({ tenant, policy, onOpenChange, onEditPolicy }: TenantDetailDialogProps) {
+  if (!tenant) return null;
+  const levelInfo = policy ? LEVEL_OPTIONS.find((l) => l.key === policy.level) : undefined;
+  const isPersonal = tenant.type === "个人用户";
+
+  return (
+    <Dialog open={!!tenant} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Eye className="h-5 w-5 text-primary" />
+            租户详情
+          </DialogTitle>
+          <DialogDescription className="flex items-center gap-2 flex-wrap pt-1">
+            <span className="font-mono text-xs">{tenant.id}</span>
+            <span>·</span>
+            <span className="text-foreground font-medium">{tenant.name}</span>
+            <Badge variant="outline" className="font-normal">{tenant.type}</Badge>
+            <Badge variant="outline" className={authBadge(tenant.authStatus)}>{tenant.authStatus}</Badge>
+            <Badge variant="outline" className={coopBadge(tenant.coopStatus)}>{tenant.coopStatus}</Badge>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5 py-2">
+          {/* 基础信息 */}
+          <section className="rounded-lg border bg-card">
+            <div className="px-4 py-2.5 border-b text-sm font-semibold flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" /> 基础信息
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 p-4">
+              <DetailKV label="租户ID" value={<span className="font-mono">{tenant.id}</span>} />
+              <DetailKV label="租户名称" value={tenant.name} />
+              <DetailKV label="类型" value={tenant.type} />
+              <DetailKV label="行业" value={tenant.industry} />
+              <DetailKV label="主营产品" value={tenant.product} />
+              <DetailKV label="联系人" value={tenant.contact} />
+              <DetailKV label="联系电话" value={<span className="font-mono">{tenant.contactPhone}</span>} />
+              <DetailKV label="合作内容" value={tenant.coopContent} />
+              <DetailKV label="合作状态" value={<Badge variant="outline" className={coopBadge(tenant.coopStatus)}>{tenant.coopStatus}</Badge>} />
+              <DetailKV label="认证状态" value={<Badge variant="outline" className={authBadge(tenant.authStatus)}>{tenant.authStatus}</Badge>} />
+              <div className="md:col-span-2">
+                <DetailKV label="简介" value={<span className="leading-relaxed">{tenant.intro}</span>} />
+              </div>
+            </div>
+          </section>
+
+          {/* 认证策略 */}
+          <section className="rounded-lg border bg-card">
+            <div className="px-4 py-2.5 border-b text-sm font-semibold flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-primary" /> 认证策略
+              </div>
+              <Button size="sm" variant="ghost" className="h-7 text-primary hover:text-primary" onClick={onEditPolicy}>
+                {policy ? "编辑策略" : "去设置"}
+              </Button>
+            </div>
+
+            {!policy ? (
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                <ShieldCheck className="h-8 w-8 mx-auto text-muted-foreground/60 mb-2" />
+                <div className="font-medium text-foreground">未设置</div>
+                <div className="mt-1 text-xs">该租户尚未设置认证策略，点击右上角「去设置」配置认证规则</div>
+              </div>
+            ) : (
+              <div className="p-4 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+                  <DetailKV
+                    label="实名认证"
+                    value={
+                      policy.enabled ? (
+                        <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200">已开启</Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-muted text-muted-foreground border-border">已关闭</Badge>
+                      )
+                    }
+                  />
+                  <DetailKV label="认证时机" value={policy.timing} />
+                  <DetailKV
+                    label="认证等级"
+                    value={
+                      levelInfo ? (
+                        <span className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                            {levelInfo.key} · {levelInfo.title}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {isPersonal ? levelInfo.personalTag : levelInfo.enterpriseTag}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )
+                    }
+                  />
+                  <DetailKV
+                    label="人工复核"
+                    value={policy.manualReview ? "需要人工复核" : "无需人工复核"}
+                  />
+                  {policy.manualReview && (
+                    <>
+                      <DetailKV label="审核超时" value={`${policy.reviewTimeoutHours} 小时`} />
+                      <DetailKV label="审核通过后" value={policy.autoActivateAfterReview ? "自动激活" : "需手动激活"} />
+                    </>
+                  )}
+                  <DetailKV
+                    label="认证有效期"
+                    value={policy.validityMonths === 0 ? "永久有效" : `${policy.validityMonths} 个月`}
+                  />
+                </div>
+
+                {policy.timing === "使用敏感功能" && (
+                  <div className="rounded-md border border-dashed bg-muted/20 p-3">
+                    <div className="text-xs text-muted-foreground mb-2">敏感功能列表</div>
+                    {policy.sensitiveFeatures.length === 0 ? (
+                      <div className="text-xs text-muted-foreground">未配置</div>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5">
+                        {policy.sensitiveFeatures.map((f) => (
+                          <Badge key={f} variant="outline" className="bg-background font-normal">{f}</Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {levelInfo && (
+                  <div className="rounded-md border bg-muted/30 p-3">
+                    <div className="text-xs text-muted-foreground mb-2">所需认证要素</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(isPersonal ? levelInfo.personalFactors : levelInfo.enterpriseFactors).map((f) => (
+                        <Badge key={f} variant="outline" className="bg-background font-normal">{f}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>关闭</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DetailKV({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div>
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-sm mt-0.5 break-words">{value}</div>
+    </div>
+  );
+}
+
 function TenantFormDialog({ open, onOpenChange, editing, onSubmit }: TenantFormProps) {
   const empty: Tenant = {
     id: "",
