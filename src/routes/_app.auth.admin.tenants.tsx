@@ -15,6 +15,9 @@ import {
   Trash2,
   RotateCcw,
   X,
+  FileSpreadsheet,
+  FileDown,
+  CheckCircle2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -221,6 +224,7 @@ function TenantsPage() {
   }, []);
 
   const [policyTarget, setPolicyTarget] = useState<Tenant | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return data.filter((t) => {
@@ -396,7 +400,7 @@ function TenantsPage() {
             <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
               <Plus className="h-4 w-4" /> 新增租户
             </Button>
-            <Button variant="outline" onClick={() => toast.info("打开导入租户")}>
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Upload className="h-4 w-4" /> 导入租户
             </Button>
             <Button variant="outline" onClick={() => toast.success("已导出当前筛选结果")}>
@@ -581,6 +585,8 @@ function TenantsPage() {
           setPolicyTarget(null);
         }}
       />
+
+      <ImportTenantsDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }
@@ -783,6 +789,179 @@ function TenantFormDialog({ open, onOpenChange, editing, onSubmit }: TenantFormP
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
           <Button onClick={submit}>{isEdit ? "保存修改" : "创建租户"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const TEMPLATE_COLUMNS: { key: string; label: string; required: boolean; example: string; note: string }[] = [
+  { key: "name", label: "名称", required: true, example: "字节跳动", note: "租户名称，须唯一" },
+  { key: "type", label: "类型", required: true, example: "企业用户", note: "可选值：个人用户 / 企业用户" },
+  { key: "industry", label: "行业", required: true, example: "互联网", note: "请使用平台支持的行业名称" },
+  { key: "product", label: "主营产品", required: true, example: "数据中台", note: "租户主营产品/服务" },
+  { key: "contact", label: "联系人", required: true, example: "张伟", note: "联系人 / 负责人姓名" },
+  { key: "contactPhone", label: "联系电话", required: true, example: "13800001234", note: "6-20 位数字，可含 -" },
+  { key: "coopContent", label: "合作内容", required: true, example: "数据接入 / 联合运营", note: "合作业务描述" },
+  { key: "coopStatus", label: "合作状态", required: false, example: "合作中", note: "可选值：合作中 / 终止合作，默认 合作中" },
+  { key: "authStatus", label: "认证状态", required: false, example: "待认证", note: "可选值：待认证 / 认证中 / 认证成功 / 认证失败，默认 待认证" },
+  { key: "intro", label: "简介", required: false, example: "全球领先的内容平台…", note: "租户简介，建议 50-200 字" },
+];
+
+function downloadTenantTemplate() {
+  const headers = TEMPLATE_COLUMNS.map((c) => (c.required ? `${c.label}*` : c.label));
+  const example = TEMPLATE_COLUMNS.map((c) => c.example);
+  const example2 = ["示例科技", "企业用户", "金融", "智能风控平台", "李娜", "13900002345", "风控模型联合训练", "合作中", "认证中", "聚焦中小金融机构的智能风控服务"];
+  const csvEscape = (v: string) => {
+    const s = String(v ?? "");
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const rows = [headers, example, example2].map((r) => r.map(csvEscape).join(",")).join("\r\n");
+  // UTF-8 BOM 让 Excel 正确识别中文
+  const blob = new Blob(["\uFEFF" + rows], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "租户导入模板.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast.success("模板已下载：租户导入模板.csv");
+}
+
+function ImportTenantsDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) {
+  const [fileName, setFileName] = useState<string>("");
+
+  const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFileName(f.name);
+  };
+
+  const onImport = () => {
+    if (!fileName) {
+      toast.error("请先选择要导入的文件");
+      return;
+    }
+    toast.success(`已解析 ${fileName}，导入任务已提交`);
+    setFileName("");
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Upload className="h-5 w-5 text-primary" /> 批量导入租户
+          </DialogTitle>
+          <DialogDescription>
+            请先下载模板，按列填写后上传 CSV / Excel 文件。带 <span className="text-destructive font-medium">*</span> 的字段为必填项。
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5 py-2">
+          {/* 模板下载 */}
+          <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <FileSpreadsheet className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-sm font-medium">租户导入模板.csv</div>
+                <div className="text-xs text-muted-foreground">
+                  含全部字段列标题与示例数据，UTF-8 编码，支持 Excel / WPS 直接打开
+                </div>
+              </div>
+            </div>
+            <Button variant="outline" onClick={downloadTenantTemplate}>
+              <FileDown className="h-4 w-4" /> 下载模板
+            </Button>
+          </div>
+
+          {/* 字段说明 */}
+          <div>
+            <div className="mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              字段说明
+            </div>
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-32">列标题</TableHead>
+                    <TableHead className="w-20">必填</TableHead>
+                    <TableHead>说明</TableHead>
+                    <TableHead className="w-44">示例</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {TEMPLATE_COLUMNS.map((c) => (
+                    <TableRow key={c.key}>
+                      <TableCell className="font-medium">
+                        {c.label}
+                        {c.required && <span className="text-destructive ml-0.5">*</span>}
+                      </TableCell>
+                      <TableCell>
+                        {c.required ? (
+                          <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100 border-0">必填</Badge>
+                        ) : (
+                          <Badge variant="secondary">选填</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{c.note}</TableCell>
+                      <TableCell className="text-xs font-mono text-muted-foreground">{c.example}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="mt-2 flex items-start gap-2 text-xs text-muted-foreground">
+              <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
+              <span>
+                请确保列标题与模板完全一致；导入时系统将按上述规则校验，未通过校验的行将跳过并在结果中提示。
+              </span>
+            </div>
+          </div>
+
+          {/* 上传文件 */}
+          <div>
+            <div className="mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              上传文件
+            </div>
+            <label className="block cursor-pointer rounded-lg border border-dashed bg-muted/20 hover:bg-muted/40 transition-colors p-6 text-center">
+              <input
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                className="hidden"
+                onChange={onPick}
+              />
+              <Upload className="h-6 w-6 mx-auto text-muted-foreground" />
+              <div className="mt-2 text-sm">
+                {fileName ? (
+                  <span className="font-medium text-foreground">{fileName}</span>
+                ) : (
+                  <>
+                    点击选择文件，或将 <span className="font-medium text-foreground">.csv / .xlsx</span> 文件拖放到此处
+                  </>
+                )}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">单次最多 1000 条，单文件不超过 5MB</div>
+            </label>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+          <Button onClick={onImport}>
+            <Upload className="h-4 w-4" /> 开始导入
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
