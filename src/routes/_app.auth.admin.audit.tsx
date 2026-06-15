@@ -523,7 +523,9 @@ function AuditPage() {
             <SelectTrigger><SelectValue placeholder="审核状态" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部状态</SelectItem>
-              {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              {(["待审核", "审核中", "已通过", "已驳回"] as Status[]).map((s) => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
