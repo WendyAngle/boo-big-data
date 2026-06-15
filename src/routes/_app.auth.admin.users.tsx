@@ -165,6 +165,7 @@ function UsersPage() {
   const [pageSize] = useState(10);
   const [data, setData] = useState<AppUser[]>(MOCK);
   const [delTarget, setDelTarget] = useState<AppUser | null>(null);
+  const [toggleTarget, setToggleTarget] = useState<AppUser | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AppUser | null>(null);
   const [viewTarget, setViewTarget] = useState<AppUser | null>(null);
@@ -484,16 +485,7 @@ function UsersPage() {
                                     : "text-emerald-600 hover:text-emerald-700"
                                 }
                                 onClick={() => {
-                                  setData((d) =>
-                                    d.map((x) =>
-                                      x.id === u.id
-                                        ? { ...x, status: x.status === "正常" ? "停用" : "正常" }
-                                        : x,
-                                    ),
-                                  );
-                                  toast.success(
-                                    `已${u.status === "正常" ? "停用" : "启用"} ${u.name}`,
-                                  );
+                                  setToggleTarget(u);
                                 }}
                               >
                                 {u.status === "正常" ? (
@@ -560,6 +552,44 @@ function UsersPage() {
               }}
             >
               确认删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Toggle status confirm */}
+      <AlertDialog open={!!toggleTarget} onOpenChange={(o) => !o && setToggleTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              确认{toggleTarget?.status === "正常" ? "停用" : "启用"}该用户？
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              即将{toggleTarget?.status === "正常" ? "停用" : "启用"}{" "}
+              <span className="font-medium text-foreground">{toggleTarget?.name}</span>
+              （{toggleTarget?.id}）。
+              {toggleTarget?.status === "正常"
+                ? "停用后该用户将无法登录系统。"
+                : "启用后该用户可恢复登录。"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (toggleTarget) {
+                  const next = toggleTarget.status === "正常" ? "停用" : "正常";
+                  setData((d) =>
+                    d.map((x) => (x.id === toggleTarget.id ? { ...x, status: next } : x)),
+                  );
+                  toast.success(
+                    `已${toggleTarget.status === "正常" ? "停用" : "启用"} ${toggleTarget.name}`,
+                  );
+                }
+                setToggleTarget(null);
+              }}
+            >
+              确认{toggleTarget?.status === "正常" ? "停用" : "启用"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
