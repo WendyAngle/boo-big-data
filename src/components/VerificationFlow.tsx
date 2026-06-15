@@ -373,7 +373,7 @@ export function VerificationFlow({ subject }: Props) {
             </Card>
           )}
 
-          {step === 2 && (
+          {step === 3 && (
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -442,7 +442,7 @@ export function VerificationFlow({ subject }: Props) {
             </Card>
           )}
 
-          {step === 3 && (
+          {step === 2 && (
             <Card className="p-6">
               <div className="mb-4">
                 <h2 className="text-base font-semibold">选择认证渠道</h2>
