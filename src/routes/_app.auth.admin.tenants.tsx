@@ -225,6 +225,7 @@ function TenantsPage() {
   }, []);
 
   const [policyTarget, setPolicyTarget] = useState<Tenant | null>(null);
+  const [viewTarget, setViewTarget] = useState<Tenant | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -594,11 +595,11 @@ function TenantsPage() {
                                 <ShieldCheck className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>查看 / 设置认证策略</TooltipContent>
+                            <TooltipContent>设置认证策略</TooltipContent>
                           </Tooltip>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button size="sm" variant="ghost" onClick={() => toast.info(`查看 ${t.name}`)}>
+                              <Button size="sm" variant="ghost" onClick={() => setViewTarget(t)}>
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
