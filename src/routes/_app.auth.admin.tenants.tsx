@@ -530,6 +530,18 @@ function TenantsPage() {
           setFormOpen(false);
         }}
       />
+
+      <AuthPolicyDialog
+        tenant={policyTarget}
+        existing={policyTarget ? policies[policyTarget.id] : undefined}
+        onOpenChange={(o) => !o && setPolicyTarget(null)}
+        onSubmit={(p) => {
+          if (!policyTarget) return;
+          setPolicies((m) => ({ ...m, [policyTarget.id]: p }));
+          toast.success(`已保存 ${policyTarget.name} 的认证策略`);
+          setPolicyTarget(null);
+        }}
+      />
     </div>
   );
 }
