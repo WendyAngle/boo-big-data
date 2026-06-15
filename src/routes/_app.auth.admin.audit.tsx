@@ -49,14 +49,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { ListPagination } from "@/components/ListPagination";
 import {
   Dialog,
   DialogContent,
@@ -647,19 +640,12 @@ function AuditPage() {
           </Table>
         </div>
 
-        <div className="mt-4 flex justify-end">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem><PaginationPrevious onClick={() => setPage((p) => Math.max(1, p - 1))} /></PaginationItem>
-              {Array.from({ length: totalPages }).slice(0, 5).map((_, i) => (
-                <PaginationItem key={i}>
-                  <PaginationLink isActive={page === i + 1} onClick={() => setPage(i + 1)}>{i + 1}</PaginationLink>
-                </PaginationItem>
-              ))}
-              <PaginationItem><PaginationNext onClick={() => setPage((p) => Math.min(totalPages, p + 1))} /></PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
+        <ListPagination
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={setPage}
+        />
       </Card>
 
       {/* Detail Dialog */}
