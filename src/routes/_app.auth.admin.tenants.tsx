@@ -902,39 +902,74 @@ function TenantFormDialog({ open, onOpenChange, editing, onSubmit }: TenantFormP
   );
 }
 
-const TEMPLATE_COLUMNS: { key: string; label: string; required: boolean; example: string; note: string }[] = [
+const TEMPLATE_COLUMNS: { key: string; label: string; required: boolean; example: string; note: string; options?: string[] }[] = [
   { key: "name", label: "名称", required: true, example: "字节跳动", note: "租户名称，须唯一" },
-  { key: "type", label: "类型", required: true, example: "企业用户", note: "可选值：个人用户 / 企业用户" },
-  { key: "industry", label: "行业", required: true, example: "互联网", note: "请使用平台支持的行业名称" },
+  { key: "type", label: "类型", required: true, example: "企业用户", note: "下拉选择：个人用户 / 企业用户", options: ["个人用户", "企业用户"] },
+  { key: "industry", label: "行业", required: true, example: "互联网", note: "下拉选择平台支持的行业", options: INDUSTRIES },
   { key: "product", label: "主营产品", required: true, example: "数据中台", note: "租户主营产品/服务" },
   { key: "contact", label: "联系人", required: true, example: "张伟", note: "联系人 / 负责人姓名" },
   { key: "contactPhone", label: "联系电话", required: true, example: "13800001234", note: "6-20 位数字，可含 -" },
   { key: "coopContent", label: "合作内容", required: true, example: "数据接入 / 联合运营", note: "合作业务描述" },
-  { key: "coopStatus", label: "合作状态", required: false, example: "合作中", note: "可选值：合作中 / 终止合作，默认 合作中" },
-  { key: "authStatus", label: "认证状态", required: false, example: "待认证", note: "可选值：待认证 / 认证中 / 认证成功 / 认证失败，默认 待认证" },
+  { key: "coopStatus", label: "合作状态", required: false, example: "合作中", note: "下拉选择，默认 合作中", options: ["合作中", "终止合作"] },
+  { key: "authStatus", label: "认证状态", required: false, example: "待认证", note: "下拉选择，默认 待认证", options: ["待认证", "认证中", "认证成功", "认证失败"] },
   { key: "intro", label: "简介", required: false, example: "全球领先的内容平台…", note: "租户简介，建议 50-200 字" },
 ];
 
-function downloadTenantTemplate() {
-  const headers = TEMPLATE_COLUMNS.map((c) => (c.required ? `${c.label}*` : c.label));
-  const example = TEMPLATE_COLUMNS.map((c) => c.example);
-  const example2 = ["示例科技", "企业用户", "金融", "智能风控平台", "李娜", "13900002345", "风控模型联合训练", "合作中", "认证中", "聚焦中小金融机构的智能风控服务"];
-  const csvEscape = (v: string) => {
-    const s = String(v ?? "");
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+async function downloadTenantTemplate() {
+  const ExcelJS = (await import("exceljs")).default;
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet("租户导入");
+  ws.columns = TEMPLATE_COLUMNS.map((c) => ({
+    header: c.required ? `${c.label}*` : c.label,
+    key: c.key,
+    width: Math.max(14, c.label.length * 3),
+  }));
+  // 表头样式
+  ws.getRow(1).font = { bold: true };
+  ws.getRow(1).alignment = { vertical: "middle", horizontal: "center" };
+  ws.getRow(1).fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FFEFF3FA" },
   };
-  const rows = [headers, example, example2].map((r) => r.map(csvEscape).join(",")).join("\r\n");
-  // UTF-8 BOM 让 Excel 正确识别中文
-  const blob = new Blob(["\uFEFF" + rows], { type: "text/csv;charset=utf-8" });
+  // 必填表头红色
+  TEMPLATE_COLUMNS.forEach((c, i) => {
+    if (c.required) {
+      ws.getRow(1).getCell(i + 1).font = { bold: true, color: { argb: "FFDC2626" } };
+    }
+  });
+  // 示例行
+  ws.addRow(TEMPLATE_COLUMNS.map((c) => c.example));
+  ws.addRow(["示例科技", "企业用户", "金融", "智能风控平台", "李娜", "13900002345", "风控模型联合训练", "合作中", "认证中", "聚焦中小金融机构的智能风控服务"]);
+  // 下拉校验：从第 2 行到 1000 行
+  TEMPLATE_COLUMNS.forEach((c, i) => {
+    if (!c.options) return;
+    const colLetter = ws.getColumn(i + 1).letter;
+    for (let r = 2; r <= 1000; r++) {
+      ws.getCell(`${colLetter}${r}`).dataValidation = {
+        type: "list",
+        allowBlank: !c.required,
+        formulae: [`"${c.options.join(",")}"`],
+        showErrorMessage: true,
+        errorStyle: "error",
+        errorTitle: "无效值",
+        error: `请从下拉列表选择：${c.options.join(" / ")}`,
+      };
+    }
+  });
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "租户导入模板.csv";
+  a.download = "租户导入模板.xlsx";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  toast.success("模板已下载：租户导入模板.csv");
+  toast.success("模板已下载：租户导入模板.xlsx");
 }
 
 function ImportTenantsDialog({
@@ -982,9 +1017,9 @@ function ImportTenantsDialog({
                 <FileSpreadsheet className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-sm font-medium">租户导入模板.csv</div>
+                <div className="text-sm font-medium">租户导入模板.xlsx</div>
                 <div className="text-xs text-muted-foreground">
-                  含全部字段列标题与示例数据，UTF-8 编码，支持 Excel / WPS 直接打开
+                  含全部字段列标题、示例数据与下拉选项校验，支持 Excel / WPS 直接打开
                 </div>
               </div>
             </div>

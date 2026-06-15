@@ -1113,36 +1113,78 @@ function StatCard({
   );
 }
 
-const USER_TEMPLATE_COLUMNS: { key: string; label: string; required: boolean; example: string; note: string }[] = [
+const USER_TEMPLATE_COLUMNS: { key: string; label: string; required: boolean; example: string; note: string; options?: string[] }[] = [
   { key: "name", label: "昵称 / 姓名", required: true, example: "张伟", note: "用户昵称或真实姓名，最长 32 字符" },
   { key: "phone", label: "手机号码", required: true, example: "13800001234", note: "6-20 位数字，可含 -，须唯一" },
   { key: "email", label: "邮箱", required: false, example: "zhangwei@example.com", note: "标准邮箱格式，最长 64 字符" },
-  { key: "gender", label: "性别", required: false, example: "男", note: "可选值：男 / 女 / 未知，默认 未知" },
-  { key: "role", label: "角色", required: false, example: "员工", note: "可选值：法人 / 管理员 / 员工，默认 员工" },
-  { key: "tenantName", label: "所属租户", required: false, example: "字节跳动", note: "需与租户管理中的租户名称一致，留空则不绑定" },
-  { key: "status", label: "状态", required: false, example: "正常", note: "可选值：正常 / 停用，默认 正常" },
+  { key: "gender", label: "性别", required: false, example: "男", note: "下拉选择，默认 未知", options: ["男", "女", "未知"] },
+  { key: "role", label: "角色", required: false, example: "员工", note: "下拉选择，默认 员工", options: ["法人", "管理员", "员工"] },
+  { key: "tenantName", label: "所属租户", required: false, example: "字节跳动", note: "下拉选择租户管理中的租户，留空则不绑定", options: TENANTS.map((t) => t.name) },
+  { key: "status", label: "状态", required: false, example: "正常", note: "下拉选择，默认 正常", options: ["正常", "停用"] },
   { key: "remark", label: "备注", required: false, example: "数据中台负责人", note: "最长 200 字符" },
 ];
 
-function downloadUserTemplate() {
-  const headers = USER_TEMPLATE_COLUMNS.map((c) => (c.required ? `${c.label}*` : c.label));
-  const example1 = USER_TEMPLATE_COLUMNS.map((c) => c.example);
-  const example2 = ["李娜", "13900002345", "lina@example.com", "女", "管理员", "示例科技", "正常", "风控业务联系人"];
-  const csvEscape = (v: string) => {
-    const s = String(v ?? "");
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+async function downloadUserTemplate() {
+  const ExcelJS = (await import("exceljs")).default;
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet("用户导入");
+  ws.columns = USER_TEMPLATE_COLUMNS.map((c) => ({
+    header: c.required ? `${c.label}*` : c.label,
+    key: c.key,
+    width: Math.max(14, c.label.length * 3),
+  }));
+  ws.getRow(1).font = { bold: true };
+  ws.getRow(1).alignment = { vertical: "middle", horizontal: "center" };
+  ws.getRow(1).fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FFEFF3FA" },
   };
-  const rows = [headers, example1, example2].map((r) => r.map(csvEscape).join(",")).join("\r\n");
-  const blob = new Blob(["\uFEFF" + rows], { type: "text/csv;charset=utf-8" });
+  USER_TEMPLATE_COLUMNS.forEach((c, i) => {
+    if (c.required) {
+      ws.getRow(1).getCell(i + 1).font = { bold: true, color: { argb: "FFDC2626" } };
+    }
+  });
+  ws.addRow(USER_TEMPLATE_COLUMNS.map((c) => c.example));
+  ws.addRow(["李娜", "13900002345", "lina@example.com", "女", "管理员", "示例科技", "正常", "风控业务联系人"]);
+
+  // 长选项放隐藏 sheet，便于绕过 Excel 内联列表 255 字符限制
+  const opts = wb.addWorksheet("_options");
+  opts.state = "hidden";
+  USER_TEMPLATE_COLUMNS.forEach((c, i) => {
+    if (!c.options) return;
+    const colLetter = opts.getColumn(i + 1).letter;
+    c.options.forEach((v, idx) => {
+      opts.getCell(`${colLetter}${idx + 1}`).value = v;
+    });
+    const colLetterMain = ws.getColumn(i + 1).letter;
+    const range = `_options!$${colLetter}$1:$${colLetter}$${c.options.length}`;
+    for (let r = 2; r <= 1000; r++) {
+      ws.getCell(`${colLetterMain}${r}`).dataValidation = {
+        type: "list",
+        allowBlank: !c.required,
+        formulae: [`=${range}`],
+        showErrorMessage: true,
+        errorStyle: "error",
+        errorTitle: "无效值",
+        error: `请从下拉列表选择有效项`,
+      };
+    }
+  });
+
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "用户导入模板.csv";
+  a.download = "用户导入模板.xlsx";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  toast.success("模板已下载：用户导入模板.csv");
+  toast.success("模板已下载：用户导入模板.xlsx");
 }
 
 function ImportUsersDialog({
@@ -1189,9 +1231,9 @@ function ImportUsersDialog({
                 <FileSpreadsheet className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-sm font-medium">用户导入模板.csv</div>
+                <div className="text-sm font-medium">用户导入模板.xlsx</div>
                 <div className="text-xs text-muted-foreground">
-                  含全部字段列标题与示例数据，UTF-8 编码，支持 Excel / WPS 直接打开
+                  含全部字段列标题、示例数据与下拉选项校验，支持 Excel / WPS 直接打开
                 </div>
               </div>
             </div>
