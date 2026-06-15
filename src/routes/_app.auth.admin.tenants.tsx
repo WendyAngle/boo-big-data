@@ -47,14 +47,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { ListPagination } from "@/components/ListPagination";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -505,42 +498,12 @@ function TenantsPage() {
           </Table>
         </div>
 
-        {/* Pagination */}
-        <div className="mt-4 flex items-center justify-between flex-wrap gap-3">
-          <div className="text-xs text-muted-foreground">
-            第 {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, total)} 条 / 共 {total} 条
-          </div>
-          <Pagination className="mx-0 w-auto justify-end">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  href="#"
-                  onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(1, p - 1)); }}
-                />
-              </PaginationItem>
-              {Array.from({ length: totalPages }).slice(0, 5).map((_, i) => {
-                const p = i + 1;
-                return (
-                  <PaginationItem key={p}>
-                    <PaginationLink
-                      href="#"
-                      isActive={p === page}
-                      onClick={(e) => { e.preventDefault(); setPage(p); }}
-                    >
-                      {p}
-                    </PaginationLink>
-                  </PaginationItem>
-                );
-              })}
-              <PaginationItem>
-                <PaginationNext
-                  href="#"
-                  onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(totalPages, p + 1)); }}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
+        <ListPagination
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={setPage}
+        />
       </Card>
 
       {/* Delete confirm */}
