@@ -731,6 +731,31 @@ function TenantDetailDialog({ tenant, policy, onOpenChange, onEditPolicy }: Tena
   const levelInfo = policy ? LEVEL_OPTIONS.find((l) => l.key === policy.level) : undefined;
   const isPersonal = tenant.type === "个人用户";
 
+  // mock 认证通过时间：基于租户ID稳定生成（30 - 540 天前）
+  const passedInfo = (() => {
+    if (tenant.authStatus !== "认证成功") return null;
+    const seed = Array.from(tenant.id).reduce((s, c) => s + c.charCodeAt(0), 0);
+    const daysAgo = 30 + (seed % 510);
+    const passedAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
+    const validityMonths = policy?.validityMonths ?? 12;
+    const isPermanent = validityMonths === 0;
+    let expiresAt: Date | null = null;
+    let valid = true;
+    if (!isPermanent) {
+      expiresAt = new Date(passedAt);
+      expiresAt.setMonth(expiresAt.getMonth() + validityMonths);
+      valid = expiresAt.getTime() > Date.now();
+    }
+    const fmt = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return {
+      passedAtText: fmt(passedAt),
+      expiresAtText: expiresAt ? fmt(expiresAt) : null,
+      isPermanent,
+      valid,
+    };
+  })();
+
   return (
     <Dialog open={!!tenant} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -766,6 +791,42 @@ function TenantDetailDialog({ tenant, policy, onOpenChange, onEditPolicy }: Tena
               <DetailKV label="合作内容" value={tenant.coopContent} />
               <DetailKV label="合作状态" value={<Badge variant="outline" className={coopBadge(tenant.coopStatus)}>{tenant.coopStatus}</Badge>} />
               <DetailKV label="认证状态" value={<Badge variant="outline" className={authBadge(tenant.authStatus)}>{tenant.authStatus}</Badge>} />
+              {passedInfo && (
+                <>
+                  <DetailKV label="认证通过时间" value={<span className="font-mono">{passedInfo.passedAtText}</span>} />
+                  <DetailKV
+                    label="是否在有效期内"
+                    value={
+                      passedInfo.isPermanent ? (
+                        <span className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200">是</Badge>
+                          <span className="text-xs text-muted-foreground">认证策略为永久有效</span>
+                        </span>
+                      ) : passedInfo.valid ? (
+                        <span className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200">是</Badge>
+                          {passedInfo.expiresAtText && (
+                            <span className="text-xs text-muted-foreground">有效期至 {passedInfo.expiresAtText}</span>
+                          )}
+                        </span>
+                      ) : (
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center gap-2">
+                            <Badge variant="outline" className="bg-rose-100 text-rose-700 border-rose-200">否</Badge>
+                            {passedInfo.expiresAtText && (
+                              <span className="text-xs text-muted-foreground">已于 {passedInfo.expiresAtText} 到期</span>
+                            )}
+                          </span>
+                          <div className="text-xs text-rose-600 flex items-center gap-1">
+                            <ShieldAlert className="h-3.5 w-3.5" />
+                            请提醒租户认证信息已到期，请重新认证
+                          </div>
+                        </div>
+                      )
+                    }
+                  />
+                </>
+              )}
               <div className="md:col-span-2">
                 <DetailKV label="简介" value={<span className="leading-relaxed">{tenant.intro}</span>} />
               </div>
