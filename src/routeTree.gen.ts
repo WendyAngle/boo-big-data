@@ -14,6 +14,7 @@ import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppAuthUserRouteImport } from './routes/_app.auth.user'
 import { Route as AppAuthAdminRouteImport } from './routes/_app.auth.admin'
 import { Route as AppAuthAdminIndexRouteImport } from './routes/_app.auth.admin.index'
+import { Route as AppAuthAdminTenantsRouteImport } from './routes/_app.auth.admin.tenants'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -39,16 +40,23 @@ const AppAuthAdminIndexRoute = AppAuthAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppAuthAdminRoute,
 } as any)
+const AppAuthAdminTenantsRoute = AppAuthAdminTenantsRouteImport.update({
+  id: '/tenants',
+  path: '/tenants',
+  getParentRoute: () => AppAuthAdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/auth/admin': typeof AppAuthAdminRouteWithChildren
   '/auth/user': typeof AppAuthUserRoute
+  '/auth/admin/tenants': typeof AppAuthAdminTenantsRoute
   '/auth/admin/': typeof AppAuthAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
   '/auth/user': typeof AppAuthUserRoute
+  '/auth/admin/tenants': typeof AppAuthAdminTenantsRoute
   '/auth/admin': typeof AppAuthAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -57,19 +65,26 @@ export interface FileRoutesById {
   '/_app/': typeof AppIndexRoute
   '/_app/auth/admin': typeof AppAuthAdminRouteWithChildren
   '/_app/auth/user': typeof AppAuthUserRoute
+  '/_app/auth/admin/tenants': typeof AppAuthAdminTenantsRoute
   '/_app/auth/admin/': typeof AppAuthAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth/admin' | '/auth/user' | '/auth/admin/'
+  fullPaths:
+    | '/'
+    | '/auth/admin'
+    | '/auth/user'
+    | '/auth/admin/tenants'
+    | '/auth/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth/user' | '/auth/admin'
+  to: '/' | '/auth/user' | '/auth/admin/tenants' | '/auth/admin'
   id:
     | '__root__'
     | '/_app'
     | '/_app/'
     | '/_app/auth/admin'
     | '/_app/auth/user'
+    | '/_app/auth/admin/tenants'
     | '/_app/auth/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -114,14 +129,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthAdminIndexRouteImport
       parentRoute: typeof AppAuthAdminRoute
     }
+    '/_app/auth/admin/tenants': {
+      id: '/_app/auth/admin/tenants'
+      path: '/tenants'
+      fullPath: '/auth/admin/tenants'
+      preLoaderRoute: typeof AppAuthAdminTenantsRouteImport
+      parentRoute: typeof AppAuthAdminRoute
+    }
   }
 }
 
 interface AppAuthAdminRouteChildren {
+  AppAuthAdminTenantsRoute: typeof AppAuthAdminTenantsRoute
   AppAuthAdminIndexRoute: typeof AppAuthAdminIndexRoute
 }
 
 const AppAuthAdminRouteChildren: AppAuthAdminRouteChildren = {
+  AppAuthAdminTenantsRoute: AppAuthAdminTenantsRoute,
   AppAuthAdminIndexRoute: AppAuthAdminIndexRoute,
 }
 
