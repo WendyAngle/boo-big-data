@@ -1,0 +1,492 @@
+import { useMemo, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  Users,
+  ShieldAlert,
+  ShieldCheck,
+  Handshake,
+  ChevronRight,
+  Search,
+  Plus,
+  Settings2,
+  Upload,
+  Download,
+  Eye,
+  Pencil,
+  Trash2,
+  RotateCcw,
+} from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/_app/auth/admin/tenants")({
+  head: () => ({ meta: [{ title: "租户管理 | Boo数据平台" }] }),
+  component: TenantsPage,
+});
+
+type AuthStatus = "待认证" | "认证中" | "认证成功" | "认证失败";
+type CoopStatus = "合作中" | "终止合作";
+type TenantType = "个人用户" | "企业用户";
+
+interface Tenant {
+  id: string;
+  name: string;
+  intro: string;
+  type: TenantType;
+  industry: string;
+  product: string;
+  coopContent: string;
+  coopStatus: CoopStatus;
+  authStatus: AuthStatus;
+}
+
+const INDUSTRIES = ["金融", "电商", "制造", "教育", "医疗", "互联网", "物流"];
+
+const MOCK: Tenant[] = Array.from({ length: 47 }).map((_, i) => {
+  const types: TenantType[] = ["个人用户", "企业用户"];
+  const auths: AuthStatus[] = ["待认证", "认证中", "认证成功", "认证失败"];
+  const coops: CoopStatus[] = ["合作中", "合作中", "合作中", "终止合作"];
+  const names = [
+    "字节跳动",
+    "蚂蚁集团",
+    "美团点评",
+    "京东物流",
+    "宁德时代",
+    "比亚迪汽车",
+    "顺丰科技",
+    "腾讯云",
+    "阿里云",
+    "网易严选",
+  ];
+  return {
+    id: `T${String(202600 + i).padStart(6, "0")}`,
+    name: `${names[i % names.length]}${i > 9 ? `(${i})` : ""}`,
+    intro: "专注于数据服务与企业级解决方案，提供安全可靠的合作生态。",
+    type: types[i % 2],
+    industry: INDUSTRIES[i % INDUSTRIES.length],
+    product: ["数据中台", "智能风控", "营销云", "供应链", "AI平台"][i % 5],
+    coopContent: ["数据接入", "联合运营", "技术共建", "渠道分销"][i % 4],
+    coopStatus: coops[i % coops.length],
+    authStatus: auths[i % auths.length],
+  };
+});
+
+function authBadge(s: AuthStatus) {
+  const map: Record<AuthStatus, string> = {
+    待认证: "bg-muted text-muted-foreground border-border",
+    认证中: "bg-amber-100 text-amber-700 border-amber-200",
+    认证成功: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    认证失败: "bg-rose-100 text-rose-700 border-rose-200",
+  };
+  return map[s];
+}
+function coopBadge(s: CoopStatus) {
+  return s === "合作中"
+    ? "bg-accent text-accent-foreground border-primary/20"
+    : "bg-muted text-muted-foreground border-border";
+}
+
+function TenantsPage() {
+  const [keyword, setKeyword] = useState("");
+  const [type, setType] = useState("all");
+  const [industry, setIndustry] = useState("all");
+  const [auth, setAuth] = useState("all");
+  const [coop, setCoop] = useState("all");
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [delTarget, setDelTarget] = useState<Tenant | null>(null);
+  const [data, setData] = useState<Tenant[]>(MOCK);
+
+  const filtered = useMemo(() => {
+    return data.filter((t) => {
+      if (keyword && !(`${t.id} ${t.name}`.toLowerCase().includes(keyword.toLowerCase()))) return false;
+      if (type !== "all" && t.type !== type) return false;
+      if (industry !== "all" && t.industry !== industry) return false;
+      if (auth !== "all" && t.authStatus !== auth) return false;
+      if (coop !== "all" && t.coopStatus !== coop) return false;
+      return true;
+    });
+  }, [data, keyword, type, industry, auth, coop]);
+
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const pageData = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const stats = useMemo(() => {
+    const c = (fn: (t: Tenant) => boolean) => data.filter(fn).length;
+    return {
+      total: data.length,
+      pending: c((t) => t.authStatus === "待认证"),
+      auditing: c((t) => t.authStatus === "认证中"),
+      success: c((t) => t.authStatus === "认证成功"),
+      failed: c((t) => t.authStatus === "认证失败"),
+      coop: c((t) => t.coopStatus === "合作中"),
+      ended: c((t) => t.coopStatus === "终止合作"),
+    };
+  }, [data]);
+
+  const reset = () => {
+    setKeyword("");
+    setType("all");
+    setIndustry("all");
+    setAuth("all");
+    setCoop("all");
+    setPage(1);
+  };
+
+  return (
+    <div className="p-8 space-y-6">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <span>实名认证</span>
+        <ChevronRight className="h-3.5 w-3.5" />
+        <Link to="/auth/admin" className="hover:text-foreground">管理端</Link>
+        <ChevronRight className="h-3.5 w-3.5" />
+        <span className="text-foreground font-medium">租户管理</span>
+      </div>
+
+      {/* Hero */}
+      <section
+        className="relative overflow-hidden rounded-2xl p-6 text-white"
+        style={{ background: "var(--gradient-hero)" }}
+      >
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <Users className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">租户管理</h1>
+            <p className="text-white/85 text-sm mt-0.5">
+              管理所有接入租户的基础信息、认证进度与合作状态
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard
+          icon={<Users className="h-5 w-5" />}
+          label="租户总数"
+          mainValue={stats.total}
+          tone="primary"
+        />
+        <StatCard
+          icon={<ShieldAlert className="h-5 w-5" />}
+          label="待认证 / 认证中"
+          mainValue={`${stats.pending} / ${stats.auditing}`}
+          tone="amber"
+          subs={[
+            { k: "待认证", v: stats.pending },
+            { k: "认证中", v: stats.auditing },
+          ]}
+        />
+        <StatCard
+          icon={<ShieldCheck className="h-5 w-5" />}
+          label="认证成功 / 认证失败"
+          mainValue={`${stats.success} / ${stats.failed}`}
+          tone="emerald"
+          subs={[
+            { k: "成功", v: stats.success },
+            { k: "失败", v: stats.failed },
+          ]}
+        />
+        <StatCard
+          icon={<Handshake className="h-5 w-5" />}
+          label="合作中 / 终止合作"
+          mainValue={`${stats.coop} / ${stats.ended}`}
+          tone="cyan"
+          subs={[
+            { k: "合作中", v: stats.coop },
+            { k: "终止", v: stats.ended },
+          ]}
+        />
+      </div>
+
+      {/* Search */}
+      <Card className="p-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
+          <div className="xl:col-span-2 relative">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={keyword}
+              onChange={(e) => { setKeyword(e.target.value); setPage(1); }}
+              placeholder="搜索租户ID / 名称"
+              className="pl-9"
+            />
+          </div>
+          <Select value={type} onValueChange={(v) => { setType(v); setPage(1); }}>
+            <SelectTrigger><SelectValue placeholder="全部类型" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部类型</SelectItem>
+              <SelectItem value="个人用户">个人用户</SelectItem>
+              <SelectItem value="企业用户">企业用户</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={industry} onValueChange={(v) => { setIndustry(v); setPage(1); }}>
+            <SelectTrigger><SelectValue placeholder="全部行业" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部行业</SelectItem>
+              {INDUSTRIES.map((i) => (
+                <SelectItem key={i} value={i}>{i}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={auth} onValueChange={(v) => { setAuth(v); setPage(1); }}>
+            <SelectTrigger><SelectValue placeholder="认证状态" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部认证状态</SelectItem>
+              <SelectItem value="待认证">待认证</SelectItem>
+              <SelectItem value="认证中">认证中</SelectItem>
+              <SelectItem value="认证成功">认证成功</SelectItem>
+              <SelectItem value="认证失败">认证失败</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={coop} onValueChange={(v) => { setCoop(v); setPage(1); }}>
+            <SelectTrigger><SelectValue placeholder="合作状态" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部合作状态</SelectItem>
+              <SelectItem value="合作中">合作中</SelectItem>
+              <SelectItem value="终止合作">终止合作</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="outline" onClick={reset}>
+            <RotateCcw className="h-4 w-4" /> 重置
+          </Button>
+          <Button onClick={() => toast.success(`已应用筛选，共 ${total} 条`)}>
+            <Search className="h-4 w-4" /> 搜索
+          </Button>
+        </div>
+      </Card>
+
+      {/* Actions + Table */}
+      <Card className="p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div className="text-sm text-muted-foreground">
+            共 <span className="font-semibold text-foreground">{total}</span> 条租户记录
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => toast.info("打开新增租户表单")}>
+              <Plus className="h-4 w-4" /> 新增租户
+            </Button>
+            <Button variant="outline" onClick={() => toast.info("打开认证策略配置")}>
+              <Settings2 className="h-4 w-4" /> 设置认证策略
+            </Button>
+            <Button variant="outline" onClick={() => toast.info("打开导入租户")}>
+              <Upload className="h-4 w-4" /> 导入租户
+            </Button>
+            <Button variant="outline" onClick={() => toast.success("已导出当前筛选结果")}>
+              <Download className="h-4 w-4" /> 导出租户
+            </Button>
+          </div>
+        </div>
+
+        <div className="rounded-lg border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40">
+                <TableHead className="whitespace-nowrap">租户ID</TableHead>
+                <TableHead>名称</TableHead>
+                <TableHead className="min-w-[220px]">简介</TableHead>
+                <TableHead>类型</TableHead>
+                <TableHead>行业</TableHead>
+                <TableHead>主营产品</TableHead>
+                <TableHead>合作内容</TableHead>
+                <TableHead>合作状态</TableHead>
+                <TableHead>认证状态</TableHead>
+                <TableHead className="text-right whitespace-nowrap">操作</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pageData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
+                    暂无匹配的租户
+                  </TableCell>
+                </TableRow>
+              ) : (
+                pageData.map((t) => (
+                  <TableRow key={t.id} className="hover:bg-accent/30">
+                    <TableCell className="font-mono text-xs">{t.id}</TableCell>
+                    <TableCell className="font-medium">{t.name}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground max-w-[260px] truncate">{t.intro}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="font-normal">{t.type}</Badge>
+                    </TableCell>
+                    <TableCell>{t.industry}</TableCell>
+                    <TableCell>{t.product}</TableCell>
+                    <TableCell>{t.coopContent}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={coopBadge(t.coopStatus)}>{t.coopStatus}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={authBadge(t.authStatus)}>{t.authStatus}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => toast.info(`查看 ${t.name}`)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => toast.info(`编辑 ${t.name}`)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDelTarget(t)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Pagination */}
+        <div className="mt-4 flex items-center justify-between flex-wrap gap-3">
+          <div className="text-xs text-muted-foreground">
+            第 {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, total)} 条 / 共 {total} 条
+          </div>
+          <Pagination className="mx-0 w-auto justify-end">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(1, p - 1)); }}
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }).slice(0, 5).map((_, i) => {
+                const p = i + 1;
+                return (
+                  <PaginationItem key={p}>
+                    <PaginationLink
+                      href="#"
+                      isActive={p === page}
+                      onClick={(e) => { e.preventDefault(); setPage(p); }}
+                    >
+                      {p}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(totalPages, p + 1)); }}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      </Card>
+
+      {/* Delete confirm */}
+      <AlertDialog open={!!delTarget} onOpenChange={(o) => !o && setDelTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除该租户？</AlertDialogTitle>
+            <AlertDialogDescription>
+              即将删除 <span className="font-medium text-foreground">{delTarget?.name}</span>（{delTarget?.id}），此操作不可撤销。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (delTarget) {
+                  setData((d) => d.filter((x) => x.id !== delTarget.id));
+                  toast.success(`已删除 ${delTarget.name}`);
+                }
+                setDelTarget(null);
+              }}
+            >
+              确认删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+type Tone = "primary" | "amber" | "emerald" | "cyan";
+const toneMap: Record<Tone, { bg: string; icon: string; ring: string }> = {
+  primary: { bg: "from-primary/15 to-primary/0", icon: "bg-primary/15 text-primary", ring: "ring-primary/10" },
+  amber: { bg: "from-amber-200/40 to-amber-100/0", icon: "bg-amber-100 text-amber-700", ring: "ring-amber-200/40" },
+  emerald: { bg: "from-emerald-200/40 to-emerald-100/0", icon: "bg-emerald-100 text-emerald-700", ring: "ring-emerald-200/40" },
+  cyan: { bg: "from-cyan-200/40 to-cyan-100/0", icon: "bg-cyan-100 text-cyan-700", ring: "ring-cyan-200/40" },
+};
+
+function StatCard({
+  icon, label, mainValue, tone, subs,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  mainValue: string | number;
+  tone: Tone;
+  subs?: { k: string; v: number }[];
+}) {
+  const t = toneMap[tone];
+  return (
+    <Card className={`relative overflow-hidden p-5 ring-1 ${t.ring}`}>
+      <div className={`absolute inset-0 bg-gradient-to-br ${t.bg} pointer-events-none`} />
+      <div className="relative flex items-start justify-between">
+        <div>
+          <div className="text-sm text-muted-foreground">{label}</div>
+          <div className="mt-2 text-2xl font-bold tabular-nums">{mainValue}</div>
+          {subs && (
+            <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
+              {subs.map((s) => (
+                <span key={s.k} className="flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-foreground/30" />
+                  {s.k} <span className="font-semibold text-foreground">{s.v}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${t.icon}`}>
+          {icon}
+        </div>
+      </div>
+    </Card>
+  );
+}
