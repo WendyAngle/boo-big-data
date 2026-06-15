@@ -415,6 +415,7 @@ function TenantsPage() {
                 <TableHead>类型</TableHead>
                 <TableHead>行业</TableHead>
                 <TableHead>主营产品</TableHead>
+                <TableHead className="whitespace-nowrap">联系方式</TableHead>
                 <TableHead>合作内容</TableHead>
                 <TableHead>合作状态</TableHead>
                 <TableHead>认证状态</TableHead>
@@ -425,7 +426,7 @@ function TenantsPage() {
             <TableBody>
               {pageData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={12} className="text-center py-12 text-muted-foreground">
                     暂无匹配的租户
                   </TableCell>
                 </TableRow>
@@ -440,6 +441,18 @@ function TenantsPage() {
                     </TableCell>
                     <TableCell>{t.industry}</TableCell>
                     <TableCell>{t.product}</TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {t.contact || t.contactPhone ? (
+                        <div className="flex flex-col leading-tight">
+                          <span className="text-sm font-medium text-foreground">{t.contact || "—"}</span>
+                          <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                            {t.contactPhone || "—"}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">未填写</span>
+                      )}
+                    </TableCell>
                     <TableCell>{t.coopContent}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={coopBadge(t.coopStatus)}>{t.coopStatus}</Badge>
