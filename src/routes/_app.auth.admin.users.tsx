@@ -165,6 +165,7 @@ function UsersPage() {
   const [pageSize] = useState(10);
   const [data, setData] = useState<AppUser[]>(MOCK);
   const [delTarget, setDelTarget] = useState<AppUser | null>(null);
+  const [toggleTarget, setToggleTarget] = useState<AppUser | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AppUser | null>(null);
   const [viewTarget, setViewTarget] = useState<AppUser | null>(null);
@@ -484,16 +485,7 @@ function UsersPage() {
                                     : "text-emerald-600 hover:text-emerald-700"
                                 }
                                 onClick={() => {
-                                  setData((d) =>
-                                    d.map((x) =>
-                                      x.id === u.id
-                                        ? { ...x, status: x.status === "正常" ? "停用" : "正常" }
-                                        : x,
-                                    ),
-                                  );
-                                  toast.success(
-                                    `已${u.status === "正常" ? "停用" : "启用"} ${u.name}`,
-                                  );
+                                  setToggleTarget(u);
                                 }}
                               >
                                 {u.status === "正常" ? (
