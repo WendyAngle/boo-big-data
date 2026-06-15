@@ -76,12 +76,18 @@ interface Tenant {
   type: TenantType;
   industry: string;
   product: string;
+  contact: string;
+  contactPhone: string;
   coopContent: string;
   coopStatus: CoopStatus;
   authStatus: AuthStatus;
 }
 
 const INDUSTRIES = ["金融", "电商", "制造", "教育", "医疗", "互联网", "物流"];
+const CONTACT_NAMES = [
+  "张伟", "王芳", "李娜", "刘洋", "陈思", "杨明",
+  "赵磊", "黄雨", "周凯", "吴婷",
+];
 
 // 认证等级列表（与 认证等级 页面保持一致）
 type LevelKey = "L1" | "L2" | "L3" | "L4";
