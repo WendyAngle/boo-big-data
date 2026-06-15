@@ -120,6 +120,7 @@ const LEVEL_COLORS: Record<LevelKey, string> = {
 function LevelsPage() {
   const [levels, setLevels] = useState(LEVELS);
   const [confirmTarget, setConfirmTarget] = useState<{ key: LevelKey; next: boolean } | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const requestToggle = (key: LevelKey) => {
     const current = levels.find((l) => l.key === key);
@@ -137,6 +138,12 @@ function LevelsPage() {
   };
 
   const confirmLevel = confirmTarget ? levels.find((l) => l.key === confirmTarget.key) : null;
+
+  const handleCreate = (l: LevelDef) => {
+    setLevels((s) => [...s, l]);
+    toast.success(`已新建认证等级 ${l.key} · ${l.title}`);
+    setCreateOpen(false);
+  };
 
   return (
     <div className="min-h-full bg-gradient-to-br from-background via-background to-muted/30">
@@ -205,7 +212,7 @@ function LevelsPage() {
                 <Building2 className="h-3.5 w-3.5" /> 企业用户
               </TabsTrigger>
             </TabsList>
-            <Button onClick={() => toast.info("新建自定义等级")}>
+            <Button onClick={() => setCreateOpen(true)}>
               <Plus className="h-4 w-4" /> 新建等级
             </Button>
           </div>
@@ -260,6 +267,13 @@ function LevelsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CreateLevelDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        existingKeys={levels.map((l) => l.key)}
+        onCreate={handleCreate}
+      />
     </div>
   );
 }
