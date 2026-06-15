@@ -975,9 +975,38 @@ function FieldIcon({ type }: { type: FieldType }) {
   return <span className="text-muted-foreground">{map[type]}</span>;
 }
 
-function DetailBody({ detail, comment, setComment, onRecheck }: { detail: AuditItem; comment: string; setComment: (v: string) => void; onRecheck: () => void }) {
+function DetailBody({ detail, comment, setComment, onRecheck, onSync }: { detail: AuditItem; comment: string; setComment: (v: string) => void; onRecheck: () => void; onSync: () => void }) {
   const fields = detail.subject === "个人" ? PERSONAL_FIELDS[detail.level] : ENTERPRISE_FIELDS[detail.level];
   const p = PROVIDERS[detail.provider];
+  const [rawOpen, setRawOpen] = useState(false);
+
+  const rawPayload = p.isThirdParty && detail.thirdParty ? {
+    provider: detail.provider,
+    providerName: p.name,
+    channel: p.channel,
+    request: {
+      bizNo: detail.id,
+      tenantId: detail.tenantId,
+      level: detail.level,
+      subject: detail.subject,
+      submittedAt: detail.submittedAt,
+    },
+    response: {
+      code: detail.thirdParty.conclusion === "FAIL" ? "REJECTED" : detail.thirdParty.conclusion === "PASS" ? "SUCCESS" : "PROCESSING",
+      message: detail.thirdParty.conclusion === "FAIL" ? "核验未通过，请核对资料" : detail.thirdParty.conclusion === "PASS" ? "核验通过" : "认证处理中，请稍后查询",
+      traceId: detail.thirdParty.traceId,
+      callbackAt: detail.thirdParty.callbackAt,
+      conclusion: detail.thirdParty.conclusion,
+      riskScore: detail.thirdParty.riskScore,
+      data: {
+        realName: detail.data.name ?? detail.data.legalName,
+        idNoMasked: detail.data.idNo ? maskId(detail.data.idNo) : undefined,
+        phoneMasked: detail.data.phone ? maskPhone(detail.data.phone) : undefined,
+        bizLicense: detail.data.license,
+        uscc: detail.data.uscc,
+      },
+    },
+  } : null;
 
   return (
     <div className="space-y-5">
@@ -1015,16 +1044,60 @@ function DetailBody({ detail, comment, setComment, onRecheck }: { detail: AuditI
                 <KV k="核验结论" v={<Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200">PASS</Badge>} />
               </div>
             )}
-            <div className="mt-3 text-xs text-muted-foreground flex items-center gap-2">
+            <div className="mt-3 text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
               <ExternalLink className="h-3 w-3" />
-              {p.isThirdParty ? "以下资料由第三方渠道回传，平台不可修改" : "以下资料由用户在平台填写并通过直连通道核验"}
-              <Button variant="ghost" size="sm" className="ml-auto h-7" onClick={onRecheck}>
-                <RefreshCcw className="h-3.5 w-3.5" /> 重新核验
-              </Button>
+              <span>{p.isThirdParty ? "以下资料由第三方渠道回传，平台不可修改" : "以下资料由用户在平台填写并通过直连通道核验"}</span>
+              <div className="ml-auto flex items-center gap-1">
+                {p.isThirdParty && (
+                  <Button variant="ghost" size="sm" className="h-7" onClick={() => setRawOpen(true)}>
+                    <Braces className="h-3.5 w-3.5" /> 查看第三方原始数据
+                  </Button>
+                )}
+                {p.isThirdParty && detail.status === "审核中" && (
+                  <Button variant="ghost" size="sm" className="h-7 text-primary hover:text-primary" onClick={onSync}>
+                    <RotateCw className="h-3.5 w-3.5" /> 同步最新状态
+                  </Button>
+                )}
+                {!p.isThirdParty && (
+                  <Button variant="ghost" size="sm" className="h-7" onClick={onRecheck}>
+                    <RefreshCcw className="h-3.5 w-3.5" /> 重新核验
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </Card>
+
+      {/* 第三方原始数据 */}
+      {p.isThirdParty && (
+        <Dialog open={rawOpen} onOpenChange={setRawOpen}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Braces className="h-4 w-4 text-primary" />
+                第三方原始数据
+                <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200 text-[10px]">{p.name}</Badge>
+              </DialogTitle>
+              <DialogDescription className="flex items-center gap-2 flex-wrap pt-1">
+                <span className="font-mono text-xs">traceId: {detail.thirdParty?.traceId}</span>
+                <span>·</span>
+                <span>回调时间 {detail.thirdParty?.callbackAt}</span>
+              </DialogDescription>
+            </DialogHeader>
+            <pre className="flex-1 overflow-auto rounded-md border bg-muted/40 p-4 text-xs font-mono leading-relaxed whitespace-pre">
+{JSON.stringify(rawPayload, null, 2)}
+            </pre>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => {
+                navigator.clipboard?.writeText(JSON.stringify(rawPayload, null, 2));
+                toast.success("已复制原始 JSON");
+              }}>复制 JSON</Button>
+              <Button onClick={() => setRawOpen(false)}>关闭</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Dynamic fields per level */}
       <Card className="p-5">
