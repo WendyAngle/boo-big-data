@@ -16,6 +16,9 @@ import {
   RotateCcw,
   ChevronRight,
   ShieldCheck,
+  FileSpreadsheet,
+  FileDown,
+  CheckCircle2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -169,6 +172,7 @@ function UsersPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AppUser | null>(null);
   const [viewTarget, setViewTarget] = useState<AppUser | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return data.filter((u) => {
@@ -374,7 +378,7 @@ function UsersPage() {
             >
               <Plus className="h-4 w-4" /> 新增用户
             </Button>
-            <Button variant="outline" onClick={() => toast.info("打开导入用户")}>
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Upload className="h-4 w-4" /> 导入用户
             </Button>
             <Button
@@ -617,6 +621,8 @@ function UsersPage() {
         user={viewTarget}
         onOpenChange={(o) => !o && setViewTarget(null)}
       />
+
+      <ImportUsersDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }
@@ -1001,5 +1007,172 @@ function StatCard({
         </div>
       </div>
     </Card>
+  );
+}
+
+const USER_TEMPLATE_COLUMNS: { key: string; label: string; required: boolean; example: string; note: string }[] = [
+  { key: "name", label: "昵称 / 姓名", required: true, example: "张伟", note: "用户昵称或真实姓名，最长 32 字符" },
+  { key: "phone", label: "手机号码", required: true, example: "13800001234", note: "6-20 位数字，可含 -，须唯一" },
+  { key: "email", label: "邮箱", required: false, example: "zhangwei@example.com", note: "标准邮箱格式，最长 64 字符" },
+  { key: "gender", label: "性别", required: false, example: "男", note: "可选值：男 / 女 / 未知，默认 未知" },
+  { key: "role", label: "角色", required: false, example: "员工", note: "可选值：法人 / 管理员 / 员工，默认 员工" },
+  { key: "tenantName", label: "所属租户", required: false, example: "字节跳动", note: "需与租户管理中的租户名称一致，留空则不绑定" },
+  { key: "status", label: "状态", required: false, example: "正常", note: "可选值：正常 / 停用，默认 正常" },
+  { key: "remark", label: "备注", required: false, example: "数据中台负责人", note: "最长 200 字符" },
+];
+
+function downloadUserTemplate() {
+  const headers = USER_TEMPLATE_COLUMNS.map((c) => (c.required ? `${c.label}*` : c.label));
+  const example1 = USER_TEMPLATE_COLUMNS.map((c) => c.example);
+  const example2 = ["李娜", "13900002345", "lina@example.com", "女", "管理员", "示例科技", "正常", "风控业务联系人"];
+  const csvEscape = (v: string) => {
+    const s = String(v ?? "");
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const rows = [headers, example1, example2].map((r) => r.map(csvEscape).join(",")).join("\r\n");
+  const blob = new Blob(["\uFEFF" + rows], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "用户导入模板.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast.success("模板已下载：用户导入模板.csv");
+}
+
+function ImportUsersDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) {
+  const [fileName, setFileName] = useState<string>("");
+
+  const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFileName(f.name);
+  };
+
+  const onImport = () => {
+    if (!fileName) {
+      toast.error("请先选择要导入的文件");
+      return;
+    }
+    toast.success(`已解析 ${fileName}，导入任务已提交`);
+    setFileName("");
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Upload className="h-5 w-5 text-primary" /> 批量导入用户
+          </DialogTitle>
+          <DialogDescription>
+            请先下载模板，按列填写后上传 CSV / Excel 文件。带 <span className="text-destructive font-medium">*</span> 的字段为必填项。
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5 py-2">
+          <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <FileSpreadsheet className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-sm font-medium">用户导入模板.csv</div>
+                <div className="text-xs text-muted-foreground">
+                  含全部字段列标题与示例数据，UTF-8 编码，支持 Excel / WPS 直接打开
+                </div>
+              </div>
+            </div>
+            <Button variant="outline" onClick={downloadUserTemplate}>
+              <FileDown className="h-4 w-4" /> 下载模板
+            </Button>
+          </div>
+
+          <div>
+            <div className="mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              字段说明
+            </div>
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-32">列标题</TableHead>
+                    <TableHead className="w-20">必填</TableHead>
+                    <TableHead>说明</TableHead>
+                    <TableHead className="w-48">示例</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {USER_TEMPLATE_COLUMNS.map((c) => (
+                    <TableRow key={c.key}>
+                      <TableCell className="font-medium">
+                        {c.label}
+                        {c.required && <span className="text-destructive ml-0.5">*</span>}
+                      </TableCell>
+                      <TableCell>
+                        {c.required ? (
+                          <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100 border-0">必填</Badge>
+                        ) : (
+                          <Badge variant="secondary">选填</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{c.note}</TableCell>
+                      <TableCell className="text-xs font-mono text-muted-foreground">{c.example}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="mt-2 flex items-start gap-2 text-xs text-muted-foreground">
+              <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 text-primary shrink-0" />
+              <span>
+                请确保列标题与模板完全一致；"所属租户"需与租户管理列表中的名称一致，否则该行将作为未绑定租户处理。
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              上传文件
+            </div>
+            <label className="block cursor-pointer rounded-lg border border-dashed bg-muted/20 hover:bg-muted/40 transition-colors p-6 text-center">
+              <input
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                className="hidden"
+                onChange={onPick}
+              />
+              <Upload className="h-6 w-6 mx-auto text-muted-foreground" />
+              <div className="mt-2 text-sm">
+                {fileName ? (
+                  <span className="font-medium text-foreground">{fileName}</span>
+                ) : (
+                  <>
+                    点击选择文件，或将 <span className="font-medium text-foreground">.csv / .xlsx</span> 文件拖放到此处
+                  </>
+                )}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">单次最多 1000 条，单文件不超过 5MB</div>
+            </label>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+          <Button onClick={onImport}>
+            <Upload className="h-4 w-4" /> 开始导入
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
