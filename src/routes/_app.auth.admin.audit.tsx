@@ -301,6 +301,10 @@ function AuditPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [passConfirm, setPassConfirm] = useState<
+    { kind: "one"; item: AuditItem } | { kind: "batch"; ids: string[] } | null
+  >(null);
+  const [batchRejectConfirm, setBatchRejectConfirm] = useState<string[] | null>(null);
   const [detail, setDetail] = useState<AuditItem | null>(null);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState(REJECT_REASONS[0]);
@@ -361,6 +365,9 @@ function AuditPage() {
   };
 
   const passOne = (t: AuditItem) => {
+    setPassConfirm({ kind: "one", item: t });
+  };
+  const doPassOne = (t: AuditItem) => {
     applyDecision([t.id], "已通过");
     toast.success(`已通过 ${t.id}`);
   };
@@ -378,13 +385,27 @@ function AuditPage() {
   };
   const batchPass = () => {
     if (selected.size === 0) return toast.error("请先选择申请单");
-    applyDecision(Array.from(selected), "已通过");
-    toast.success(`批量通过 ${selected.size} 条`);
+    setPassConfirm({ kind: "batch", ids: Array.from(selected) });
   };
   const batchReject = () => {
     if (selected.size === 0) return toast.error("请先选择申请单");
-    applyDecision(Array.from(selected), "已驳回", "批量驳回 · 请补充资料");
-    toast.success(`批量驳回 ${selected.size} 条`);
+    setBatchRejectConfirm(Array.from(selected));
+  };
+  const confirmPass = () => {
+    if (!passConfirm) return;
+    if (passConfirm.kind === "one") {
+      doPassOne(passConfirm.item);
+    } else {
+      applyDecision(passConfirm.ids, "已通过");
+      toast.success(`批量通过 ${passConfirm.ids.length} 条`);
+    }
+    setPassConfirm(null);
+  };
+  const confirmBatchReject = () => {
+    if (!batchRejectConfirm) return;
+    applyDecision(batchRejectConfirm, "已驳回", "批量驳回 · 请补充资料");
+    toast.success(`批量驳回 ${batchRejectConfirm.length} 条`);
+    setBatchRejectConfirm(null);
   };
 
   const recheck = (t: AuditItem) => {
