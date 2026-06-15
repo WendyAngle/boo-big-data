@@ -6,8 +6,6 @@ import {
   User,
   Building2,
   Plus,
-  Save,
-  Settings2,
   Pencil,
   CheckCircle2,
   ShieldCheck,
@@ -129,17 +127,6 @@ function LevelsPage() {
             <p className="text-sm text-muted-foreground">配置个人 / 企业租户的实名认证分级策略</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => toast.info("打开要素配置")}>
-            <Settings2 className="h-4 w-4" /> 配置要素
-          </Button>
-          <Button variant="outline" onClick={() => toast.info("新建自定义等级")}>
-            <Plus className="h-4 w-4" /> 新建等级
-          </Button>
-          <Button onClick={() => toast.success("认证策略已保存")}>
-            <Save className="h-4 w-4" /> 保存策略
-          </Button>
-        </div>
       </div>
 
       {/* Stat cards */}
@@ -174,14 +161,19 @@ function LevelsPage() {
       {/* Tabs */}
       <div className="px-8 mt-6 pb-10">
         <Tabs defaultValue="personal" className="w-full">
-          <TabsList>
-            <TabsTrigger value="personal">
-              <User className="h-3.5 w-3.5" /> 个人用户
-            </TabsTrigger>
-            <TabsTrigger value="enterprise">
-              <Building2 className="h-3.5 w-3.5" /> 企业用户
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <TabsList>
+              <TabsTrigger value="personal">
+                <User className="h-3.5 w-3.5" /> 个人用户
+              </TabsTrigger>
+              <TabsTrigger value="enterprise">
+                <Building2 className="h-3.5 w-3.5" /> 企业用户
+              </TabsTrigger>
+            </TabsList>
+            <Button onClick={() => toast.info("新建自定义等级")}>
+              <Plus className="h-4 w-4" /> 新建等级
+            </Button>
+          </div>
 
           {/* Personal view */}
           <TabsContent value="personal" className="mt-4">
