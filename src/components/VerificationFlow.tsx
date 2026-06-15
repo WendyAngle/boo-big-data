@@ -91,7 +91,7 @@ const PERSONAL_LEVELS: LevelDef[] = [
     fields: [
       { key: "name", label: "真实姓名", type: "text" },
       { key: "idNo", label: "身份证号", type: "id" },
-      { key: "phone", label: "本人手机号", type: "phone" },
+      { key: "phone", label: "本人手机号", type: "phone", hint: "银行卡预留手机号" },
       { key: "face", label: "人脸识别", type: "face" },
       { key: "bank", label: "本人银行卡", type: "bank", hint: "银联四要素鉴权" },
     ],
