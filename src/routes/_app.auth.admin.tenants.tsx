@@ -97,12 +97,34 @@ interface LevelOption {
   title: string;
   personalTag: string;
   enterpriseTag: string;
+  personalFactors: string[];
+  enterpriseFactors: string[];
 }
 const LEVEL_OPTIONS: LevelOption[] = [
-  { key: "L1", title: "基础认证", personalTag: "二要素", enterpriseTag: "企业 + 法人二要素" },
-  { key: "L2", title: "三要素认证", personalTag: "三要素", enterpriseTag: "法人三要素" },
-  { key: "L3", title: "人脸核身", personalTag: "人脸核身", enterpriseTag: "企业 + 法人人脸核身" },
-  { key: "L4", title: "完整认证", personalTag: "四要素", enterpriseTag: "企业完整认证" },
+  {
+    key: "L1", title: "基础认证",
+    personalTag: "二要素", enterpriseTag: "企业 + 法人二要素",
+    personalFactors: ["姓名", "身份证号"],
+    enterpriseFactors: ["企业名称", "统一社会信用代码", "法人姓名", "法人身份证号"],
+  },
+  {
+    key: "L2", title: "三要素认证",
+    personalTag: "三要素", enterpriseTag: "法人三要素",
+    personalFactors: ["姓名", "身份证号", "手机号"],
+    enterpriseFactors: ["企业信息", "法人姓名", "法人身份证号", "法人手机号"],
+  },
+  {
+    key: "L3", title: "人脸核身",
+    personalTag: "人脸核身", enterpriseTag: "企业 + 法人人脸核身",
+    personalFactors: ["姓名", "身份证号", "手机号", "人脸识别"],
+    enterpriseFactors: ["企业信息", "营业执照", "法人三要素", "法人人脸识别"],
+  },
+  {
+    key: "L4", title: "完整认证",
+    personalTag: "四要素", enterpriseTag: "企业完整认证",
+    personalFactors: ["姓名", "身份证号", "手机号", "人脸识别", "银行卡"],
+    enterpriseFactors: ["企业信息", "营业执照", "法人四要素", "对公账户"],
+  },
 ];
 
 type AuthTiming = "首次登录" | "使用敏感功能";
@@ -911,18 +933,35 @@ function AuthPolicyDialog({ tenant, existing, onOpenChange, onSubmit }: AuthPoli
                 </span>
               </Label>
               <Select value={policy.level} onValueChange={(v) => set("level", v as LevelKey)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-auto min-h-10 py-2">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  {LEVEL_OPTIONS.map((l) => (
-                    <SelectItem key={l.key} value={l.key}>
-                      <span className="font-medium">{l.key} · {l.title}</span>
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        {isPersonal ? l.personalTag : l.enterpriseTag}
-                      </span>
-                    </SelectItem>
-                  ))}
+                <SelectContent className="max-w-[--radix-select-trigger-width]">
+                  {LEVEL_OPTIONS.map((l) => {
+                    const factors = isPersonal ? l.personalFactors : l.enterpriseFactors;
+                    const tag = isPersonal ? l.personalTag : l.enterpriseTag;
+                    return (
+                      <SelectItem key={l.key} value={l.key} className="py-2.5">
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{l.key} · {l.title}</span>
+                            <span className="text-xs text-muted-foreground">{tag}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {factors.map((f) => (
+                              <Badge
+                                key={f}
+                                variant="secondary"
+                                className="text-[10px] font-normal py-0 px-1.5"
+                              >
+                                {f}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
