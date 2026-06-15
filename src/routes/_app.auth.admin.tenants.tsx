@@ -1017,9 +1017,9 @@ function ImportTenantsDialog({
                 <FileSpreadsheet className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-sm font-medium">租户导入模板.csv</div>
+                <div className="text-sm font-medium">租户导入模板.xlsx</div>
                 <div className="text-xs text-muted-foreground">
-                  含全部字段列标题与示例数据，UTF-8 编码，支持 Excel / WPS 直接打开
+                  含全部字段列标题、示例数据与下拉选项校验，支持 Excel / WPS 直接打开
                 </div>
               </div>
             </div>
