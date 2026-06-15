@@ -558,7 +558,6 @@ function UsersPage() {
       </AlertDialog>
 
       <UserFormDialog
-        {...({} as Record<string, never>)}
         open={formOpen}
         onOpenChange={setFormOpen}
         editing={editing}
