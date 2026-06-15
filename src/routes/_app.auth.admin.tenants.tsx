@@ -199,6 +199,21 @@ function coopBadge(s: CoopStatus) {
     : "bg-muted text-muted-foreground border-border";
 }
 
+// mock 认证失败原因：基于租户ID稳定生成
+const AUTH_FAIL_REASONS = [
+  "证件信息与权威库比对不一致，请核实姓名与证件号",
+  "人脸识别相似度低于阈值，建议本人重新提交",
+  "证件照片模糊或反光，无法识别关键字段",
+  "营业执照已注销或处于异常经营状态",
+  "法人/经办人身份信息与工商登记不一致",
+  "银行卡四要素校验失败，预留手机号不匹配",
+  "认证渠道超时未响应，建议稍后重试",
+];
+function authFailReason(id: string) {
+  const seed = Array.from(id).reduce((s, c) => s + c.charCodeAt(0), 0);
+  return AUTH_FAIL_REASONS[seed % AUTH_FAIL_REASONS.length];
+}
+
 function TenantsPage() {
   const [keyword, setKeyword] = useState("");
   const [type, setType] = useState("all");
