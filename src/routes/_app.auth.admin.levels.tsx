@@ -6,8 +6,6 @@ import {
   User,
   Building2,
   Plus,
-  Save,
-  Settings2,
   Pencil,
   CheckCircle2,
   ShieldCheck,
