@@ -735,10 +735,23 @@ function TenantDetailDialog({ tenant, policy, onOpenChange, onEditPolicy }: Tena
   const passedInfo = (() => {
     if (tenant.authStatus !== "认证成功") return null;
     const seed = Array.from(tenant.id).reduce((s, c) => s + c.charCodeAt(0), 0);
-    const daysAgo = 30 + (seed % 510);
-    const passedAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
     const validityMonths = policy?.validityMonths ?? 12;
     const isPermanent = validityMonths === 0;
+    // mock 分布：约 75% 在有效期内（不同剩余天数），约 25% 已过期
+    const validDays = validityMonths * 30;
+    const bucket = seed % 4;
+    let daysAgo: number;
+    if (isPermanent) {
+      daysAgo = 15 + (seed % 540);
+    } else if (bucket === 0) {
+      // 已过期：超出有效期 15 - 180 天
+      daysAgo = validDays + 15 + (seed % 165);
+    } else {
+      // 在有效期内：均匀分布在 [15, validDays - 10] 区间
+      const max = Math.max(20, validDays - 10);
+      daysAgo = 15 + (seed % Math.max(1, max - 15));
+    }
+    const passedAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
     let expiresAt: Date | null = null;
     let valid = true;
     if (!isPermanent) {
