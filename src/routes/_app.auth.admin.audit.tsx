@@ -379,7 +379,7 @@ function AuditPage() {
     });
   };
   const toggleAll = () => {
-    const ids = pageData.filter((t) => t.status === "待审核" || t.status === "审核中").map((t) => t.id);
+    const ids = pageData.map((t) => t.id);
     setSelected((s) => {
       const allOn = ids.every((id) => s.has(id));
       const n = new Set(s);
@@ -642,7 +642,17 @@ function AuditPage() {
             <TableHeader>
               <TableRow className="bg-muted/40">
                 <TableHead className="w-10">
-                  <Checkbox onCheckedChange={toggleAll} />
+                  <Checkbox
+                    checked={
+                      pageData.length > 0 && pageData.every((t) => selected.has(t.id))
+                        ? true
+                        : pageData.some((t) => selected.has(t.id))
+                          ? "indeterminate"
+                          : false
+                    }
+                    onCheckedChange={toggleAll}
+                    aria-label="全选当前页"
+                  />
                 </TableHead>
                 <TableHead className="whitespace-nowrap">申请单号</TableHead>
                 <TableHead>租户 / 申请人</TableHead>
@@ -665,7 +675,6 @@ function AuditPage() {
                     <TableCell>
                       <Checkbox
                         checked={selected.has(t.id)}
-                        disabled={!canAct}
                         onCheckedChange={() => toggle(t.id)}
                       />
                     </TableCell>
