@@ -214,15 +214,15 @@ export function VerificationFlow({ subject }: Props) {
 
   const STEPS = [
     { n: 1, title: "选择认证等级", icon: ShieldCheck },
-    { n: 2, title: "填写认证资料", icon: FileText },
-    { n: 3, title: "选择认证渠道", icon: ExternalLink },
+    { n: 2, title: "选择认证渠道", icon: ExternalLink },
+    { n: 3, title: "填写认证资料", icon: FileText },
     { n: 4, title: "提交与结果", icon: CheckCircle2 },
   ] as const;
 
   const updateField = (k: string, v: string) => setForm((s) => ({ ...s, [k]: v }));
 
   const goNext = () => {
-    if (step === 2) {
+    if (step === 3) {
       const missing = currentLevel.fields.find((f) => !form[f.key] && f.type !== "face" && f.type !== "upload");
       if (missing) {
         toast.error(`请填写「${missing.label}」`);
@@ -373,7 +373,7 @@ export function VerificationFlow({ subject }: Props) {
             </Card>
           )}
 
-          {step === 2 && (
+          {step === 3 && (
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -442,7 +442,7 @@ export function VerificationFlow({ subject }: Props) {
             </Card>
           )}
 
-          {step === 3 && (
+          {step === 2 && (
             <Card className="p-6">
               <div className="mb-4">
                 <h2 className="text-base font-semibold">选择认证渠道</h2>
