@@ -221,7 +221,7 @@ const TENANTS: TenantRef[] = Array.from({ length: 47 }).map((_, i) => {
   return {
     id: `T${String(202600 + i).padStart(6, "0")}`,
     name: `${TENANT_NAMES[i % TENANT_NAMES.length]}${i > 9 ? `(${i})` : ""}`,
-    subject: i % 2 === 0 ? "个人" : "企业",
+    subject: "企业",
     tenantAuth,
     level: tenantAuth === "待认证" ? undefined : LEVELS[i % 4],
   };
@@ -356,7 +356,6 @@ function AuditPage() {
       const rows = data.filter((d) => d.status === s);
       return {
         total: rows.length,
-        personal: rows.filter((d) => d.subject === "个人").length,
         enterprise: rows.filter((d) => d.subject === "企业").length,
       };
     };
@@ -896,7 +895,7 @@ function AuditPage() {
   );
 }
 
-function StatCard({ icon, label, stat, tone, hint }: { icon: React.ReactNode; label: string; stat: { total: number; personal: number; enterprise: number }; tone: "muted" | "amber" | "emerald" | "rose"; hint?: string }) {
+function StatCard({ icon, label, stat, tone, hint }: { icon: React.ReactNode; label: string; stat: { total: number; enterprise: number }; tone: "muted" | "amber" | "emerald" | "rose"; hint?: string }) {
   const toneCls: Record<string, string> = {
     muted: "bg-muted text-muted-foreground",
     amber: "bg-amber-100 text-amber-700",
@@ -916,12 +915,6 @@ function StatCard({ icon, label, stat, tone, hint }: { icon: React.ReactNode; la
           <div className="text-sm text-muted-foreground">{label}</div>
           <div className="text-3xl font-bold mt-1 tabular-nums">{stat.total}</div>
           <div className="mt-2 flex items-center gap-3 text-xs">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <UserIcon className="h-3.5 w-3.5" />
-              <span>个人</span>
-              <span className="font-semibold text-foreground tabular-nums">{stat.personal}</span>
-            </div>
-            <span className="h-3 w-px bg-border" />
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <Building2 className="h-3.5 w-3.5" />
               <span>企业</span>
