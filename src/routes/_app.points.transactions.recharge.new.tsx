@@ -662,48 +662,24 @@ function RechargeNewPage() {
                     )}
                   </span>
                 </div>
-                <div className="divide-y">
-                  <div className="px-5 py-3 flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">租户名称</span>
-                    <span className="font-semibold text-foreground">{pickedTenant.name}</span>
+                <div>
+                  <div className="px-5 py-2.5 flex items-center justify-between text-xs text-muted-foreground bg-muted/30 border-b">
+                    <span>租户编号</span>
+                    <span>租户名称</span>
                   </div>
-                  <div className="px-5 py-3 flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">租户编号</span>
-                    <span className="font-mono text-xs">{pickedTenant.id}</span>
-                  </div>
-                  <div className="px-5 py-3 flex items-start justify-between gap-4 text-sm">
-                    <span className="text-muted-foreground shrink-0">联系人</span>
-                    <span className="text-right">
-                      {pickedTenant.contact}
-                      <span className="text-muted-foreground ml-2 font-mono text-xs">{pickedTenant.contactPhone}</span>
-                    </span>
-                  </div>
-                  <div className="px-5 py-3 flex items-start justify-between gap-4 text-sm">
-                    <span className="text-muted-foreground shrink-0 pt-0.5">关联应用</span>
-                    <div className="text-right space-y-1">
-                      {pickedTenant.apps.map((a, idx) => (
-                        <div key={idx} className="text-sm">
-                          <span className="text-foreground">{a.name}</span>
-                          <span className="text-muted-foreground"> · </span>
-                          <span className="font-mono text-xs text-muted-foreground">{a.appId}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  {pickedTenants.length > 1 && (
-                    <div className="px-5 py-3 text-sm">
-                      <div className="text-muted-foreground mb-2">其余租户</div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {pickedTenants.slice(1).map((t) => (
-                          <Badge key={t.id} variant="outline" className="bg-muted/40 border-border">
-                            {t.name}
-                          </Badge>
-                        ))}
+                  <div className="max-h-[280px] overflow-y-auto divide-y">
+                    {pickedTenants.map((t) => (
+                      <div
+                        key={t.id}
+                        className="px-5 py-2.5 flex items-center justify-between text-sm hover:bg-accent/30"
+                      >
+                        <span className="font-mono text-xs text-muted-foreground">{t.id}</span>
+                        <span className="font-medium text-foreground">{t.name}</span>
                       </div>
-                    </div>
-                  )}
+                    ))}
+                  </div>
                   {wizardRemark && (
-                    <div className="px-5 py-3 flex items-start justify-between gap-4 text-sm">
+                    <div className="px-5 py-3 flex items-start justify-between gap-4 text-sm border-t">
                       <span className="text-muted-foreground shrink-0">备注</span>
                       <span className="text-right text-foreground">{wizardRemark}</span>
                     </div>
