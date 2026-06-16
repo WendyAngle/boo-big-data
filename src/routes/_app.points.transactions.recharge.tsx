@@ -399,7 +399,7 @@ function RechargePage() {
   // 选择产品(第二步)
   const [productTab, setProductTab] = useState<"bundle" | "recharge">("bundle");
   const [pickedBundleId, setPickedBundleId] = useState<string>("");
-  const [rechargeCategoryId, setRechargeCategoryId] = useState<string>("");
+  const [rechargeProductId, setRechargeProductId] = useState<string>("");
   const [rechargeAmount, setRechargeAmount] = useState<number | "">("");
   const [expireDate, setExpireDate] = useState<string>(() =>
     addYears(fmtDate(new Date()), 1),
@@ -501,11 +501,10 @@ function RechargePage() {
 
   // 派生:第二步当前所选产品的汇总
   const pickedBundle = BUNDLE_PRODUCTS.find((b) => b.id === pickedBundleId) || null;
-  const pickedCategory = RECHARGE_CATEGORIES.find((c) => c.id === rechargeCategoryId) || null;
+  const pickedProduct = RECHARGE_PRODUCTS.find((c) => c.id === rechargeProductId) || null;
   const rechargeAmt = typeof rechargeAmount === "number" ? rechargeAmount : 0;
-  const rechargeTier = pickedCategory ? matchTier(pickedCategory, rechargeAmt) : null;
-  const rechargeBasic = pickedCategory ? Math.round((rechargeAmt * pickedCategory.ratio) / 100) : 0;
-  const rechargeGift = rechargeTier ? Math.round((rechargeBasic * rechargeTier.gift) / 100) : 0;
+  const rechargeTier = pickedProduct ? matchRechargeTier(pickedProduct, rechargeAmt) : null;
+  const { basic: rechargeBasic, gift: rechargeGift } = calcRechargePoints(rechargeTier, rechargeAmt);
 
   // 汇总(第三步/提交用)
   const summary = useMemo(() => {
@@ -519,12 +518,12 @@ function RechargePage() {
         gift: pickedBundle.giftPoints,
       };
     }
-    if (productTab === "recharge" && pickedCategory && rechargeAmt > 0) {
+    if (productTab === "recharge" && pickedProduct && rechargeAmt > 0) {
       return {
         type: "积分充值" as RechargeType,
-        productName: `${pickedCategory.name} · ¥${rechargeAmt.toLocaleString()}`,
+        productName: `${pickedProduct.name} · ¥${rechargeAmt.toLocaleString()}`,
         productDesc: rechargeTier
-          ? `匹配阶梯 ¥${rechargeTier.min.toLocaleString()},赠送比例 ${rechargeTier.gift}%`
+          ? `匹配阶梯 ¥${rechargeTier.min.toLocaleString()}-¥${rechargeTier.max.toLocaleString()}`
           : "未匹配任何阶梯,无赠送",
         amount: rechargeAmt,
         basic: rechargeBasic,
@@ -532,7 +531,7 @@ function RechargePage() {
       };
     }
     return null;
-  }, [productTab, pickedBundle, pickedCategory, rechargeAmt, rechargeBasic, rechargeGift, rechargeTier]);
+  }, [productTab, pickedBundle, pickedProduct, rechargeAmt, rechargeBasic, rechargeGift, rechargeTier]);
 
   const openCreate = () => {
     setWizardStep(1);
@@ -542,7 +541,7 @@ function RechargePage() {
     setTenantPage(1);
     setProductTab("bundle");
     setPickedBundleId("");
-    setRechargeCategoryId("");
+    setRechargeProductId("");
     setRechargeAmount("");
     setExpireDate(addYears(fmtDate(new Date()), 1));
     setWizardRemark("");
