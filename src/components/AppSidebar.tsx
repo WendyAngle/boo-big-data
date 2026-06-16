@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ShieldCheck, ChevronDown, LayoutDashboard, Users, Layers, Building2, ClipboardCheck, UserCog, Coins, LogIn, Send } from "lucide-react";
+import { ShieldCheck, ChevronDown, LayoutDashboard, Users, Building2, ClipboardCheck, UserCog, Coins, LogIn, Send } from "lucide-react";
 
 type Leaf = { label: string; to: string; icon?: typeof Users };
 type Group = { label: string; to?: string; children: Leaf[] };
@@ -17,7 +17,6 @@ const menu: Root[] = [
         children: [
           { label: "租户管理", to: "/auth/admin/tenants", icon: Users },
           { label: "用户管理", to: "/auth/admin/users", icon: UserCog },
-          { label: "认证等级", to: "/auth/admin/levels", icon: Layers },
           { label: "实名审核", to: "/auth/admin/audit", icon: ClipboardCheck },
         ],
       },
