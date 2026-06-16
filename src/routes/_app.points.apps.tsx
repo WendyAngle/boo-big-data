@@ -11,6 +11,7 @@ import {
   EyeOff,
   RefreshCw,
   Copy,
+  Trash2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ListPagination } from "@/components/ListPagination";
 import { toast } from "sonner";
@@ -58,6 +69,7 @@ type ApiPerm = "查询权限" | "消耗权限" | "退还权限";
 
 interface AppRecord {
   id: string;
+  appNo: string;
   name: string;
   appKey: string;
   secret: string;
@@ -78,9 +90,14 @@ function randomSecret() {
   return s;
 }
 
+function appNoOf(seq: number) {
+  return `APP${String(seq).padStart(7, "0")}`;
+}
+
 const INITIAL: AppRecord[] = [
   {
     id: "1",
+    appNo: appNoOf(1),
     name: "AI视频生成",
     appKey: "app_3",
     secret: "K3xqA8nLp2VeWfHr5MdT7uJyCb9XoZsR",
@@ -92,6 +109,7 @@ const INITIAL: AppRecord[] = [
   },
   {
     id: "2",
+    appNo: appNoOf(2),
     name: "SIS",
     appKey: "app_1",
     secret: "Pq7tEvN9mDk4Yh2LcXr6BgWaJzUoFsM3",
@@ -103,6 +121,7 @@ const INITIAL: AppRecord[] = [
   },
   {
     id: "3",
+    appNo: appNoOf(3),
     name: "AIMedia",
     appKey: "app_2",
     secret: "Hn8sLk2QwTpR5yBvX9aCmZdJfGeUoXi7",
@@ -114,6 +133,7 @@ const INITIAL: AppRecord[] = [
   },
   {
     id: "4",
+    appNo: appNoOf(4),
     name: "Hub",
     appKey: "app_4",
     secret: "Tm5jKpL8nQrV2dXcZeWaB7sYoUiFhRgN",
@@ -138,6 +158,18 @@ function AppsPage() {
   const [shown, setShown] = useState<Set<string>>(new Set());
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AppRecord | null>(null);
+  const [delTarget, setDelTarget] = useState<AppRecord | null>(null);
+  const [toggleTarget, setToggleTarget] = useState<AppRecord | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkAction, setBulkAction] = useState<"启用" | "禁用" | null>(null);
+
+  const nextAppNo = useMemo(() => {
+    const maxSeq = data.reduce((m, a) => {
+      const n = parseInt(a.appNo.replace(/^APP/, ""), 10);
+      return Number.isFinite(n) && n > m ? n : m;
+    }, 0);
+    return appNoOf(maxSeq + 1);
+  }, [data]);
 
   const filtered = useMemo(() => {
     return data.filter((a) => {
@@ -150,6 +182,46 @@ function AppsPage() {
 
   const total = filtered.length;
   const pageData = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const pageIds = pageData.map((a) => a.id);
+  const allChecked = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+  const someChecked = pageIds.some((id) => selectedIds.includes(id));
+  const togglePage = (checked: boolean) => {
+    setSelectedIds((prev) =>
+      checked
+        ? Array.from(new Set([...prev, ...pageIds]))
+        : prev.filter((id) => !pageIds.includes(id)),
+    );
+  };
+  const toggleOne = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
+  };
+
+  const confirmToggle = () => {
+    if (!toggleTarget) return;
+    const next: AppStatus = toggleTarget.status === "启用" ? "禁用" : "启用";
+    setData((d) => d.map((x) => (x.id === toggleTarget.id ? { ...x, status: next } : x)));
+    toast.success(`已${next} ${toggleTarget.name}`);
+    setToggleTarget(null);
+  };
+
+  const confirmBulk = () => {
+    if (!bulkAction || selectedIds.length === 0) return;
+    setData((d) =>
+      d.map((x) => (selectedIds.includes(x.id) ? { ...x, status: bulkAction } : x)),
+    );
+    toast.success(`已批量${bulkAction} ${selectedIds.length} 个应用`);
+    setSelectedIds([]);
+    setBulkAction(null);
+  };
+
+  const confirmDelete = () => {
+    if (!delTarget) return;
+    setData((d) => d.filter((x) => x.id !== delTarget.id));
+    setSelectedIds((prev) => prev.filter((id) => id !== delTarget.id));
+    toast.success(`已删除 ${delTarget.name}`);
+    setDelTarget(null);
+  };
 
   const apply = () => {
     setApplied({ name: nameKw.trim(), enc: encFilter, status: statusFilter });
@@ -258,21 +330,50 @@ function AppsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div className="text-sm text-muted-foreground">
             共 <span className="font-semibold text-foreground">{total}</span> 个应用
+            {selectedIds.length > 0 && (
+              <span className="ml-2">
+                · 已选 <span className="font-semibold text-foreground">{selectedIds.length}</span> 项
+              </span>
+            )}
           </div>
-          <Button
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4" /> 新增
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              disabled={selectedIds.length === 0}
+              onClick={() => setBulkAction("启用")}
+            >
+              批量启用
+            </Button>
+            <Button
+              variant="outline"
+              disabled={selectedIds.length === 0}
+              onClick={() => setBulkAction("禁用")}
+            >
+              批量停用
+            </Button>
+            <Button
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4" /> 新增
+            </Button>
+          </div>
         </div>
 
         <div className="rounded-lg border overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allChecked ? true : someChecked ? "indeterminate" : false}
+                    onCheckedChange={(v) => togglePage(!!v)}
+                    aria-label="全选当前页"
+                  />
+                </TableHead>
+                <TableHead className="whitespace-nowrap">应用编号</TableHead>
                 <TableHead>应用名称</TableHead>
                 <TableHead>应用标识</TableHead>
                 <TableHead>密钥</TableHead>
@@ -280,13 +381,13 @@ function AppsPage() {
                 <TableHead>状态</TableHead>
                 <TableHead className="whitespace-nowrap">过期时间</TableHead>
                 <TableHead>备注</TableHead>
-                <TableHead className="text-right whitespace-nowrap w-24">操作</TableHead>
+                <TableHead className="text-right whitespace-nowrap w-28">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pageData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
                     暂无匹配的应用
                   </TableCell>
                 </TableRow>
@@ -295,6 +396,14 @@ function AppsPage() {
                   const isShown = shown.has(a.id);
                   return (
                     <TableRow key={a.id} className="hover:bg-accent/30">
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.includes(a.id)}
+                          onCheckedChange={(v) => toggleOne(a.id, !!v)}
+                          aria-label={`选择 ${a.name}`}
+                        />
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">{a.appNo}</TableCell>
                       <TableCell className="font-medium">{a.name}</TableCell>
                       <TableCell className="font-mono text-xs">{a.appKey}</TableCell>
                       <TableCell>
@@ -364,16 +473,32 @@ function AppsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={
-                            a.status === "启用"
-                              ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                              : "bg-rose-100 text-rose-700 border-rose-200"
-                          }
-                        >
-                          {a.status}
-                        </Badge>
+                        <TooltipProvider delayDuration={150}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={() => setToggleTarget(a)}
+                                className="cursor-pointer"
+                                aria-label={a.status === "启用" ? "点击停用" : "点击启用"}
+                              >
+                                <Badge
+                                  variant="outline"
+                                  className={
+                                    a.status === "启用"
+                                      ? "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200"
+                                      : "bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-200"
+                                  }
+                                >
+                                  {a.status}
+                                </Badge>
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {a.status === "启用" ? "点击停用" : "点击启用"}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </TableCell>
                       <TableCell className="font-mono text-xs tabular-nums text-muted-foreground">
                         {a.expiresAt.slice(0, 10)}
@@ -384,23 +509,38 @@ function AppsPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <TooltipProvider delayDuration={150}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  setEditing(a);
-                                  setFormOpen(true);
-                                }}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>编辑</TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <div className="flex justify-end gap-1">
+                          <TooltipProvider delayDuration={150}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setEditing(a);
+                                    setFormOpen(true);
+                                  }}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>编辑</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => setDelTarget(a)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>删除</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -418,6 +558,7 @@ function AppsPage() {
         onOpenChange={setFormOpen}
         editing={editing}
         existingAppKeys={data.map((a) => a.appKey)}
+        nextAppNo={nextAppNo}
         onSubmit={(values) => {
           if (editing) {
             setData((d) =>
@@ -426,27 +567,98 @@ function AppsPage() {
             toast.success(`已更新 ${values.name}`);
           } else {
             const id = String(Date.now());
-            setData((d) => [{ id, secret: randomSecret(), ...values }, ...d]);
+            setData((d) => [
+              { id, appNo: nextAppNo, secret: randomSecret(), ...values },
+              ...d,
+            ]);
             toast.success(`已新增 ${values.name}`);
           }
           setFormOpen(false);
         }}
       />
+
+      <AlertDialog open={!!delTarget} onOpenChange={(o) => !o && setDelTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除该应用?</AlertDialogTitle>
+            <AlertDialogDescription>
+              即将删除 <span className="font-medium text-foreground">{delTarget?.name}</span>(
+              {delTarget?.appNo}),此操作不可撤销。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>确认删除</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!toggleTarget} onOpenChange={(o) => !o && setToggleTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              确认{toggleTarget?.status === "启用" ? "停用" : "启用"}该应用?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              即将{toggleTarget?.status === "启用" ? "停用" : "启用"}{" "}
+              <span className="font-medium text-foreground">{toggleTarget?.name}</span>(
+              {toggleTarget?.appNo})
+              {toggleTarget?.status === "启用"
+                ? ",停用后该应用将无法调用相关接口。"
+                : ",启用后该应用将恢复接口调用能力。"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmToggle}>
+              确认{toggleTarget?.status === "启用" ? "停用" : "启用"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!bulkAction} onOpenChange={(o) => !o && setBulkAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              确认批量{bulkAction === "启用" ? "启用" : "停用"} {selectedIds.length} 个应用?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              该操作将对所选 {selectedIds.length} 个应用执行
+              {bulkAction === "启用" ? "启用" : "停用"}操作,请确认后继续。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmBulk}>
+              确认{bulkAction === "启用" ? "启用" : "停用"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
-type FormValues = Omit<AppRecord, "id" | "secret"> & { secret?: string };
+type FormValues = Omit<AppRecord, "id" | "secret" | "appNo"> & { secret?: string };
 
 interface AppFormProps {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   editing: AppRecord | null;
   existingAppKeys: string[];
+  nextAppNo: string;
   onSubmit: (v: FormValues) => void;
 }
 
-function AppFormDialog({ open, onOpenChange, editing, existingAppKeys, onSubmit }: AppFormProps) {
+function AppFormDialog({
+  open,
+  onOpenChange,
+  editing,
+  existingAppKeys,
+  nextAppNo,
+  onSubmit,
+}: AppFormProps) {
   const [name, setName] = useState("");
   const [appKey, setAppKey] = useState("");
   const [perms, setPerms] = useState<ApiPerm[]>([]);
@@ -516,6 +728,17 @@ function AppFormDialog({ open, onOpenChange, editing, existingAppKeys, onSubmit 
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          <FormRow label="应用编号">
+            <Input
+              value={editing ? editing.appNo : nextAppNo}
+              disabled
+              className="font-mono bg-muted/40"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              {editing ? "应用编号不可修改" : "由系统自动生成,保存后将使用该编号"}
+            </p>
+          </FormRow>
+
           <FormRow label="应用名称" required error={touched ? errors.name : ""}>
             <Input
               value={name}
