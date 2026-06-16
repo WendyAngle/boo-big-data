@@ -338,9 +338,14 @@ function RechargePage() {
   const [tenantStatusF, setTenantStatusF] = useState("all");
   const [tenantPage, setTenantPage] = useState(1);
   const TENANT_PAGE_SIZE = 5;
-  const [wizardType, setWizardType] = useState<RechargeType>("积分充值");
-  const [wizardProduct, setWizardProduct] = useState<string>(PRODUCTS_RECHARGE[0]);
-  const [wizardAmount, setWizardAmount] = useState<number>(100);
+  // 选择产品(第二步)
+  const [productTab, setProductTab] = useState<"bundle" | "recharge">("bundle");
+  const [pickedBundleId, setPickedBundleId] = useState<string>("");
+  const [rechargeCategoryId, setRechargeCategoryId] = useState<string>("");
+  const [rechargeAmount, setRechargeAmount] = useState<number | "">("");
+  const [expireDate, setExpireDate] = useState<string>(() =>
+    addYears(fmtDate(new Date()), 1),
+  );
   const [wizardRemark, setWizardRemark] = useState("");
 
   const filtered = useMemo(() => {
@@ -387,8 +392,6 @@ function RechargePage() {
     setPage(1);
   };
 
-  const productOptions = wizardType === "积分充值" ? PRODUCTS_RECHARGE : PRODUCTS_BUNDLE;
-
   // 模拟租户列表 (与「积分管理系统 · 租户管理」字段一致)
   const WIZARD_TENANTS = useMemo(() => buildWizardTenants(), []);
 
@@ -417,15 +420,52 @@ function RechargePage() {
   );
   const pickedTenant = WIZARD_TENANTS.find((t) => t.id === pickedTenantId) || null;
 
+  // 派生:第二步当前所选产品的汇总
+  const pickedBundle = BUNDLE_PRODUCTS.find((b) => b.id === pickedBundleId) || null;
+  const pickedCategory = RECHARGE_CATEGORIES.find((c) => c.id === rechargeCategoryId) || null;
+  const rechargeAmt = typeof rechargeAmount === "number" ? rechargeAmount : 0;
+  const rechargeTier = pickedCategory ? matchTier(pickedCategory, rechargeAmt) : null;
+  const rechargeBasic = pickedCategory ? Math.round((rechargeAmt * pickedCategory.ratio) / 100) : 0;
+  const rechargeGift = rechargeTier ? Math.round((rechargeBasic * rechargeTier.gift) / 100) : 0;
+
+  // 汇总(第三步/提交用)
+  const summary = useMemo(() => {
+    if (productTab === "bundle" && pickedBundle) {
+      return {
+        type: "套餐购买" as RechargeType,
+        productName: pickedBundle.name,
+        productDesc: pickedBundle.description,
+        amount: pickedBundle.amount,
+        basic: pickedBundle.basicPoints,
+        gift: pickedBundle.giftPoints,
+      };
+    }
+    if (productTab === "recharge" && pickedCategory && rechargeAmt > 0) {
+      return {
+        type: "积分充值" as RechargeType,
+        productName: `${pickedCategory.name} · ¥${rechargeAmt.toLocaleString()}`,
+        productDesc: rechargeTier
+          ? `匹配阶梯 ¥${rechargeTier.min.toLocaleString()},赠送比例 ${rechargeTier.gift}%`
+          : "未匹配任何阶梯,无赠送",
+        amount: rechargeAmt,
+        basic: rechargeBasic,
+        gift: rechargeGift,
+      };
+    }
+    return null;
+  }, [productTab, pickedBundle, pickedCategory, rechargeAmt, rechargeBasic, rechargeGift, rechargeTier]);
+
   const openCreate = () => {
     setWizardStep(1);
     setPickedTenantId("");
     setTenantKw("");
     setTenantStatusF("all");
     setTenantPage(1);
-    setWizardType("积分充值");
-    setWizardProduct(PRODUCTS_RECHARGE[0]);
-    setWizardAmount(100);
+    setProductTab("bundle");
+    setPickedBundleId("");
+    setRechargeCategoryId("");
+    setRechargeAmount("");
+    setExpireDate(addYears(fmtDate(new Date()), 1));
     setWizardRemark("");
     setCreateOpen(true);
   };
@@ -438,8 +478,16 @@ function RechargePage() {
       }
       setWizardStep(2);
     } else if (wizardStep === 2) {
-      if (!wizardAmount || wizardAmount <= 0) {
-        toast.error("请输入有效充值金额");
+      if (!summary) {
+        toast.error(
+          productTab === "bundle"
+            ? "请选择一个套餐产品"
+            : "请选择产品分类并输入充值金额",
+        );
+        return;
+      }
+      if (!expireDate) {
+        toast.error("请设置积分到期日");
         return;
       }
       setWizardStep(3);
@@ -450,9 +498,9 @@ function RechargePage() {
     else if (wizardStep === 3) setWizardStep(2);
   };
   const submitCreate = () => {
-    if (!pickedTenant) return;
+    if (!pickedTenant || !summary) return;
     toast.success(
-      `已为「${pickedTenant.name}」创建${wizardType}订单 ¥${wizardAmount.toLocaleString()}`,
+      `已为「${pickedTenant.name}」创建${summary.type}订单 ¥${summary.amount.toLocaleString()}`,
     );
     setCreateOpen(false);
   };
