@@ -434,7 +434,7 @@ function RechargePage() {
       {/* 列表 */}
       <Card className="p-5">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button onClick={openCreate}>
             <Plus className="h-4 w-4" /> 新增充值
           </Button>
           <div className="text-sm text-muted-foreground">
@@ -470,7 +470,7 @@ function RechargePage() {
                 pageData.map((r) => (
                   <TableRow key={r.id} className="hover:bg-accent/30">
                     <TableCell className="font-mono text-xs whitespace-nowrap">{r.id}</TableCell>
-                    <TableCell className="font-medium whitespace-nowrap">{r.customer}</TableCell>
+                    <TableCell className="font-medium whitespace-nowrap">{r.tenant}</TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
                         {r.apps.map((a) => (
@@ -663,7 +663,7 @@ function RechargePage() {
           </DialogHeader>
           {detailRow && (
             <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm py-2">
-              <DetailItem label="客户名称" value={detailRow.customer} />
+              <DetailItem label="租户名称" value={detailRow.tenant} />
               <DetailItem
                 label="充值类型"
                 value={
