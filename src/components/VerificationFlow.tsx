@@ -174,11 +174,7 @@ type Provider = {
 };
 
 const PROVIDERS: Provider[] = [
-  { id: "platform", name: "平台直连", desc: "由 Boo 数据平台直接调用底层核验通道", badge: "推荐", color: "from-primary/15 to-accent/10 border-primary/30", initial: "B" },
   { id: "alipay", name: "支付宝实名", desc: "跳转支付宝完成实人认证，回调返回结果", badge: "第三方", color: "from-blue-500/15 to-sky-500/5 border-blue-500/30", initial: "支" },
-  { id: "wechat", name: "微信支付实名", desc: "通过微信小程序完成人脸核身", badge: "第三方", color: "from-green-500/15 to-emerald-500/5 border-green-500/30", initial: "微" },
-  { id: "unionpay", name: "银联云闪付", desc: "银联四要素 / 对公账户验证", badge: "第三方", color: "from-rose-500/15 to-red-500/5 border-rose-500/30", initial: "银" },
-  { id: "cfca", name: "CFCA 数字证书", desc: "适用于企业法人 / 对公场景", badge: "企业优先", color: "from-amber-500/15 to-orange-500/5 border-amber-500/30", initial: "C" },
 ];
 
 const FIELD_ICON: Record<FieldType, typeof UserIcon> = {
@@ -200,13 +196,13 @@ export function VerificationFlow({ subject }: Props) {
   const SubjectIcon = isPersonal ? UserIcon : Building2;
   const title = isPersonal ? "个人实名认证" : "企业实名认证";
   const subtitle = isPersonal
-    ? "按所选认证等级提交个人资料，支持平台直连与第三方实名渠道"
-    : "提交企业与法人资料并完成核验，支持营业执照 OCR 与第三方实名渠道";
+    ? "按所选认证等级提交个人资料，通过支付宝实人认证完成核验"
+    : "提交企业与法人资料，通过支付宝实人认证完成核验";
 
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [levelKey, setLevelKey] = useState<LevelKey>("L2");
   const [form, setForm] = useState<Record<string, string>>({});
-  const [provider, setProvider] = useState<string>("platform");
+  const provider = "alipay";
   const [dialogOpen, setDialogOpen] = useState(false);
   const [result, setResult] = useState<"pending" | "success" | "review" | "failed">("pending");
 
@@ -214,39 +210,32 @@ export function VerificationFlow({ subject }: Props) {
 
   const STEPS = [
     { n: 1, title: "选择认证等级", icon: ShieldCheck },
-    { n: 2, title: "选择认证渠道", icon: ExternalLink },
-    { n: 3, title: "填写认证资料", icon: FileText },
-    { n: 4, title: "提交与结果", icon: CheckCircle2 },
+    { n: 2, title: "填写认证资料", icon: FileText },
+    { n: 3, title: "提交与结果", icon: CheckCircle2 },
   ] as const;
 
   const updateField = (k: string, v: string) => setForm((s) => ({ ...s, [k]: v }));
 
   const goNext = () => {
-    if (step === 3) {
+    if (step === 2) {
       const missing = currentLevel.fields.find((f) => !form[f.key] && f.type !== "face" && f.type !== "upload");
       if (missing) {
         toast.error(`请填写「${missing.label}」`);
         return;
       }
     }
-    setStep((s) => (Math.min(4, s + 1) as 1 | 2 | 3 | 4));
+    setStep((s) => (Math.min(3, s + 1) as 1 | 2 | 3));
   };
-  const goPrev = () => setStep((s) => (Math.max(1, s - 1) as 1 | 2 | 3 | 4));
+  const goPrev = () => setStep((s) => (Math.max(1, s - 1) as 1 | 2 | 3));
 
   const onSubmit = () => {
-    if (provider !== "platform") {
-      setDialogOpen(true);
-      return;
-    }
-    setResult(levelKey === "L4" ? "review" : "success");
-    setStep(4);
-    toast.success("认证申请已提交");
+    setDialogOpen(true);
   };
 
   const handleCallback = (ok: boolean) => {
     setDialogOpen(false);
     setResult(ok ? "success" : "failed");
-    setStep(4);
+    setStep(3);
     toast[ok ? "success" : "error"](ok ? "第三方认证成功" : "第三方认证失败，请重试");
   };
 
