@@ -8,9 +8,6 @@ import {
   RotateCcw,
   Pencil,
   Trash2,
-  ChevronDown,
-  X,
-  Check,
   Layers,
   Box,
 } from "lucide-react";
@@ -20,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -53,7 +49,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
@@ -64,16 +59,15 @@ import { ListPagination } from "@/components/ListPagination";
 import { toast } from "sonner";
 import { useProductCategories } from "@/lib/productCategoriesStore";
 import { useBasicProducts } from "@/lib/basicProductsStore";
+import { ProductMultiPicker, type ProductSel } from "@/components/ProductMultiPicker";
 
 export const Route = createFileRoute("/_app/points/products/recharge")({
   head: () => ({ meta: [{ title: "产品管理 · 充值产品 | Boo数据平台" }] }),
   component: RechargeProductsPage,
 });
 
-// 选择项：整个分类 或 单个基础产品
-export type ProductSel =
-  | { type: "category"; key: string }
-  | { type: "basic"; key: string }; // key = basicId
+// 选择项类型由 ProductMultiPicker 提供
+export type { ProductSel };
 
 interface RechargeProduct {
   id: string;
