@@ -303,7 +303,7 @@ function BasicProductsPage() {
                 <TableHead className="text-right whitespace-nowrap">现金价值(元)</TableHead>
                 <TableHead className="text-right whitespace-nowrap">消耗积分</TableHead>
                 <TableHead className="whitespace-nowrap">计量单位</TableHead>
-                <TableHead className="whitespace-nowrap">状态</TableHead>
+                <TableHead className="whitespace-nowrap">启用状态</TableHead>
                 <TableHead className="whitespace-nowrap">创建时间</TableHead>
                 <TableHead className="text-right whitespace-nowrap w-28">操作</TableHead>
               </TableRow>
@@ -345,26 +345,15 @@ function BasicProductsPage() {
                               role="switch"
                               aria-checked={p.enabled}
                               onClick={() => toggleEnabled(p)}
-                              className="inline-flex items-center gap-1.5 cursor-pointer"
+                              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                                p.enabled ? "bg-primary" : "bg-input"
+                              }`}
                             >
                               <span
-                                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                                  p.enabled ? "bg-primary" : "bg-input"
+                                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow ring-0 transition-transform ${
+                                  p.enabled ? "translate-x-4" : "translate-x-0.5"
                                 }`}
-                              >
-                                <span
-                                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow ring-0 transition-transform ${
-                                    p.enabled ? "translate-x-4" : "translate-x-0.5"
-                                  }`}
-                                />
-                              </span>
-                              <span
-                                className={`text-xs font-medium ${
-                                  p.enabled ? "text-primary" : "text-muted-foreground"
-                                }`}
-                              >
-                                {p.enabled ? "启用" : "停用"}
-                              </span>
+                              />
                             </button>
                           </TooltipTrigger>
                           <TooltipContent>{p.enabled ? "点击停用" : "点击启用"}</TooltipContent>
