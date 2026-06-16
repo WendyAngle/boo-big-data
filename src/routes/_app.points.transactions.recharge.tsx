@@ -543,8 +543,10 @@ function RechargePage() {
       {/* 列表 */}
       <Card className="p-5">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <Button onClick={openCreate}>
-            <Plus className="h-4 w-4" /> 新增充值
+          <Button asChild>
+            <Link to="/points/transactions/recharge/new">
+              <Plus className="h-4 w-4" /> 新增充值
+            </Link>
           </Button>
           <div className="text-sm text-muted-foreground">
             共 <span className="font-semibold text-foreground">{total}</span> 条充值订单
