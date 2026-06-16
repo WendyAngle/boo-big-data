@@ -72,7 +72,7 @@ export const Route = createFileRoute("/_app/auth/admin/tenants")({
 
 type AuthStatus = "待认证" | "认证中" | "认证成功" | "认证失败";
 type CoopStatus = "合作中" | "终止合作";
-type TenantType = "个人用户" | "企业用户";
+type TenantType = "企业用户";
 
 interface Tenant {
   id: string;
@@ -131,11 +131,10 @@ const LEVEL_OPTIONS: LevelOption[] = [
   },
 ];
 
-type AuthTiming = "首次登录" | "使用敏感功能";
+type AuthTiming = "首次登录";
 interface AuthPolicy {
   enabled: boolean;
   timing: AuthTiming;
-  sensitiveFeatures: string[];
   level: LevelKey;
   manualReview: boolean;
   reviewTimeoutHours: number;
@@ -145,7 +144,6 @@ interface AuthPolicy {
 const DEFAULT_POLICY: AuthPolicy = {
   enabled: true,
   timing: "首次登录",
-  sensitiveFeatures: [],
   level: "L2",
   manualReview: false,
   reviewTimeoutHours: 24,
@@ -154,7 +152,6 @@ const DEFAULT_POLICY: AuthPolicy = {
 };
 
 const MOCK: Tenant[] = Array.from({ length: 47 }).map((_, i) => {
-  const types: TenantType[] = ["个人用户", "企业用户"];
   const auths: AuthStatus[] = ["待认证", "认证中", "认证成功", "认证失败"];
   const coops: CoopStatus[] = ["合作中", "合作中", "合作中", "终止合作"];
   const names = [
@@ -173,7 +170,7 @@ const MOCK: Tenant[] = Array.from({ length: 47 }).map((_, i) => {
     id: `T${String(202600 + i).padStart(6, "0")}`,
     name: `${names[i % names.length]}${i > 9 ? `(${i})` : ""}`,
     intro: "专注于数据服务与企业级解决方案，提供安全可靠的合作生态。",
-    type: types[i % 2],
+    type: "企业用户",
     industry: INDUSTRIES[i % INDUSTRIES.length],
     product: ["数据中台", "智能风控", "营销云", "供应链", "AI平台"][i % 5],
     contact: CONTACT_NAMES[i % CONTACT_NAMES.length],
