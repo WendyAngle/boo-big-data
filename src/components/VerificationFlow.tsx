@@ -518,11 +518,18 @@ export function VerificationFlow({ subject }: Props) {
             <h3 className="text-sm font-semibold">认证历史</h3>
           </div>
           <ol className="relative border-l border-border ml-2 space-y-4">
-            {[
-              { t: "2026-06-15 10:24", title: "提交认证申请", desc: `等级 ${levelKey} · ${providerName}` },
-              { t: "2026-05-02 14:11", title: "L2 认证通过", desc: "平台直连" },
-              { t: "2026-04-01 09:00", title: "L1 认证通过", desc: "平台直连" },
-            ].map((e, i) => (
+            {(isPersonal
+              ? [
+                  { t: "2026-06-15 10:24", title: "提交认证申请", desc: `等级 ${levelKey} · ${providerName}` },
+                  { t: "2026-05-02 14:11", title: "L2 认证通过", desc: "平台直连" },
+                  { t: "2026-04-01 09:00", title: "L1 认证通过", desc: "平台直连" },
+                ]
+              : [
+                  { t: "2026-06-15 10:24", title: "提交完整认证申请", desc: `企业完整认证 · ${providerName}` },
+                  { t: "2026-05-20 16:42", title: "认证未通过", desc: "法人人脸核身失败 · 已重新提交" },
+                  { t: "2026-05-18 09:15", title: "上传企业资料", desc: "营业执照 · 统一社会信用代码" },
+                ]
+            ).map((e, i) => (
               <li key={i} className="ml-4">
                 <div className="absolute -left-1.5 h-3 w-3 rounded-full bg-primary/80 border border-background" />
                 <div className="text-[11px] text-muted-foreground">{e.t}</div>
