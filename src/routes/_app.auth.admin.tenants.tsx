@@ -1574,14 +1574,14 @@ function AuthPolicyDialog({ tenant, existing, onOpenChange, onSubmit }: AuthPoli
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="max-w-[--radix-select-trigger-width]">
-                  {LEVEL_OPTIONS.map((l) => {
+                  {LEVEL_OPTIONS.filter((l) => l.key === "L4").map((l) => {
                     const factors = l.enterpriseFactors;
                     const tag = l.enterpriseTag;
                     return (
                       <SelectItem key={l.key} value={l.key} className="py-2.5">
                         <div className="flex flex-col gap-1.5">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{l.key} · {l.title}</span>
+                            <span className="font-medium">{l.title}</span>
                             <span className="text-xs text-muted-foreground">{tag}</span>
                           </div>
                           <div className="flex flex-wrap gap-1">
