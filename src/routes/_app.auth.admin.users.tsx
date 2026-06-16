@@ -717,6 +717,35 @@ function UsersPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Reset password confirm */}
+      <AlertDialog open={!!resetTarget} onOpenChange={(o) => !o && setResetTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-primary" />
+              确认重置该用户密码？
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              即将为 <span className="font-medium text-foreground">{resetTarget?.name}</span>
+              （{resetTarget?.id}）重置登录密码为系统默认初始密码，重置后用户需通过手机号/邮箱重新设置新密码后方可登录。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (resetTarget) {
+                  toast.success(`已重置 ${resetTarget.name} 的登录密码`);
+                }
+                setResetTarget(null);
+              }}
+            >
+              确认重置
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <UserFormDialog
         open={formOpen}
         onOpenChange={setFormOpen}
