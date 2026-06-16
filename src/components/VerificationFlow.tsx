@@ -292,6 +292,7 @@ export function VerificationFlow({ subject }: Props) {
       </div>
 
       {/* Stepper */}
+      {isPersonal && (
       <div className="px-8 mt-2">
         <Card className="p-5">
           <div className="flex items-center justify-between">
@@ -327,6 +328,7 @@ export function VerificationFlow({ subject }: Props) {
           </div>
         </Card>
       </div>
+      )}
 
       {/* Body grid */}
       <div className="px-8 py-6 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
