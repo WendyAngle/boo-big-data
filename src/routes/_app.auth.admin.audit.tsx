@@ -325,7 +325,6 @@ function AuditPage() {
   const [keyword, setKeyword] = useState("");
   const [subject, setSubject] = useState("all");
   const [level, setLevel] = useState("all");
-  const [provider, setProvider] = useState("all");
   const [status, setStatus] = useState("all");
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -345,11 +344,10 @@ function AuditPage() {
       if (keyword && !(`${t.id} ${t.tenantName} ${t.applicantName}`.toLowerCase().includes(keyword.toLowerCase()))) return false;
       if (subject !== "all" && t.subject !== subject) return false;
       if (level !== "all" && t.level !== level) return false;
-      if (provider !== "all" && t.provider !== provider) return false;
       if (status !== "all" && t.status !== status) return false;
       return true;
     });
-  }, [data, keyword, subject, level, provider, status]);
+  }, [data, keyword, subject, level, status]);
 
   const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -368,7 +366,7 @@ function AuditPage() {
   }, [data]);
 
   const reset = () => {
-    setKeyword(""); setSubject("all"); setLevel("all"); setProvider("all"); setStatus("all"); setPage(1);
+    setKeyword(""); setSubject("all"); setLevel("all"); setStatus("all"); setPage(1);
   };
 
   const toggle = (id: string) => {
@@ -614,7 +612,7 @@ function AuditPage() {
 
       {/* Filter */}
       <Card className="p-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
           <div className="xl:col-span-2 relative">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input value={keyword} onChange={(e) => { setKeyword(e.target.value); setPage(1); }} placeholder="搜索申请单号 / 租户 / 申请人" className="pl-9" />
@@ -632,13 +630,6 @@ function AuditPage() {
             <SelectContent>
               <SelectItem value="all">全部等级</SelectItem>
               {LEVELS.map((l) => <SelectItem key={l} value={l}>{l} · {LEVEL_META[l].title}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={provider} onValueChange={(v) => { setProvider(v); setPage(1); }}>
-            <SelectTrigger><SelectValue placeholder="认证渠道" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部渠道</SelectItem>
-              {PROVIDER_IDS.map((p) => <SelectItem key={p} value={p}>{PROVIDERS[p].name}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
