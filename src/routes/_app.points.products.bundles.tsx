@@ -8,9 +8,6 @@ import {
   RotateCcw,
   Pencil,
   Trash2,
-  Coins,
-  Gem,
-  Info,
   Trash,
   AlertTriangle,
 } from "lucide-react";
@@ -19,15 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -39,7 +27,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -64,22 +51,22 @@ import { ListPagination } from "@/components/ListPagination";
 import { toast } from "sonner";
 import { useProductCategories } from "@/lib/productCategoriesStore";
 import { useBasicProducts, type BasicProduct } from "@/lib/basicProductsStore";
+import {
+  ProductMultiPicker,
+  productSelLabel,
+  type ProductSel,
+} from "@/components/ProductMultiPicker";
 
 export const Route = createFileRoute("/_app/points/products/bundles")({
   head: () => ({ meta: [{ title: "产品管理 · 套餐产品 | Boo数据平台" }] }),
   component: BundleProductsPage,
 });
 
-type ItemTargetType = "category" | "basic";
-type PointsType = "general" | "professional";
-
 interface BundleItem {
   id: string;
-  targetType: ItemTargetType;
-  targetKey: string;
-  pointsType: PointsType;
-  basePoints: string;
-  bonusPoints: string;
+  products: ProductSel[];   // 分级多选：分类或基础产品
+  basePoints: string;       // 初始基础积分
+  bonusPoints: string;      // 初始赠送积分
 }
 
 interface BundleProduct {
@@ -95,175 +82,80 @@ interface BundleProduct {
 const NAME_MAX = 50;
 const DESC_MAX = 200;
 
-function ppCode(seq: number) {
-  return `PP${String(seq).padStart(8, "0")}`;
-}
-
-function nowStr() {
+const ppCode = (n: number) => `PP${String(n).padStart(6, "0")}`;
+const nowStr = () => {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-}
+};
+const newItem = (): BundleItem => ({
+  id: Math.random().toString(36).slice(2, 9),
+  products: [],
+  basePoints: "",
+  bonusPoints: "",
+});
 
-function newItem(): BundleItem {
-  return {
-    id: Math.random().toString(36).slice(2, 9),
-    targetType: "category",
-    targetKey: "",
-    pointsType: "general",
-    basePoints: "",
-    bonusPoints: "",
-  };
-}
-
-const INITIAL_BUNDLES: BundleProduct[] = [
+const INITIAL: BundleProduct[] = [
   {
-    id: "PP00000008",
-    name: "全域旗舰版",
-    price: "29800",
-    description: "覆盖内容创作、获客、视频与数据洞察的全域旗舰套餐，通用+专业积分混合发放。",
+    id: "PP000030",
+    name: "test",
+    price: "11",
+    description: "11",
     enabled: true,
     items: [
-      { id: "i1", targetType: "category", targetKey: "AI内容创作", pointsType: "general", basePoints: "50000", bonusPoints: "10000" },
-      { id: "i2", targetType: "category", targetKey: "AI智能获客", pointsType: "professional", basePoints: "40000", bonusPoints: "8000" },
-      { id: "i3", targetType: "basic", targetKey: "BP000043", pointsType: "professional", basePoints: "20000", bonusPoints: "4000" },
-      { id: "i4", targetType: "basic", targetKey: "BP000030", pointsType: "general", basePoints: "20000", bonusPoints: "4000" },
+      { id: "i1", products: [{ type: "category", key: "AI视频制作" }], basePoints: "10", bonusPoints: "10" },
     ],
-    createdAt: "2026-03-15 10:08:11",
+    createdAt: "2026-03-11 17:05:32",
   },
   {
-    id: "PP00000007",
+    id: "PP000024",
     name: "拓界版",
     price: "109800",
     description: "SIS升级包+AI视频制作(30000) 等多模块组合，适合中大型团队。",
     enabled: true,
     items: [
-      { id: "i1", targetType: "category", targetKey: "AI视频制作", pointsType: "general", basePoints: "30000", bonusPoints: "6000" },
-      { id: "i2", targetType: "category", targetKey: "AI智能获客", pointsType: "general", basePoints: "30000", bonusPoints: "6000" },
-      { id: "i3", targetType: "category", targetKey: "AI内容创作", pointsType: "professional", basePoints: "20000", bonusPoints: "2000" },
-      { id: "i4", targetType: "category", targetKey: "数据洞察", pointsType: "professional", basePoints: "20000", bonusPoints: "2000" },
-      { id: "i5", targetType: "basic", targetKey: "BP000043", pointsType: "professional", basePoints: "10000", bonusPoints: "100" },
+      { id: "i1", products: [{ type: "category", key: "AI视频制作" }], basePoints: "30000", bonusPoints: "6000" },
+      { id: "i2", products: [{ type: "category", key: "AI智能获客" }], basePoints: "30000", bonusPoints: "6000" },
+      { id: "i3", products: [{ type: "basic", key: "BP000043" }], basePoints: "20000", bonusPoints: "2000" },
+      { id: "i4", products: [{ type: "basic", key: "BP000030" }, { type: "basic", key: "BP000028" }], basePoints: "20000", bonusPoints: "2000" },
+      { id: "i5", products: [{ type: "basic", key: "BP000032" }], basePoints: "10000", bonusPoints: "100" },
     ],
-    createdAt: "2026-03-14 16:37:02",
+    createdAt: "2026-03-10 16:37:02",
   },
   {
-    id: "PP00000006",
-    name: "视频专业版",
-    price: "9800",
-    description: "仅 AI 视频制作分类内可用的专业积分套餐。",
-    enabled: true,
-    items: [
-      { id: "i1", targetType: "category", targetKey: "AI视频制作", pointsType: "professional", basePoints: "20000", bonusPoints: "4000" },
-    ],
-    createdAt: "2026-03-13 14:12:30",
-  },
-  {
-    id: "PP00000005",
+    id: "PP000005",
     name: "基石版",
     price: "69800",
     description: "SIS基础包+AI视频制作(10000) 入门组合，覆盖核心场景。",
     enabled: true,
     items: [
-      { id: "i1", targetType: "category", targetKey: "AI视频制作", pointsType: "general", basePoints: "10000", bonusPoints: "2000" },
-      { id: "i2", targetType: "category", targetKey: "AI智能获客", pointsType: "general", basePoints: "10000", bonusPoints: "2000" },
+      { id: "i1", products: [{ type: "category", key: "AI视频制作" }], basePoints: "10000", bonusPoints: "2000" },
+      { id: "i2", products: [{ type: "category", key: "AI智能获客" }], basePoints: "10000", bonusPoints: "2000" },
     ],
-    createdAt: "2026-03-12 10:17:38",
-  },
-  {
-    id: "PP00000004",
-    name: "单品体验包·Tiktok获客",
-    price: "999",
-    description: "仅 Tiktok 获客单品可用的专业积分体验包。",
-    enabled: false,
-    items: [
-      { id: "i1", targetType: "basic", targetKey: "BP000032", pointsType: "professional", basePoints: "5000", bonusPoints: "500" },
-    ],
-    createdAt: "2026-03-11 17:05:32",
-  },
-  {
-    id: "PP00000003",
-    name: "通用积分包·标准版",
-    price: "1999",
-    description: "面向全平台的通用积分，锁定 AI 图生视频销售入口。",
-    enabled: true,
-    items: [
-      { id: "i1", targetType: "basic", targetKey: "BP000030", pointsType: "general", basePoints: "10000", bonusPoints: "1500" },
-    ],
-    createdAt: "2026-03-10 09:22:18",
-  },
-  {
-    id: "PP00000002",
-    name: "数据洞察季度通用包",
-    price: "5999",
-    description: "面向数据团队的通用积分季度包，可在全平台已启用产品消费。",
-    enabled: true,
-    items: [
-      { id: "i1", targetType: "category", targetKey: "数据洞察", pointsType: "general", basePoints: "30000", bonusPoints: "6000" },
-    ],
-    createdAt: "2026-03-09 15:30:14",
-  },
-  {
-    id: "PP00000001",
-    name: "AI内容创作混合包",
-    price: "3999",
-    description: "AI 内容创作分类专享 + 文生图单品加成，通用+专业积分混合。",
-    enabled: false,
-    items: [
-      { id: "i1", targetType: "category", targetKey: "AI内容创作", pointsType: "general", basePoints: "15000", bonusPoints: "3000" },
-      { id: "i2", targetType: "basic", targetKey: "BP000043", pointsType: "professional", basePoints: "8000", bonusPoints: "1500" },
-    ],
-    createdAt: "2026-03-08 11:48:55",
+    createdAt: "2026-03-09 10:17:38",
   },
 ];
 
 function sumPoints(items: BundleItem[]) {
-  let bg = 0, bp = 0, og = 0, op = 0;
+  let base = 0, bonus = 0;
   for (const it of items) {
-    const base = Number(it.basePoints) || 0;
-    const bonus = Number(it.bonusPoints) || 0;
-    if (it.pointsType === "general") { bg += base; og += bonus; }
-    else { bp += base; op += bonus; }
+    base += Number(it.basePoints) || 0;
+    bonus += Number(it.bonusPoints) || 0;
   }
-  return {
-    baseGeneral: bg, baseProfessional: bp,
-    bonusGeneral: og, bonusProfessional: op,
-    totalBase: bg + bp, totalBonus: og + op,
-  };
-}
-
-function getPointsKind(items: BundleItem[]): "general" | "professional" | "mixed" {
-  const hasG = items.some((i) => i.pointsType === "general");
-  const hasP = items.some((i) => i.pointsType === "professional");
-  if (hasG && hasP) return "mixed";
-  return hasG ? "general" : "professional";
-}
-
-function getTargetKind(items: BundleItem[]): "category" | "basic" | "mixed" {
-  const hasC = items.some((i) => i.targetType === "category");
-  const hasB = items.some((i) => i.targetType === "basic");
-  if (hasC && hasB) return "mixed";
-  return hasC ? "category" : "basic";
+  return { totalBase: base, totalBonus: bonus };
 }
 
 function BundleProductsPage() {
   const categories = useProductCategories();
   const basicProducts = useBasicProducts();
-  const enabledCategories = useMemo(() => categories.filter((c) => c.enabled), [categories]);
+  const enabledCategories = useMemo(() => categories.filter((c) => c.enabled).map((c) => c.name), [categories]);
   const enabledBasic = useMemo(() => basicProducts.filter((b) => b.enabled), [basicProducts]);
 
-  const [data, setData] = useState<BundleProduct[]>(INITIAL_BUNDLES);
-  const [seq, setSeq] = useState(8);
+  const [data, setData] = useState<BundleProduct[]>(INITIAL);
+  const [seq, setSeq] = useState(30);
 
   const [kw, setKw] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "category" | "basic" | "mixed">("all");
-  const [pointsFilter, setPointsFilter] = useState<"all" | "general" | "professional" | "mixed">("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "enabled" | "disabled">("all");
-  const [applied, setApplied] = useState({
-    kw: "",
-    type: "all" as "all" | "category" | "basic" | "mixed",
-    points: "all" as "all" | "general" | "professional" | "mixed",
-    status: "all" as "all" | "enabled" | "disabled",
-  });
+  const [applied, setApplied] = useState({ kw: "" });
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
@@ -271,59 +163,22 @@ function BundleProductsPage() {
   const [editing, setEditing] = useState<BundleProduct | null>(null);
   const [delTarget, setDelTarget] = useState<BundleProduct | null>(null);
   const [toggleTarget, setToggleTarget] = useState<BundleProduct | null>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [bulkAction, setBulkAction] = useState<"enable" | "disable" | null>(null);
-
-  const targetLabel = (it: BundleItem) => {
-    if (it.targetType === "category") return it.targetKey;
-    const bp = basicProducts.find((b) => b.id === it.targetKey);
-    return bp ? bp.name : it.targetKey;
-  };
 
   const filtered = useMemo(() => {
     return data.filter((p) => {
       if (applied.kw) {
         const k = applied.kw.toLowerCase();
-        const inItems = p.items.some((it) => targetLabel(it).toLowerCase().includes(k));
-        if (
-          !p.name.toLowerCase().includes(k) &&
-          !p.id.toLowerCase().includes(k) &&
-          !inItems
-        ) return false;
+        if (!p.name.toLowerCase().includes(k) && !p.id.toLowerCase().includes(k)) return false;
       }
-      if (applied.type !== "all" && getTargetKind(p.items) !== applied.type) return false;
-      if (applied.points !== "all" && getPointsKind(p.items) !== applied.points) return false;
-      if (applied.status === "enabled" && !p.enabled) return false;
-      if (applied.status === "disabled" && p.enabled) return false;
       return true;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, applied, basicProducts]);
+  }, [data, applied]);
 
   const total = filtered.length;
   const pageData = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  const apply = () => {
-    setApplied({ kw: kw.trim(), type: typeFilter, points: pointsFilter, status: statusFilter });
-    setPage(1);
-  };
-  const reset = () => {
-    setKw(""); setTypeFilter("all"); setPointsFilter("all"); setStatusFilter("all");
-    setApplied({ kw: "", type: "all", points: "all", status: "all" });
-    setPage(1);
-  };
-
-  const pageIds = pageData.map((p) => p.id);
-  const allChecked = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
-  const someChecked = pageIds.some((id) => selectedIds.includes(id)) && !allChecked;
-  const togglePage = (v: boolean) => {
-    setSelectedIds((prev) =>
-      v ? Array.from(new Set([...prev, ...pageIds]))
-        : prev.filter((id) => !pageIds.includes(id)),
-    );
-  };
-  const toggleOne = (id: string, v: boolean) =>
-    setSelectedIds((prev) => (v ? [...prev, id] : prev.filter((x) => x !== id)));
+  const apply = () => { setApplied({ kw: kw.trim() }); setPage(1); };
+  const reset = () => { setKw(""); setApplied({ kw: "" }); setPage(1); };
 
   const confirmToggle = () => {
     if (!toggleTarget) return;
@@ -332,17 +187,9 @@ function BundleProductsPage() {
     toast.success(`已${next ? "启用" : "停用"} ${toggleTarget.name}`);
     setToggleTarget(null);
   };
-  const confirmBulk = () => {
-    if (!bulkAction) return;
-    const next = bulkAction === "enable";
-    setData((d) => d.map((x) => (selectedIds.includes(x.id) ? { ...x, enabled: next } : x)));
-    toast.success(`已批量${next ? "启用" : "停用"} ${selectedIds.length} 条套餐`);
-    setBulkAction(null); setSelectedIds([]);
-  };
   const confirmDelete = () => {
     if (!delTarget) return;
     setData((d) => d.filter((x) => x.id !== delTarget.id));
-    setSelectedIds((prev) => prev.filter((id) => id !== delTarget.id));
     toast.success(`已删除 ${delTarget.name}`);
     setDelTarget(null);
   };
@@ -359,16 +206,9 @@ function BundleProductsPage() {
       setSeq((s) => s + 1);
       toast.success(`已新增 ${created.name}(${created.id})`);
     }
-    setFormOpen(false); setEditing(null);
+    setFormOpen(false);
+    setEditing(null);
   };
-
-  const kpi = useMemo(() => {
-    const enabled = data.filter((d) => d.enabled).length;
-    const totalItems = data.reduce((s, d) => s + d.items.length, 0);
-    const totalBase = data.reduce((s, d) => s + sumPoints(d.items).totalBase, 0);
-    const totalBonus = data.reduce((s, d) => s + sumPoints(d.items).totalBonus, 0);
-    return { total: data.length, enabled, totalItems, totalBase, totalBonus };
-  }, [data]);
 
   return (
     <div className="p-8 space-y-6">
@@ -391,100 +231,54 @@ function BundleProductsPage() {
           <div>
             <h1 className="text-xl font-bold">套餐产品</h1>
             <p className="text-white/85 text-sm mt-0.5">
-              同时支持按产品分类和按基础产品配置套餐项目，每项可单独设置积分类型（通用/专业）、基础积分与赠送积分，总积分自动汇总。
+              组合产品分类与基础产品，配置初始基础积分与赠送积分，按套餐统一售卖
             </p>
           </div>
-        </div>
-
-        <div className="mt-5 grid grid-cols-2 md:grid-cols-5 gap-3">
-          <KpiTile label="套餐总数" value={kpi.total} />
-          <KpiTile label="已启用" value={kpi.enabled} />
-          <KpiTile label="产品项总数" value={kpi.totalItems} />
-          <KpiTile label="总基础积分" value={kpi.totalBase} />
-          <KpiTile label="总赠送积分" value={kpi.totalBonus} accent />
         </div>
       </section>
 
       <Card className="p-5">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <div className="relative">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="relative md:col-span-2">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={kw}
               onChange={(e) => setKw(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && apply()}
-              placeholder="请输入套餐名称/编号/包含目标"
+              placeholder="请输入套餐名称/套餐编号"
               className="pl-9"
             />
           </div>
-          <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as typeof typeFilter)}>
-            <SelectTrigger><SelectValue placeholder="目标构成" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部目标构成</SelectItem>
-              <SelectItem value="category">仅按产品分类</SelectItem>
-              <SelectItem value="basic">仅按基础产品</SelectItem>
-              <SelectItem value="mixed">分类+基础产品混合</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={pointsFilter} onValueChange={(v) => setPointsFilter(v as typeof pointsFilter)}>
-            <SelectTrigger><SelectValue placeholder="积分构成" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部积分构成</SelectItem>
-              <SelectItem value="general">仅通用积分</SelectItem>
-              <SelectItem value="professional">仅专业积分</SelectItem>
-              <SelectItem value="mixed">通用+专业混合</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
-            <SelectTrigger><SelectValue placeholder="启用状态" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部状态</SelectItem>
-              <SelectItem value="enabled">已启用</SelectItem>
-              <SelectItem value="disabled">已停用</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="mt-4 flex justify-end gap-2">
-          <Button variant="outline" onClick={reset}>
-            <RotateCcw className="h-4 w-4" /> 重置
-          </Button>
-          <Button onClick={apply}>
-            <Search className="h-4 w-4" /> 搜索
-          </Button>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={reset}>
+              <RotateCcw className="h-4 w-4" /> 重置
+            </Button>
+            <Button onClick={apply}>
+              <Search className="h-4 w-4" /> 查询
+            </Button>
+          </div>
         </div>
       </Card>
 
       <Card className="p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div className="flex items-center justify-between mb-4">
           <div className="text-sm text-muted-foreground">
             共 <span className="font-semibold text-foreground">{total}</span> 条套餐产品
-            {selectedIds.length > 0 && (
-              <span className="ml-2 text-primary">已选 {selectedIds.length} 项</span>
-            )}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" disabled={selectedIds.length === 0} onClick={() => setBulkAction("enable")}>批量启用</Button>
-            <Button variant="outline" disabled={selectedIds.length === 0} onClick={() => setBulkAction("disable")}>批量停用</Button>
-            <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
-              <Plus className="h-4 w-4" /> 新增
-            </Button>
-          </div>
+          <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
+            <Plus className="h-4 w-4" /> 新增
+          </Button>
         </div>
 
         <div className="rounded-lg border overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead className="w-10">
-                  <Checkbox
-                    checked={allChecked ? true : someChecked ? "indeterminate" : false}
-                    onCheckedChange={(v) => togglePage(!!v)}
-                  />
-                </TableHead>
                 <TableHead className="whitespace-nowrap">套餐编号</TableHead>
-                <TableHead>套餐名称</TableHead>
-                <TableHead className="min-w-[300px]">产品详情</TableHead>
-                <TableHead className="text-right whitespace-nowrap">套餐现金价(元)</TableHead>
+                <TableHead className="whitespace-nowrap">套餐名称</TableHead>
+                <TableHead className="min-w-[280px]">产品详情</TableHead>
+                <TableHead className="min-w-[160px]">套餐描述</TableHead>
+                <TableHead className="text-right whitespace-nowrap">套餐现金价</TableHead>
                 <TableHead className="text-right whitespace-nowrap">总基础积分</TableHead>
                 <TableHead className="text-right whitespace-nowrap">总赠送积分</TableHead>
                 <TableHead className="whitespace-nowrap">状态</TableHead>
@@ -504,30 +298,43 @@ function BundleProductsPage() {
                   const sums = sumPoints(p.items);
                   return (
                     <TableRow key={p.id} className="hover:bg-accent/30 align-top">
-                      <TableCell className="pt-4">
-                        <Checkbox checked={selectedIds.includes(p.id)} onCheckedChange={(v) => toggleOne(p.id, !!v)} />
-                      </TableCell>
                       <TableCell className="font-mono text-xs pt-4">{p.id}</TableCell>
                       <TableCell className="font-medium text-primary pt-4">{p.name}</TableCell>
                       <TableCell className="py-3">
                         <div className="flex flex-col gap-1.5">
-                          {p.items.map((it) => (
-                            <ItemBadge key={it.id} item={it} label={targetLabel(it)} />
-                          ))}
+                          {p.items.flatMap((it) => {
+                            const base = Number(it.basePoints) || 0;
+                            const bonus = Number(it.bonusPoints) || 0;
+                            return it.products.map((sel) => (
+                              <div
+                                key={`${it.id}:${sel.type}:${sel.key}`}
+                                className="rounded-md border bg-muted/30 px-2.5 py-1.5 text-xs leading-relaxed"
+                              >
+                                <span className="font-medium text-foreground">
+                                  {productSelLabel(sel, basicProducts)}
+                                </span>
+                                <span className="text-muted-foreground"> -- 基础积分: </span>
+                                <span className="tabular-nums">{base.toLocaleString()}</span>
+                                <span className="text-muted-foreground"> -- 赠送积分: </span>
+                                <span className="tabular-nums text-emerald-600 dark:text-emerald-400">
+                                  {bonus.toLocaleString()}
+                                </span>
+                              </div>
+                            ));
+                          })}
                         </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm pt-4 max-w-[220px]">
+                        <div className="line-clamp-2" title={p.description}>{p.description || "—"}</div>
                       </TableCell>
                       <TableCell className="text-right tabular-nums font-medium pt-4">
                         {Number(p.price).toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums pt-4">
-                        <div className="font-medium">{sums.totalBase.toLocaleString()}</div>
-                        <PointsBreakdown g={sums.baseGeneral} p={sums.baseProfessional} />
+                      <TableCell className="text-right tabular-nums font-medium pt-4">
+                        {sums.totalBase.toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums pt-4">
-                        <div className="font-medium text-emerald-600 dark:text-emerald-400">
-                          +{sums.totalBonus.toLocaleString()}
-                        </div>
-                        <PointsBreakdown g={sums.bonusGeneral} p={sums.bonusProfessional} />
+                      <TableCell className="text-right tabular-nums text-emerald-600 dark:text-emerald-400 font-medium pt-4">
+                        +{sums.totalBonus.toLocaleString()}
                       </TableCell>
                       <TableCell className="pt-4">
                         <TooltipProvider delayDuration={150}>
@@ -552,26 +359,17 @@ function BundleProductsPage() {
                       </TableCell>
                       <TableCell className="text-right pt-3">
                         <div className="flex justify-end gap-1">
-                          <TooltipProvider delayDuration={150}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button size="sm" variant="ghost" onClick={() => { setEditing(p); setFormOpen(true); }}>
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>编辑</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          <TooltipProvider delayDuration={150}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDelTarget(p)}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>删除</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          <Button size="sm" variant="ghost" onClick={() => { setEditing(p); setFormOpen(true); }}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => setDelTarget(p)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -582,14 +380,7 @@ function BundleProductsPage() {
           </Table>
         </div>
 
-        <div className="mt-4">
-          <ListPagination
-            page={page}
-            pageSize={pageSize}
-            total={total}
-            onPageChange={setPage}
-          />
-        </div>
+        <ListPagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
       </Card>
 
       <BundleFormDialog
@@ -597,7 +388,7 @@ function BundleProductsPage() {
         onOpenChange={(o) => { setFormOpen(o); if (!o) setEditing(null); }}
         editing={editing}
         nextCode={nextCode}
-        categories={enabledCategories.map((c) => c.name)}
+        categories={enabledCategories}
         basicProducts={enabledBasic}
         onSubmit={onSubmit}
       />
@@ -613,21 +404,6 @@ function BundleProductsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction onClick={confirmToggle}>确认</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={!!bulkAction} onOpenChange={(o) => !o && setBulkAction(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>批量{bulkAction === "enable" ? "启用" : "停用"}</AlertDialogTitle>
-            <AlertDialogDescription>
-              确认对已选 {selectedIds.length} 条套餐执行批量{bulkAction === "enable" ? "启用" : "停用"}操作吗？
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmBulk}>确认</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -655,64 +431,7 @@ function BundleProductsPage() {
   );
 }
 
-function KpiTile({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
-  return (
-    <div className="rounded-xl bg-white/10 backdrop-blur-sm px-4 py-3 border border-white/15">
-      <div className="text-xs text-white/75">{label}</div>
-      <div className={`mt-1 text-xl font-bold tabular-nums ${accent ? "text-emerald-200" : ""}`}>
-        {accent && value > 0 ? "+" : ""}
-        {value.toLocaleString()}
-      </div>
-    </div>
-  );
-}
-
-function ItemBadge({ item, label }: { item: BundleItem; label: string }) {
-  const isGeneral = item.pointsType === "general";
-  return (
-    <div
-      className={`flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-md border px-2.5 py-1.5 text-xs ${
-        isGeneral
-          ? "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900"
-          : "bg-purple-50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-900"
-      }`}
-    >
-      <Badge
-        variant="outline"
-        className={`h-5 px-1.5 ${
-          isGeneral
-            ? "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800"
-            : "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-800"
-        }`}
-      >
-        {isGeneral ? <Coins className="h-3 w-3 mr-0.5" /> : <Gem className="h-3 w-3 mr-0.5" />}
-        {isGeneral ? "通用" : "专业"}
-      </Badge>
-      <span className="text-muted-foreground">
-        {item.targetType === "category" ? "分类" : "产品"}
-      </span>
-      <span className="font-medium text-foreground">{label || "—"}</span>
-      <span className="text-muted-foreground">·</span>
-      <span className="tabular-nums">
-        基础 <b className="text-foreground">{(Number(item.basePoints) || 0).toLocaleString()}</b>
-      </span>
-      <span className="text-muted-foreground">·</span>
-      <span className="tabular-nums text-emerald-600 dark:text-emerald-400">
-        赠送 +{(Number(item.bonusPoints) || 0).toLocaleString()}
-      </span>
-    </div>
-  );
-}
-
-function PointsBreakdown({ g, p }: { g: number; p: number }) {
-  if (g === 0 && p === 0) return null;
-  return (
-    <div className="text-[11px] text-muted-foreground mt-0.5 flex justify-end gap-2">
-      {g > 0 && <span><span className="text-blue-600 dark:text-blue-400">通</span> {g.toLocaleString()}</span>}
-      {p > 0 && <span><span className="text-purple-600 dark:text-purple-400">专</span> {p.toLocaleString()}</span>}
-    </div>
-  );
-}
+/* =====================  新增 / 编辑  ===================== */
 
 type FormValues = Omit<BundleProduct, "id" | "createdAt">;
 
@@ -740,67 +459,58 @@ function BundleFormDialog({ open, onOpenChange, editing, nextCode, categories, b
       setPrice(editing?.price ?? "");
       setDescription(editing?.description ?? "");
       setEnabled(editing ? editing.enabled : true);
-      setItems(editing?.items.length ? editing.items.map((i) => ({ ...i })) : [newItem()]);
+      setItems(
+        editing?.items.length
+          ? editing.items.map((i) => ({ ...i, products: [...i.products] }))
+          : [newItem()],
+      );
       setTouched(false);
     }
   }, [open, editing]);
 
   const itemErr = (it: BundleItem): string => {
-    if (!it.targetKey) return it.targetType === "category" ? "请选择产品分类" : "请选择基础产品";
-    const base = Number(it.basePoints);
-    const bonus = Number(it.bonusPoints);
-    if (it.basePoints === "" || !/^\d+$/.test(it.basePoints) || base < 0) return "基础积分需为非负整数";
-    if (it.bonusPoints === "" || !/^\d+$/.test(it.bonusPoints) || bonus < 0) return "赠送积分需为非负整数";
-    if (base + bonus <= 0) return "基础积分与赠送积分不能同时为 0";
+    if (it.products.length === 0) return "请选择产品";
+    if (it.basePoints === "" || !/^\d+$/.test(it.basePoints) || Number(it.basePoints) < 0)
+      return "基础积分需为非负整数";
+    if (it.bonusPoints === "" || !/^\d+$/.test(it.bonusPoints) || Number(it.bonusPoints) < 0)
+      return "赠送积分需为非负整数";
+    if (Number(it.basePoints) + Number(it.bonusPoints) <= 0)
+      return "基础积分与赠送积分不能同时为 0";
     return "";
   };
 
-  const dupErr = useMemo(() => {
-    const seen = new Set<string>();
-    for (const it of items) {
-      if (!it.targetKey) continue;
-      const key = `${it.targetType}:${it.targetKey}:${it.pointsType}`;
-      if (seen.has(key)) return "存在重复的（目标对象 + 积分类型）项，请合并";
-      seen.add(key);
-    }
-    return "";
-  }, [items]);
-
-  // 方案A：分类与该分类下基础产品同时存在（同积分类型）时给出冲突提示，不阻止保存
-  const overlapConflicts = useMemo(() => {
-    const list: { category: string; productName: string; productId: string; pointsType: PointsType }[] = [];
-    const cats = items.filter((i) => i.targetType === "category" && i.targetKey);
-    const basics = items.filter((i) => i.targetType === "basic" && i.targetKey);
-    for (const c of cats) {
-      for (const b of basics) {
-        if (b.pointsType !== c.pointsType) continue;
-        const bp = basicProducts.find((p) => p.id === b.targetKey);
-        if (bp && bp.category === c.targetKey) {
-          list.push({
-            category: c.targetKey,
-            productName: bp.name,
-            productId: bp.id,
-            pointsType: c.pointsType,
-          });
-        }
-      }
-    }
-    return list;
-  }, [items, basicProducts]);
-
   const itemsError = useMemo(() => {
-    if (items.length === 0) return "请至少添加一个套餐项目";
+    if (items.length === 0) return "请至少添加一个服务项";
     for (const it of items) {
       const e = itemErr(it);
       if (e) return e;
     }
-    return dupErr;
-  }, [items, dupErr]);
+    return "";
+  }, [items]);
+
+  // 同分类与其下基础产品同时出现 → 叠加提示（不阻止保存）
+  const overlapConflicts = useMemo(() => {
+    const list: { category: string; productName: string; productId: string }[] = [];
+    const catKeys = new Set<string>();
+    items.forEach((it) => it.products.forEach((p) => p.type === "category" && catKeys.add(p.key)));
+    items.forEach((it) =>
+      it.products.forEach((p) => {
+        if (p.type === "basic") {
+          const bp = basicProducts.find((b) => b.id === p.key);
+          if (bp && catKeys.has(bp.category)) {
+            list.push({ category: bp.category, productName: bp.name, productId: bp.id });
+          }
+        }
+      }),
+    );
+    return list;
+  }, [items, basicProducts]);
 
   const errors = {
     name: !name.trim() ? "请输入套餐名称" : "",
     price: !price || !/^\d+(\.\d{1,2})?$/.test(price) || Number(price) <= 0 ? "请输入有效的套餐现金价" : "",
     items: itemsError,
+    description: !description.trim() ? "请输入套餐描述" : "",
   };
 
   const totals = useMemo(() => sumPoints(items), [items]);
@@ -813,28 +523,25 @@ function BundleFormDialog({ open, onOpenChange, editing, nextCode, categories, b
       price,
       description: description.trim(),
       enabled,
-      items: items.map((i) => ({ ...i })),
+      items: items.map((i) => ({ ...i, products: [...i.products] })),
     });
   };
 
   const updateItem = (id: string, patch: Partial<BundleItem>) =>
     setItems((arr) => arr.map((i) => (i.id === id ? { ...i, ...patch } : i)));
-  const removeItem = (id: string) => setItems((arr) => arr.filter((i) => i.id !== id));
+  const removeRow = (id: string) => setItems((arr) => arr.filter((i) => i.id !== id));
   const addRow = () => setItems((arr) => [...arr, newItem()]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editing ? "修改套餐产品" : "添加套餐产品"}</DialogTitle>
-          <DialogDescription>
-            支持按产品分类与基础产品混合配置，每项可单独选择积分类型（通用/专业）；总基础与总赠送积分将自动汇总。
-          </DialogDescription>
+          <DialogTitle>{editing ? "修改套餐产品" : "增加套餐产品"}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5 py-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-            <FormRow label="套餐编号" required>
+            <FormRow label="套餐编号">
               <Input value={editing ? editing.id : nextCode} disabled className="font-mono bg-muted/40" />
             </FormRow>
             <FormRow
@@ -846,22 +553,128 @@ function BundleFormDialog({ open, onOpenChange, editing, nextCode, categories, b
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value.slice(0, NAME_MAX))}
-                placeholder="请输入套餐名称（最长50字）"
+                placeholder="请输入套餐名称"
                 maxLength={NAME_MAX}
               />
             </FormRow>
+          </div>
 
-            <FormRow label="套餐现金价(元)" required error={touched ? errors.price : ""}>
-              <Input
-                type="number"
-                min={0}
-                step="0.01"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="例如：1999"
-              />
+          <FormRow label="套餐产品信息" required error={touched ? errors.items : ""}>
+            <div className="rounded-lg border bg-muted/20 p-3 space-y-3">
+              {items.map((it) => (
+                <div
+                  key={it.id}
+                  className="rounded-md border bg-background p-3 space-y-2"
+                >
+                  <ProductMultiPicker
+                    categories={categories}
+                    basicProducts={basicProducts.map((b) => ({ id: b.id, name: b.name, category: b.category }))}
+                    value={it.products}
+                    onChange={(v) => updateItem(it.id, { products: v })}
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2 items-end">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">初始基础积分</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={it.basePoints}
+                        onChange={(e) => updateItem(it.id, { basePoints: e.target.value.replace(/[^0-9]/g, "") })}
+                        placeholder="请输入基础积分"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">初始赠送积分</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={it.bonusPoints}
+                        onChange={(e) => updateItem(it.id, { bonusPoints: e.target.value.replace(/[^0-9]/g, "") })}
+                        placeholder="请输入赠送积分"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                      disabled={items.length === 1}
+                      onClick={() => removeRow(it.id)}
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="default"
+                className="w-full"
+                onClick={addRow}
+              >
+                <Plus className="h-4 w-4" /> 添加服务项
+              </Button>
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <SumTile label="总基础积分" value={totals.totalBase} />
+              <SumTile label="总赠送积分" value={totals.totalBonus} bonus />
+            </div>
+
+            {overlapConflicts.length > 0 && (
+              <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50/70 dark:bg-amber-950/20 dark:border-amber-900/60 p-3">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <div className="space-y-1 text-xs">
+                    <div className="font-medium text-amber-800 dark:text-amber-300">
+                      检测到分类与其下基础产品同时出现，将形成叠加发放
+                    </div>
+                    <ul className="list-disc pl-4 space-y-0.5 text-amber-700 dark:text-amber-400/90">
+                      {overlapConflicts.map((c, i) => (
+                        <li key={i}>
+                          分类「{c.category}」 与 基础产品「{c.productName}（{c.productId}）」
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+          </FormRow>
+
+          <FormRow
+            label="套餐描述"
+            required
+            error={touched ? errors.description : ""}
+            extra={<span className="text-xs text-muted-foreground tabular-nums">{description.length} / {DESC_MAX}</span>}
+          >
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value.slice(0, DESC_MAX))}
+              placeholder="请输入套餐描述"
+              rows={3}
+              maxLength={DESC_MAX}
+            />
+          </FormRow>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            <FormRow label="套餐现金价" required error={touched ? errors.price : ""}>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">¥</span>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="请输入套餐现金价"
+                  className="pl-7"
+                />
+              </div>
             </FormRow>
-            <FormRow label="启用状态">
+            <FormRow label="状态">
               <div className="flex items-center gap-2 h-10">
                 <button
                   type="button"
@@ -876,178 +689,11 @@ function BundleFormDialog({ open, onOpenChange, editing, nextCode, categories, b
               </div>
             </FormRow>
           </div>
-
-          <FormRow
-            label="套餐描述"
-            extra={<span className="text-xs text-muted-foreground tabular-nums">{description.length} / {DESC_MAX}</span>}
-          >
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value.slice(0, DESC_MAX))}
-              placeholder="补充说明套餐的适用场景与权益要点"
-              rows={2}
-              maxLength={DESC_MAX}
-            />
-          </FormRow>
-
-          <FormRow label="套餐项目设置" required error={touched ? errors.items : ""}>
-            <div className="mb-2 rounded-md border border-dashed bg-muted/30 px-3 py-2 text-xs text-muted-foreground leading-relaxed">
-              说明：每条项目仅可选择「通用积分」或「专业积分」其中之一。如需同时发放两类积分，请添加多条项目分别配置，套餐将自动标记为「混合积分」套餐。
-            </div>
-            <div className="rounded-lg border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/40">
-                    <TableHead className="w-14">项</TableHead>
-                    <TableHead className="w-32 whitespace-nowrap">目标类型</TableHead>
-                    <TableHead className="min-w-[200px]">目标对象</TableHead>
-                    <TableHead className="w-32 whitespace-nowrap">积分类型</TableHead>
-                    <TableHead className="w-32 whitespace-nowrap">基础积分</TableHead>
-                    <TableHead className="w-32 whitespace-nowrap">赠送积分</TableHead>
-                    <TableHead className="text-right whitespace-nowrap">小计</TableHead>
-                    <TableHead className="w-12"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((it, idx) => {
-                    const sub = (Number(it.basePoints) || 0) + (Number(it.bonusPoints) || 0);
-                    return (
-                      <TableRow key={it.id}>
-                        <TableCell className="font-medium text-primary">#{idx + 1}</TableCell>
-                        <TableCell>
-                          <Select
-                            value={it.targetType}
-                            onValueChange={(v) => updateItem(it.id, { targetType: v as ItemTargetType, targetKey: "" })}
-                          >
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="category">按产品分类</SelectItem>
-                              <SelectItem value="basic">按基础产品</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <Select value={it.targetKey} onValueChange={(v) => updateItem(it.id, { targetKey: v })}>
-                            <SelectTrigger>
-                              <SelectValue placeholder={it.targetType === "category" ? "请选择产品分类" : "请选择基础产品"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {it.targetType === "category" ? (
-                                categories.length === 0 ? (
-                                  <div className="px-3 py-2 text-xs text-muted-foreground">暂无可用分类</div>
-                                ) : (
-                                  categories.map((c) => (
-                                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                                  ))
-                                )
-                              ) : basicProducts.length === 0 ? (
-                                <div className="px-3 py-2 text-xs text-muted-foreground">暂无可用基础产品</div>
-                              ) : (
-                                basicProducts.map((b) => (
-                                  <SelectItem key={b.id} value={b.id}>{b.name} ({b.id})</SelectItem>
-                                ))
-                              )}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <Select value={it.pointsType} onValueChange={(v) => updateItem(it.id, { pointsType: v as PointsType })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="general">通用积分</SelectItem>
-                              <SelectItem value="professional">专业积分</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min={0}
-                            step={1}
-                            value={it.basePoints}
-                            onChange={(e) => updateItem(it.id, { basePoints: e.target.value })}
-                            placeholder="0"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min={0}
-                            step={1}
-                            value={it.bonusPoints}
-                            onChange={(e) => updateItem(it.id, { bonusPoints: e.target.value })}
-                            placeholder="0"
-                          />
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums font-medium">
-                          {sub.toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="text-muted-foreground hover:text-destructive"
-                            disabled={items.length === 1}
-                            onClick={() => removeItem(it.id)}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-              <div className="border-t bg-muted/20 p-3">
-                <Button type="button" variant="outline" size="sm" onClick={addRow}>
-                  <Plus className="h-4 w-4" /> 添加项目
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3">
-              <SumTile label="通用·基础" value={totals.baseGeneral} tone="general" />
-              <SumTile label="通用·赠送" value={totals.bonusGeneral} tone="general" bonus />
-              <SumTile label="专业·基础" value={totals.baseProfessional} tone="pro" />
-              <SumTile label="专业·赠送" value={totals.bonusProfessional} tone="pro" bonus />
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-3">
-              <SumTile label="总基础积分" value={totals.totalBase} highlight />
-              <SumTile label="总赠送积分" value={totals.totalBonus} highlight bonus />
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground flex items-start gap-1.5">
-              <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-              「通用积分」可在全平台已启用产品消费；「专业积分」仅限该项目标对象范围内抵扣。同一（目标 + 积分类型）不可重复设置。
-            </p>
-            {overlapConflicts.length > 0 && (
-              <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50/70 dark:bg-amber-950/20 dark:border-amber-900/60 p-3">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
-                  <div className="space-y-1.5 text-xs">
-                    <div className="font-medium text-amber-800 dark:text-amber-300">
-                      检测到分类与该分类下单品的积分配置存在叠加
-                    </div>
-                    <ul className="list-disc pl-4 space-y-0.5 text-amber-700 dark:text-amber-400/90">
-                      {overlapConflicts.map((c, i) => (
-                        <li key={i}>
-                          已设置分类「{c.category}」的{c.pointsType === "general" ? "通用" : "专业"}积分，
-                          又为其下基础产品「{c.productName}（{c.productId}）」单独配置同类型积分，将形成叠加发放。
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="text-amber-700/90 dark:text-amber-400/80">
-                      请确认这是有意的"分类通用额度 + 单品加码"设计；若为配置重复，请删除其中一项。
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </FormRow>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
-          <Button onClick={submit}>保存</Button>
+          <Button onClick={submit}>确定</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -1074,19 +720,9 @@ function FormRow({
   );
 }
 
-function SumTile({
-  label, value, tone, bonus, highlight,
-}: {
-  label: string; value: number; tone?: "general" | "pro"; bonus?: boolean; highlight?: boolean;
-}) {
-  const toneCls =
-    tone === "general"
-      ? "border-blue-200 bg-blue-50/60 dark:bg-blue-950/20 dark:border-blue-900"
-      : tone === "pro"
-      ? "border-purple-200 bg-purple-50/60 dark:bg-purple-950/20 dark:border-purple-900"
-      : "border-primary/30 bg-primary/5";
+function SumTile({ label, value, bonus }: { label: string; value: number; bonus?: boolean }) {
   return (
-    <div className={`rounded-lg border px-3 py-2 ${highlight ? "bg-primary/5 border-primary/30" : toneCls}`}>
+    <div className="rounded-lg border bg-primary/5 border-primary/20 px-3 py-2">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className={`mt-0.5 text-base font-semibold tabular-nums ${bonus ? "text-emerald-600 dark:text-emerald-400" : ""}`}>
         {bonus && value > 0 ? "+" : ""}
