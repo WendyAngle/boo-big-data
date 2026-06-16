@@ -653,6 +653,7 @@ function RechargeFormDialog({
   const [name, setName] = useState("");
   const [targetType, setTargetType] = useState<TargetType>("category");
   const [targetKey, setTargetKey] = useState("");
+  const [pointsMode, setPointsMode] = useState<PointsMode>("mixed");
   const [remark, setRemark] = useState("");
   const [enabled, setEnabled] = useState(true);
   const [tiers, setTiers] = useState<Tier[]>([newTier()]);
@@ -676,6 +677,7 @@ function RechargeFormDialog({
       setName(editing?.name ?? "");
       setTargetType(editing?.targetType ?? "category");
       setTargetKey(editing?.targetKey ?? "");
+      setPointsMode(editing?.pointsMode ?? "mixed");
       setRemark(editing?.remark ?? "");
       setEnabled(editing ? editing.enabled : true);
       setTiers(editing?.tiers.length ? editing.tiers : [newTier()]);
@@ -689,15 +691,26 @@ function RechargeFormDialog({
     setTargetKey("");
   };
 
+  const needGeneral = pointsMode === "general" || pointsMode === "mixed";
+  const needPro = pointsMode === "professional" || pointsMode === "mixed";
+
   const tierErr = (t: Tier): string => {
     if (t.minAmount === "" || Number.isNaN(Number(t.minAmount)) || Number(t.minAmount) < 0)
       return "请输入有效起始金额";
     if (t.maxAmount === "" || Number.isNaN(Number(t.maxAmount)) || Number(t.maxAmount) <= Number(t.minAmount))
       return "止金额需大于起金额";
-    if (t.pointRate === "" || !/^\d+(\.\d+)?$/.test(t.pointRate) || Number(t.pointRate) <= 0)
-      return "请输入有效的转换比例";
-    if (t.bonusRate === "" || Number.isNaN(Number(t.bonusRate)) || Number(t.bonusRate) < 0)
-      return "请输入有效的赠送比例";
+    if (needGeneral) {
+      if (t.generalRate === "" || !/^\d+(\.\d+)?$/.test(t.generalRate) || Number(t.generalRate) <= 0)
+        return "请输入有效的通用积分转换比例";
+      if (t.generalBonus === "" || Number.isNaN(Number(t.generalBonus)) || Number(t.generalBonus) < 0)
+        return "请输入有效的通用积分赠送比例";
+    }
+    if (needPro) {
+      if (t.proRate === "" || !/^\d+(\.\d+)?$/.test(t.proRate) || Number(t.proRate) <= 0)
+        return "请输入有效的专业积分转换比例";
+      if (t.proBonus === "" || Number.isNaN(Number(t.proBonus)) || Number(t.proBonus) < 0)
+        return "请输入有效的专业积分赠送比例";
+    }
     return "";
   };
 
@@ -708,7 +721,8 @@ function RechargeFormDialog({
       if (e) return e;
     }
     return "";
-  }, [tiers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tiers, pointsMode]);
 
   const errors = {
     name: !name.trim() ? "请输入充值产品名称" : "",
@@ -723,6 +737,7 @@ function RechargeFormDialog({
       name: name.trim(),
       targetType,
       targetKey,
+      pointsMode,
       remark: remark.trim(),
       enabled,
       tiers: tiers.map((t) => ({ ...t })),
