@@ -183,6 +183,94 @@ function buildMock(): RechargeRow[] {
 
 const MOCK = buildMock();
 
+// === 新增充值 向导 · 租户模拟数据 ===
+interface WizardTenant {
+  id: string;
+  name: string;
+  contact: string;
+  contactPhone: string;
+  apps: AppRef[];
+  generalBalance: number;
+  proBalance: number;
+  partner: string;
+  enabled: boolean;
+}
+
+const W_CONTACTS = ["li", "jack", "rose", "刘德华", "刘一", "张伟", "王芳", "陈晓"];
+const W_PARTNERS = ["星火短剧工作室", "广东分公司总代", "华东渠道商", "西南渠道商", "直营"];
+function buildWizardTenants(): WizardTenant[] {
+  return Array.from({ length: 22 }).map((_, i) => {
+    const name = TENANT_NAMES[i % TENANT_NAMES.length] + (i >= TENANT_NAMES.length ? `(${i})` : "");
+    const phone = "1" + String(38452487968 + i * 731).slice(0, 10);
+    const appCount = (i % 3) + 1;
+    const apps: AppRef[] = [];
+    for (let k = 0; k < appCount; k++) apps.push(APPS[(i + k) % APPS.length]);
+    const g = ((i * 1373) % 90 - 10) * 1000;
+    const p = ((i * 911) % 50 + 2) * 1000;
+    return {
+      id: `PT${String(202600 + i + 1).padStart(6, "0")}`,
+      name,
+      contact: W_CONTACTS[i % W_CONTACTS.length],
+      contactPhone: phone,
+      apps,
+      generalBalance: g,
+      proBalance: p,
+      partner: W_PARTNERS[i % W_PARTNERS.length],
+      enabled: i % 7 !== 0,
+    };
+  });
+}
+
+function Stepper({
+  current,
+  steps,
+}: {
+  current: 1 | 2 | 3;
+  steps: { label: string; icon: typeof User }[];
+}) {
+  return (
+    <div className="flex items-center justify-center gap-2 max-w-[640px] mx-auto">
+      {steps.map((s, idx) => {
+        const stepNum = (idx + 1) as 1 | 2 | 3;
+        const done = current > stepNum;
+        const active = current === stepNum;
+        const Icon = s.icon;
+        return (
+          <div key={s.label} className="flex items-center flex-1">
+            <div className="flex flex-col items-center gap-1.5">
+              <div
+                className={`h-10 w-10 rounded-full flex items-center justify-center transition-colors ${
+                  active
+                    ? "bg-primary text-primary-foreground shadow-md ring-4 ring-primary/15"
+                    : done
+                      ? "bg-primary/15 text-primary"
+                      : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {done ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+              </div>
+              <span
+                className={`text-xs ${
+                  active ? "text-primary font-medium" : done ? "text-foreground" : "text-muted-foreground"
+                }`}
+              >
+                {s.label}
+              </span>
+            </div>
+            {idx < steps.length - 1 && (
+              <div
+                className={`flex-1 h-px mx-2 -mt-5 ${
+                  current > stepNum ? "bg-primary/40" : "bg-border"
+                }`}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function RechargePage() {
   const today = new Date();
   const monthAgo = new Date(today.getTime() - 30 * 24 * 3600 * 1000);
