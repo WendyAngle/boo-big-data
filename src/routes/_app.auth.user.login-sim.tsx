@@ -13,18 +13,18 @@ export const Route = createFileRoute("/_app/auth/user/login-sim")({
   component: LoginSimPage,
 });
 
-type TenantType = "personal" | "enterprise";
+type TenantType = "enterprise";
 type AuthTiming = "first_login" | "sensitive";
 
 const FAIL_REASON = "证件信息与权威库比对不一致";
 
 function LoginSimPage() {
   const navigate = useNavigate();
-  const [tenantType, setTenantType] = useState<TenantType>("personal");
+  const [tenantType, setTenantType] = useState<TenantType>("enterprise");
   const [timing, setTiming] = useState<AuthTiming>("first_login");
 
   const goAuthPage = () => {
-    navigate({ to: tenantType === "personal" ? "/auth/user/personal" : "/auth/user/enterprise" });
+    navigate({ to: "/auth/user/enterprise" });
   };
 
   const handlePending = (currentScene: AuthTiming) => {
@@ -81,7 +81,6 @@ function LoginSimPage() {
             <Select value={tenantType} onValueChange={(v) => setTenantType(v as TenantType)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="personal">个人租户</SelectItem>
                 <SelectItem value="enterprise">企业租户</SelectItem>
               </SelectContent>
             </Select>
@@ -111,8 +110,7 @@ function LoginSimPage() {
               <Badge variant="outline" className="border-amber-500/50 text-amber-600">Pending</Badge>
             </div>
             <CardDescription>
-              当前操作与管理端配置的认证时机匹配时，提示并跳转至
-              {tenantType === "personal" ? "个人" : "企业"}实名认证页。
+              当前操作与管理端配置的认证时机匹配时，提示并跳转至企业实名认证页。
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
@@ -153,7 +151,7 @@ function LoginSimPage() {
               <Badge variant="destructive">Failed</Badge>
             </div>
             <CardDescription>
-              提示失败原因并跳转至{tenantType === "personal" ? "个人" : "企业"}实名认证页重新认证。
+              提示失败原因并跳转至企业实名认证页重新认证。
             </CardDescription>
           </CardHeader>
           <CardContent>
