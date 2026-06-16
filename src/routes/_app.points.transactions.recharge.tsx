@@ -198,21 +198,23 @@ function RechargePage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [detailRow, setDetailRow] = useState<RechargeRow | null>(null);
 
-  // 新增充值 表单
-  const [form, setForm] = useState({
-    customer: "",
-    type: "积分充值" as RechargeType,
-    product: PRODUCTS_RECHARGE[0],
-    amount: 100,
-    appIds: [] as string[],
-    remark: "",
-  });
+  // 新增充值 多步向导
+  const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
+  const [pickedTenantId, setPickedTenantId] = useState<string>("");
+  const [tenantKw, setTenantKw] = useState("");
+  const [tenantStatusF, setTenantStatusF] = useState("all");
+  const [tenantPage, setTenantPage] = useState(1);
+  const TENANT_PAGE_SIZE = 5;
+  const [wizardType, setWizardType] = useState<RechargeType>("积分充值");
+  const [wizardProduct, setWizardProduct] = useState<string>(PRODUCTS_RECHARGE[0]);
+  const [wizardAmount, setWizardAmount] = useState<number>(100);
+  const [wizardRemark, setWizardRemark] = useState("");
 
   const filtered = useMemo(() => {
     return MOCK.filter((r) => {
       if (applied.kw) {
         const k = applied.kw.toLowerCase();
-        if (!r.customer.toLowerCase().includes(k) && !r.id.toLowerCase().includes(k)) return false;
+        if (!r.tenant.toLowerCase().includes(k) && !r.id.toLowerCase().includes(k)) return false;
       }
       if (applied.type !== "all" && r.type !== applied.type) return false;
       return true;
@@ -252,33 +254,74 @@ function RechargePage() {
     setPage(1);
   };
 
-  const productOptions = form.type === "积分充值" ? PRODUCTS_RECHARGE : PRODUCTS_BUNDLE;
+  const productOptions = wizardType === "积分充值" ? PRODUCTS_RECHARGE : PRODUCTS_BUNDLE;
 
+  // 模拟租户列表 (与「积分管理系统 · 租户管理」字段一致)
+  const WIZARD_TENANTS = useMemo(() => buildWizardTenants(), []);
+
+  const tenantFiltered = useMemo(() => {
+    return WIZARD_TENANTS.filter((t) => {
+      if (tenantKw) {
+        const k = tenantKw.toLowerCase();
+        if (
+          !t.name.toLowerCase().includes(k) &&
+          !t.id.toLowerCase().includes(k) &&
+          !t.contactPhone.includes(k)
+        )
+          return false;
+      }
+      if (tenantStatusF !== "all") {
+        const enabled = tenantStatusF === "enabled";
+        if (t.enabled !== enabled) return false;
+      }
+      return true;
+    });
+  }, [WIZARD_TENANTS, tenantKw, tenantStatusF]);
+  const tenantTotal = tenantFiltered.length;
+  const tenantPageData = tenantFiltered.slice(
+    (tenantPage - 1) * TENANT_PAGE_SIZE,
+    tenantPage * TENANT_PAGE_SIZE,
+  );
+  const pickedTenant = WIZARD_TENANTS.find((t) => t.id === pickedTenantId) || null;
+
+  const openCreate = () => {
+    setWizardStep(1);
+    setPickedTenantId("");
+    setTenantKw("");
+    setTenantStatusF("all");
+    setTenantPage(1);
+    setWizardType("积分充值");
+    setWizardProduct(PRODUCTS_RECHARGE[0]);
+    setWizardAmount(100);
+    setWizardRemark("");
+    setCreateOpen(true);
+  };
+
+  const nextStep = () => {
+    if (wizardStep === 1) {
+      if (!pickedTenantId) {
+        toast.error("请选择一个租户");
+        return;
+      }
+      setWizardStep(2);
+    } else if (wizardStep === 2) {
+      if (!wizardAmount || wizardAmount <= 0) {
+        toast.error("请输入有效充值金额");
+        return;
+      }
+      setWizardStep(3);
+    }
+  };
+  const prevStep = () => {
+    if (wizardStep === 2) setWizardStep(1);
+    else if (wizardStep === 3) setWizardStep(2);
+  };
   const submitCreate = () => {
-    if (!form.customer) {
-      toast.error("请选择客户");
-      return;
-    }
-    if (form.appIds.length === 0) {
-      toast.error("请至少选择一个关联应用");
-      return;
-    }
-    if (!form.amount || form.amount <= 0) {
-      toast.error("请输入有效充值金额");
-      return;
-    }
+    if (!pickedTenant) return;
     toast.success(
-      `已为「${form.customer}」创建${form.type}订单 ¥${form.amount.toLocaleString()}`,
+      `已为「${pickedTenant.name}」创建${wizardType}订单 ¥${wizardAmount.toLocaleString()}`,
     );
     setCreateOpen(false);
-    setForm({
-      customer: "",
-      type: "积分充值",
-      product: PRODUCTS_RECHARGE[0],
-      amount: 100,
-      appIds: [],
-      remark: "",
-    });
   };
 
   return (
