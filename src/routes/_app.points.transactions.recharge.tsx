@@ -16,6 +16,11 @@ import {
   Eye,
   X,
   ArrowLeftRight,
+  User,
+  ShoppingCart,
+  CheckCircle2,
+  Check,
+  ChevronLeft,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
