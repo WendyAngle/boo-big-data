@@ -814,7 +814,13 @@ function RechargePage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/40">
-                        <TableHead className="w-10"></TableHead>
+                        <TableHead className="w-10">
+                          <Checkbox
+                            checked={pageAllChecked ? true : pageSomeChecked ? "indeterminate" : false}
+                            onCheckedChange={(v) => togglePageAll(v === true)}
+                            aria-label="全选当前页"
+                          />
+                        </TableHead>
                         <TableHead className="whitespace-nowrap">租户编号</TableHead>
                         <TableHead className="whitespace-nowrap">租户名称</TableHead>
                         <TableHead className="whitespace-nowrap">联系信息</TableHead>
@@ -833,23 +839,21 @@ function RechargePage() {
                         </TableRow>
                       ) : (
                         tenantPageData.map((t) => {
-                          const picked = pickedTenantId === t.id;
+                          const picked = pickedTenantIds.includes(t.id);
                           const balance = t.generalBalance + t.proBalance;
                           return (
                             <TableRow
                               key={t.id}
-                              onClick={() => setPickedTenantId(t.id)}
+                              onClick={() => toggleTenant(t.id, !picked)}
                               data-state={picked ? "selected" : undefined}
                               className={`cursor-pointer ${picked ? "bg-primary/5" : "hover:bg-accent/30"}`}
                             >
-                              <TableCell>
-                                <span
-                                  className={`inline-flex h-4 w-4 items-center justify-center rounded-full border ${
-                                    picked ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
-                                  }`}
-                                >
-                                  {picked && <Check className="h-3 w-3" />}
-                                </span>
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                <Checkbox
+                                  checked={picked}
+                                  onCheckedChange={(v) => toggleTenant(t.id, v === true)}
+                                  aria-label={`选择 ${t.name}`}
+                                />
                               </TableCell>
                               <TableCell className="font-mono text-xs whitespace-nowrap">{t.id}</TableCell>
                               <TableCell className="font-medium whitespace-nowrap">{t.name}</TableCell>
