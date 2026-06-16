@@ -21,7 +21,6 @@ import { Route as AppAuthUserLoginSimRouteImport } from './routes/_app.auth.user
 import { Route as AppAuthUserEnterpriseRouteImport } from './routes/_app.auth.user.enterprise'
 import { Route as AppAuthAdminUsersRouteImport } from './routes/_app.auth.admin.users'
 import { Route as AppAuthAdminTenantsRouteImport } from './routes/_app.auth.admin.tenants'
-import { Route as AppAuthAdminLevelsRouteImport } from './routes/_app.auth.admin.levels'
 import { Route as AppAuthAdminAuditRouteImport } from './routes/_app.auth.admin.audit'
 
 const AppRoute = AppRouteImport.update({
@@ -83,11 +82,6 @@ const AppAuthAdminTenantsRoute = AppAuthAdminTenantsRouteImport.update({
   path: '/tenants',
   getParentRoute: () => AppAuthAdminRoute,
 } as any)
-const AppAuthAdminLevelsRoute = AppAuthAdminLevelsRouteImport.update({
-  id: '/levels',
-  path: '/levels',
-  getParentRoute: () => AppAuthAdminRoute,
-} as any)
 const AppAuthAdminAuditRoute = AppAuthAdminAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
@@ -101,7 +95,6 @@ export interface FileRoutesByFullPath {
   '/points/strategy': typeof AppPointsStrategyRoute
   '/outreach/': typeof AppOutreachIndexRoute
   '/auth/admin/audit': typeof AppAuthAdminAuditRoute
-  '/auth/admin/levels': typeof AppAuthAdminLevelsRoute
   '/auth/admin/tenants': typeof AppAuthAdminTenantsRoute
   '/auth/admin/users': typeof AppAuthAdminUsersRoute
   '/auth/user/enterprise': typeof AppAuthUserEnterpriseRoute
@@ -115,7 +108,6 @@ export interface FileRoutesByTo {
   '/points/strategy': typeof AppPointsStrategyRoute
   '/outreach': typeof AppOutreachIndexRoute
   '/auth/admin/audit': typeof AppAuthAdminAuditRoute
-  '/auth/admin/levels': typeof AppAuthAdminLevelsRoute
   '/auth/admin/tenants': typeof AppAuthAdminTenantsRoute
   '/auth/admin/users': typeof AppAuthAdminUsersRoute
   '/auth/user/enterprise': typeof AppAuthUserEnterpriseRoute
@@ -132,7 +124,6 @@ export interface FileRoutesById {
   '/_app/points/strategy': typeof AppPointsStrategyRoute
   '/_app/outreach/': typeof AppOutreachIndexRoute
   '/_app/auth/admin/audit': typeof AppAuthAdminAuditRoute
-  '/_app/auth/admin/levels': typeof AppAuthAdminLevelsRoute
   '/_app/auth/admin/tenants': typeof AppAuthAdminTenantsRoute
   '/_app/auth/admin/users': typeof AppAuthAdminUsersRoute
   '/_app/auth/user/enterprise': typeof AppAuthUserEnterpriseRoute
@@ -149,7 +140,6 @@ export interface FileRouteTypes {
     | '/points/strategy'
     | '/outreach/'
     | '/auth/admin/audit'
-    | '/auth/admin/levels'
     | '/auth/admin/tenants'
     | '/auth/admin/users'
     | '/auth/user/enterprise'
@@ -163,7 +153,6 @@ export interface FileRouteTypes {
     | '/points/strategy'
     | '/outreach'
     | '/auth/admin/audit'
-    | '/auth/admin/levels'
     | '/auth/admin/tenants'
     | '/auth/admin/users'
     | '/auth/user/enterprise'
@@ -179,7 +168,6 @@ export interface FileRouteTypes {
     | '/_app/points/strategy'
     | '/_app/outreach/'
     | '/_app/auth/admin/audit'
-    | '/_app/auth/admin/levels'
     | '/_app/auth/admin/tenants'
     | '/_app/auth/admin/users'
     | '/_app/auth/user/enterprise'
@@ -278,13 +266,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthAdminTenantsRouteImport
       parentRoute: typeof AppAuthAdminRoute
     }
-    '/_app/auth/admin/levels': {
-      id: '/_app/auth/admin/levels'
-      path: '/levels'
-      fullPath: '/auth/admin/levels'
-      preLoaderRoute: typeof AppAuthAdminLevelsRouteImport
-      parentRoute: typeof AppAuthAdminRoute
-    }
     '/_app/auth/admin/audit': {
       id: '/_app/auth/admin/audit'
       path: '/audit'
@@ -297,7 +278,6 @@ declare module '@tanstack/react-router' {
 
 interface AppAuthAdminRouteChildren {
   AppAuthAdminAuditRoute: typeof AppAuthAdminAuditRoute
-  AppAuthAdminLevelsRoute: typeof AppAuthAdminLevelsRoute
   AppAuthAdminTenantsRoute: typeof AppAuthAdminTenantsRoute
   AppAuthAdminUsersRoute: typeof AppAuthAdminUsersRoute
   AppAuthAdminIndexRoute: typeof AppAuthAdminIndexRoute
@@ -305,7 +285,6 @@ interface AppAuthAdminRouteChildren {
 
 const AppAuthAdminRouteChildren: AppAuthAdminRouteChildren = {
   AppAuthAdminAuditRoute: AppAuthAdminAuditRoute,
-  AppAuthAdminLevelsRoute: AppAuthAdminLevelsRoute,
   AppAuthAdminTenantsRoute: AppAuthAdminTenantsRoute,
   AppAuthAdminUsersRoute: AppAuthAdminUsersRoute,
   AppAuthAdminIndexRoute: AppAuthAdminIndexRoute,
