@@ -720,18 +720,43 @@ function RechargePage() {
                   </Badge>
                 }
               />
-              <DetailItem label="产品名称" value={detailRow.product} />
+              <DetailItem
+                label="产品名称"
+                value={
+                  <div className="flex flex-col">
+                    <span>{detailRow.product}</span>
+                    <span className="font-mono text-[11px] text-muted-foreground">
+                      {detailRow.productId} · {POINTS_MODE_LABEL[detailRow.pointsMode]}
+                    </span>
+                  </div>
+                }
+              />
               <DetailItem
                 label="充值金额"
                 value={<span className="font-semibold text-rose-600">¥{detailRow.amount.toLocaleString()}</span>}
               />
-              <DetailItem label="基础积分" value={detailRow.basicPoints.toLocaleString()} />
               <DetailItem
-                label="赠送积分"
+                label="基础积分(通用 / 专业)"
                 value={
-                  <span className={detailRow.giftPoints > 0 ? "text-emerald-600 font-medium" : ""}>
-                    +{detailRow.giftPoints.toLocaleString()}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{detailRow.basicPoints.toLocaleString()}</span>
+                    <span className="text-[11px] text-muted-foreground">
+                      通用 {detailRow.generalBasic.toLocaleString()} · 专业 {detailRow.proBasic.toLocaleString()}
+                    </span>
+                  </div>
+                }
+              />
+              <DetailItem
+                label="赠送积分(通用 / 专业)"
+                value={
+                  <div className="flex flex-col">
+                    <span className={detailRow.giftPoints > 0 ? "text-emerald-600 font-medium" : ""}>
+                      +{detailRow.giftPoints.toLocaleString()}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      通用 +{detailRow.generalGift.toLocaleString()} · 专业 +{detailRow.proGift.toLocaleString()}
+                    </span>
+                  </div>
                 }
               />
               <DetailItem label="积分到期日" value={<span className="font-mono text-xs">{detailRow.expireAt}</span>} />
