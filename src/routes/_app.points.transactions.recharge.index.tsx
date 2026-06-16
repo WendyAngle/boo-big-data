@@ -55,7 +55,7 @@ import {
 import { ListPagination } from "@/components/ListPagination";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_app/points/transactions/recharge")({
+export const Route = createFileRoute("/_app/points/transactions/recharge/")({
   head: () => ({ meta: [{ title: "业务交易 · 充值管理 | Boo数据平台" }] }),
   component: RechargePage,
 });
