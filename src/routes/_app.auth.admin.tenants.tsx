@@ -213,7 +213,7 @@ function authFailReason(id: string) {
 
 function TenantsPage() {
   const [keyword, setKeyword] = useState("");
-  const [type, setType] = useState("all");
+  // 类型筛选已移除（当前仅有"企业用户"一种类型）
   const [industry, setIndustry] = useState("all");
   const [auth, setAuth] = useState("all");
   const [coop, setCoop] = useState("all");
@@ -245,13 +245,12 @@ function TenantsPage() {
   const filtered = useMemo(() => {
     return data.filter((t) => {
       if (keyword && !(`${t.id} ${t.name}`.toLowerCase().includes(keyword.toLowerCase()))) return false;
-      if (type !== "all" && t.type !== type) return false;
       if (industry !== "all" && t.industry !== industry) return false;
       if (auth !== "all" && t.authStatus !== auth) return false;
       if (coop !== "all" && t.coopStatus !== coop) return false;
       return true;
     });
-  }, [data, keyword, type, industry, auth, coop]);
+  }, [data, keyword, industry, auth, coop]);
 
   const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -444,13 +443,6 @@ function TenantsPage() {
               className="pl-9"
             />
           </div>
-          <Select value={type} onValueChange={(v) => { setType(v); setPage(1); }}>
-            <SelectTrigger><SelectValue placeholder="全部类型" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部类型</SelectItem>
-              <SelectItem value="企业用户">企业用户</SelectItem>
-            </SelectContent>
-          </Select>
           <Select value={industry} onValueChange={(v) => { setIndustry(v); setPage(1); }}>
             <SelectTrigger><SelectValue placeholder="全部行业" /></SelectTrigger>
             <SelectContent>
