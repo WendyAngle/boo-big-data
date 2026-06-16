@@ -609,26 +609,11 @@ function AuditPage() {
 
       {/* Filter */}
       <Card className="p-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           <div className="xl:col-span-2 relative">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input value={keyword} onChange={(e) => { setKeyword(e.target.value); setPage(1); }} placeholder="搜索申请单号 / 租户 / 申请人" className="pl-9" />
           </div>
-          <Select value={subject} onValueChange={(v) => { setSubject(v); setPage(1); }}>
-            <SelectTrigger><SelectValue placeholder="主体类型" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部主体</SelectItem>
-              <SelectItem value="个人">个人</SelectItem>
-              <SelectItem value="企业">企业</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={level} onValueChange={(v) => { setLevel(v); setPage(1); }}>
-            <SelectTrigger><SelectValue placeholder="认证等级" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部等级</SelectItem>
-              {LEVELS.map((l) => <SelectItem key={l} value={l}>{l} · {LEVEL_META[l].title}</SelectItem>)}
-            </SelectContent>
-          </Select>
           <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
             <SelectTrigger><SelectValue placeholder="审核状态" /></SelectTrigger>
             <SelectContent>
