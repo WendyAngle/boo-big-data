@@ -13,7 +13,7 @@ const menu: Root[] = [
     children: [
       {
         label: "用户端",
-        to: "/auth/user",
+        to: "/auth/user/users",
         children: [
           { label: "用户管理", to: "/auth/user/users", icon: UserCog },
           { label: "登录模拟", to: "/auth/user/login-sim", icon: LogIn },
