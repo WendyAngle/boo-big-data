@@ -495,9 +495,13 @@ export function VerificationFlow({ subject }: Props) {
           {/* Step Footer */}
           {step < 3 && (
             <div className="flex items-center justify-between">
-              <Button variant="ghost" onClick={goPrev} disabled={step === (isPersonal ? 1 : 2)}>
-                <ArrowLeft className="h-4 w-4 mr-1" /> 上一步
-              </Button>
+              {isPersonal ? (
+                <Button variant="ghost" onClick={goPrev} disabled={step === 1}>
+                  <ArrowLeft className="h-4 w-4 mr-1" /> 上一步
+                </Button>
+              ) : (
+                <span />
+              )}
               {step < 2 ? (
                 <Button onClick={goNext}>
                   下一步 <ArrowRight className="h-4 w-4 ml-1" />
