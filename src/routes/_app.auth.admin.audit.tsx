@@ -79,7 +79,7 @@ export const Route = createFileRoute("/_app/auth/admin/audit")({
 type Subject = "个人" | "企业";
 type LevelKey = "L1" | "L2" | "L3" | "L4";
 type Status = "待审核" | "审核中" | "已通过" | "已驳回";
-type ProviderId = "platform" | "alipay" | "wechat" | "unionpay" | "cfca";
+type ProviderId = "alipay";
 
 type FieldType = "text" | "id" | "phone" | "upload" | "face" | "bank";
 type FieldDef = { key: string; label: string; type: FieldType };
@@ -152,11 +152,7 @@ const LEVEL_META: Record<LevelKey, { title: string; tag: string; color: string }
 };
 
 const PROVIDERS: Record<ProviderId, { name: string; short: string; color: string; isThirdParty: boolean; channel: string }> = {
-  platform: { name: "平台直连", short: "B", color: "bg-gradient-to-br from-primary to-accent text-primary-foreground", isThirdParty: false, channel: "运营商三要素 / 公安一所" },
   alipay: { name: "支付宝实名", short: "支", color: "bg-blue-500 text-white", isThirdParty: true, channel: "支付宝实人认证 OpenAPI" },
-  wechat: { name: "微信支付实名", short: "微", color: "bg-green-500 text-white", isThirdParty: true, channel: "微信小程序人脸核身" },
-  unionpay: { name: "银联云闪付", short: "银", color: "bg-rose-500 text-white", isThirdParty: true, channel: "银联四要素鉴权" },
-  cfca: { name: "CFCA 数字证书", short: "C", color: "bg-amber-500 text-white", isThirdParty: true, channel: "CFCA 企业证书核验" },
 };
 
 const STATUS_BADGE: Record<Status, string> = {
@@ -204,8 +200,6 @@ const TENANT_NAMES = [
 ];
 const PERSON_NAMES = ["张伟", "王芳", "李娜", "刘洋", "陈思", "杨明", "赵磊", "黄雨", "周凯", "吴婷", "徐航", "孙悦"];
 const LEVELS: LevelKey[] = ["L1", "L2", "L3", "L4"];
-const PROVIDER_IDS: ProviderId[] = ["platform", "alipay", "wechat", "unionpay", "cfca"];
-
 // 与"租户管理"完全一致的租户类型 / 认证状态 / 认证等级派生
 // 索引规则:
 //   subject:   i % 2  -> 0: 个人, 1: 企业
@@ -241,13 +235,8 @@ const tenantAuthToAuditStatus = (t: TenantAuth, idx: number): Status => {
   return "待审核";
 };
 
-// 渠道选择：高等级偏向人脸 / 数字证书渠道
-const pickProvider = (level: LevelKey, idx: number): ProviderId => {
-  if (level === "L3") return idx % 2 === 0 ? "alipay" : "wechat";
-  if (level === "L4") return idx % 2 === 0 ? "wechat" : "cfca";
-  if (level === "L2") return idx % 2 === 0 ? "platform" : "unionpay";
-  return idx % 2 === 0 ? "platform" : "cfca";
-};
+// 渠道：系统已收敛为仅支付宝实名
+const pickProvider = (_level: LevelKey, _idx: number): ProviderId => "alipay";
 
 function maskId(s: string) {
   if (s.length < 8) return s;
@@ -334,7 +323,6 @@ function AuditPage() {
   const [keyword, setKeyword] = useState("");
   const [subject, setSubject] = useState("all");
   const [level, setLevel] = useState("all");
-  const [provider, setProvider] = useState("all");
   const [status, setStatus] = useState("all");
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -354,11 +342,10 @@ function AuditPage() {
       if (keyword && !(`${t.id} ${t.tenantName} ${t.applicantName}`.toLowerCase().includes(keyword.toLowerCase()))) return false;
       if (subject !== "all" && t.subject !== subject) return false;
       if (level !== "all" && t.level !== level) return false;
-      if (provider !== "all" && t.provider !== provider) return false;
       if (status !== "all" && t.status !== status) return false;
       return true;
     });
-  }, [data, keyword, subject, level, provider, status]);
+  }, [data, keyword, subject, level, status]);
 
   const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -377,7 +364,7 @@ function AuditPage() {
   }, [data]);
 
   const reset = () => {
-    setKeyword(""); setSubject("all"); setLevel("all"); setProvider("all"); setStatus("all"); setPage(1);
+    setKeyword(""); setSubject("all"); setLevel("all"); setStatus("all"); setPage(1);
   };
 
   const toggle = (id: string) => {
@@ -623,7 +610,7 @@ function AuditPage() {
 
       {/* Filter */}
       <Card className="p-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
           <div className="xl:col-span-2 relative">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input value={keyword} onChange={(e) => { setKeyword(e.target.value); setPage(1); }} placeholder="搜索申请单号 / 租户 / 申请人" className="pl-9" />
@@ -641,13 +628,6 @@ function AuditPage() {
             <SelectContent>
               <SelectItem value="all">全部等级</SelectItem>
               {LEVELS.map((l) => <SelectItem key={l} value={l}>{l} · {LEVEL_META[l].title}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={provider} onValueChange={(v) => { setProvider(v); setPage(1); }}>
-            <SelectTrigger><SelectValue placeholder="认证渠道" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部渠道</SelectItem>
-              {PROVIDER_IDS.map((p) => <SelectItem key={p} value={p}>{PROVIDERS[p].name}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
