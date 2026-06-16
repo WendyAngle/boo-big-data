@@ -1063,20 +1063,31 @@ function RechargePage() {
                       <div className="space-y-4">
                         <div className="space-y-1.5">
                           <Label>
-                            产品分类 <span className="text-destructive">*</span>
+                            充值产品 <span className="text-destructive">*</span>
                           </Label>
-                          <Select value={rechargeCategoryId} onValueChange={setRechargeCategoryId}>
+                          <Select value={rechargeProductId} onValueChange={setRechargeProductId}>
                             <SelectTrigger>
-                              <SelectValue placeholder="请选择产品分类" />
+                              <SelectValue placeholder="请选择充值产品" />
                             </SelectTrigger>
                             <SelectContent>
-                              {RECHARGE_CATEGORIES.map((c) => (
+                              {RECHARGE_PRODUCTS.map((c) => (
                                 <SelectItem key={c.id} value={c.id}>
+                                  <span className="font-mono text-xs text-muted-foreground mr-2">{c.id}</span>
                                   {c.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
+                          {pickedProduct && (
+                            <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px] text-muted-foreground">
+                              <Badge variant="outline" className="bg-muted/40 border-border text-foreground/80">
+                                {pickedProduct.targetType === "category" ? "分类" : "基础产品"} · {pickedProduct.targetKey}
+                              </Badge>
+                              <Badge variant="outline" className="bg-muted/40 border-border text-foreground/80">
+                                {POINTS_MODE_LABEL[pickedProduct.pointsMode]}
+                              </Badge>
+                            </div>
+                          )}
                         </div>
                         <div className="space-y-1.5">
                           <Label>
@@ -1097,16 +1108,16 @@ function RechargePage() {
                               className="rounded-l-none"
                             />
                           </div>
-                          {pickedCategory && (
+                          {pickedProduct && (
                             <div className="flex flex-wrap gap-1.5 pt-1">
-                              {pickedCategory.tiers.map((t) => (
+                              {pickedProduct.tiers.map((t) => (
                                 <button
                                   key={t.min}
                                   type="button"
                                   onClick={() => setRechargeAmount(t.min)}
                                   className="text-[11px] px-2 py-0.5 rounded border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-colors"
                                 >
-                                  ¥{t.min.toLocaleString()} 起 · +{t.gift}%
+                                  ¥{t.min.toLocaleString()}-¥{t.max.toLocaleString()}
                                 </button>
                               ))}
                             </div>
@@ -1116,7 +1127,7 @@ function RechargePage() {
 
                       {/* 预览面板 */}
                       <div className="rounded-xl border bg-muted/20 p-5 min-h-[280px] flex">
-                        {pickedCategory && rechargeAmt > 0 ? (
+                        {pickedProduct && rechargeAmt > 0 ? (
                           <div className="w-full">
                             <div className="text-center">
                               <div className="text-xs text-muted-foreground">预计获得总积分</div>
@@ -1128,28 +1139,42 @@ function RechargePage() {
                             <div className="text-center">
                               <div className="text-xs text-muted-foreground">匹配阶梯</div>
                               <div className="mt-1 text-lg font-semibold text-rose-600 tabular-nums">
-                                {rechargeTier ? `¥${rechargeTier.min.toLocaleString()}` : "未匹配"}
+                                {rechargeTier ? `¥${rechargeTier.min.toLocaleString()}-¥${rechargeTier.max.toLocaleString()}` : "未匹配"}
                               </div>
                             </div>
                             <div className="mt-5 space-y-2.5 text-sm">
-                              <div className="flex items-center justify-between">
-                                <span className="text-muted-foreground">基础积分转化比例</span>
-                                <span className="text-primary font-medium tabular-nums">
-                                  {pickedCategory.ratio}%
-                                </span>
-                              </div>
+                              {rechargeTier && rechargeTier.generalRate > 0 && (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-muted-foreground">通用积分比例</span>
+                                  <span className="text-primary font-medium tabular-nums">
+                                    1 元 = {rechargeTier.generalRate} 通用积分
+                                  </span>
+                                </div>
+                              )}
+                              {rechargeTier && rechargeTier.proRate > 0 && (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-muted-foreground">专业积分比例</span>
+                                  <span className="text-primary font-medium tabular-nums">
+                                    1 元 = {rechargeTier.proRate} 专业积分
+                                  </span>
+                                </div>
+                              )}
                               <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground">基础积分</span>
                                 <span className="font-semibold tabular-nums">
                                   {rechargeBasic.toLocaleString()}
                                 </span>
                               </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-muted-foreground">积分赠送比例</span>
-                                <span className="text-amber-600 font-medium tabular-nums">
-                                  {rechargeTier ? `${rechargeTier.gift}%` : "0%"}
-                                </span>
-                              </div>
+                              {rechargeTier && (rechargeTier.generalBonus > 0 || rechargeTier.proBonus > 0) && (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-muted-foreground">赠送比例</span>
+                                  <span className="text-amber-600 font-medium tabular-nums">
+                                    {rechargeTier.generalRate > 0 && `通用 +${rechargeTier.generalBonus}%`}
+                                    {rechargeTier.generalRate > 0 && rechargeTier.proRate > 0 && " / "}
+                                    {rechargeTier.proRate > 0 && `专业 +${rechargeTier.proBonus}%`}
+                                  </span>
+                                </div>
+                              )}
                               <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground">赠送积分</span>
                                 <span className="text-emerald-600 font-medium tabular-nums">
@@ -1161,7 +1186,7 @@ function RechargePage() {
                         ) : (
                           <div className="m-auto text-center text-muted-foreground">
                             <ShoppingCart className="h-10 w-10 mx-auto opacity-40" />
-                            <div className="mt-3 text-sm">请选择产品分类并输入充值金额</div>
+                            <div className="mt-3 text-sm">请选择充值产品并输入充值金额</div>
                           </div>
                         )}
                       </div>
