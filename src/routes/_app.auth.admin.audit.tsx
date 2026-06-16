@@ -221,7 +221,7 @@ const TENANTS: TenantRef[] = Array.from({ length: 47 }).map((_, i) => {
   return {
     id: `T${String(202600 + i).padStart(6, "0")}`,
     name: `${TENANT_NAMES[i % TENANT_NAMES.length]}${i > 9 ? `(${i})` : ""}`,
-    subject: i % 2 === 0 ? "个人" : "企业",
+    subject: "企业",
     tenantAuth,
     level: tenantAuth === "待认证" ? undefined : LEVELS[i % 4],
   };
@@ -356,7 +356,6 @@ function AuditPage() {
       const rows = data.filter((d) => d.status === s);
       return {
         total: rows.length,
-        personal: rows.filter((d) => d.subject === "个人").length,
         enterprise: rows.filter((d) => d.subject === "企业").length,
       };
     };
