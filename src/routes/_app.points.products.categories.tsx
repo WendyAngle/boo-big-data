@@ -1,0 +1,431 @@
+import { useEffect, useMemo, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import {
+  FolderTree,
+  ChevronRight,
+  Search,
+  Plus,
+  RotateCcw,
+  Pencil,
+  Trash2,
+} from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ListPagination } from "@/components/ListPagination";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/_app/points/products/categories")({
+  head: () => ({ meta: [{ title: "产品管理 · 产品分类 | Boo数据平台" }] }),
+  component: CategoriesPage,
+});
+
+interface Category {
+  id: string;
+  name: string;
+  remark: string;
+  createdAt: string;
+}
+
+const REMARK_MAX = 200;
+
+function genCode(seq: number) {
+  return `PC${String(seq).padStart(8, "0")}`;
+}
+
+const INITIAL_NAMES = [
+  "AI内容创作",
+  "AI智能获客",
+  "AI贸易数据",
+  "AI视频制作",
+  "AI客服助手",
+  "数据洞察",
+];
+const INITIAL_REMARKS = [
+  "面向内容团队的AI写作、文案与素材生成能力。",
+  "基于大模型的销售线索挖掘与精准触达。",
+  "覆盖全球进出口贸易的数据查询与分析。",
+  "AI短视频生成与剪辑相关产品集合。",
+  "智能问答、工单分流等客服场景产品。",
+  "面向业务分析的看板、报表与洞察服务。",
+];
+
+const INITIAL_DATA: Category[] = INITIAL_NAMES.map((name, i) => ({
+  id: genCode(i + 1),
+  name,
+  remark: INITIAL_REMARKS[i] ?? "",
+  createdAt: `2026-0${(i % 6) + 1}-${String(((i * 7) % 27) + 1).padStart(2, "0")}`,
+}));
+
+function CategoriesPage() {
+  const [data, setData] = useState<Category[]>(INITIAL_DATA);
+  const [seq, setSeq] = useState(INITIAL_DATA.length);
+
+  const [nameKw, setNameKw] = useState("");
+  const [codeKw, setCodeKw] = useState("");
+  const [appliedName, setAppliedName] = useState("");
+  const [appliedCode, setAppliedCode] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<Category | null>(null);
+  const [delTarget, setDelTarget] = useState<Category | null>(null);
+
+  const filtered = useMemo(() => {
+    return data.filter((c) => {
+      if (appliedName && !c.name.toLowerCase().includes(appliedName.toLowerCase())) return false;
+      if (appliedCode && !c.id.toLowerCase().includes(appliedCode.toLowerCase())) return false;
+      return true;
+    });
+  }, [data, appliedName, appliedCode]);
+
+  const total = filtered.length;
+  const pageData = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const applySearch = () => {
+    setAppliedName(nameKw.trim());
+    setAppliedCode(codeKw.trim());
+    setPage(1);
+  };
+  const reset = () => {
+    setNameKw("");
+    setCodeKw("");
+    setAppliedName("");
+    setAppliedCode("");
+    setPage(1);
+  };
+
+  return (
+    <div className="p-8 space-y-6">
+      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <span>积分管理系统</span>
+        <ChevronRight className="h-3.5 w-3.5" />
+        <span>产品管理</span>
+        <ChevronRight className="h-3.5 w-3.5" />
+        <span className="text-foreground font-medium">产品分类</span>
+      </div>
+
+      <section
+        className="relative overflow-hidden rounded-2xl p-6 text-white"
+        style={{ background: "var(--gradient-hero)" }}
+      >
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <FolderTree className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">产品分类</h1>
+            <p className="text-white/85 text-sm mt-0.5">
+              统一维护积分体系下的产品分类,编码由系统自动生成
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <Card className="p-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="relative">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={nameKw}
+              onChange={(e) => setNameKw(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && applySearch()}
+              placeholder="请输入产品分类名称"
+              className="pl-9"
+            />
+          </div>
+          <div className="relative">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={codeKw}
+              onChange={(e) => setCodeKw(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && applySearch()}
+              placeholder="请输入产品分类编码"
+              className="pl-9 font-mono"
+            />
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="outline" onClick={reset}>
+            <RotateCcw className="h-4 w-4" /> 重置
+          </Button>
+          <Button onClick={applySearch}>
+            <Search className="h-4 w-4" /> 搜索
+          </Button>
+        </div>
+      </Card>
+
+      <Card className="p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div className="text-sm text-muted-foreground">
+            共 <span className="font-semibold text-foreground">{total}</span> 条产品分类
+          </div>
+          <Button
+            onClick={() => {
+              setEditing(null);
+              setFormOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4" /> 新增
+          </Button>
+        </div>
+
+        <div className="rounded-lg border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40">
+                <TableHead>产品分类名称</TableHead>
+                <TableHead className="whitespace-nowrap">产品分类编码</TableHead>
+                <TableHead>备注</TableHead>
+                <TableHead className="whitespace-nowrap">创建时间</TableHead>
+                <TableHead className="text-right whitespace-nowrap w-32">操作</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pageData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                    暂无匹配的产品分类
+                  </TableCell>
+                </TableRow>
+              ) : (
+                pageData.map((c) => (
+                  <TableRow key={c.id} className="hover:bg-accent/30">
+                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell className="font-mono text-xs">{c.id}</TableCell>
+                    <TableCell className="text-muted-foreground max-w-md">
+                      <div className="truncate" title={c.remark}>
+                        {c.remark || <span className="text-xs">—</span>}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground tabular-nums">
+                      {c.createdAt}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <TooltipProvider delayDuration={150}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditing(c);
+                                  setFormOpen(true);
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>编辑</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => setDelTarget(c)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>删除</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        <ListPagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
+      </Card>
+
+      <CategoryFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        editing={editing}
+        nextCode={genCode(seq + 1)}
+        onSubmit={(values) => {
+          if (editing) {
+            setData((d) =>
+              d.map((x) =>
+                x.id === editing.id ? { ...x, name: values.name, remark: values.remark } : x,
+              ),
+            );
+            toast.success(`已更新 ${values.name}`);
+          } else {
+            const nextSeq = seq + 1;
+            const id = genCode(nextSeq);
+            const today = new Date();
+            const createdAt = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+            setData((d) => [{ id, name: values.name, remark: values.remark, createdAt }, ...d]);
+            setSeq(nextSeq);
+            toast.success(`已新增 ${values.name}(${id})`);
+          }
+          setFormOpen(false);
+        }}
+      />
+
+      <AlertDialog open={!!delTarget} onOpenChange={(o) => !o && setDelTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除该产品分类?</AlertDialogTitle>
+            <AlertDialogDescription>
+              即将删除 <span className="font-medium text-foreground">{delTarget?.name}</span>(
+              {delTarget?.id}),此操作不可撤销。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (delTarget) {
+                  setData((d) => d.filter((x) => x.id !== delTarget.id));
+                  toast.success(`已删除 ${delTarget.name}`);
+                }
+                setDelTarget(null);
+              }}
+            >
+              确认删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+interface CategoryFormProps {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  editing: Category | null;
+  nextCode: string;
+  onSubmit: (v: { name: string; remark: string }) => void;
+}
+
+function CategoryFormDialog({ open, onOpenChange, editing, nextCode, onSubmit }: CategoryFormProps) {
+  const [name, setName] = useState("");
+  const [remark, setRemark] = useState("");
+  const [touched, setTouched] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setName(editing?.name ?? "");
+      setRemark(editing?.remark ?? "");
+      setTouched(false);
+    }
+  }, [open, editing]);
+
+  const nameError = touched && !name.trim() ? "请输入产品分类名称" : "";
+  const remarkError = remark.length > REMARK_MAX ? `备注最多 ${REMARK_MAX} 个字符` : "";
+
+  const submit = () => {
+    setTouched(true);
+    if (!name.trim()) return;
+    if (remark.length > REMARK_MAX) return;
+    onSubmit({ name: name.trim(), remark });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{editing ? "编辑产品分类" : "新增产品分类"}</DialogTitle>
+          <DialogDescription>
+            产品分类编码由系统自动生成,无需手工填写。
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label>产品分类编码</Label>
+            <Input
+              value={editing ? editing.id : nextCode}
+              disabled
+              className="font-mono bg-muted/40"
+            />
+            <p className="text-xs text-muted-foreground">
+              {editing ? "编码不可修改" : "保存后将使用该编码"}
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>
+              产品分类名称 <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="请输入产品分类名称"
+              maxLength={50}
+            />
+            {nameError && <p className="text-xs text-destructive">{nameError}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label>备注</Label>
+              <span
+                className={`text-xs tabular-nums ${
+                  remark.length > REMARK_MAX ? "text-destructive" : "text-muted-foreground"
+                }`}
+              >
+                {remark.length}/{REMARK_MAX}
+              </span>
+            </div>
+            <Textarea
+              value={remark}
+              onChange={(e) => setRemark(e.target.value.slice(0, REMARK_MAX))}
+              placeholder="选填,最多 200 个字符"
+              rows={4}
+              maxLength={REMARK_MAX}
+            />
+            {remarkError && <p className="text-xs text-destructive">{remarkError}</p>}
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            取消
+          </Button>
+          <Button onClick={submit}>保存</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

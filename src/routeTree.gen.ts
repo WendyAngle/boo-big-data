@@ -18,7 +18,6 @@ import { Route as AppAuthUserRouteImport } from './routes/_app.auth.user'
 import { Route as AppAuthAdminRouteImport } from './routes/_app.auth.admin'
 import { Route as AppAuthAdminIndexRouteImport } from './routes/_app.auth.admin.index'
 import { Route as AppPointsProductsRechargeRouteImport } from './routes/_app.points.products.recharge'
-import { Route as AppPointsProductsCategoriesRouteImport } from './routes/_app.points.products.categories'
 import { Route as AppPointsProductsBundlesRouteImport } from './routes/_app.points.products.bundles'
 import { Route as AppPointsProductsBasicRouteImport } from './routes/_app.points.products.basic'
 import { Route as AppAuthUserUsersRouteImport } from './routes/_app.auth.user.users'
@@ -71,12 +70,6 @@ const AppPointsProductsRechargeRoute =
   AppPointsProductsRechargeRouteImport.update({
     id: '/points/products/recharge',
     path: '/points/products/recharge',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppPointsProductsCategoriesRoute =
-  AppPointsProductsCategoriesRouteImport.update({
-    id: '/points/products/categories',
-    path: '/points/products/categories',
     getParentRoute: () => AppRoute,
   } as any)
 const AppPointsProductsBundlesRoute =
@@ -136,7 +129,6 @@ export interface FileRoutesByFullPath {
   '/auth/user/users': typeof AppAuthUserUsersRoute
   '/points/products/basic': typeof AppPointsProductsBasicRoute
   '/points/products/bundles': typeof AppPointsProductsBundlesRoute
-  '/points/products/categories': typeof AppPointsProductsCategoriesRoute
   '/points/products/recharge': typeof AppPointsProductsRechargeRoute
   '/auth/admin/': typeof AppAuthAdminIndexRoute
 }
@@ -154,7 +146,6 @@ export interface FileRoutesByTo {
   '/auth/user/users': typeof AppAuthUserUsersRoute
   '/points/products/basic': typeof AppPointsProductsBasicRoute
   '/points/products/bundles': typeof AppPointsProductsBundlesRoute
-  '/points/products/categories': typeof AppPointsProductsCategoriesRoute
   '/points/products/recharge': typeof AppPointsProductsRechargeRoute
   '/auth/admin': typeof AppAuthAdminIndexRoute
 }
@@ -175,7 +166,6 @@ export interface FileRoutesById {
   '/_app/auth/user/users': typeof AppAuthUserUsersRoute
   '/_app/points/products/basic': typeof AppPointsProductsBasicRoute
   '/_app/points/products/bundles': typeof AppPointsProductsBundlesRoute
-  '/_app/points/products/categories': typeof AppPointsProductsCategoriesRoute
   '/_app/points/products/recharge': typeof AppPointsProductsRechargeRoute
   '/_app/auth/admin/': typeof AppAuthAdminIndexRoute
 }
@@ -196,7 +186,6 @@ export interface FileRouteTypes {
     | '/auth/user/users'
     | '/points/products/basic'
     | '/points/products/bundles'
-    | '/points/products/categories'
     | '/points/products/recharge'
     | '/auth/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -214,7 +203,6 @@ export interface FileRouteTypes {
     | '/auth/user/users'
     | '/points/products/basic'
     | '/points/products/bundles'
-    | '/points/products/categories'
     | '/points/products/recharge'
     | '/auth/admin'
   id:
@@ -234,7 +222,6 @@ export interface FileRouteTypes {
     | '/_app/auth/user/users'
     | '/_app/points/products/basic'
     | '/_app/points/products/bundles'
-    | '/_app/points/products/categories'
     | '/_app/points/products/recharge'
     | '/_app/auth/admin/'
   fileRoutesById: FileRoutesById
@@ -306,13 +293,6 @@ declare module '@tanstack/react-router' {
       path: '/points/products/recharge'
       fullPath: '/points/products/recharge'
       preLoaderRoute: typeof AppPointsProductsRechargeRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/points/products/categories': {
-      id: '/_app/points/products/categories'
-      path: '/points/products/categories'
-      fullPath: '/points/products/categories'
-      preLoaderRoute: typeof AppPointsProductsCategoriesRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/points/products/bundles': {
@@ -417,7 +397,6 @@ interface AppRouteChildren {
   AppOutreachIndexRoute: typeof AppOutreachIndexRoute
   AppPointsProductsBasicRoute: typeof AppPointsProductsBasicRoute
   AppPointsProductsBundlesRoute: typeof AppPointsProductsBundlesRoute
-  AppPointsProductsCategoriesRoute: typeof AppPointsProductsCategoriesRoute
   AppPointsProductsRechargeRoute: typeof AppPointsProductsRechargeRoute
 }
 
@@ -430,7 +409,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachIndexRoute: AppOutreachIndexRoute,
   AppPointsProductsBasicRoute: AppPointsProductsBasicRoute,
   AppPointsProductsBundlesRoute: AppPointsProductsBundlesRoute,
-  AppPointsProductsCategoriesRoute: AppPointsProductsCategoriesRoute,
   AppPointsProductsRechargeRoute: AppPointsProductsRechargeRoute,
 }
 
@@ -442,13 +420,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
