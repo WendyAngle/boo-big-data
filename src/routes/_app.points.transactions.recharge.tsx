@@ -23,6 +23,7 @@ import {
   ChevronLeft,
   HelpCircle,
   CalendarDays,
+  AlertCircle,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1112,14 +1113,66 @@ function RechargePage() {
 
             {wizardStep === 3 && pickedTenant && summary && (
               <div className="space-y-4 pb-2">
-                <div className="rounded-lg border bg-card p-5 space-y-3">
-                  <div className="text-sm font-semibold text-foreground">订单信息确认</div>
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
-                    <DetailItem label="租户名称" value={pickedTenant.name} />
-                    <DetailItem label="租户编号" value={<span className="font-mono text-xs">{pickedTenant.id}</span>} />
-                    <DetailItem
-                      label="充值类型"
-                      value={
+                {/* 提示条 */}
+                <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+                  <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>请认真核对充值信息,确认无误后点击「确认充值」按钮。本次操作将立即生成订单并发放积分。</span>
+                </div>
+
+                {/* 双栏:左 选定租户 / 右 产品信息 */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* 选定租户 */}
+                  <div className="rounded-lg border bg-card overflow-hidden">
+                    <div className="flex items-center gap-2 px-5 py-3 border-b-2 border-sky-500/80 bg-sky-50/40">
+                      <User className="h-4 w-4 text-sky-600" />
+                      <span className="text-sm font-semibold text-sky-700">选定租户</span>
+                    </div>
+                    <div className="divide-y">
+                      <div className="px-5 py-3 flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">租户名称</span>
+                        <span className="font-semibold text-foreground">{pickedTenant.name}</span>
+                      </div>
+                      <div className="px-5 py-3 flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">租户编号</span>
+                        <span className="font-mono text-xs">{pickedTenant.id}</span>
+                      </div>
+                      <div className="px-5 py-3 flex items-start justify-between gap-4 text-sm">
+                        <span className="text-muted-foreground shrink-0">联系人</span>
+                        <span className="text-right">
+                          {pickedTenant.contact}
+                          <span className="text-muted-foreground ml-2 font-mono text-xs">{pickedTenant.contactPhone}</span>
+                        </span>
+                      </div>
+                      <div className="px-5 py-3 flex items-start justify-between gap-4 text-sm">
+                        <span className="text-muted-foreground shrink-0 pt-0.5">关联应用</span>
+                        <div className="text-right space-y-1">
+                          {pickedTenant.apps.map((a, idx) => (
+                            <div key={idx} className="text-sm">
+                              <span className="text-foreground">{a.name}</span>
+                              <span className="text-muted-foreground"> · </span>
+                              <span className="font-mono text-xs text-muted-foreground">{a.appId}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      {wizardRemark && (
+                        <div className="px-5 py-3 flex items-start justify-between gap-4 text-sm">
+                          <span className="text-muted-foreground shrink-0">备注</span>
+                          <span className="text-right text-foreground">{wizardRemark}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 产品信息 */}
+                  <div className="rounded-lg border bg-card overflow-hidden">
+                    <div className="flex items-center gap-2 px-5 py-3 border-b-2 border-emerald-500/80 bg-emerald-50/40">
+                      <ShoppingCart className="h-4 w-4 text-emerald-600" />
+                      <span className="text-sm font-semibold text-emerald-700">产品信息</span>
+                    </div>
+                    <div className="divide-y">
+                      <div className="px-5 py-3 flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">充值类型</span>
                         <Badge
                           variant="outline"
                           className={
@@ -1130,30 +1183,38 @@ function RechargePage() {
                         >
                           {summary.type}
                         </Badge>
-                      }
-                    />
-                    <DetailItem label="产品名称" value={summary.productName} />
-                    <DetailItem
-                      label="充值金额"
-                      value={<span className="font-semibold text-rose-600">¥{summary.amount.toLocaleString()}</span>}
-                    />
-                    <DetailItem label="基础积分" value={summary.basic.toLocaleString()} />
-                    <DetailItem
-                      label="赠送积分"
-                      value={
-                        <span className={summary.gift > 0 ? "text-emerald-600 font-medium" : "text-muted-foreground"}>
-                          +{summary.gift.toLocaleString()}
+                      </div>
+                      <div className="px-5 py-3 flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">产品名称</span>
+                        <span className="font-semibold text-foreground">{summary.productName}</span>
+                      </div>
+                      <div className="px-5 py-3 flex items-center justify-between text-sm border-l-2 border-rose-400/70 -ml-px pl-[18px]">
+                        <span className="text-muted-foreground">充值金额</span>
+                        <span className="text-xl font-bold text-rose-600 tabular-nums">
+                          ¥{summary.amount.toLocaleString()}
                         </span>
-                      }
-                    />
-                    <DetailItem label="积分到期日" value={<span className="font-mono text-xs">{expireDate}</span>} />
-                    <DetailItem label="备注" value={wizardRemark || <span className="text-muted-foreground">—</span>} />
-                  </div>
-                  <div className="pt-3 mt-2 border-t flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">本次发放总积分</span>
-                    <span className="text-2xl font-bold text-emerald-600 tabular-nums">
-                      +{(summary.basic + summary.gift).toLocaleString()}
-                    </span>
+                      </div>
+                      <div className="px-5 py-3 flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">基础积分</span>
+                        <span className="font-semibold tabular-nums">{summary.basic.toLocaleString()} 点</span>
+                      </div>
+                      <div className="px-5 py-3 flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">赠送积分</span>
+                        <span className={`font-semibold tabular-nums ${summary.gift > 0 ? "text-emerald-600" : "text-muted-foreground"}`}>
+                          {summary.gift > 0 ? "+" : ""}{summary.gift.toLocaleString()} 点
+                        </span>
+                      </div>
+                      <div className="px-5 py-4 flex items-center justify-between border-l-2 border-emerald-500/80 -ml-px pl-[18px] bg-emerald-50/30">
+                        <span className="text-sm font-semibold text-emerald-700">预计获得总积分</span>
+                        <span className="text-2xl font-bold text-emerald-600 tabular-nums">
+                          {(summary.basic + summary.gift).toLocaleString()} 点
+                        </span>
+                      </div>
+                      <div className="px-5 py-3 flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">积分到期日</span>
+                        <span className="font-mono text-xs text-amber-700">{expireDate}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
