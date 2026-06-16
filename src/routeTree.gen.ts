@@ -22,7 +22,6 @@ import { Route as AppAuthAdminIndexRouteImport } from './routes/_app.auth.admin.
 import { Route as AppPointsTransactionsPointsLedgerRouteImport } from './routes/_app.points.transactions.points-ledger'
 import { Route as AppPointsProductsRechargeRouteImport } from './routes/_app.points.products.recharge'
 import { Route as AppPointsProductsCategoriesRouteImport } from './routes/_app.points.products.categories'
-import { Route as AppPointsProductsBundlesRouteImport } from './routes/_app.points.products.bundles'
 import { Route as AppPointsProductsBasicRouteImport } from './routes/_app.points.products.basic'
 import { Route as AppAuthUserUsersRouteImport } from './routes/_app.auth.user.users'
 import { Route as AppAuthUserLoginSimRouteImport } from './routes/_app.auth.user.login-sim'
@@ -99,12 +98,6 @@ const AppPointsProductsCategoriesRoute =
     path: '/points/products/categories',
     getParentRoute: () => AppRoute,
   } as any)
-const AppPointsProductsBundlesRoute =
-  AppPointsProductsBundlesRouteImport.update({
-    id: '/points/products/bundles',
-    path: '/points/products/bundles',
-    getParentRoute: () => AppRoute,
-  } as any)
 const AppPointsProductsBasicRoute = AppPointsProductsBasicRouteImport.update({
   id: '/points/products/basic',
   path: '/points/products/basic',
@@ -156,7 +149,6 @@ export interface FileRoutesByFullPath {
   '/auth/user/login-sim': typeof AppAuthUserLoginSimRoute
   '/auth/user/users': typeof AppAuthUserUsersRoute
   '/points/products/basic': typeof AppPointsProductsBasicRoute
-  '/points/products/bundles': typeof AppPointsProductsBundlesRoute
   '/points/products/categories': typeof AppPointsProductsCategoriesRoute
   '/points/products/recharge': typeof AppPointsProductsRechargeRoute
   '/points/transactions/points-ledger': typeof AppPointsTransactionsPointsLedgerRoute
@@ -176,7 +168,6 @@ export interface FileRoutesByTo {
   '/auth/user/login-sim': typeof AppAuthUserLoginSimRoute
   '/auth/user/users': typeof AppAuthUserUsersRoute
   '/points/products/basic': typeof AppPointsProductsBasicRoute
-  '/points/products/bundles': typeof AppPointsProductsBundlesRoute
   '/points/products/categories': typeof AppPointsProductsCategoriesRoute
   '/points/products/recharge': typeof AppPointsProductsRechargeRoute
   '/points/transactions/points-ledger': typeof AppPointsTransactionsPointsLedgerRoute
@@ -200,7 +191,6 @@ export interface FileRoutesById {
   '/_app/auth/user/login-sim': typeof AppAuthUserLoginSimRoute
   '/_app/auth/user/users': typeof AppAuthUserUsersRoute
   '/_app/points/products/basic': typeof AppPointsProductsBasicRoute
-  '/_app/points/products/bundles': typeof AppPointsProductsBundlesRoute
   '/_app/points/products/categories': typeof AppPointsProductsCategoriesRoute
   '/_app/points/products/recharge': typeof AppPointsProductsRechargeRoute
   '/_app/points/transactions/points-ledger': typeof AppPointsTransactionsPointsLedgerRoute
@@ -224,7 +214,6 @@ export interface FileRouteTypes {
     | '/auth/user/login-sim'
     | '/auth/user/users'
     | '/points/products/basic'
-    | '/points/products/bundles'
     | '/points/products/categories'
     | '/points/products/recharge'
     | '/points/transactions/points-ledger'
@@ -244,7 +233,6 @@ export interface FileRouteTypes {
     | '/auth/user/login-sim'
     | '/auth/user/users'
     | '/points/products/basic'
-    | '/points/products/bundles'
     | '/points/products/categories'
     | '/points/products/recharge'
     | '/points/transactions/points-ledger'
@@ -267,7 +255,6 @@ export interface FileRouteTypes {
     | '/_app/auth/user/login-sim'
     | '/_app/auth/user/users'
     | '/_app/points/products/basic'
-    | '/_app/points/products/bundles'
     | '/_app/points/products/categories'
     | '/_app/points/products/recharge'
     | '/_app/points/transactions/points-ledger'
@@ -370,13 +357,6 @@ declare module '@tanstack/react-router' {
       path: '/points/products/categories'
       fullPath: '/points/products/categories'
       preLoaderRoute: typeof AppPointsProductsCategoriesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/points/products/bundles': {
-      id: '/_app/points/products/bundles'
-      path: '/points/products/bundles'
-      fullPath: '/points/products/bundles'
-      preLoaderRoute: typeof AppPointsProductsBundlesRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/points/products/basic': {
@@ -490,7 +470,6 @@ interface AppRouteChildren {
   AppPointsTransactionsRoute: typeof AppPointsTransactionsRouteWithChildren
   AppOutreachIndexRoute: typeof AppOutreachIndexRoute
   AppPointsProductsBasicRoute: typeof AppPointsProductsBasicRoute
-  AppPointsProductsBundlesRoute: typeof AppPointsProductsBundlesRoute
   AppPointsProductsCategoriesRoute: typeof AppPointsProductsCategoriesRoute
   AppPointsProductsRechargeRoute: typeof AppPointsProductsRechargeRoute
 }
@@ -504,7 +483,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppPointsTransactionsRoute: AppPointsTransactionsRouteWithChildren,
   AppOutreachIndexRoute: AppOutreachIndexRoute,
   AppPointsProductsBasicRoute: AppPointsProductsBasicRoute,
-  AppPointsProductsBundlesRoute: AppPointsProductsBundlesRoute,
   AppPointsProductsCategoriesRoute: AppPointsProductsCategoriesRoute,
   AppPointsProductsRechargeRoute: AppPointsProductsRechargeRoute,
 }
@@ -517,13 +495,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
