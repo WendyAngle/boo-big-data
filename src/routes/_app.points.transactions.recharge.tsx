@@ -987,7 +987,7 @@ function RechargePage() {
                         <HelpCircle className="h-4 w-4 text-amber-500 cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
-                        套餐产品按固定金额发放预设积分;充值产品按所选分类的转化比例与阶梯赠送规则计算积分。
+                        套餐产品按固定金额发放预设积分;充值产品按所选产品的阶梯规则计算基础积分与赠送积分。
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
