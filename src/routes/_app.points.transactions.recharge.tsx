@@ -336,7 +336,7 @@ function RechargePage() {
   const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
   const [pickedTenantId, setPickedTenantId] = useState<string>("");
   const [tenantKw, setTenantKw] = useState("");
-  const [tenantStatusF, setTenantStatusF] = useState("all");
+  const [tenantStatusF, setTenantStatusF] = useState("enabled");
   const [tenantPage, setTenantPage] = useState(1);
   const TENANT_PAGE_SIZE = 5;
   // 选择产品(第二步)
@@ -460,7 +460,7 @@ function RechargePage() {
     setWizardStep(1);
     setPickedTenantId("");
     setTenantKw("");
-    setTenantStatusF("all");
+    setTenantStatusF("enabled");
     setTenantPage(1);
     setProductTab("bundle");
     setPickedBundleId("");
