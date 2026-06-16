@@ -117,40 +117,96 @@ const APPS: AppRef[] = [
 const PRODUCTS_RECHARGE = ["10 元充值包", "100 元充值包", "500 元充值包", "1000 元充值包"];
 const PRODUCTS_BUNDLE = ["入门版", "标准版", "拓界版", "旗舰版", "test"];
 
-// === 套餐产品库(高保真,字段对齐「套餐产品管理」)===
+// === 套餐产品库(数据对齐「套餐产品管理 · 启用中」)===
 interface BundleProduct {
   id: string;
   name: string;
   description: string;
-  amount: number; // 充值金额(元)
-  basicPoints: number;
-  giftPoints: number;
+  amount: number; // 套餐现金价(元)
+  basicPoints: number; // 基础积分(通用+专业)
+  giftPoints: number; // 赠送积分(通用+专业)
 }
 const BUNDLE_PRODUCTS: BundleProduct[] = [
-  { id: "BD0001", name: "test", description: "11", amount: 10, basicPoints: 10, giftPoints: 10 },
-  { id: "BD0002", name: "基石版", description: "SIS基础包 + AI视频制作(12000积分) + AI智能获客(12000积分)", amount: 69800, basicPoints: 20000, giftPoints: 4000 },
-  { id: "BD0003", name: "拓界版", description: "SIS升级包 + AI视频制作(36000积分) + AI智能获客(36000积分)", amount: 109800, basicPoints: 110000, giftPoints: 16100 },
-  { id: "BD0004", name: "旗舰版", description: "SIS旗舰包 + AI视频制作(80000积分) + AI智能获客(80000积分) + 专属客服", amount: 199800, basicPoints: 220000, giftPoints: 44000 },
+  { id: "PP00000008", name: "全域旗舰版", description: "覆盖内容创作、获客、视频与数据洞察的全域旗舰套餐,通用+专业积分混合发放。", amount: 29800, basicPoints: 130000, giftPoints: 26000 },
+  { id: "PP00000007", name: "拓界版", description: "SIS升级包+AI视频制作(30000) 等多模块组合,适合中大型团队。", amount: 109800, basicPoints: 110000, giftPoints: 16100 },
+  { id: "PP00000006", name: "视频专业版", description: "仅 AI 视频制作分类内可用的专业积分套餐。", amount: 9800, basicPoints: 20000, giftPoints: 4000 },
+  { id: "PP00000005", name: "基石版", description: "SIS基础包+AI视频制作(10000) 入门组合,覆盖核心场景。", amount: 69800, basicPoints: 20000, giftPoints: 4000 },
+  { id: "PP00000003", name: "通用积分包·标准版", description: "面向全平台的通用积分,锁定 AI 图生视频销售入口。", amount: 1999, basicPoints: 10000, giftPoints: 1500 },
+  { id: "PP00000002", name: "数据洞察季度通用包", description: "面向数据团队的通用积分季度包,可在全平台已启用产品消费。", amount: 5999, basicPoints: 30000, giftPoints: 6000 },
 ];
 
-// === 充值产品分类 + 阶梯赠送规则 ===
-interface RechargeCategory {
+// === 充值产品库(数据对齐「充值产品管理 · 启用中」)===
+type RechargeTargetType = "category" | "basic";
+type RechargePointsMode = "general" | "professional" | "mixed";
+interface RechargeTier {
+  min: number;
+  max: number;
+  generalRate: number; // 1元=N通用积分
+  generalBonus: number; // 通用赠送%
+  proRate: number; // 1元=N专业积分
+  proBonus: number; // 专业赠送%
+}
+interface RechargeProductDef {
   id: string;
   name: string;
-  ratio: number; // 基础积分转化比例(%), 100 = 1元=1积分
-  tiers: { min: number; gift: number }[]; // gift = 赠送比例(%)
+  targetType: RechargeTargetType;
+  targetKey: string;
+  pointsMode: RechargePointsMode;
+  remark: string;
+  tiers: RechargeTier[];
 }
-const RECHARGE_CATEGORIES: RechargeCategory[] = [
-  { id: "CT01", name: "AI视频制作", ratio: 100, tiers: [{ min: 100, gift: 5 }, { min: 1000, gift: 10 }, { min: 5000, gift: 30 }, { min: 50000, gift: 35 }] },
-  { id: "CT02", name: "AI智能获客", ratio: 100, tiers: [{ min: 100, gift: 5 }, { min: 1000, gift: 15 }, { min: 10000, gift: 25 }] },
-  { id: "CT03", name: "AI内容创作", ratio: 100, tiers: [{ min: 100, gift: 8 }, { min: 2000, gift: 18 }, { min: 20000, gift: 28 }] },
-  { id: "CT04", name: "AI客服助手", ratio: 100, tiers: [{ min: 100, gift: 10 }, { min: 5000, gift: 20 }] },
-  { id: "CT05", name: "数据洞察", ratio: 100, tiers: [{ min: 500, gift: 5 }, { min: 5000, gift: 15 }] },
+const RECHARGE_PRODUCTS: RechargeProductDef[] = [
+  { id: "RP000008", name: "数据洞察季度通用充值", targetType: "category", targetKey: "数据洞察", pointsMode: "general", remark: "面向数据分析团队的通用积分充值,平台内任意产品可用。", tiers: [
+    { min: 200, max: 1000, generalRate: 8, generalBonus: 5, proRate: 0, proBonus: 0 },
+    { min: 1000, max: 5000, generalRate: 8, generalBonus: 10, proRate: 0, proBonus: 0 },
+    { min: 5000, max: 20000, generalRate: 8, generalBonus: 18, proRate: 0, proBonus: 0 },
+  ]},
+  { id: "RP000007", name: "AI内容创作专享充值", targetType: "category", targetKey: "AI内容创作", pointsMode: "professional", remark: "仅限 AI 内容创作分类内产品消费的专业积分。", tiers: [
+    { min: 100, max: 500, generalRate: 0, generalBonus: 0, proRate: 12, proBonus: 5 },
+    { min: 500, max: 3000, generalRate: 0, generalBonus: 0, proRate: 12, proBonus: 12 },
+    { min: 3000, max: 10000, generalRate: 0, generalBonus: 0, proRate: 12, proBonus: 20 },
+  ]},
+  { id: "RP000005", name: "Tiktok获客单品通用充值", targetType: "basic", targetKey: "BP000032", pointsMode: "general", remark: "锁定 Tiktok 获客销售入口,发放可全平台使用的通用积分。", tiers: [
+    { min: 80, max: 400, generalRate: 6, generalBonus: 3, proRate: 0, proBonus: 0 },
+    { min: 400, max: 2000, generalRate: 6, generalBonus: 8, proRate: 0, proBonus: 0 },
+  ]},
+  { id: "RP000004", name: "AI图生视频混合充值", targetType: "basic", targetKey: "BP000030", pointsMode: "mixed", remark: "单品促销:同时发放通用积分与定向专业积分。", tiers: [
+    { min: 100, max: 500, generalRate: 3, generalBonus: 5, proRate: 10, proBonus: 10 },
+    { min: 500, max: 3000, generalRate: 3, generalBonus: 10, proRate: 10, proBonus: 20 },
+    { min: 3000, max: 12000, generalRate: 3, generalBonus: 15, proRate: 10, proBonus: 30 },
+  ]},
+  { id: "RP000002", name: "AI视频制作充值套餐", targetType: "category", targetKey: "AI视频制作", pointsMode: "mixed", remark: "面向视频团队的阶梯充值方案,金额越大赠送越多。", tiers: [
+    { min: 100, max: 500, generalRate: 5, generalBonus: 5, proRate: 10, proBonus: 10 },
+    { min: 500, max: 2000, generalRate: 5, generalBonus: 8, proRate: 10, proBonus: 15 },
+    { min: 2000, max: 10000, generalRate: 5, generalBonus: 12, proRate: 10, proBonus: 25 },
+  ]},
+  { id: "RP000001", name: "AI文生图体验充值", targetType: "basic", targetKey: "BP000043", pointsMode: "professional", remark: "针对单一基础产品的体验充值。", tiers: [
+    { min: 50, max: 200, generalRate: 0, generalBonus: 0, proRate: 20, proBonus: 0 },
+    { min: 200, max: 1000, generalRate: 0, generalBonus: 0, proRate: 20, proBonus: 8 },
+  ]},
 ];
-function matchTier(cat: RechargeCategory, amount: number) {
-  let matched = cat.tiers[0];
-  for (const t of cat.tiers) if (amount >= t.min) matched = t;
-  return amount >= cat.tiers[0].min ? matched : null;
+const POINTS_MODE_LABEL: Record<RechargePointsMode, string> = {
+  general: "仅通用积分",
+  professional: "仅专业积分",
+  mixed: "混合发放",
+};
+function matchRechargeTier(p: RechargeProductDef, amount: number): RechargeTier | null {
+  if (amount <= 0) return null;
+  // 在 [min, max] 区间内匹配;若超过最大阶梯上限,沿用最后一阶梯
+  for (const t of p.tiers) {
+    if (amount >= t.min && amount <= t.max) return t;
+  }
+  const last = p.tiers[p.tiers.length - 1];
+  if (last && amount > last.max) return last;
+  return null;
+}
+function calcRechargePoints(tier: RechargeTier | null, amount: number) {
+  if (!tier || amount <= 0) return { basic: 0, gift: 0 };
+  const basicGeneral = Math.round(amount * tier.generalRate);
+  const basicPro = Math.round(amount * tier.proRate);
+  const giftGeneral = Math.round((basicGeneral * tier.generalBonus) / 100);
+  const giftPro = Math.round((basicPro * tier.proBonus) / 100);
+  return { basic: basicGeneral + basicPro, gift: giftGeneral + giftPro };
 }
 
 function addYears(dateStr: string, years: number) {
@@ -343,7 +399,7 @@ function RechargePage() {
   // 选择产品(第二步)
   const [productTab, setProductTab] = useState<"bundle" | "recharge">("bundle");
   const [pickedBundleId, setPickedBundleId] = useState<string>("");
-  const [rechargeCategoryId, setRechargeCategoryId] = useState<string>("");
+  const [rechargeProductId, setRechargeProductId] = useState<string>("");
   const [rechargeAmount, setRechargeAmount] = useState<number | "">("");
   const [expireDate, setExpireDate] = useState<string>(() =>
     addYears(fmtDate(new Date()), 1),
@@ -445,11 +501,10 @@ function RechargePage() {
 
   // 派生:第二步当前所选产品的汇总
   const pickedBundle = BUNDLE_PRODUCTS.find((b) => b.id === pickedBundleId) || null;
-  const pickedCategory = RECHARGE_CATEGORIES.find((c) => c.id === rechargeCategoryId) || null;
+  const pickedProduct = RECHARGE_PRODUCTS.find((c) => c.id === rechargeProductId) || null;
   const rechargeAmt = typeof rechargeAmount === "number" ? rechargeAmount : 0;
-  const rechargeTier = pickedCategory ? matchTier(pickedCategory, rechargeAmt) : null;
-  const rechargeBasic = pickedCategory ? Math.round((rechargeAmt * pickedCategory.ratio) / 100) : 0;
-  const rechargeGift = rechargeTier ? Math.round((rechargeBasic * rechargeTier.gift) / 100) : 0;
+  const rechargeTier = pickedProduct ? matchRechargeTier(pickedProduct, rechargeAmt) : null;
+  const { basic: rechargeBasic, gift: rechargeGift } = calcRechargePoints(rechargeTier, rechargeAmt);
 
   // 汇总(第三步/提交用)
   const summary = useMemo(() => {
@@ -463,12 +518,12 @@ function RechargePage() {
         gift: pickedBundle.giftPoints,
       };
     }
-    if (productTab === "recharge" && pickedCategory && rechargeAmt > 0) {
+    if (productTab === "recharge" && pickedProduct && rechargeAmt > 0) {
       return {
         type: "积分充值" as RechargeType,
-        productName: `${pickedCategory.name} · ¥${rechargeAmt.toLocaleString()}`,
+        productName: `${pickedProduct.name} · ¥${rechargeAmt.toLocaleString()}`,
         productDesc: rechargeTier
-          ? `匹配阶梯 ¥${rechargeTier.min.toLocaleString()},赠送比例 ${rechargeTier.gift}%`
+          ? `匹配阶梯 ¥${rechargeTier.min.toLocaleString()}-¥${rechargeTier.max.toLocaleString()}`
           : "未匹配任何阶梯,无赠送",
         amount: rechargeAmt,
         basic: rechargeBasic,
@@ -476,7 +531,7 @@ function RechargePage() {
       };
     }
     return null;
-  }, [productTab, pickedBundle, pickedCategory, rechargeAmt, rechargeBasic, rechargeGift, rechargeTier]);
+  }, [productTab, pickedBundle, pickedProduct, rechargeAmt, rechargeBasic, rechargeGift, rechargeTier]);
 
   const openCreate = () => {
     setWizardStep(1);
@@ -486,7 +541,7 @@ function RechargePage() {
     setTenantPage(1);
     setProductTab("bundle");
     setPickedBundleId("");
-    setRechargeCategoryId("");
+    setRechargeProductId("");
     setRechargeAmount("");
     setExpireDate(addYears(fmtDate(new Date()), 1));
     setWizardRemark("");
@@ -505,7 +560,7 @@ function RechargePage() {
         toast.error(
           productTab === "bundle"
             ? "请选择一个套餐产品"
-            : "请选择产品分类并输入充值金额",
+            : "请选择充值产品并输入充值金额",
         );
         return;
       }
@@ -932,7 +987,7 @@ function RechargePage() {
                         <HelpCircle className="h-4 w-4 text-amber-500 cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
-                        套餐产品按固定金额发放预设积分;充值产品按所选分类的转化比例与阶梯赠送规则计算积分。
+                        套餐产品按固定金额发放预设积分;充值产品按所选产品的阶梯规则计算基础积分与赠送积分。
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -1008,20 +1063,31 @@ function RechargePage() {
                       <div className="space-y-4">
                         <div className="space-y-1.5">
                           <Label>
-                            产品分类 <span className="text-destructive">*</span>
+                            充值产品 <span className="text-destructive">*</span>
                           </Label>
-                          <Select value={rechargeCategoryId} onValueChange={setRechargeCategoryId}>
+                          <Select value={rechargeProductId} onValueChange={setRechargeProductId}>
                             <SelectTrigger>
-                              <SelectValue placeholder="请选择产品分类" />
+                              <SelectValue placeholder="请选择充值产品" />
                             </SelectTrigger>
                             <SelectContent>
-                              {RECHARGE_CATEGORIES.map((c) => (
+                              {RECHARGE_PRODUCTS.map((c) => (
                                 <SelectItem key={c.id} value={c.id}>
+                                  <span className="font-mono text-xs text-muted-foreground mr-2">{c.id}</span>
                                   {c.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
+                          {pickedProduct && (
+                            <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px] text-muted-foreground">
+                              <Badge variant="outline" className="bg-muted/40 border-border text-foreground/80">
+                                {pickedProduct.targetType === "category" ? "分类" : "基础产品"} · {pickedProduct.targetKey}
+                              </Badge>
+                              <Badge variant="outline" className="bg-muted/40 border-border text-foreground/80">
+                                {POINTS_MODE_LABEL[pickedProduct.pointsMode]}
+                              </Badge>
+                            </div>
+                          )}
                         </div>
                         <div className="space-y-1.5">
                           <Label>
@@ -1042,16 +1108,16 @@ function RechargePage() {
                               className="rounded-l-none"
                             />
                           </div>
-                          {pickedCategory && (
+                          {pickedProduct && (
                             <div className="flex flex-wrap gap-1.5 pt-1">
-                              {pickedCategory.tiers.map((t) => (
+                              {pickedProduct.tiers.map((t) => (
                                 <button
                                   key={t.min}
                                   type="button"
                                   onClick={() => setRechargeAmount(t.min)}
                                   className="text-[11px] px-2 py-0.5 rounded border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-colors"
                                 >
-                                  ¥{t.min.toLocaleString()} 起 · +{t.gift}%
+                                  ¥{t.min.toLocaleString()}-¥{t.max.toLocaleString()}
                                 </button>
                               ))}
                             </div>
@@ -1061,7 +1127,7 @@ function RechargePage() {
 
                       {/* 预览面板 */}
                       <div className="rounded-xl border bg-muted/20 p-5 min-h-[280px] flex">
-                        {pickedCategory && rechargeAmt > 0 ? (
+                        {pickedProduct && rechargeAmt > 0 ? (
                           <div className="w-full">
                             <div className="text-center">
                               <div className="text-xs text-muted-foreground">预计获得总积分</div>
@@ -1073,28 +1139,42 @@ function RechargePage() {
                             <div className="text-center">
                               <div className="text-xs text-muted-foreground">匹配阶梯</div>
                               <div className="mt-1 text-lg font-semibold text-rose-600 tabular-nums">
-                                {rechargeTier ? `¥${rechargeTier.min.toLocaleString()}` : "未匹配"}
+                                {rechargeTier ? `¥${rechargeTier.min.toLocaleString()}-¥${rechargeTier.max.toLocaleString()}` : "未匹配"}
                               </div>
                             </div>
                             <div className="mt-5 space-y-2.5 text-sm">
-                              <div className="flex items-center justify-between">
-                                <span className="text-muted-foreground">基础积分转化比例</span>
-                                <span className="text-primary font-medium tabular-nums">
-                                  {pickedCategory.ratio}%
-                                </span>
-                              </div>
+                              {rechargeTier && rechargeTier.generalRate > 0 && (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-muted-foreground">通用积分比例</span>
+                                  <span className="text-primary font-medium tabular-nums">
+                                    1 元 = {rechargeTier.generalRate} 通用积分
+                                  </span>
+                                </div>
+                              )}
+                              {rechargeTier && rechargeTier.proRate > 0 && (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-muted-foreground">专业积分比例</span>
+                                  <span className="text-primary font-medium tabular-nums">
+                                    1 元 = {rechargeTier.proRate} 专业积分
+                                  </span>
+                                </div>
+                              )}
                               <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground">基础积分</span>
                                 <span className="font-semibold tabular-nums">
                                   {rechargeBasic.toLocaleString()}
                                 </span>
                               </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-muted-foreground">积分赠送比例</span>
-                                <span className="text-amber-600 font-medium tabular-nums">
-                                  {rechargeTier ? `${rechargeTier.gift}%` : "0%"}
-                                </span>
-                              </div>
+                              {rechargeTier && (rechargeTier.generalBonus > 0 || rechargeTier.proBonus > 0) && (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-muted-foreground">赠送比例</span>
+                                  <span className="text-amber-600 font-medium tabular-nums">
+                                    {rechargeTier.generalRate > 0 && `通用 +${rechargeTier.generalBonus}%`}
+                                    {rechargeTier.generalRate > 0 && rechargeTier.proRate > 0 && " / "}
+                                    {rechargeTier.proRate > 0 && `专业 +${rechargeTier.proBonus}%`}
+                                  </span>
+                                </div>
+                              )}
                               <div className="flex items-center justify-between">
                                 <span className="text-muted-foreground">赠送积分</span>
                                 <span className="text-emerald-600 font-medium tabular-nums">
@@ -1106,7 +1186,7 @@ function RechargePage() {
                         ) : (
                           <div className="m-auto text-center text-muted-foreground">
                             <ShoppingCart className="h-10 w-10 mx-auto opacity-40" />
-                            <div className="mt-3 text-sm">请选择产品分类并输入充值金额</div>
+                            <div className="mt-3 text-sm">请选择充值产品并输入充值金额</div>
                           </div>
                         )}
                       </div>
