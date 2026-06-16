@@ -914,6 +914,9 @@ function RechargePage() {
                       <span className="text-muted-foreground">已选租户:</span>{" "}
                       <span className="font-medium">{pickedTenant.name}</span>{" "}
                       <span className="font-mono text-xs text-muted-foreground">({pickedTenant.id})</span>
+                      {pickedTenants.length > 1 && (
+                        <span className="text-muted-foreground"> 等 {pickedTenants.length} 位租户</span>
+                      )}
                     </div>
                     <Badge variant="outline" className="bg-accent/40 text-primary border-primary/20">
                       剩余 {(pickedTenant.generalBalance + pickedTenant.proBalance).toLocaleString()} 积分
