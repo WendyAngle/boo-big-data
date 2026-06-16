@@ -45,6 +45,11 @@ const menu: Root[] = [
         ],
       },
       {
+        label: "应用管理",
+        to: "/points/apps",
+        children: [],
+      },
+      {
         label: "租户管理",
         to: "/points/tenants",
         children: [],

@@ -14,6 +14,7 @@ import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppOutreachIndexRouteImport } from './routes/_app.outreach.index'
 import { Route as AppPointsTransactionsRouteImport } from './routes/_app.points.transactions'
 import { Route as AppPointsTenantsRouteImport } from './routes/_app.points.tenants'
+import { Route as AppPointsAppsRouteImport } from './routes/_app.points.apps'
 import { Route as AppAuthUserRouteImport } from './routes/_app.auth.user'
 import { Route as AppAuthAdminRouteImport } from './routes/_app.auth.admin'
 import { Route as AppAuthAdminIndexRouteImport } from './routes/_app.auth.admin.index'
@@ -50,6 +51,11 @@ const AppPointsTransactionsRoute = AppPointsTransactionsRouteImport.update({
 const AppPointsTenantsRoute = AppPointsTenantsRouteImport.update({
   id: '/points/tenants',
   path: '/points/tenants',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPointsAppsRoute = AppPointsAppsRouteImport.update({
+  id: '/points/apps',
+  path: '/points/apps',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAuthUserRoute = AppAuthUserRouteImport.update({
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/auth/admin': typeof AppAuthAdminRouteWithChildren
   '/auth/user': typeof AppAuthUserRouteWithChildren
+  '/points/apps': typeof AppPointsAppsRoute
   '/points/tenants': typeof AppPointsTenantsRoute
   '/points/transactions': typeof AppPointsTransactionsRoute
   '/outreach/': typeof AppOutreachIndexRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
   '/auth/user': typeof AppAuthUserRouteWithChildren
+  '/points/apps': typeof AppPointsAppsRoute
   '/points/tenants': typeof AppPointsTenantsRoute
   '/points/transactions': typeof AppPointsTransactionsRoute
   '/outreach': typeof AppOutreachIndexRoute
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/_app/': typeof AppIndexRoute
   '/_app/auth/admin': typeof AppAuthAdminRouteWithChildren
   '/_app/auth/user': typeof AppAuthUserRouteWithChildren
+  '/_app/points/apps': typeof AppPointsAppsRoute
   '/_app/points/tenants': typeof AppPointsTenantsRoute
   '/_app/points/transactions': typeof AppPointsTransactionsRoute
   '/_app/outreach/': typeof AppOutreachIndexRoute
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth/admin'
     | '/auth/user'
+    | '/points/apps'
     | '/points/tenants'
     | '/points/transactions'
     | '/outreach/'
@@ -203,6 +213,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth/user'
+    | '/points/apps'
     | '/points/tenants'
     | '/points/transactions'
     | '/outreach'
@@ -223,6 +234,7 @@ export interface FileRouteTypes {
     | '/_app/'
     | '/_app/auth/admin'
     | '/_app/auth/user'
+    | '/_app/points/apps'
     | '/_app/points/tenants'
     | '/_app/points/transactions'
     | '/_app/outreach/'
@@ -278,6 +290,13 @@ declare module '@tanstack/react-router' {
       path: '/points/tenants'
       fullPath: '/points/tenants'
       preLoaderRoute: typeof AppPointsTenantsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/points/apps': {
+      id: '/_app/points/apps'
+      path: '/points/apps'
+      fullPath: '/points/apps'
+      preLoaderRoute: typeof AppPointsAppsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/auth/user': {
@@ -412,6 +431,7 @@ interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppAuthAdminRoute: typeof AppAuthAdminRouteWithChildren
   AppAuthUserRoute: typeof AppAuthUserRouteWithChildren
+  AppPointsAppsRoute: typeof AppPointsAppsRoute
   AppPointsTenantsRoute: typeof AppPointsTenantsRoute
   AppPointsTransactionsRoute: typeof AppPointsTransactionsRoute
   AppOutreachIndexRoute: typeof AppOutreachIndexRoute
@@ -425,6 +445,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
   AppAuthAdminRoute: AppAuthAdminRouteWithChildren,
   AppAuthUserRoute: AppAuthUserRouteWithChildren,
+  AppPointsAppsRoute: AppPointsAppsRoute,
   AppPointsTenantsRoute: AppPointsTenantsRoute,
   AppPointsTransactionsRoute: AppPointsTransactionsRoute,
   AppOutreachIndexRoute: AppOutreachIndexRoute,
