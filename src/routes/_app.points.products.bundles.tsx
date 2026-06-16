@@ -766,6 +766,28 @@ function BundleFormDialog({ open, onOpenChange, editing, nextCode, categories, b
     return "";
   }, [items]);
 
+  // 方案A：分类与该分类下基础产品同时存在（同积分类型）时给出冲突提示，不阻止保存
+  const overlapConflicts = useMemo(() => {
+    const list: { category: string; productName: string; productId: string; pointsType: PointsType }[] = [];
+    const cats = items.filter((i) => i.targetType === "category" && i.targetKey);
+    const basics = items.filter((i) => i.targetType === "basic" && i.targetKey);
+    for (const c of cats) {
+      for (const b of basics) {
+        if (b.pointsType !== c.pointsType) continue;
+        const bp = basicProducts.find((p) => p.id === b.targetKey);
+        if (bp && bp.category === c.targetKey) {
+          list.push({
+            category: c.targetKey,
+            productName: bp.name,
+            productId: bp.id,
+            pointsType: c.pointsType,
+          });
+        }
+      }
+    }
+    return list;
+  }, [items, basicProducts]);
+
   const itemsError = useMemo(() => {
     if (items.length === 0) return "请至少添加一个套餐项目";
     for (const it of items) {
@@ -994,6 +1016,29 @@ function BundleFormDialog({ open, onOpenChange, editing, nextCode, categories, b
               <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
               「通用积分」可在全平台已启用产品消费；「专业积分」仅限该项目标对象范围内抵扣。同一（目标 + 积分类型）不可重复设置。
             </p>
+            {overlapConflicts.length > 0 && (
+              <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50/70 dark:bg-amber-950/20 dark:border-amber-900/60 p-3">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <div className="space-y-1.5 text-xs">
+                    <div className="font-medium text-amber-800 dark:text-amber-300">
+                      检测到分类与该分类下单品的积分配置存在叠加
+                    </div>
+                    <ul className="list-disc pl-4 space-y-0.5 text-amber-700 dark:text-amber-400/90">
+                      {overlapConflicts.map((c, i) => (
+                        <li key={i}>
+                          已设置分类「{c.category}」的{c.pointsType === "general" ? "通用" : "专业"}积分，
+                          又为其下基础产品「{c.productName}（{c.productId}）」单独配置同类型积分，将形成叠加发放。
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="text-amber-700/90 dark:text-amber-400/80">
+                      请确认这是有意的"分类通用额度 + 单品加码"设计；若为配置重复，请删除其中一项。
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </FormRow>
         </div>
 
