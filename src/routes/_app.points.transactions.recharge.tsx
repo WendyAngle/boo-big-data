@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -334,7 +335,7 @@ function RechargePage() {
 
   // 新增充值 多步向导
   const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
-  const [pickedTenantId, setPickedTenantId] = useState<string>("");
+  const [pickedTenantIds, setPickedTenantIds] = useState<string[]>([]);
   const [tenantKw, setTenantKw] = useState("");
   const [tenantStatusF, setTenantStatusF] = useState("enabled");
   const [tenantPage, setTenantPage] = useState(1);
@@ -419,7 +420,28 @@ function RechargePage() {
     (tenantPage - 1) * TENANT_PAGE_SIZE,
     tenantPage * TENANT_PAGE_SIZE,
   );
-  const pickedTenant = WIZARD_TENANTS.find((t) => t.id === pickedTenantId) || null;
+  const pickedTenants = WIZARD_TENANTS.filter((t) => pickedTenantIds.includes(t.id));
+  const pickedTenant = pickedTenants[0] || null;
+  const pageAllChecked =
+    tenantPageData.length > 0 && tenantPageData.every((t) => pickedTenantIds.includes(t.id));
+  const pageSomeChecked =
+    tenantPageData.some((t) => pickedTenantIds.includes(t.id)) && !pageAllChecked;
+  const togglePageAll = (checked: boolean) => {
+    setPickedTenantIds((prev) => {
+      const ids = tenantPageData.map((t) => t.id);
+      if (checked) {
+        const set = new Set(prev);
+        ids.forEach((id) => set.add(id));
+        return Array.from(set);
+      }
+      return prev.filter((id) => !ids.includes(id));
+    });
+  };
+  const toggleTenant = (id: string, checked: boolean) => {
+    setPickedTenantIds((prev) =>
+      checked ? Array.from(new Set([...prev, id])) : prev.filter((x) => x !== id),
+    );
+  };
 
   // 派生:第二步当前所选产品的汇总
   const pickedBundle = BUNDLE_PRODUCTS.find((b) => b.id === pickedBundleId) || null;
@@ -458,7 +480,7 @@ function RechargePage() {
 
   const openCreate = () => {
     setWizardStep(1);
-    setPickedTenantId("");
+    setPickedTenantIds([]);
     setTenantKw("");
     setTenantStatusF("enabled");
     setTenantPage(1);
@@ -473,8 +495,8 @@ function RechargePage() {
 
   const nextStep = () => {
     if (wizardStep === 1) {
-      if (!pickedTenantId) {
-        toast.error("请选择一个租户");
+      if (pickedTenantIds.length === 0) {
+        toast.error("请至少选择一个租户");
         return;
       }
       setWizardStep(2);
@@ -499,9 +521,13 @@ function RechargePage() {
     else if (wizardStep === 3) setWizardStep(2);
   };
   const submitCreate = () => {
-    if (!pickedTenant || !summary) return;
+    if (pickedTenants.length === 0 || !summary) return;
+    const label =
+      pickedTenants.length === 1
+        ? `「${pickedTenants[0].name}」`
+        : `${pickedTenants.length} 位租户`;
     toast.success(
-      `已为「${pickedTenant.name}」创建${summary.type}订单 ¥${summary.amount.toLocaleString()}`,
+      `已为${label}创建${summary.type}订单 ¥${summary.amount.toLocaleString()}`,
     );
     setCreateOpen(false);
   };
