@@ -138,6 +138,93 @@ const POINTS_MODE_LABEL: Record<PointsMode, string> = {
 
 const INITIAL_RECHARGE: RechargeProduct[] = [
   {
+    id: "RP000008",
+    name: "数据洞察季度通用充值",
+    targetType: "category",
+    targetKey: "数据洞察",
+    pointsMode: "general",
+    remark: "面向数据分析团队的通用积分充值,平台内任意产品可用。",
+    enabled: true,
+    tiers: [
+      { id: "t1", minAmount: "200", maxAmount: "1000", generalRate: "8", generalBonus: "5", proRate: "", proBonus: "" },
+      { id: "t2", minAmount: "1000", maxAmount: "5000", generalRate: "8", generalBonus: "10", proRate: "", proBonus: "" },
+      { id: "t3", minAmount: "5000", maxAmount: "20000", generalRate: "8", generalBonus: "18", proRate: "", proBonus: "" },
+    ],
+    createdAt: "2026-03-15 14:22:08",
+  },
+  {
+    id: "RP000007",
+    name: "AI内容创作专享充值",
+    targetType: "category",
+    targetKey: "AI内容创作",
+    pointsMode: "professional",
+    remark: "仅限 AI 内容创作分类内产品消费的专业积分。",
+    enabled: true,
+    tiers: [
+      { id: "t1", minAmount: "100", maxAmount: "500", generalRate: "", generalBonus: "", proRate: "12", proBonus: "5" },
+      { id: "t2", minAmount: "500", maxAmount: "3000", generalRate: "", generalBonus: "", proRate: "12", proBonus: "12" },
+      { id: "t3", minAmount: "3000", maxAmount: "10000", generalRate: "", generalBonus: "", proRate: "12", proBonus: "20" },
+    ],
+    createdAt: "2026-03-14 11:05:33",
+  },
+  {
+    id: "RP000006",
+    name: "AI智能获客双轨充值",
+    targetType: "category",
+    targetKey: "AI智能获客",
+    pointsMode: "mixed",
+    remark: "通用 + 专业双轨发放,既可全平台使用也可定向消费。",
+    enabled: false,
+    tiers: [
+      { id: "t1", minAmount: "300", maxAmount: "1500", generalRate: "4", generalBonus: "5", proRate: "8", proBonus: "10" },
+      { id: "t2", minAmount: "1500", maxAmount: "8000", generalRate: "4", generalBonus: "10", proRate: "8", proBonus: "20" },
+    ],
+    createdAt: "2026-03-13 18:46:51",
+  },
+  {
+    id: "RP000005",
+    name: "Tiktok获客单品通用充值",
+    targetType: "basic",
+    targetKey: "BP000032",
+    pointsMode: "general",
+    remark: "锁定 Tiktok 获客销售入口,发放可全平台使用的通用积分。",
+    enabled: true,
+    tiers: [
+      { id: "t1", minAmount: "80", maxAmount: "400", generalRate: "6", generalBonus: "3", proRate: "", proBonus: "" },
+      { id: "t2", minAmount: "400", maxAmount: "2000", generalRate: "6", generalBonus: "8", proRate: "", proBonus: "" },
+    ],
+    createdAt: "2026-03-13 09:18:40",
+  },
+  {
+    id: "RP000004",
+    name: "AI图生视频混合充值",
+    targetType: "basic",
+    targetKey: "BP000030",
+    pointsMode: "mixed",
+    remark: "单品促销:同时发放可全平台用的通用积分与定向专业积分。",
+    enabled: true,
+    tiers: [
+      { id: "t1", minAmount: "100", maxAmount: "500", generalRate: "3", generalBonus: "5", proRate: "10", proBonus: "10" },
+      { id: "t2", minAmount: "500", maxAmount: "3000", generalRate: "3", generalBonus: "10", proRate: "10", proBonus: "20" },
+      { id: "t3", minAmount: "3000", maxAmount: "12000", generalRate: "3", generalBonus: "15", proRate: "10", proBonus: "30" },
+    ],
+    createdAt: "2026-03-12 16:54:27",
+  },
+  {
+    id: "RP000003",
+    name: "AI视频消除专业积分包",
+    targetType: "basic",
+    targetKey: "BP000028",
+    pointsMode: "professional",
+    remark: "仅限 AI 视频消除使用的专业积分。",
+    enabled: false,
+    tiers: [
+      { id: "t1", minAmount: "50", maxAmount: "300", generalRate: "", generalBonus: "", proRate: "15", proBonus: "0" },
+      { id: "t2", minAmount: "300", maxAmount: "1500", generalRate: "", generalBonus: "", proRate: "15", proBonus: "10" },
+    ],
+    createdAt: "2026-03-12 10:21:12",
+  },
+  {
     id: "RP000002",
     name: "AI视频制作充值套餐",
     targetType: "category",
@@ -175,7 +262,7 @@ function RechargeProductsPage() {
   const enabledBasic = useMemo(() => basicProducts.filter((b) => b.enabled), [basicProducts]);
 
   const [data, setData] = useState<RechargeProduct[]>(INITIAL_RECHARGE);
-  const [seq, setSeq] = useState(2);
+  const [seq, setSeq] = useState(8);
 
   const [kw, setKw] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | TargetType>("all");
