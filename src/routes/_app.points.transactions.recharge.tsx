@@ -21,6 +21,8 @@ import {
   CheckCircle2,
   Check,
   ChevronLeft,
+  HelpCircle,
+  CalendarDays,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,6 +58,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ListPagination } from "@/components/ListPagination";
 import { toast } from "sonner";
 
@@ -111,6 +114,48 @@ const APPS: AppRef[] = [
 
 const PRODUCTS_RECHARGE = ["10 元充值包", "100 元充值包", "500 元充值包", "1000 元充值包"];
 const PRODUCTS_BUNDLE = ["入门版", "标准版", "拓界版", "旗舰版", "test"];
+
+// === 套餐产品库(高保真,字段对齐「套餐产品管理」)===
+interface BundleProduct {
+  id: string;
+  name: string;
+  description: string;
+  amount: number; // 充值金额(元)
+  basicPoints: number;
+  giftPoints: number;
+}
+const BUNDLE_PRODUCTS: BundleProduct[] = [
+  { id: "BD0001", name: "test", description: "11", amount: 10, basicPoints: 10, giftPoints: 10 },
+  { id: "BD0002", name: "基石版", description: "SIS基础包 + AI视频制作(12000积分) + AI智能获客(12000积分)", amount: 69800, basicPoints: 20000, giftPoints: 4000 },
+  { id: "BD0003", name: "拓界版", description: "SIS升级包 + AI视频制作(36000积分) + AI智能获客(36000积分)", amount: 109800, basicPoints: 110000, giftPoints: 16100 },
+  { id: "BD0004", name: "旗舰版", description: "SIS旗舰包 + AI视频制作(80000积分) + AI智能获客(80000积分) + 专属客服", amount: 199800, basicPoints: 220000, giftPoints: 44000 },
+];
+
+// === 充值产品分类 + 阶梯赠送规则 ===
+interface RechargeCategory {
+  id: string;
+  name: string;
+  ratio: number; // 基础积分转化比例(%), 100 = 1元=1积分
+  tiers: { min: number; gift: number }[]; // gift = 赠送比例(%)
+}
+const RECHARGE_CATEGORIES: RechargeCategory[] = [
+  { id: "CT01", name: "AI视频制作", ratio: 100, tiers: [{ min: 100, gift: 5 }, { min: 1000, gift: 10 }, { min: 5000, gift: 30 }, { min: 50000, gift: 35 }] },
+  { id: "CT02", name: "AI智能获客", ratio: 100, tiers: [{ min: 100, gift: 5 }, { min: 1000, gift: 15 }, { min: 10000, gift: 25 }] },
+  { id: "CT03", name: "AI内容创作", ratio: 100, tiers: [{ min: 100, gift: 8 }, { min: 2000, gift: 18 }, { min: 20000, gift: 28 }] },
+  { id: "CT04", name: "AI客服助手", ratio: 100, tiers: [{ min: 100, gift: 10 }, { min: 5000, gift: 20 }] },
+  { id: "CT05", name: "数据洞察", ratio: 100, tiers: [{ min: 500, gift: 5 }, { min: 5000, gift: 15 }] },
+];
+function matchTier(cat: RechargeCategory, amount: number) {
+  let matched = cat.tiers[0];
+  for (const t of cat.tiers) if (amount >= t.min) matched = t;
+  return amount >= cat.tiers[0].min ? matched : null;
+}
+
+function addYears(dateStr: string, years: number) {
+  const d = new Date(dateStr);
+  d.setFullYear(d.getFullYear() + years);
+  return fmtDate(d);
+}
 
 function pad(n: number, len = 2) {
   return String(n).padStart(len, "0");
@@ -293,9 +338,14 @@ function RechargePage() {
   const [tenantStatusF, setTenantStatusF] = useState("all");
   const [tenantPage, setTenantPage] = useState(1);
   const TENANT_PAGE_SIZE = 5;
-  const [wizardType, setWizardType] = useState<RechargeType>("积分充值");
-  const [wizardProduct, setWizardProduct] = useState<string>(PRODUCTS_RECHARGE[0]);
-  const [wizardAmount, setWizardAmount] = useState<number>(100);
+  // 选择产品(第二步)
+  const [productTab, setProductTab] = useState<"bundle" | "recharge">("bundle");
+  const [pickedBundleId, setPickedBundleId] = useState<string>("");
+  const [rechargeCategoryId, setRechargeCategoryId] = useState<string>("");
+  const [rechargeAmount, setRechargeAmount] = useState<number | "">("");
+  const [expireDate, setExpireDate] = useState<string>(() =>
+    addYears(fmtDate(new Date()), 1),
+  );
   const [wizardRemark, setWizardRemark] = useState("");
 
   const filtered = useMemo(() => {
@@ -342,8 +392,6 @@ function RechargePage() {
     setPage(1);
   };
 
-  const productOptions = wizardType === "积分充值" ? PRODUCTS_RECHARGE : PRODUCTS_BUNDLE;
-
   // 模拟租户列表 (与「积分管理系统 · 租户管理」字段一致)
   const WIZARD_TENANTS = useMemo(() => buildWizardTenants(), []);
 
@@ -372,15 +420,52 @@ function RechargePage() {
   );
   const pickedTenant = WIZARD_TENANTS.find((t) => t.id === pickedTenantId) || null;
 
+  // 派生:第二步当前所选产品的汇总
+  const pickedBundle = BUNDLE_PRODUCTS.find((b) => b.id === pickedBundleId) || null;
+  const pickedCategory = RECHARGE_CATEGORIES.find((c) => c.id === rechargeCategoryId) || null;
+  const rechargeAmt = typeof rechargeAmount === "number" ? rechargeAmount : 0;
+  const rechargeTier = pickedCategory ? matchTier(pickedCategory, rechargeAmt) : null;
+  const rechargeBasic = pickedCategory ? Math.round((rechargeAmt * pickedCategory.ratio) / 100) : 0;
+  const rechargeGift = rechargeTier ? Math.round((rechargeBasic * rechargeTier.gift) / 100) : 0;
+
+  // 汇总(第三步/提交用)
+  const summary = useMemo(() => {
+    if (productTab === "bundle" && pickedBundle) {
+      return {
+        type: "套餐购买" as RechargeType,
+        productName: pickedBundle.name,
+        productDesc: pickedBundle.description,
+        amount: pickedBundle.amount,
+        basic: pickedBundle.basicPoints,
+        gift: pickedBundle.giftPoints,
+      };
+    }
+    if (productTab === "recharge" && pickedCategory && rechargeAmt > 0) {
+      return {
+        type: "积分充值" as RechargeType,
+        productName: `${pickedCategory.name} · ¥${rechargeAmt.toLocaleString()}`,
+        productDesc: rechargeTier
+          ? `匹配阶梯 ¥${rechargeTier.min.toLocaleString()},赠送比例 ${rechargeTier.gift}%`
+          : "未匹配任何阶梯,无赠送",
+        amount: rechargeAmt,
+        basic: rechargeBasic,
+        gift: rechargeGift,
+      };
+    }
+    return null;
+  }, [productTab, pickedBundle, pickedCategory, rechargeAmt, rechargeBasic, rechargeGift, rechargeTier]);
+
   const openCreate = () => {
     setWizardStep(1);
     setPickedTenantId("");
     setTenantKw("");
     setTenantStatusF("all");
     setTenantPage(1);
-    setWizardType("积分充值");
-    setWizardProduct(PRODUCTS_RECHARGE[0]);
-    setWizardAmount(100);
+    setProductTab("bundle");
+    setPickedBundleId("");
+    setRechargeCategoryId("");
+    setRechargeAmount("");
+    setExpireDate(addYears(fmtDate(new Date()), 1));
     setWizardRemark("");
     setCreateOpen(true);
   };
@@ -393,8 +478,16 @@ function RechargePage() {
       }
       setWizardStep(2);
     } else if (wizardStep === 2) {
-      if (!wizardAmount || wizardAmount <= 0) {
-        toast.error("请输入有效充值金额");
+      if (!summary) {
+        toast.error(
+          productTab === "bundle"
+            ? "请选择一个套餐产品"
+            : "请选择产品分类并输入充值金额",
+        );
+        return;
+      }
+      if (!expireDate) {
+        toast.error("请设置积分到期日");
         return;
       }
       setWizardStep(3);
@@ -405,9 +498,9 @@ function RechargePage() {
     else if (wizardStep === 3) setWizardStep(2);
   };
   const submitCreate = () => {
-    if (!pickedTenant) return;
+    if (!pickedTenant || !summary) return;
     toast.success(
-      `已为「${pickedTenant.name}」创建${wizardType}订单 ¥${wizardAmount.toLocaleString()}`,
+      `已为「${pickedTenant.name}」创建${summary.type}订单 ¥${summary.amount.toLocaleString()}`,
     );
     setCreateOpen(false);
   };
@@ -796,61 +889,228 @@ function RechargePage() {
                     </Badge>
                   </div>
                 )}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label>充值类型</Label>
-                    <Select
-                      value={wizardType}
-                      onValueChange={(v) => {
-                        setWizardType(v as RechargeType);
-                        setWizardProduct(v === "积分充值" ? PRODUCTS_RECHARGE[0] : PRODUCTS_BUNDLE[0]);
-                      }}
-                    >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="积分充值">积分充值</SelectItem>
-                        <SelectItem value="套餐购买">套餐购买</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>产品名称</Label>
-                    <Select value={wizardProduct} onValueChange={setWizardProduct}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {productOptions.map((p) => (
-                          <SelectItem key={p} value={p}>{p}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>充值金额 (元)</Label>
-                    <Input
-                      type="number"
-                      value={wizardAmount}
-                      onChange={(e) => setWizardAmount(Number(e.target.value))}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>备注</Label>
-                    <Input
-                      value={wizardRemark}
-                      onChange={(e) => setWizardRemark(e.target.value)}
-                      placeholder="选填"
-                    />
-                  </div>
+
+                <div className="flex items-center gap-2 text-base font-semibold">
+                  选择充值产品
+                  <TooltipProvider delayDuration={150}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="h-4 w-4 text-amber-500 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        套餐产品按固定金额发放预设积分;充值产品按所选分类的转化比例与阶梯赠送规则计算积分。
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
-                <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground flex items-start gap-2">
-                  <Info className="h-3.5 w-3.5 mt-0.5 text-amber-500 shrink-0" />
-                  <span>
-                    本次按「{wizardType}」规则计算: 基础积分 {(wizardAmount * 10).toLocaleString()},预计赠送积分 +{Math.round(wizardAmount * 10 * 0.1).toLocaleString()}。
-                  </span>
+
+                <Tabs
+                  value={productTab}
+                  onValueChange={(v) => setProductTab(v as "bundle" | "recharge")}
+                >
+                  <TabsList className="bg-transparent p-0 h-auto border-b rounded-none w-full justify-start gap-6">
+                    <TabsTrigger
+                      value="bundle"
+                      className="px-0 pb-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                    >
+                      套餐产品
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="recharge"
+                      className="px-0 pb-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                    >
+                      充值产品
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* 套餐产品 */}
+                  <TabsContent value="bundle" className="mt-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {BUNDLE_PRODUCTS.map((b) => {
+                        const active = pickedBundleId === b.id;
+                        return (
+                          <button
+                            key={b.id}
+                            type="button"
+                            onClick={() => setPickedBundleId(b.id)}
+                            className={`relative text-left rounded-xl border-2 p-5 transition-all ${
+                              active
+                                ? "border-primary bg-primary/5 shadow-sm"
+                                : "border-dashed border-border bg-card hover:border-primary/40 hover:bg-accent/20"
+                            }`}
+                          >
+                            {active && (
+                              <span className="absolute top-3 right-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
+                                <Check className="h-3.5 w-3.5" />
+                              </span>
+                            )}
+                            <div className="text-lg font-bold">{b.name}</div>
+                            <div className="mt-1 text-xs text-muted-foreground line-clamp-2 min-h-[2rem]">
+                              {b.description}
+                            </div>
+                            <div className="mt-3 flex items-baseline gap-2">
+                              <span className="text-2xl font-bold text-rose-600 tabular-nums">
+                                ¥ {b.amount.toLocaleString()}
+                              </span>
+                              <span className="text-xs text-muted-foreground">充值金额</span>
+                            </div>
+                            <div className="mt-3 flex items-center justify-between text-xs">
+                              <span className="text-foreground/80">
+                                <span className="tabular-nums font-medium">{b.basicPoints.toLocaleString()}</span> 基础积分
+                              </span>
+                              <span className="text-emerald-600 font-medium tabular-nums">
+                                +{b.giftPoints.toLocaleString()} 赠送积分
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </TabsContent>
+
+                  {/* 充值产品 */}
+                  <TabsContent value="recharge" className="mt-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
+                          <Label>
+                            产品分类 <span className="text-destructive">*</span>
+                          </Label>
+                          <Select value={rechargeCategoryId} onValueChange={setRechargeCategoryId}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="请选择产品分类" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {RECHARGE_CATEGORIES.map((c) => (
+                                <SelectItem key={c.id} value={c.id}>
+                                  {c.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>
+                            充值金额 (元) <span className="text-destructive">*</span>
+                          </Label>
+                          <div className="flex">
+                            <span className="inline-flex items-center justify-center w-10 rounded-l-md border border-r-0 bg-muted text-muted-foreground text-sm">
+                              ¥
+                            </span>
+                            <Input
+                              type="number"
+                              min={0}
+                              value={rechargeAmount}
+                              onChange={(e) =>
+                                setRechargeAmount(e.target.value === "" ? "" : Number(e.target.value))
+                              }
+                              placeholder="请输入充值金额"
+                              className="rounded-l-none"
+                            />
+                          </div>
+                          {pickedCategory && (
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              {pickedCategory.tiers.map((t) => (
+                                <button
+                                  key={t.min}
+                                  type="button"
+                                  onClick={() => setRechargeAmount(t.min)}
+                                  className="text-[11px] px-2 py-0.5 rounded border border-border bg-muted/40 hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-colors"
+                                >
+                                  ¥{t.min.toLocaleString()} 起 · +{t.gift}%
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 预览面板 */}
+                      <div className="rounded-xl border bg-muted/20 p-5 min-h-[280px] flex">
+                        {pickedCategory && rechargeAmt > 0 ? (
+                          <div className="w-full">
+                            <div className="text-center">
+                              <div className="text-xs text-muted-foreground">预计获得总积分</div>
+                              <div className="mt-1 text-3xl font-bold text-emerald-600 tabular-nums">
+                                +{(rechargeBasic + rechargeGift).toLocaleString()}
+                              </div>
+                            </div>
+                            <div className="my-4 border-t" />
+                            <div className="text-center">
+                              <div className="text-xs text-muted-foreground">匹配阶梯</div>
+                              <div className="mt-1 text-lg font-semibold text-rose-600 tabular-nums">
+                                {rechargeTier ? `¥${rechargeTier.min.toLocaleString()}` : "未匹配"}
+                              </div>
+                            </div>
+                            <div className="mt-5 space-y-2.5 text-sm">
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">基础积分转化比例</span>
+                                <span className="text-primary font-medium tabular-nums">
+                                  {pickedCategory.ratio}%
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">基础积分</span>
+                                <span className="font-semibold tabular-nums">
+                                  {rechargeBasic.toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">积分赠送比例</span>
+                                <span className="text-amber-600 font-medium tabular-nums">
+                                  {rechargeTier ? `${rechargeTier.gift}%` : "0%"}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">赠送积分</span>
+                                <span className="text-emerald-600 font-medium tabular-nums">
+                                  +{rechargeGift.toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="m-auto text-center text-muted-foreground">
+                            <ShoppingCart className="h-10 w-10 mx-auto opacity-40" />
+                            <div className="mt-3 text-sm">请选择产品分类并输入充值金额</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+
+                {/* 积分到期日 */}
+                <div className="space-y-2 pt-2 border-t">
+                  <div className="flex items-center gap-2 text-sm font-semibold pt-3">
+                    <CalendarDays className="h-4 w-4 text-primary" />
+                    积分到期日设置
+                  </div>
+                  <div className="text-xs text-muted-foreground">设置积分有效期至</div>
+                  <div className="relative max-w-[260px]">
+                    <CalendarDays className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      type="date"
+                      value={expireDate}
+                      onChange={(e) => setExpireDate(e.target.value)}
+                      className="pl-9 font-mono text-xs"
+                    />
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">默认有效期为一年</div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>备注</Label>
+                  <Input
+                    value={wizardRemark}
+                    onChange={(e) => setWizardRemark(e.target.value)}
+                    placeholder="选填,例如「2026 Q1 续费补单」"
+                  />
                 </div>
               </div>
             )}
 
-            {wizardStep === 3 && pickedTenant && (
+            {wizardStep === 3 && pickedTenant && summary && (
               <div className="space-y-4 pb-2">
                 <div className="rounded-lg border bg-card p-5 space-y-3">
                   <div className="text-sm font-semibold text-foreground">订单信息确认</div>
@@ -863,48 +1123,69 @@ function RechargePage() {
                         <Badge
                           variant="outline"
                           className={
-                            wizardType === "积分充值"
+                            summary.type === "积分充值"
                               ? "bg-sky-50 text-sky-700 border-sky-200"
                               : "bg-emerald-50 text-emerald-700 border-emerald-200"
                           }
                         >
-                          {wizardType}
+                          {summary.type}
                         </Badge>
                       }
                     />
-                    <DetailItem label="产品名称" value={wizardProduct} />
+                    <DetailItem label="产品名称" value={summary.productName} />
                     <DetailItem
                       label="充值金额"
-                      value={<span className="font-semibold text-rose-600">¥{wizardAmount.toLocaleString()}</span>}
+                      value={<span className="font-semibold text-rose-600">¥{summary.amount.toLocaleString()}</span>}
                     />
-                    <DetailItem label="基础积分" value={(wizardAmount * 10).toLocaleString()} />
+                    <DetailItem label="基础积分" value={summary.basic.toLocaleString()} />
                     <DetailItem
                       label="赠送积分"
-                      value={<span className="text-emerald-600 font-medium">+{Math.round(wizardAmount * 10 * 0.1).toLocaleString()}</span>}
+                      value={
+                        <span className={summary.gift > 0 ? "text-emerald-600 font-medium" : "text-muted-foreground"}>
+                          +{summary.gift.toLocaleString()}
+                        </span>
+                      }
                     />
+                    <DetailItem label="积分到期日" value={<span className="font-mono text-xs">{expireDate}</span>} />
                     <DetailItem label="备注" value={wizardRemark || <span className="text-muted-foreground">—</span>} />
+                  </div>
+                  <div className="pt-3 mt-2 border-t flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">本次发放总积分</span>
+                    <span className="text-2xl font-bold text-emerald-600 tabular-nums">
+                      +{(summary.basic + summary.gift).toLocaleString()}
+                    </span>
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          <DialogFooter className="px-6 py-4 border-t bg-muted/20">
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
-            {wizardStep > 1 && (
-              <Button variant="outline" onClick={prevStep}>
-                <ChevronLeft className="h-4 w-4" /> 上一步
-              </Button>
-            )}
-            {wizardStep < 3 ? (
-              <Button onClick={nextStep} disabled={wizardStep === 1 && !pickedTenantId}>
-                下一步 <ChevronRight className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button onClick={submitCreate}>
-                <Check className="h-4 w-4" /> 确认充值
-              </Button>
-            )}
+          <DialogFooter className="px-6 py-4 border-t bg-muted/20 sm:justify-between">
+            <div>
+              {wizardStep > 1 && (
+                <Button variant="outline" onClick={prevStep}>
+                  <ChevronLeft className="h-4 w-4" /> 上一步
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
+              {wizardStep < 3 ? (
+                <Button
+                  onClick={nextStep}
+                  disabled={
+                    (wizardStep === 1 && !pickedTenantId) ||
+                    (wizardStep === 2 && !summary)
+                  }
+                >
+                  下一步 <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button onClick={submitCreate}>
+                  <Check className="h-4 w-4" /> 确认充值
+                </Button>
+              )}
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
