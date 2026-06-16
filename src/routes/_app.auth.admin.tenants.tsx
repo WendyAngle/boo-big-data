@@ -1611,13 +1611,7 @@ function AuthPolicyDialog({ tenant, existing, onOpenChange, onSubmit }: AuthPoli
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
           <Button
-            onClick={() => {
-              if (policy.enabled && policy.timing === "使用敏感功能" && policy.sensitiveFeatures.length === 0) {
-                toast.error("请至少添加一项敏感功能");
-                return;
-              }
-              onSubmit(policy);
-            }}
+            onClick={() => onSubmit(policy)}
           >
             {isEdit ? "保存修改" : "保存策略"}
           </Button>
