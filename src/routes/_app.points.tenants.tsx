@@ -747,7 +747,7 @@ function AdjustPointsDialog({
             <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="请输入调整原因(可选)" rows={3} maxLength={200} />
           </div>
           <div className="rounded-lg border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-            提示:调整将生成一条积分流水,可在 业务交易 · 积分流水 中查询。
+            提示:调整将生成一条积分流水记录。
           </div>
         </div>
         <DialogFooter>
