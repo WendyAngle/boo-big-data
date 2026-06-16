@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ShieldCheck, Users, Settings } from "lucide-react";
+import { Users } from "lucide-react";
 
 export const Route = createFileRoute("/_app/")({
   head: () => ({
@@ -24,18 +24,7 @@ function Home() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <Link to="/auth/admin" className="group rounded-xl border bg-card p-6 hover:border-primary hover:shadow-md transition-all">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-lg bg-accent flex items-center justify-center">
-              <Settings className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">实名认证 · 管理端</h3>
-              <p className="text-sm text-muted-foreground">审核与配置认证流程</p>
-            </div>
-          </div>
-        </Link>
-        <Link to="/auth/user" className="group rounded-xl border bg-card p-6 hover:border-primary hover:shadow-md transition-all">
+        <Link to="/auth/user/users" className="group rounded-xl border bg-card p-6 hover:border-primary hover:shadow-md transition-all">
           <div className="flex items-center gap-3">
             <div className="h-11 w-11 rounded-lg bg-accent flex items-center justify-center">
               <Users className="h-5 w-5 text-primary" />

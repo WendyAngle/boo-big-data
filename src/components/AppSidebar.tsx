@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ShieldCheck, ChevronDown, LayoutDashboard, Users, Building2, ClipboardCheck, UserCog, Coins, LogIn, Send, Package, Receipt, FolderTree, Box, Wallet, Layers, ArrowLeftRight } from "lucide-react";
+import { ShieldCheck, ChevronDown, LayoutDashboard, Users, UserCog, Coins, Send, FolderTree, Box, Wallet, Layers, ArrowLeftRight } from "lucide-react";
 
 type Leaf = { label: string; to: string; icon?: typeof Users };
 type Group = { label: string; to?: string; children: Leaf[] };
@@ -12,21 +12,10 @@ const menu: Root[] = [
     icon: ShieldCheck,
     children: [
       {
-        label: "管理端",
-        to: "/auth/admin",
-        children: [
-          { label: "租户管理", to: "/auth/admin/tenants", icon: Users },
-          { label: "用户管理", to: "/auth/admin/users", icon: UserCog },
-          { label: "实名审核", to: "/auth/admin/audit", icon: ClipboardCheck },
-        ],
-      },
-      {
         label: "用户端",
-        to: "/auth/user",
+        to: "/auth/user/users",
         children: [
-          { label: "企业实名认证", to: "/auth/user/enterprise", icon: Building2 },
           { label: "用户管理", to: "/auth/user/users", icon: UserCog },
-          { label: "登录模拟", to: "/auth/user/login-sim", icon: LogIn },
         ],
       },
     ],
@@ -80,7 +69,7 @@ export function AppSidebar() {
   const { location } = useRouterState();
   const [open, setOpen] = useState<Record<string, boolean>>({
     实名认证: true,
-    管理端: true,
+    用户端: true,
   });
 
   return (
