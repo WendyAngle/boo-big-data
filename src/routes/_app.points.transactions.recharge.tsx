@@ -17,20 +17,12 @@ import {
   X,
   ArrowLeftRight,
   User,
-  ShoppingCart,
-  CheckCircle2,
   Check,
-  ChevronLeft,
-  HelpCircle,
-  CalendarDays,
-  AlertCircle,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -60,7 +52,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ListPagination } from "@/components/ListPagination";
 import { toast } from "sonner";
 
