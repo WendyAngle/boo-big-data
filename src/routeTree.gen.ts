@@ -21,7 +21,6 @@ import { Route as AppAuthAdminIndexRouteImport } from './routes/_app.auth.admin.
 import { Route as AppPointsProductsRechargeRouteImport } from './routes/_app.points.products.recharge'
 import { Route as AppPointsProductsCategoriesRouteImport } from './routes/_app.points.products.categories'
 import { Route as AppPointsProductsBundlesRouteImport } from './routes/_app.points.products.bundles'
-import { Route as AppPointsProductsBasicRouteImport } from './routes/_app.points.products.basic'
 import { Route as AppAuthUserUsersRouteImport } from './routes/_app.auth.user.users'
 import { Route as AppAuthUserLoginSimRouteImport } from './routes/_app.auth.user.login-sim'
 import { Route as AppAuthUserEnterpriseRouteImport } from './routes/_app.auth.user.enterprise'
@@ -91,11 +90,6 @@ const AppPointsProductsBundlesRoute =
     path: '/points/products/bundles',
     getParentRoute: () => AppRoute,
   } as any)
-const AppPointsProductsBasicRoute = AppPointsProductsBasicRouteImport.update({
-  id: '/points/products/basic',
-  path: '/points/products/basic',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppAuthUserUsersRoute = AppAuthUserUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -141,7 +135,6 @@ export interface FileRoutesByFullPath {
   '/auth/user/enterprise': typeof AppAuthUserEnterpriseRoute
   '/auth/user/login-sim': typeof AppAuthUserLoginSimRoute
   '/auth/user/users': typeof AppAuthUserUsersRoute
-  '/points/products/basic': typeof AppPointsProductsBasicRoute
   '/points/products/bundles': typeof AppPointsProductsBundlesRoute
   '/points/products/categories': typeof AppPointsProductsCategoriesRoute
   '/points/products/recharge': typeof AppPointsProductsRechargeRoute
@@ -160,7 +153,6 @@ export interface FileRoutesByTo {
   '/auth/user/enterprise': typeof AppAuthUserEnterpriseRoute
   '/auth/user/login-sim': typeof AppAuthUserLoginSimRoute
   '/auth/user/users': typeof AppAuthUserUsersRoute
-  '/points/products/basic': typeof AppPointsProductsBasicRoute
   '/points/products/bundles': typeof AppPointsProductsBundlesRoute
   '/points/products/categories': typeof AppPointsProductsCategoriesRoute
   '/points/products/recharge': typeof AppPointsProductsRechargeRoute
@@ -182,7 +174,6 @@ export interface FileRoutesById {
   '/_app/auth/user/enterprise': typeof AppAuthUserEnterpriseRoute
   '/_app/auth/user/login-sim': typeof AppAuthUserLoginSimRoute
   '/_app/auth/user/users': typeof AppAuthUserUsersRoute
-  '/_app/points/products/basic': typeof AppPointsProductsBasicRoute
   '/_app/points/products/bundles': typeof AppPointsProductsBundlesRoute
   '/_app/points/products/categories': typeof AppPointsProductsCategoriesRoute
   '/_app/points/products/recharge': typeof AppPointsProductsRechargeRoute
@@ -204,7 +195,6 @@ export interface FileRouteTypes {
     | '/auth/user/enterprise'
     | '/auth/user/login-sim'
     | '/auth/user/users'
-    | '/points/products/basic'
     | '/points/products/bundles'
     | '/points/products/categories'
     | '/points/products/recharge'
@@ -223,7 +213,6 @@ export interface FileRouteTypes {
     | '/auth/user/enterprise'
     | '/auth/user/login-sim'
     | '/auth/user/users'
-    | '/points/products/basic'
     | '/points/products/bundles'
     | '/points/products/categories'
     | '/points/products/recharge'
@@ -244,7 +233,6 @@ export interface FileRouteTypes {
     | '/_app/auth/user/enterprise'
     | '/_app/auth/user/login-sim'
     | '/_app/auth/user/users'
-    | '/_app/points/products/basic'
     | '/_app/points/products/bundles'
     | '/_app/points/products/categories'
     | '/_app/points/products/recharge'
@@ -341,13 +329,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPointsProductsBundlesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/points/products/basic': {
-      id: '/_app/points/products/basic'
-      path: '/points/products/basic'
-      fullPath: '/points/products/basic'
-      preLoaderRoute: typeof AppPointsProductsBasicRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/auth/user/users': {
       id: '/_app/auth/user/users'
       path: '/users'
@@ -435,7 +416,6 @@ interface AppRouteChildren {
   AppPointsTenantsRoute: typeof AppPointsTenantsRoute
   AppPointsTransactionsRoute: typeof AppPointsTransactionsRoute
   AppOutreachIndexRoute: typeof AppOutreachIndexRoute
-  AppPointsProductsBasicRoute: typeof AppPointsProductsBasicRoute
   AppPointsProductsBundlesRoute: typeof AppPointsProductsBundlesRoute
   AppPointsProductsCategoriesRoute: typeof AppPointsProductsCategoriesRoute
   AppPointsProductsRechargeRoute: typeof AppPointsProductsRechargeRoute
@@ -449,7 +429,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppPointsTenantsRoute: AppPointsTenantsRoute,
   AppPointsTransactionsRoute: AppPointsTransactionsRoute,
   AppOutreachIndexRoute: AppOutreachIndexRoute,
-  AppPointsProductsBasicRoute: AppPointsProductsBasicRoute,
   AppPointsProductsBundlesRoute: AppPointsProductsBundlesRoute,
   AppPointsProductsCategoriesRoute: AppPointsProductsCategoriesRoute,
   AppPointsProductsRechargeRoute: AppPointsProductsRechargeRoute,
