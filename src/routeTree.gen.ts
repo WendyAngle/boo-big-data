@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as AppOutreachIndexRouteImport } from './routes/_app.outreach.index'
 import { Route as AppPointsStrategyRouteImport } from './routes/_app.points.strategy'
 import { Route as AppAuthUserRouteImport } from './routes/_app.auth.user'
 import { Route as AppAuthAdminRouteImport } from './routes/_app.auth.admin'
@@ -30,6 +31,11 @@ const AppRoute = AppRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOutreachIndexRoute = AppOutreachIndexRouteImport.update({
+  id: '/outreach/',
+  path: '/outreach/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPointsStrategyRoute = AppPointsStrategyRouteImport.update({
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/auth/admin': typeof AppAuthAdminRouteWithChildren
   '/auth/user': typeof AppAuthUserRouteWithChildren
   '/points/strategy': typeof AppPointsStrategyRoute
+  '/outreach/': typeof AppOutreachIndexRoute
   '/auth/admin/audit': typeof AppAuthAdminAuditRoute
   '/auth/admin/levels': typeof AppAuthAdminLevelsRoute
   '/auth/admin/tenants': typeof AppAuthAdminTenantsRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
   '/auth/user': typeof AppAuthUserRouteWithChildren
   '/points/strategy': typeof AppPointsStrategyRoute
+  '/outreach': typeof AppOutreachIndexRoute
   '/auth/admin/audit': typeof AppAuthAdminAuditRoute
   '/auth/admin/levels': typeof AppAuthAdminLevelsRoute
   '/auth/admin/tenants': typeof AppAuthAdminTenantsRoute
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/_app/auth/admin': typeof AppAuthAdminRouteWithChildren
   '/_app/auth/user': typeof AppAuthUserRouteWithChildren
   '/_app/points/strategy': typeof AppPointsStrategyRoute
+  '/_app/outreach/': typeof AppOutreachIndexRoute
   '/_app/auth/admin/audit': typeof AppAuthAdminAuditRoute
   '/_app/auth/admin/levels': typeof AppAuthAdminLevelsRoute
   '/_app/auth/admin/tenants': typeof AppAuthAdminTenantsRoute
@@ -138,6 +147,7 @@ export interface FileRouteTypes {
     | '/auth/admin'
     | '/auth/user'
     | '/points/strategy'
+    | '/outreach/'
     | '/auth/admin/audit'
     | '/auth/admin/levels'
     | '/auth/admin/tenants'
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth/user'
     | '/points/strategy'
+    | '/outreach'
     | '/auth/admin/audit'
     | '/auth/admin/levels'
     | '/auth/admin/tenants'
@@ -166,6 +177,7 @@ export interface FileRouteTypes {
     | '/_app/auth/admin'
     | '/_app/auth/user'
     | '/_app/points/strategy'
+    | '/_app/outreach/'
     | '/_app/auth/admin/audit'
     | '/_app/auth/admin/levels'
     | '/_app/auth/admin/tenants'
@@ -194,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/outreach/': {
+      id: '/_app/outreach/'
+      path: '/outreach'
+      fullPath: '/outreach/'
+      preLoaderRoute: typeof AppOutreachIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/points/strategy': {
@@ -317,6 +336,7 @@ interface AppRouteChildren {
   AppAuthAdminRoute: typeof AppAuthAdminRouteWithChildren
   AppAuthUserRoute: typeof AppAuthUserRouteWithChildren
   AppPointsStrategyRoute: typeof AppPointsStrategyRoute
+  AppOutreachIndexRoute: typeof AppOutreachIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -324,6 +344,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAuthAdminRoute: AppAuthAdminRouteWithChildren,
   AppAuthUserRoute: AppAuthUserRouteWithChildren,
   AppPointsStrategyRoute: AppPointsStrategyRoute,
+  AppOutreachIndexRoute: AppOutreachIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -334,13 +355,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
