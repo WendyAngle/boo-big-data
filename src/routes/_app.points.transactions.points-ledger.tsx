@@ -123,7 +123,7 @@ function buildMock(): LedgerRow[] {
     return seed / 233280;
   };
 
-  // 每个租户维护两类积分余额,保证 before/after 自洽
+  // 每个企业维护两类积分余额,保证 before/after 自洽
   const balances: Record<string, Record<PointType, number>> = {};
   TENANTS.forEach((t) => (balances[t] = { 通用积分: 0, 专业积分: 0 }));
 
@@ -285,7 +285,7 @@ function PointsLedgerPage() {
           <div>
             <h1 className="text-xl font-bold">积分流水</h1>
             <p className="text-white/85 text-sm mt-0.5">
-              查询租户在各产品上的积分变动明细,支持按业务动作、积分类型与时间区间多维筛选
+              查询企业在各产品上的积分变动明细,支持按业务动作、积分类型与时间区间多维筛选
             </p>
           </div>
         </div>
@@ -337,10 +337,10 @@ function PointsLedgerPage() {
 
           <Select value={tenantF} onValueChange={setTenantF}>
             <SelectTrigger>
-              <SelectValue placeholder="全部租户" />
+              <SelectValue placeholder="全部企业" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">全部租户</SelectItem>
+              <SelectItem value="all">全部企业</SelectItem>
               {TENANTS.map((t) => (
                 <SelectItem key={t} value={t}>
                   {t}
@@ -436,17 +436,17 @@ function PointsLedgerPage() {
                 <TableHead className="whitespace-nowrap">操作时间</TableHead>
                 <TableHead className="whitespace-nowrap">流水编号</TableHead>
                 <TableHead className="whitespace-nowrap">订单编号</TableHead>
-                <TableHead className="whitespace-nowrap">租户名称</TableHead>
+                <TableHead className="whitespace-nowrap">企业名称</TableHead>
                 <TableHead className="whitespace-nowrap">关联应用</TableHead>
                 <TableHead className="whitespace-nowrap">产品分类</TableHead>
                 <TableHead className="whitespace-nowrap">产品名称</TableHead>
                 <TableHead className="whitespace-nowrap">业务动作</TableHead>
                 <TableHead className="whitespace-nowrap">积分类型</TableHead>
                 <TableHead className="text-right whitespace-nowrap">
-                  <HeaderWithHelp text="变动前余额" tip="本次操作发生前该租户在该积分类型下的可用余额" />
+                  <HeaderWithHelp text="变动前余额" tip="本次操作发生前该企业在该积分类型下的可用余额" />
                 </TableHead>
                 <TableHead className="text-right whitespace-nowrap">
-                  <HeaderWithHelp text="变动后余额" tip="本次操作完成后该租户在该积分类型下的可用余额" />
+                  <HeaderWithHelp text="变动后余额" tip="本次操作完成后该企业在该积分类型下的可用余额" />
                 </TableHead>
                 <TableHead className="text-right whitespace-nowrap">积分动态</TableHead>
               </TableRow>

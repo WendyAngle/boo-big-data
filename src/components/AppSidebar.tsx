@@ -39,7 +39,7 @@ const menu: Root[] = [
         children: [],
       },
       {
-        label: "租户管理",
+        label: "企业管理",
         to: "/points/tenants",
         children: [],
       },

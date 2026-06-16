@@ -64,7 +64,7 @@ import { ListPagination } from "@/components/ListPagination";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/points/tenants")({
-  head: () => ({ meta: [{ title: "积分管理系统 · 租户管理 | Boo数据平台" }] }),
+  head: () => ({ meta: [{ title: "积分管理系统 · 企业管理 | Boo数据平台" }] }),
   component: PointsTenantsPage,
 });
 
@@ -73,7 +73,7 @@ const CONTACT_NAMES = [
   "张伟", "王芳", "李娜", "刘洋", "陈思", "杨明",
   "赵磊", "黄雨", "周凯", "吴婷",
 ];
-// 与 管理端·租户管理 保持一致的租户名称
+// 与 管理端·企业管理 保持一致的企业名称
 const TENANT_NAMES = [
   "字节跳动", "蚂蚁集团", "美团点评", "京东物流", "宁德时代",
   "比亚迪汽车", "顺丰科技", "腾讯云", "阿里云", "网易严选",
@@ -208,7 +208,7 @@ function PointsTenantsPage() {
   };
 
   const exportData = () => {
-    toast.success(`已导出 ${total} 条租户积分数据`);
+    toast.success(`已导出 ${total} 条企业积分数据`);
   };
 
   const toggleEnabled = (t: PointsTenant) => {
@@ -258,7 +258,7 @@ function PointsTenantsPage() {
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <span>积分管理系统</span>
         <ChevronRight className="h-3.5 w-3.5" />
-        <span className="text-foreground font-medium">租户管理</span>
+        <span className="text-foreground font-medium">企业管理</span>
       </div>
 
       <section
@@ -270,16 +270,16 @@ function PointsTenantsPage() {
             <Users className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">租户管理</h1>
+            <h1 className="text-xl font-bold">企业管理</h1>
             <p className="text-white/85 text-sm mt-0.5">
-              维护接入积分体系的租户基础信息、积分余额与充值消费台账,支持调整积分与启用状态
+              维护接入积分体系的企业基础信息、积分余额与充值消费台账,支持调整积分与启用状态
             </p>
           </div>
         </div>
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard icon={<Users className="h-5 w-5" />} label="租户总数" mainValue={stats.total} tone="primary" />
+        <StatCard icon={<Users className="h-5 w-5" />} label="企业总数" mainValue={stats.total} tone="primary" />
         <StatCard icon={<Coins className="h-5 w-5" />} label="通用积分总余额" mainValue={stats.general.toLocaleString()} tone="cyan" />
         <StatCard icon={<Gem className="h-5 w-5" />} label="专业积分总余额" mainValue={stats.pro.toLocaleString()} tone="emerald" />
         <StatCard icon={<Wallet className="h-5 w-5" />} label="累计充值 (元)" mainValue={stats.recharge.toLocaleString()} tone="amber" />
@@ -292,7 +292,7 @@ function PointsTenantsPage() {
             <Input
               value={keyword}
               onChange={(e) => { setKeyword(e.target.value); setPage(1); }}
-              placeholder="搜索租户ID / 租户名称"
+              placeholder="搜索企业ID / 企业名称"
               className="pl-9"
             />
           </div>
@@ -325,11 +325,11 @@ function PointsTenantsPage() {
       <Card className="p-5">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div className="text-sm text-muted-foreground">
-            共 <span className="font-semibold text-foreground">{total}</span> 条租户
+            共 <span className="font-semibold text-foreground">{total}</span> 条企业
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
-              <Plus className="h-4 w-4" /> 新增租户
+              <Plus className="h-4 w-4" /> 新增企业
             </Button>
             <Button variant="outline" onClick={exportData}>
               <Download className="h-4 w-4" /> 导出
@@ -341,8 +341,8 @@ function PointsTenantsPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
-                <TableHead className="whitespace-nowrap">租户ID</TableHead>
-                <TableHead className="whitespace-nowrap">租户名称</TableHead>
+                <TableHead className="whitespace-nowrap">企业ID</TableHead>
+                <TableHead className="whitespace-nowrap">企业名称</TableHead>
                 <TableHead>行业</TableHead>
                 <TableHead className="whitespace-nowrap">联系方式</TableHead>
                 <TableHead className="text-right whitespace-nowrap">通用积分余额</TableHead>
@@ -357,7 +357,7 @@ function PointsTenantsPage() {
             <TableBody>
               {pageData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center py-12 text-muted-foreground">暂无匹配的租户</TableCell>
+                  <TableCell colSpan={11} className="text-center py-12 text-muted-foreground">暂无匹配的企业</TableCell>
                 </TableRow>
               ) : (
                 pageData.map((t) => (
@@ -466,7 +466,7 @@ function PointsTenantsPage() {
       <AlertDialog open={!!delTarget} onOpenChange={(o) => !o && setDelTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>确认删除该租户?</AlertDialogTitle>
+            <AlertDialogTitle>确认删除该企业?</AlertDialogTitle>
             <AlertDialogDescription>
               删除后将无法恢复,{delTarget?.name} 的积分余额与历史台账将被清除。
             </AlertDialogDescription>
@@ -533,7 +533,7 @@ function TenantFormDialog({
   }, [open, editing]);
 
   const submit = () => {
-    if (!name.trim()) return toast.error("请输入租户名称");
+    if (!name.trim()) return toast.error("请输入企业名称");
     if (!contact.trim()) return toast.error("请输入联系人");
     if (!/^1\d{10}$/.test(contactPhone.trim())) return toast.error("请输入正确的手机号");
     onSubmit({
@@ -553,15 +553,15 @@ function TenantFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>{editing ? "编辑租户" : "新增租户"}</DialogTitle>
+          <DialogTitle>{editing ? "编辑企业" : "新增企业"}</DialogTitle>
           <DialogDescription>
-            {editing ? "修改租户基础信息与初始余额" : "新增接入积分体系的租户"}
+            {editing ? "修改企业基础信息与初始余额" : "新增接入积分体系的企业"}
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <Label>租户名称<span className="text-destructive ml-0.5">*</span></Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="请输入租户名称" maxLength={50} />
+            <Label>企业名称<span className="text-destructive ml-0.5">*</span></Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="请输入企业名称" maxLength={50} />
           </div>
           <div>
             <Label>行业</Label>
@@ -618,14 +618,14 @@ function TenantDetailDialog({
     <Dialog open={!!tenant} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>租户详情</DialogTitle>
+          <DialogTitle>企业详情</DialogTitle>
           <DialogDescription>{tenant?.name} · {tenant?.id}</DialogDescription>
         </DialogHeader>
         {tenant && (
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <KV label="租户ID" value={<span className="font-mono">{tenant.id}</span>} />
-              <KV label="租户名称" value={tenant.name} />
+              <KV label="企业ID" value={<span className="font-mono">{tenant.id}</span>} />
+              <KV label="企业名称" value={tenant.name} />
               <KV label="行业" value={tenant.industry} />
               <KV label="启用状态" value={
                 <Badge variant="outline" className={tenant.enabled ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-muted text-muted-foreground"}>
