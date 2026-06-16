@@ -448,7 +448,6 @@ function TenantsPage() {
             <SelectTrigger><SelectValue placeholder="全部类型" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部类型</SelectItem>
-              <SelectItem value="个人用户">个人用户</SelectItem>
               <SelectItem value="企业用户">企业用户</SelectItem>
             </SelectContent>
           </Select>
@@ -817,7 +816,6 @@ function computePassedInfo(tenant: Tenant, policy: AuthPolicy | undefined) {
 function TenantDetailDialog({ tenant, policy, onOpenChange, onEditPolicy }: TenantDetailDialogProps) {
   if (!tenant) return null;
   const levelInfo = policy ? LEVEL_OPTIONS.find((l) => l.key === policy.level) : undefined;
-  const isPersonal = tenant.type === "个人用户";
 
   const passedInfo = computePassedInfo(tenant, policy);
 
@@ -938,7 +936,7 @@ function TenantDetailDialog({ tenant, policy, onOpenChange, onEditPolicy }: Tena
                             {levelInfo.key} · {levelInfo.title}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
-                            {isPersonal ? levelInfo.personalTag : levelInfo.enterpriseTag}
+                            {levelInfo.enterpriseTag}
                           </span>
                         </span>
                       ) : (
@@ -962,26 +960,11 @@ function TenantDetailDialog({ tenant, policy, onOpenChange, onEditPolicy }: Tena
                   />
                 </div>
 
-                {policy.timing === "使用敏感功能" && (
-                  <div className="rounded-md border border-dashed bg-muted/20 p-3">
-                    <div className="text-xs text-muted-foreground mb-2">敏感功能列表</div>
-                    {policy.sensitiveFeatures.length === 0 ? (
-                      <div className="text-xs text-muted-foreground">未配置</div>
-                    ) : (
-                      <div className="flex flex-wrap gap-1.5">
-                        {policy.sensitiveFeatures.map((f) => (
-                          <Badge key={f} variant="outline" className="bg-background font-normal">{f}</Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {levelInfo && (
                   <div className="rounded-md border bg-muted/30 p-3">
                     <div className="text-xs text-muted-foreground mb-2">所需认证要素</div>
                     <div className="flex flex-wrap gap-1.5">
-                      {(isPersonal ? levelInfo.personalFactors : levelInfo.enterpriseFactors).map((f) => (
+                      {levelInfo.enterpriseFactors.map((f) => (
                         <Badge key={f} variant="outline" className="bg-background font-normal">{f}</Badge>
                       ))}
                     </div>
@@ -1094,7 +1077,6 @@ function TenantFormDialog({ open, onOpenChange, editing, onSubmit }: TenantFormP
             <Select value={form.type} onValueChange={(v) => set("type", v as TenantType)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="个人用户">个人用户</SelectItem>
                 <SelectItem value="企业用户">企业用户</SelectItem>
               </SelectContent>
             </Select>
@@ -1208,7 +1190,7 @@ function TenantFormDialog({ open, onOpenChange, editing, onSubmit }: TenantFormP
 
 const TEMPLATE_COLUMNS: { key: string; label: string; required: boolean; example: string; note: string; options?: string[] }[] = [
   { key: "name", label: "名称", required: true, example: "字节跳动", note: "租户名称，须唯一" },
-  { key: "type", label: "类型", required: true, example: "企业用户", note: "下拉选择：个人用户 / 企业用户", options: ["个人用户", "企业用户"] },
+  { key: "type", label: "类型", required: true, example: "企业用户", note: "仅支持：企业用户", options: ["企业用户"] },
   { key: "industry", label: "行业", required: true, example: "互联网", note: "下拉选择平台支持的行业", options: INDUSTRIES },
   { key: "product", label: "主营产品", required: true, example: "数据中台", note: "租户主营产品/服务" },
   { key: "contact", label: "联系人", required: true, example: "张伟", note: "联系人 / 负责人姓名" },
