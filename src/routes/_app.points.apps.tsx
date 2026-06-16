@@ -378,7 +378,7 @@ function AppsPage() {
                 <TableHead>应用标识</TableHead>
                 <TableHead>密钥</TableHead>
                 <TableHead className="whitespace-nowrap">数据加密</TableHead>
-                <TableHead>状态</TableHead>
+                <TableHead className="whitespace-nowrap">启用状态</TableHead>
                 <TableHead className="whitespace-nowrap">过期时间</TableHead>
                 <TableHead>备注</TableHead>
                 <TableHead className="text-right whitespace-nowrap w-28">操作</TableHead>
@@ -478,20 +478,18 @@ function AppsPage() {
                             <TooltipTrigger asChild>
                               <button
                                 type="button"
+                                role="switch"
+                                aria-checked={a.status === "启用"}
                                 onClick={() => setToggleTarget(a)}
-                                className="cursor-pointer"
-                                aria-label={a.status === "启用" ? "点击停用" : "点击启用"}
+                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                                  a.status === "启用" ? "bg-primary" : "bg-input"
+                                }`}
                               >
-                                <Badge
-                                  variant="outline"
-                                  className={
-                                    a.status === "启用"
-                                      ? "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200"
-                                      : "bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-200"
-                                  }
-                                >
-                                  {a.status}
-                                </Badge>
+                                <span
+                                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow ring-0 transition-transform ${
+                                    a.status === "启用" ? "translate-x-4" : "translate-x-0.5"
+                                  }`}
+                                />
                               </button>
                             </TooltipTrigger>
                             <TooltipContent>
