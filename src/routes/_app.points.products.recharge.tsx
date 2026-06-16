@@ -10,6 +10,9 @@ import {
   Trash2,
   Layers,
   Sparkles,
+  Coins,
+  Gem,
+  Info,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,13 +79,18 @@ export const Route = createFileRoute("/_app/points/products/recharge")({
 });
 
 type TargetType = "category" | "basic";
+type PointsMode = "general" | "professional" | "mixed";
 
 interface Tier {
   id: string;
   minAmount: string;
   maxAmount: string;
-  pointRate: string; // 1 元 = N 基础积分
-  bonusRate: string; // 赠送比例 %
+  // 通用积分
+  generalRate: string; // 1 元 = N 通用积分
+  generalBonus: string; // 通用赠送 %
+  // 专业积分
+  proRate: string; // 1 元 = N 专业积分
+  proBonus: string; // 专业赠送 %
 }
 
 interface RechargeProduct {
@@ -90,6 +98,7 @@ interface RechargeProduct {
   name: string;
   targetType: TargetType;
   targetKey: string; // 分类名 或 基础产品 id
+  pointsMode: PointsMode;
   remark: string;
   enabled: boolean;
   tiers: Tier[];
@@ -114,10 +123,18 @@ function newTier(): Tier {
     id: Math.random().toString(36).slice(2, 9),
     minAmount: "",
     maxAmount: "",
-    pointRate: "",
-    bonusRate: "",
+    generalRate: "",
+    generalBonus: "",
+    proRate: "",
+    proBonus: "",
   };
 }
+
+const POINTS_MODE_LABEL: Record<PointsMode, string> = {
+  general: "仅通用积分",
+  professional: "仅专业积分",
+  mixed: "混合发放",
+};
 
 const INITIAL_RECHARGE: RechargeProduct[] = [
   {
@@ -125,12 +142,13 @@ const INITIAL_RECHARGE: RechargeProduct[] = [
     name: "AI视频制作充值套餐",
     targetType: "category",
     targetKey: "AI视频制作",
+    pointsMode: "mixed",
     remark: "面向视频团队的阶梯充值方案,金额越大赠送越多。",
     enabled: true,
     tiers: [
-      { id: "t1", minAmount: "100", maxAmount: "500", pointRate: "10", bonusRate: "5" },
-      { id: "t2", minAmount: "500", maxAmount: "2000", pointRate: "10", bonusRate: "10" },
-      { id: "t3", minAmount: "2000", maxAmount: "10000", pointRate: "10", bonusRate: "20" },
+      { id: "t1", minAmount: "100", maxAmount: "500", generalRate: "5", generalBonus: "5", proRate: "10", proBonus: "10" },
+      { id: "t2", minAmount: "500", maxAmount: "2000", generalRate: "5", generalBonus: "8", proRate: "10", proBonus: "15" },
+      { id: "t3", minAmount: "2000", maxAmount: "10000", generalRate: "5", generalBonus: "12", proRate: "10", proBonus: "25" },
     ],
     createdAt: "2026-03-12 09:30:14",
   },
@@ -139,11 +157,12 @@ const INITIAL_RECHARGE: RechargeProduct[] = [
     name: "AI文生图体验充值",
     targetType: "basic",
     targetKey: "BP000043",
+    pointsMode: "professional",
     remark: "针对单一基础产品的体验充值。",
     enabled: true,
     tiers: [
-      { id: "t1", minAmount: "50", maxAmount: "200", pointRate: "20", bonusRate: "0" },
-      { id: "t2", minAmount: "200", maxAmount: "1000", pointRate: "20", bonusRate: "8" },
+      { id: "t1", minAmount: "50", maxAmount: "200", generalRate: "", generalBonus: "", proRate: "20", proBonus: "0" },
+      { id: "t2", minAmount: "200", maxAmount: "1000", generalRate: "", generalBonus: "", proRate: "20", proBonus: "8" },
     ],
     createdAt: "2026-03-10 16:08:22",
   },
