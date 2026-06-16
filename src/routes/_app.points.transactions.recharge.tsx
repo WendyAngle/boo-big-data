@@ -544,112 +544,279 @@ function RechargePage() {
 
       {/* 新增充值 弹窗 */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-[560px]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[960px] max-h-[88vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-2 border-b">
             <DialogTitle>新增充值</DialogTitle>
             <DialogDescription>
-              为客户在指定关联应用下创建一笔积分充值或套餐购买订单。
+              依次完成「选择租户 → 选择产品 → 确认充值」三步,完成后将自动生成一条充值订单与积分流水。
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>客户名称</Label>
-                <Select value={form.customer} onValueChange={(v) => setForm({ ...form, customer: v })}>
-                  <SelectTrigger><SelectValue placeholder="请选择客户" /></SelectTrigger>
-                  <SelectContent>
-                    {CUSTOMERS.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>充值类型</Label>
-                <Select
-                  value={form.type}
-                  onValueChange={(v) =>
-                    setForm({
-                      ...form,
-                      type: v as RechargeType,
-                      product: v === "积分充值" ? PRODUCTS_RECHARGE[0] : PRODUCTS_BUNDLE[0],
-                    })
-                  }
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="积分充值">积分充值</SelectItem>
-                    <SelectItem value="套餐购买">套餐购买</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>产品名称</Label>
-                <Select value={form.product} onValueChange={(v) => setForm({ ...form, product: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {productOptions.map((p) => (
-                      <SelectItem key={p} value={p}>{p}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>充值金额 (元)</Label>
-                <Input
-                  type="number"
-                  value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
+
+          {/* 步骤指示器 */}
+          <div className="px-8 py-6">
+            <Stepper
+              current={wizardStep}
+              steps={[
+                { label: "选择租户", icon: User },
+                { label: "选择产品", icon: ShoppingCart },
+                { label: "确认充值", icon: CheckCircle2 },
+              ]}
+            />
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-6 pb-2">
+            {wizardStep === 1 && (
+              <div className="space-y-4">
+                <div className="text-base font-semibold">查找租户</div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="relative flex-1 min-w-[260px]">
+                    <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={tenantKw}
+                      onChange={(e) => {
+                        setTenantKw(e.target.value);
+                        setTenantPage(1);
+                      }}
+                      placeholder="输入租户名称 / 手机号 / 租户编号 搜索"
+                      className="pl-9"
+                    />
+                  </div>
+                  <Select
+                    value={tenantStatusF}
+                    onValueChange={(v) => {
+                      setTenantStatusF(v);
+                      setTenantPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">所有状态</SelectItem>
+                      <SelectItem value="enabled">合作中</SelectItem>
+                      <SelectItem value="disabled">已停用</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button>
+                    <Search className="h-4 w-4" /> 搜索
+                  </Button>
+                </div>
+
+                <div className="rounded-lg border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/40">
+                        <TableHead className="w-10"></TableHead>
+                        <TableHead className="whitespace-nowrap">租户编号</TableHead>
+                        <TableHead className="whitespace-nowrap">租户名称</TableHead>
+                        <TableHead className="whitespace-nowrap">联系信息</TableHead>
+                        <TableHead className="whitespace-nowrap">关联应用</TableHead>
+                        <TableHead className="text-right whitespace-nowrap">剩余积分</TableHead>
+                        <TableHead className="whitespace-nowrap">所属合作伙伴</TableHead>
+                        <TableHead className="whitespace-nowrap">状态</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {tenantPageData.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
+                            没有匹配的租户
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        tenantPageData.map((t) => {
+                          const picked = pickedTenantId === t.id;
+                          const balance = t.generalBalance + t.proBalance;
+                          return (
+                            <TableRow
+                              key={t.id}
+                              onClick={() => setPickedTenantId(t.id)}
+                              data-state={picked ? "selected" : undefined}
+                              className={`cursor-pointer ${picked ? "bg-primary/5" : "hover:bg-accent/30"}`}
+                            >
+                              <TableCell>
+                                <span
+                                  className={`inline-flex h-4 w-4 items-center justify-center rounded-full border ${
+                                    picked ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                                  }`}
+                                >
+                                  {picked && <Check className="h-3 w-3" />}
+                                </span>
+                              </TableCell>
+                              <TableCell className="font-mono text-xs whitespace-nowrap">{t.id}</TableCell>
+                              <TableCell className="font-medium whitespace-nowrap">{t.name}</TableCell>
+                              <TableCell className="whitespace-nowrap text-sm">
+                                <div>{t.contact}</div>
+                                <div className="font-mono text-xs text-muted-foreground">{t.contactPhone}</div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col gap-1">
+                                  {t.apps.map((a) => (
+                                    <span key={a.appId} className="text-xs text-muted-foreground">
+                                      <span className="text-foreground">{a.name}</span>
+                                      <span className="font-mono"> · {a.appId}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              </TableCell>
+                              <TableCell
+                                className={`text-right tabular-nums whitespace-nowrap font-medium ${
+                                  balance < 0 ? "text-rose-600" : ""
+                                }`}
+                              >
+                                {balance.toLocaleString()}
+                              </TableCell>
+                              <TableCell className="whitespace-nowrap text-sm">{t.partner}</TableCell>
+                              <TableCell>
+                                {t.enabled ? (
+                                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                                    合作中
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
+                                    已停用
+                                  </Badge>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+                <ListPagination
+                  page={tenantPage}
+                  pageSize={TENANT_PAGE_SIZE}
+                  total={tenantTotal}
+                  onPageChange={setTenantPage}
                 />
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label>关联应用 (可多选)</Label>
-              <div className="flex flex-wrap gap-2">
-                {APPS.map((a) => {
-                  const active = form.appIds.includes(a.appId);
-                  return (
-                    <button
-                      key={a.appId}
-                      type="button"
-                      onClick={() =>
-                        setForm({
-                          ...form,
-                          appIds: active
-                            ? form.appIds.filter((x) => x !== a.appId)
-                            : [...form.appIds, a.appId],
-                        })
-                      }
-                      className={`px-2.5 py-1 rounded-md text-xs font-mono border transition-colors ${
-                        active
-                          ? "bg-primary/10 text-primary border-primary/30"
-                          : "bg-muted/40 text-muted-foreground border-border hover:bg-muted"
-                      }`}
+            )}
+
+            {wizardStep === 2 && (
+              <div className="space-y-5">
+                {pickedTenant && (
+                  <div className="rounded-md border bg-muted/30 px-4 py-3 flex items-center justify-between">
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">已选租户:</span>{" "}
+                      <span className="font-medium">{pickedTenant.name}</span>{" "}
+                      <span className="font-mono text-xs text-muted-foreground">({pickedTenant.id})</span>
+                    </div>
+                    <Badge variant="outline" className="bg-accent/40 text-primary border-primary/20">
+                      剩余 {(pickedTenant.generalBalance + pickedTenant.proBalance).toLocaleString()} 积分
+                    </Badge>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>充值类型</Label>
+                    <Select
+                      value={wizardType}
+                      onValueChange={(v) => {
+                        setWizardType(v as RechargeType);
+                        setWizardProduct(v === "积分充值" ? PRODUCTS_RECHARGE[0] : PRODUCTS_BUNDLE[0]);
+                      }}
                     >
-                      {a.name} · {a.appId}
-                    </button>
-                  );
-                })}
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="积分充值">积分充值</SelectItem>
+                        <SelectItem value="套餐购买">套餐购买</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>产品名称</Label>
+                    <Select value={wizardProduct} onValueChange={setWizardProduct}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {productOptions.map((p) => (
+                          <SelectItem key={p} value={p}>{p}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>充值金额 (元)</Label>
+                    <Input
+                      type="number"
+                      value={wizardAmount}
+                      onChange={(e) => setWizardAmount(Number(e.target.value))}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>备注</Label>
+                    <Input
+                      value={wizardRemark}
+                      onChange={(e) => setWizardRemark(e.target.value)}
+                      placeholder="选填"
+                    />
+                  </div>
+                </div>
+                <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground flex items-start gap-2">
+                  <Info className="h-3.5 w-3.5 mt-0.5 text-amber-500 shrink-0" />
+                  <span>
+                    本次按「{wizardType}」规则计算: 基础积分 {(wizardAmount * 10).toLocaleString()},预计赠送积分 +{Math.round(wizardAmount * 10 * 0.1).toLocaleString()}。
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label>备注</Label>
-              <Input
-                value={form.remark}
-                onChange={(e) => setForm({ ...form, remark: e.target.value })}
-                placeholder="选填,例如「2026 Q1 续费补单」"
-              />
-            </div>
-            <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground flex items-start gap-2">
-              <Info className="h-3.5 w-3.5 mt-0.5 text-amber-500 shrink-0" />
-              <span>
-                提交后将按所选「{form.type}」对应规则计算基础积分与赠送积分,并生成一条积分流水。
-              </span>
-            </div>
+            )}
+
+            {wizardStep === 3 && pickedTenant && (
+              <div className="space-y-4 pb-2">
+                <div className="rounded-lg border bg-card p-5 space-y-3">
+                  <div className="text-sm font-semibold text-foreground">订单信息确认</div>
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                    <DetailItem label="租户名称" value={pickedTenant.name} />
+                    <DetailItem label="租户编号" value={<span className="font-mono text-xs">{pickedTenant.id}</span>} />
+                    <DetailItem
+                      label="充值类型"
+                      value={
+                        <Badge
+                          variant="outline"
+                          className={
+                            wizardType === "积分充值"
+                              ? "bg-sky-50 text-sky-700 border-sky-200"
+                              : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          }
+                        >
+                          {wizardType}
+                        </Badge>
+                      }
+                    />
+                    <DetailItem label="产品名称" value={wizardProduct} />
+                    <DetailItem
+                      label="充值金额"
+                      value={<span className="font-semibold text-rose-600">¥{wizardAmount.toLocaleString()}</span>}
+                    />
+                    <DetailItem label="基础积分" value={(wizardAmount * 10).toLocaleString()} />
+                    <DetailItem
+                      label="赠送积分"
+                      value={<span className="text-emerald-600 font-medium">+{Math.round(wizardAmount * 10 * 0.1).toLocaleString()}</span>}
+                    />
+                    <DetailItem label="备注" value={wizardRemark || <span className="text-muted-foreground">—</span>} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-          <DialogFooter>
+
+          <DialogFooter className="px-6 py-4 border-t bg-muted/20">
             <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
-            <Button onClick={submitCreate}>提交</Button>
+            {wizardStep > 1 && (
+              <Button variant="outline" onClick={prevStep}>
+                <ChevronLeft className="h-4 w-4" /> 上一步
+              </Button>
+            )}
+            {wizardStep < 3 ? (
+              <Button onClick={nextStep} disabled={wizardStep === 1 && !pickedTenantId}>
+                下一步 <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button onClick={submitCreate}>
+                <Check className="h-4 w-4" /> 确认充值
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
