@@ -1265,7 +1265,7 @@ function RechargePage() {
                 <Button
                   onClick={nextStep}
                   disabled={
-                    (wizardStep === 1 && !pickedTenantId) ||
+                    (wizardStep === 1 && pickedTenantIds.length === 0) ||
                     (wizardStep === 2 && !summary)
                   }
                 >
