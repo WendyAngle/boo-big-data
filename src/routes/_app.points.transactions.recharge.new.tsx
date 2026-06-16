@@ -53,7 +53,7 @@ import {
   addYears,
   fmtDate,
   Stepper,
-} from "./_app.points.transactions.recharge";
+} from "./_app.points.transactions.recharge.index";
 
 export const Route = createFileRoute("/_app/points/transactions/recharge/new")({
   head: () => ({ meta: [{ title: "新增充值 · 充值管理 | Boo数据平台" }] }),
