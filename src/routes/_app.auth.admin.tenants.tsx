@@ -774,6 +774,8 @@ interface TenantFormProps {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   editing: Tenant | null;
+  industries: string[];
+  onAddIndustry: (name: string) => boolean;
   onSubmit: (t: Tenant) => void;
 }
 
@@ -998,13 +1000,13 @@ function DetailKV({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function TenantFormDialog({ open, onOpenChange, editing, onSubmit }: TenantFormProps) {
+function TenantFormDialog({ open, onOpenChange, editing, industries, onAddIndustry, onSubmit }: TenantFormProps) {
   const empty: Tenant = {
     id: "",
     name: "",
     intro: "",
     type: "企业用户",
-    industry: INDUSTRIES[0],
+    industry: industries[0] ?? "",
     product: "",
     contact: "",
     contactPhone: "",
@@ -1013,6 +1015,8 @@ function TenantFormDialog({ open, onOpenChange, editing, onSubmit }: TenantFormP
     authStatus: "待认证",
   };
   const [form, setForm] = useState<Tenant>(empty);
+  const [addIndustryOpen, setAddIndustryOpen] = useState(false);
+  const [newIndustry, setNewIndustry] = useState("");
 
   // sync when opened
   useEffect(() => {
@@ -1090,14 +1094,58 @@ function TenantFormDialog({ open, onOpenChange, editing, onSubmit }: TenantFormP
 
           <div className="space-y-1.5">
             <Label>行业 <span className="text-destructive">*</span></Label>
-            <Select value={form.industry} onValueChange={(v) => set("industry", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {INDUSTRIES.map((i) => (
-                  <SelectItem key={i} value={i}>{i}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <Select value={form.industry} onValueChange={(v) => set("industry", v)}>
+                <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {industries.map((i) => (
+                    <SelectItem key={i} value={i}>{i}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Popover open={addIndustryOpen} onOpenChange={(o) => { setAddIndustryOpen(o); if (!o) setNewIndustry(""); }}>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" size="icon" title="新增行业">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-64 space-y-2">
+                  <div className="text-sm font-medium">新增行业</div>
+                  <Input
+                    autoFocus
+                    value={newIndustry}
+                    onChange={(e) => setNewIndustry(e.target.value)}
+                    placeholder="请输入行业名称"
+                    maxLength={20}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (onAddIndustry(newIndustry)) {
+                          set("industry", newIndustry.trim());
+                          setNewIndustry("");
+                          setAddIndustryOpen(false);
+                        }
+                      }
+                    }}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button size="sm" variant="ghost" onClick={() => { setAddIndustryOpen(false); setNewIndustry(""); }}>取消</Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        if (onAddIndustry(newIndustry)) {
+                          set("industry", newIndustry.trim());
+                          setNewIndustry("");
+                          setAddIndustryOpen(false);
+                        }
+                      }}
+                    >
+                      添加
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
 
           <div className="space-y-1.5">
