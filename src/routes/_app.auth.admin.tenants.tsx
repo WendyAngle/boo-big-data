@@ -72,7 +72,7 @@ export const Route = createFileRoute("/_app/auth/admin/tenants")({
 
 type AuthStatus = "待认证" | "认证中" | "认证成功" | "认证失败";
 type CoopStatus = "合作中" | "终止合作";
-type TenantType = "个人用户" | "企业用户";
+type TenantType = "企业用户";
 
 interface Tenant {
   id: string;
@@ -131,11 +131,10 @@ const LEVEL_OPTIONS: LevelOption[] = [
   },
 ];
 
-type AuthTiming = "首次登录" | "使用敏感功能";
+type AuthTiming = "首次登录";
 interface AuthPolicy {
   enabled: boolean;
   timing: AuthTiming;
-  sensitiveFeatures: string[];
   level: LevelKey;
   manualReview: boolean;
   reviewTimeoutHours: number;
@@ -145,7 +144,6 @@ interface AuthPolicy {
 const DEFAULT_POLICY: AuthPolicy = {
   enabled: true,
   timing: "首次登录",
-  sensitiveFeatures: [],
   level: "L2",
   manualReview: false,
   reviewTimeoutHours: 24,
@@ -154,7 +152,6 @@ const DEFAULT_POLICY: AuthPolicy = {
 };
 
 const MOCK: Tenant[] = Array.from({ length: 47 }).map((_, i) => {
-  const types: TenantType[] = ["个人用户", "企业用户"];
   const auths: AuthStatus[] = ["待认证", "认证中", "认证成功", "认证失败"];
   const coops: CoopStatus[] = ["合作中", "合作中", "合作中", "终止合作"];
   const names = [
@@ -173,7 +170,7 @@ const MOCK: Tenant[] = Array.from({ length: 47 }).map((_, i) => {
     id: `T${String(202600 + i).padStart(6, "0")}`,
     name: `${names[i % names.length]}${i > 9 ? `(${i})` : ""}`,
     intro: "专注于数据服务与企业级解决方案，提供安全可靠的合作生态。",
-    type: types[i % 2],
+    type: "企业用户",
     industry: INDUSTRIES[i % INDUSTRIES.length],
     product: ["数据中台", "智能风控", "营销云", "供应链", "AI平台"][i % 5],
     contact: CONTACT_NAMES[i % CONTACT_NAMES.length],
@@ -451,7 +448,6 @@ function TenantsPage() {
             <SelectTrigger><SelectValue placeholder="全部类型" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部类型</SelectItem>
-              <SelectItem value="个人用户">个人用户</SelectItem>
               <SelectItem value="企业用户">企业用户</SelectItem>
             </SelectContent>
           </Select>
@@ -820,7 +816,6 @@ function computePassedInfo(tenant: Tenant, policy: AuthPolicy | undefined) {
 function TenantDetailDialog({ tenant, policy, onOpenChange, onEditPolicy }: TenantDetailDialogProps) {
   if (!tenant) return null;
   const levelInfo = policy ? LEVEL_OPTIONS.find((l) => l.key === policy.level) : undefined;
-  const isPersonal = tenant.type === "个人用户";
 
   const passedInfo = computePassedInfo(tenant, policy);
 
@@ -941,7 +936,7 @@ function TenantDetailDialog({ tenant, policy, onOpenChange, onEditPolicy }: Tena
                             {levelInfo.key} · {levelInfo.title}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
-                            {isPersonal ? levelInfo.personalTag : levelInfo.enterpriseTag}
+                            {levelInfo.enterpriseTag}
                           </span>
                         </span>
                       ) : (
@@ -965,26 +960,11 @@ function TenantDetailDialog({ tenant, policy, onOpenChange, onEditPolicy }: Tena
                   />
                 </div>
 
-                {policy.timing === "使用敏感功能" && (
-                  <div className="rounded-md border border-dashed bg-muted/20 p-3">
-                    <div className="text-xs text-muted-foreground mb-2">敏感功能列表</div>
-                    {policy.sensitiveFeatures.length === 0 ? (
-                      <div className="text-xs text-muted-foreground">未配置</div>
-                    ) : (
-                      <div className="flex flex-wrap gap-1.5">
-                        {policy.sensitiveFeatures.map((f) => (
-                          <Badge key={f} variant="outline" className="bg-background font-normal">{f}</Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {levelInfo && (
                   <div className="rounded-md border bg-muted/30 p-3">
                     <div className="text-xs text-muted-foreground mb-2">所需认证要素</div>
                     <div className="flex flex-wrap gap-1.5">
-                      {(isPersonal ? levelInfo.personalFactors : levelInfo.enterpriseFactors).map((f) => (
+                      {levelInfo.enterpriseFactors.map((f) => (
                         <Badge key={f} variant="outline" className="bg-background font-normal">{f}</Badge>
                       ))}
                     </div>
@@ -1097,7 +1077,6 @@ function TenantFormDialog({ open, onOpenChange, editing, onSubmit }: TenantFormP
             <Select value={form.type} onValueChange={(v) => set("type", v as TenantType)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="个人用户">个人用户</SelectItem>
                 <SelectItem value="企业用户">企业用户</SelectItem>
               </SelectContent>
             </Select>
@@ -1211,7 +1190,7 @@ function TenantFormDialog({ open, onOpenChange, editing, onSubmit }: TenantFormP
 
 const TEMPLATE_COLUMNS: { key: string; label: string; required: boolean; example: string; note: string; options?: string[] }[] = [
   { key: "name", label: "名称", required: true, example: "字节跳动", note: "租户名称，须唯一" },
-  { key: "type", label: "类型", required: true, example: "企业用户", note: "下拉选择：个人用户 / 企业用户", options: ["个人用户", "企业用户"] },
+  { key: "type", label: "类型", required: true, example: "企业用户", note: "仅支持：企业用户", options: ["企业用户"] },
   { key: "industry", label: "行业", required: true, example: "互联网", note: "下拉选择平台支持的行业", options: INDUSTRIES },
   { key: "product", label: "主营产品", required: true, example: "数据中台", note: "租户主营产品/服务" },
   { key: "contact", label: "联系人", required: true, example: "张伟", note: "联系人 / 负责人姓名" },
@@ -1470,33 +1449,16 @@ interface AuthPolicyDialogProps {
 
 function AuthPolicyDialog({ tenant, existing, onOpenChange, onSubmit }: AuthPolicyDialogProps) {
   const [policy, setPolicy] = useState<AuthPolicy>(DEFAULT_POLICY);
-  const [featureInput, setFeatureInput] = useState("");
 
   useEffect(() => {
     if (tenant) {
       setPolicy(existing ?? DEFAULT_POLICY);
-      setFeatureInput("");
     }
   }, [tenant, existing]);
 
   const set = <K extends keyof AuthPolicy>(k: K, v: AuthPolicy[K]) =>
     setPolicy((p) => ({ ...p, [k]: v }));
 
-  const addFeature = () => {
-    const v = featureInput.trim();
-    if (!v) return;
-    if (policy.sensitiveFeatures.includes(v)) {
-      setFeatureInput("");
-      return;
-    }
-    set("sensitiveFeatures", [...policy.sensitiveFeatures, v]);
-    setFeatureInput("");
-  };
-
-  const removeFeature = (v: string) =>
-    set("sensitiveFeatures", policy.sensitiveFeatures.filter((x) => x !== v));
-
-  const isPersonal = tenant?.type === "个人用户";
   const isEdit = !!existing;
 
   return (
@@ -1548,71 +1510,14 @@ function AuthPolicyDialog({ tenant, existing, onOpenChange, onSubmit }: AuthPoli
             {/* 认证时机 */}
             <div className="space-y-2">
               <Label className="text-sm">认证时机</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {(["首次登录", "使用敏感功能"] as AuthTiming[]).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => set("timing", t)}
-                    className={
-                      "rounded-md border px-3 py-2.5 text-sm text-left transition-colors " +
-                      (policy.timing === t
-                        ? "border-primary bg-primary/5 text-foreground"
-                        : "border-input hover:bg-accent/50 text-muted-foreground")
-                    }
-                  >
-                    <div className="font-medium text-foreground">{t}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {t === "首次登录" ? "用户首次登录即触发实名认证" : "访问指定敏感功能时触发"}
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              {policy.timing === "使用敏感功能" && (
-                <div className="mt-3 rounded-md border border-dashed bg-muted/20 p-3 space-y-2">
-                  <Label className="text-xs text-muted-foreground">敏感功能列表</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={featureInput}
-                      onChange={(e) => setFeatureInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addFeature();
-                        }
-                      }}
-                      placeholder="输入敏感功能名称，回车添加，如：发起提现"
-                      className="h-9"
-                    />
-                    <Button type="button" variant="outline" onClick={addFeature}>
-                      <Plus className="h-4 w-4" /> 添加
-                    </Button>
-                  </div>
-                  {policy.sensitiveFeatures.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {policy.sensitiveFeatures.map((f) => (
-                        <Badge
-                          key={f}
-                          variant="secondary"
-                          className="gap-1 pr-1 font-normal"
-                        >
-                          {f}
-                          <button
-                            type="button"
-                            onClick={() => removeFeature(f)}
-                            className="rounded hover:bg-background/60 p-0.5"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">尚未添加，至少添加一项敏感功能</p>
-                  )}
+              <div
+                className="rounded-md border border-primary bg-primary/5 px-3 py-2.5 text-sm"
+              >
+                <div className="font-medium text-foreground">首次登录</div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  用户首次登录即触发实名认证
                 </div>
-              )}
+              </div>
             </div>
 
             {/* 认证等级 */}
@@ -1629,8 +1534,8 @@ function AuthPolicyDialog({ tenant, existing, onOpenChange, onSubmit }: AuthPoli
                 </SelectTrigger>
                 <SelectContent className="max-w-[--radix-select-trigger-width]">
                   {LEVEL_OPTIONS.map((l) => {
-                    const factors = isPersonal ? l.personalFactors : l.enterpriseFactors;
-                    const tag = isPersonal ? l.personalTag : l.enterpriseTag;
+                    const factors = l.enterpriseFactors;
+                    const tag = l.enterpriseTag;
                     return (
                       <SelectItem key={l.key} value={l.key} className="py-2.5">
                         <div className="flex flex-col gap-1.5">
@@ -1706,13 +1611,7 @@ function AuthPolicyDialog({ tenant, existing, onOpenChange, onSubmit }: AuthPoli
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
           <Button
-            onClick={() => {
-              if (policy.enabled && policy.timing === "使用敏感功能" && policy.sensitiveFeatures.length === 0) {
-                toast.error("请至少添加一项敏感功能");
-                return;
-              }
-              onSubmit(policy);
-            }}
+            onClick={() => onSubmit(policy)}
           >
             {isEdit ? "保存修改" : "保存策略"}
           </Button>
