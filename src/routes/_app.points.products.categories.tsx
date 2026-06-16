@@ -54,6 +54,7 @@ interface Category {
   name: string;
   remark: string;
   createdAt: string;
+  enabled: boolean;
 }
 
 const REMARK_MAX = 200;
@@ -84,6 +85,7 @@ const INITIAL_DATA: Category[] = INITIAL_NAMES.map((name, i) => ({
   name,
   remark: INITIAL_REMARKS[i] ?? "",
   createdAt: `2026-0${(i % 6) + 1}-${String(((i * 7) % 27) + 1).padStart(2, "0")}`,
+  enabled: true,
 }));
 
 function CategoriesPage() {
@@ -100,6 +102,11 @@ function CategoriesPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [delTarget, setDelTarget] = useState<Category | null>(null);
+
+  const toggleEnabled = (c: Category) => {
+    setData((d) => d.map((x) => (x.id === c.id ? { ...x, enabled: !x.enabled } : x)));
+    toast.success(`已${c.enabled ? "停用" : "启用"} ${c.name}`);
+  };
 
   const filtered = useMemo(() => {
     return data.filter((c) => {
@@ -207,6 +214,7 @@ function CategoriesPage() {
                 <TableHead>产品分类名称</TableHead>
                 <TableHead className="whitespace-nowrap">产品分类编码</TableHead>
                 <TableHead>备注</TableHead>
+                <TableHead className="whitespace-nowrap">启用状态</TableHead>
                 <TableHead className="whitespace-nowrap">创建时间</TableHead>
                 <TableHead className="text-right whitespace-nowrap w-32">操作</TableHead>
               </TableRow>
@@ -214,7 +222,7 @@ function CategoriesPage() {
             <TableBody>
               {pageData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
                     暂无匹配的产品分类
                   </TableCell>
                 </TableRow>
@@ -227,6 +235,30 @@ function CategoriesPage() {
                       <div className="truncate" title={c.remark}>
                         {c.remark || <span className="text-xs">—</span>}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <TooltipProvider delayDuration={150}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              role="switch"
+                              aria-checked={c.enabled}
+                              onClick={() => toggleEnabled(c)}
+                              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                                c.enabled ? "bg-primary" : "bg-input"
+                              }`}
+                            >
+                              <span
+                                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow ring-0 transition-transform ${
+                                  c.enabled ? "translate-x-4" : "translate-x-0.5"
+                                }`}
+                              />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent>{c.enabled ? "点击停用" : "点击启用"}</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground tabular-nums">
                       {c.createdAt}
@@ -284,7 +316,9 @@ function CategoriesPage() {
           if (editing) {
             setData((d) =>
               d.map((x) =>
-                x.id === editing.id ? { ...x, name: values.name, remark: values.remark } : x,
+                x.id === editing.id
+                  ? { ...x, name: values.name, remark: values.remark, enabled: values.enabled }
+                  : x,
               ),
             );
             toast.success(`已更新 ${values.name}`);
@@ -293,7 +327,10 @@ function CategoriesPage() {
             const id = genCode(nextSeq);
             const today = new Date();
             const createdAt = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-            setData((d) => [{ id, name: values.name, remark: values.remark, createdAt }, ...d]);
+            setData((d) => [
+              { id, name: values.name, remark: values.remark, createdAt, enabled: values.enabled },
+              ...d,
+            ]);
             setSeq(nextSeq);
             toast.success(`已新增 ${values.name}(${id})`);
           }
@@ -335,18 +372,20 @@ interface CategoryFormProps {
   onOpenChange: (o: boolean) => void;
   editing: Category | null;
   nextCode: string;
-  onSubmit: (v: { name: string; remark: string }) => void;
+  onSubmit: (v: { name: string; remark: string; enabled: boolean }) => void;
 }
 
 function CategoryFormDialog({ open, onOpenChange, editing, nextCode, onSubmit }: CategoryFormProps) {
   const [name, setName] = useState("");
   const [remark, setRemark] = useState("");
+  const [enabled, setEnabled] = useState(true);
   const [touched, setTouched] = useState(false);
 
   useEffect(() => {
     if (open) {
       setName(editing?.name ?? "");
       setRemark(editing?.remark ?? "");
+      setEnabled(editing ? editing.enabled : true);
       setTouched(false);
     }
   }, [open, editing]);
@@ -358,7 +397,7 @@ function CategoryFormDialog({ open, onOpenChange, editing, nextCode, onSubmit }:
     setTouched(true);
     if (!name.trim()) return;
     if (remark.length > REMARK_MAX) return;
-    onSubmit({ name: name.trim(), remark });
+    onSubmit({ name: name.trim(), remark, enabled });
   };
 
   return (
@@ -416,6 +455,42 @@ function CategoryFormDialog({ open, onOpenChange, editing, nextCode, onSubmit }:
               maxLength={REMARK_MAX}
             />
             {remarkError && <p className="text-xs text-destructive">{remarkError}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>启用状态</Label>
+            <div className="flex items-center gap-3">
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={enabled}
+                      onClick={() => setEnabled((v) => !v)}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                        enabled ? "bg-primary" : "bg-input"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow ring-0 transition-transform ${
+                          enabled ? "translate-x-4" : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{enabled ? "点击停用" : "点击启用"}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <span
+                className={`text-xs font-medium ${
+                  enabled ? "text-emerald-600" : "text-muted-foreground"
+                }`}
+              >
+                {enabled ? "已启用" : "已停用"}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">新建时默认启用</p>
           </div>
         </div>
 
