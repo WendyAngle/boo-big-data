@@ -912,35 +912,100 @@ function RechargeFormDialog({
             </div>
           </FormRow>
 
+          <FormRow label="积分发放模式" required>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <TypeCard
+                active={pointsMode === "general"}
+                icon={<Coins className="h-4 w-4" />}
+                title="仅通用积分"
+                desc="充值仅产生通用积分,可在全平台已启用的基础产品间通用"
+                onClick={() => setPointsMode("general")}
+              />
+              <TypeCard
+                active={pointsMode === "professional"}
+                icon={<Gem className="h-4 w-4" />}
+                title="仅专业积分"
+                desc="充值仅产生专业积分,仅限本充值产品目标对象范围内抵扣"
+                onClick={() => setPointsMode("professional")}
+              />
+              <TypeCard
+                active={pointsMode === "mixed"}
+                icon={<Sparkles className="h-4 w-4" />}
+                title="混合发放"
+                desc="一次充值同时产生通用积分与专业积分,运营策略更灵活"
+                onClick={() => setPointsMode("mixed")}
+              />
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground flex items-start gap-1.5">
+              <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+              专业积分的使用范围跟随上方「目标对象」,无需单独设置。
+            </p>
+            {targetType === "basic" && pointsMode === "general" && (
+              <div className="mt-2 rounded-md border border-amber-300/60 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 px-3 py-2 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-1.5">
+                <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                当前充值产品销售范围被限制在单一基础产品,但发放的通用积分可在任意已启用产品使用,请确认是否符合预期。
+              </div>
+            )}
+          </FormRow>
+
           <FormRow label="阶梯设置" required error={touched ? errors.tiers : ""}>
             <div className="rounded-lg border overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/40">
-                    <TableHead className="w-14">阶梯</TableHead>
-                    <TableHead className="whitespace-nowrap">充值金额起(元 ≥)</TableHead>
-                    <TableHead className="whitespace-nowrap">充值金额止(元 &lt;)</TableHead>
-                    <TableHead className="whitespace-nowrap">转换比例(1元 = N积分)</TableHead>
-                    <TableHead className="whitespace-nowrap">赠送比例(%)</TableHead>
-                    <TableHead className="whitespace-nowrap">基础积分预览</TableHead>
-                    <TableHead className="whitespace-nowrap">赠送积分预览</TableHead>
-                    <TableHead className="whitespace-nowrap">合计积分预览</TableHead>
-                    <TableHead className="w-12"></TableHead>
+                    <TableHead rowSpan={2} className="w-14 align-middle">阶梯</TableHead>
+                    <TableHead rowSpan={2} className="whitespace-nowrap align-middle">充值金额起(元 ≥)</TableHead>
+                    <TableHead rowSpan={2} className="whitespace-nowrap align-middle">充值金额止(元 &lt;)</TableHead>
+                    {needGeneral && (
+                      <TableHead colSpan={2} className="text-center whitespace-nowrap border-l">
+                        <span className="inline-flex items-center gap-1 text-blue-700 dark:text-blue-300">
+                          <Coins className="h-3.5 w-3.5" /> 通用积分
+                        </span>
+                      </TableHead>
+                    )}
+                    {needPro && (
+                      <TableHead colSpan={2} className="text-center whitespace-nowrap border-l">
+                        <span className="inline-flex items-center gap-1 text-purple-700 dark:text-purple-300">
+                          <Gem className="h-3.5 w-3.5" /> 专业积分
+                        </span>
+                      </TableHead>
+                    )}
+                    <TableHead rowSpan={2} className="whitespace-nowrap align-middle border-l">合计预览</TableHead>
+                    <TableHead rowSpan={2} className="w-12 align-middle"></TableHead>
+                  </TableRow>
+                  <TableRow className="bg-muted/40">
+                    {needGeneral && (
+                      <>
+                        <TableHead className="whitespace-nowrap border-l">转换(1元=N)</TableHead>
+                        <TableHead className="whitespace-nowrap">赠送(%)</TableHead>
+                      </>
+                    )}
+                    {needPro && (
+                      <>
+                        <TableHead className="whitespace-nowrap border-l">转换(1元=N)</TableHead>
+                        <TableHead className="whitespace-nowrap">赠送(%)</TableHead>
+                      </>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {tiers.map((t, idx) => {
                     const minA = Number(t.minAmount) || 0;
                     const maxA = Number(t.maxAmount) || 0;
-                    const rate = Number(t.pointRate) || 0;
-                    const bonus = Number(t.bonusRate) || 0;
-                    const baseMin = Math.floor(minA * rate);
-                    const baseMax = Math.floor(maxA * rate);
-                    const bonusMin = Math.floor((baseMin * bonus) / 100);
-                    const bonusMax = Math.floor((baseMax * bonus) / 100);
-                    const totalMin = baseMin + bonusMin;
-                    const totalMax = baseMax + bonusMax;
-                    const range = (a: number, b: number) =>
+                    const gRate = needGeneral ? Number(t.generalRate) || 0 : 0;
+                    const gBonus = needGeneral ? Number(t.generalBonus) || 0 : 0;
+                    const pRate = needPro ? Number(t.proRate) || 0 : 0;
+                    const pBonus = needPro ? Number(t.proBonus) || 0 : 0;
+                    const calc = (amt: number) => {
+                      const gBase = Math.floor(amt * gRate);
+                      const gGift = Math.floor((gBase * gBonus) / 100);
+                      const pBase = Math.floor(amt * pRate);
+                      const pGift = Math.floor((pBase * pBonus) / 100);
+                      return { g: gBase + gGift, p: pBase + pGift, total: gBase + gGift + pBase + pGift };
+                    };
+                    const lo = calc(minA);
+                    const hi = calc(maxA);
+                    const fmt = (a: number, b: number) =>
                       a === b ? a.toLocaleString() : `${a.toLocaleString()} ~ ${b.toLocaleString()}`;
                     return (
                       <TableRow key={t.id}>
@@ -952,7 +1017,7 @@ function RechargeFormDialog({
                             step="0.01"
                             value={t.minAmount}
                             onChange={(e) => updateTier(t.id, { minAmount: e.target.value })}
-                            className="w-28"
+                            className="w-24"
                           />
                         </TableCell>
                         <TableCell>
@@ -962,37 +1027,67 @@ function RechargeFormDialog({
                             step="0.01"
                             value={t.maxAmount}
                             onChange={(e) => updateTier(t.id, { maxAmount: e.target.value })}
-                            className="w-28"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            value={t.pointRate}
-                            onChange={(e) => updateTier(t.id, { pointRate: e.target.value })}
-                            className="w-28"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.1"
-                            value={t.bonusRate}
-                            onChange={(e) => updateTier(t.id, { bonusRate: e.target.value })}
                             className="w-24"
                           />
                         </TableCell>
-                        <TableCell className="tabular-nums text-muted-foreground">
-                          {range(baseMin, baseMax)}
-                        </TableCell>
-                        <TableCell className="tabular-nums text-muted-foreground">
-                          {range(bonusMin, bonusMax)}
-                        </TableCell>
-                        <TableCell className="tabular-nums font-medium text-primary">
-                          {range(totalMin, totalMax)}
+                        {needGeneral && (
+                          <>
+                            <TableCell className="border-l">
+                              <Input
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                value={t.generalRate}
+                                onChange={(e) => updateTier(t.id, { generalRate: e.target.value })}
+                                className="w-20"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min={0}
+                                step="0.1"
+                                value={t.generalBonus}
+                                onChange={(e) => updateTier(t.id, { generalBonus: e.target.value })}
+                                className="w-20"
+                              />
+                            </TableCell>
+                          </>
+                        )}
+                        {needPro && (
+                          <>
+                            <TableCell className="border-l">
+                              <Input
+                                type="number"
+                                min={0}
+                                step="0.01"
+                                value={t.proRate}
+                                onChange={(e) => updateTier(t.id, { proRate: e.target.value })}
+                                className="w-20"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min={0}
+                                step="0.1"
+                                value={t.proBonus}
+                                onChange={(e) => updateTier(t.id, { proBonus: e.target.value })}
+                                className="w-20"
+                              />
+                            </TableCell>
+                          </>
+                        )}
+                        <TableCell className="tabular-nums border-l">
+                          <div className="flex flex-col gap-0.5 text-xs">
+                            {needGeneral && (
+                              <span className="text-blue-700 dark:text-blue-300">通用 {fmt(lo.g, hi.g)}</span>
+                            )}
+                            {needPro && (
+                              <span className="text-purple-700 dark:text-purple-300">专业 {fmt(lo.p, hi.p)}</span>
+                            )}
+                            <span className="font-medium text-primary">合计 {fmt(lo.total, hi.total)}</span>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Button
@@ -1014,7 +1109,7 @@ function RechargeFormDialog({
             </div>
             <div className="mt-2 flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
-                预览根据「充值金额 × 转换比例 = 基础积分」「基础积分 × 赠送比例% = 赠送积分」实时计算
+                预览根据「充值金额 × 转换比例 = 基础积分」「基础积分 × 赠送% = 赠送积分」实时计算,合计为通用与专业之和。
               </p>
               <Button type="button" variant="ghost" size="sm" className="text-primary" onClick={addTier}>
                 <Plus className="h-4 w-4" /> 添加阶梯
