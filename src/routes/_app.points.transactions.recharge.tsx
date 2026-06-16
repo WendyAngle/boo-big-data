@@ -21,6 +21,8 @@ import {
   CheckCircle2,
   Check,
   ChevronLeft,
+  HelpCircle,
+  CalendarDays,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,6 +58,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ListPagination } from "@/components/ListPagination";
 import { toast } from "sonner";
 
