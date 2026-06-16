@@ -721,13 +721,11 @@ function UsersPage() {
       <AlertDialog open={!!resetTarget} onOpenChange={(o) => !o && setResetTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <KeyRound className="h-5 w-5 text-primary" />
-              确认重置该用户密码？
-            </AlertDialogTitle>
+            <AlertDialogTitle>重置用户密码？</AlertDialogTitle>
             <AlertDialogDescription>
-              即将为 <span className="font-medium text-foreground">{resetTarget?.name}</span>
-              （{resetTarget?.id}）重置登录密码为系统默认初始密码，重置后用户需通过手机号/邮箱重新设置新密码后方可登录。
+              将把用户 <span className="font-medium text-foreground">{resetTarget?.name}</span> 的密码重置为系统初始密码{" "}
+              <code className="px-1.5 py-0.5 rounded bg-muted text-foreground font-mono text-xs">Boo@123456</code>
+              ，请通知用户首次登录后修改。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -735,7 +733,7 @@ function UsersPage() {
             <AlertDialogAction
               onClick={() => {
                 if (resetTarget) {
-                  toast.success(`已重置 ${resetTarget.name} 的登录密码`);
+                  toast.success(`已将 ${resetTarget.name} 的密码重置为 Boo@123456`);
                 }
                 setResetTarget(null);
               }}
