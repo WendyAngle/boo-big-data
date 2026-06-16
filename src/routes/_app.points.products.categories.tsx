@@ -43,54 +43,23 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ListPagination } from "@/components/ListPagination";
 import { toast } from "sonner";
+import {
+  productCategoriesStore,
+  useProductCategories,
+  type ProductCategory,
+} from "@/lib/productCategoriesStore";
 
 export const Route = createFileRoute("/_app/points/products/categories")({
   head: () => ({ meta: [{ title: "产品管理 · 产品分类 | Boo数据平台" }] }),
   component: CategoriesPage,
 });
 
-interface Category {
-  id: string;
-  name: string;
-  remark: string;
-  createdAt: string;
-  enabled: boolean;
-}
+type Category = ProductCategory;
 
 const REMARK_MAX = 200;
 
-function genCode(seq: number) {
-  return `PC${String(seq).padStart(8, "0")}`;
-}
-
-const INITIAL_NAMES = [
-  "AI内容创作",
-  "AI智能获客",
-  "AI贸易数据",
-  "AI视频制作",
-  "AI客服助手",
-  "数据洞察",
-];
-const INITIAL_REMARKS = [
-  "面向内容团队的AI写作、文案与素材生成能力。",
-  "基于大模型的销售线索挖掘与精准触达。",
-  "覆盖全球进出口贸易的数据查询与分析。",
-  "AI短视频生成与剪辑相关产品集合。",
-  "智能问答、工单分流等客服场景产品。",
-  "面向业务分析的看板、报表与洞察服务。",
-];
-
-const INITIAL_DATA: Category[] = INITIAL_NAMES.map((name, i) => ({
-  id: genCode(i + 1),
-  name,
-  remark: INITIAL_REMARKS[i] ?? "",
-  createdAt: `2026-0${(i % 6) + 1}-${String(((i * 7) % 27) + 1).padStart(2, "0")}`,
-  enabled: true,
-}));
-
 function CategoriesPage() {
-  const [data, setData] = useState<Category[]>(INITIAL_DATA);
-  const [seq, setSeq] = useState(INITIAL_DATA.length);
+  const data = useProductCategories();
 
   const [nameKw, setNameKw] = useState("");
   const [codeKw, setCodeKw] = useState("");
@@ -104,7 +73,7 @@ function CategoriesPage() {
   const [delTarget, setDelTarget] = useState<Category | null>(null);
 
   const toggleEnabled = (c: Category) => {
-    setData((d) => d.map((x) => (x.id === c.id ? { ...x, enabled: !x.enabled } : x)));
+    productCategoriesStore.update(c.id, { enabled: !c.enabled });
     toast.success(`已${c.enabled ? "停用" : "启用"} ${c.name}`);
   };
 
@@ -311,28 +280,18 @@ function CategoriesPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         editing={editing}
-        nextCode={genCode(seq + 1)}
+        nextCode={productCategoriesStore.nextCode()}
         onSubmit={(values) => {
           if (editing) {
-            setData((d) =>
-              d.map((x) =>
-                x.id === editing.id
-                  ? { ...x, name: values.name, remark: values.remark, enabled: values.enabled }
-                  : x,
-              ),
-            );
+            productCategoriesStore.update(editing.id, {
+              name: values.name,
+              remark: values.remark,
+              enabled: values.enabled,
+            });
             toast.success(`已更新 ${values.name}`);
           } else {
-            const nextSeq = seq + 1;
-            const id = genCode(nextSeq);
-            const today = new Date();
-            const createdAt = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-            setData((d) => [
-              { id, name: values.name, remark: values.remark, createdAt, enabled: values.enabled },
-              ...d,
-            ]);
-            setSeq(nextSeq);
-            toast.success(`已新增 ${values.name}(${id})`);
+            const created = productCategoriesStore.add(values);
+            toast.success(`已新增 ${created.name}(${created.id})`);
           }
           setFormOpen(false);
         }}
@@ -352,7 +311,7 @@ function CategoriesPage() {
             <AlertDialogAction
               onClick={() => {
                 if (delTarget) {
-                  setData((d) => d.filter((x) => x.id !== delTarget.id));
+                  productCategoriesStore.remove(delTarget.id);
                   toast.success(`已删除 ${delTarget.name}`);
                 }
                 setDelTarget(null);
