@@ -200,8 +200,6 @@ const TENANT_NAMES = [
 ];
 const PERSON_NAMES = ["张伟", "王芳", "李娜", "刘洋", "陈思", "杨明", "赵磊", "黄雨", "周凯", "吴婷", "徐航", "孙悦"];
 const LEVELS: LevelKey[] = ["L1", "L2", "L3", "L4"];
-const PROVIDER_IDS: ProviderId[] = ["alipay"];
-
 // 与"租户管理"完全一致的租户类型 / 认证状态 / 认证等级派生
 // 索引规则:
 //   subject:   i % 2  -> 0: 个人, 1: 企业
