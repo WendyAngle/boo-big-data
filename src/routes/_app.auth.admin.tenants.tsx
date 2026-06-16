@@ -355,7 +355,6 @@ function TenantsPage() {
 
   const reset = () => {
     setKeyword("");
-    setType("all");
     setIndustry("all");
     setAuth("all");
     setCoop("all");
