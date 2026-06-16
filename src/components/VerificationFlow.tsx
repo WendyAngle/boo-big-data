@@ -362,7 +362,7 @@ export function VerificationFlow({ subject }: Props) {
             </Card>
           )}
 
-          {step === 3 && (
+          {step === 2 && (
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -431,53 +431,7 @@ export function VerificationFlow({ subject }: Props) {
             </Card>
           )}
 
-          {step === 2 && (
-            <Card className="p-6">
-              <div className="mb-4">
-                <h2 className="text-base font-semibold">选择认证渠道</h2>
-                <p className="text-xs text-muted-foreground mt-1">支持平台直连或跳转至第三方权威实名服务完成核验</p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {PROVIDERS.map((p) => {
-                  const selected = provider === p.id;
-                  return (
-                    <button
-                      key={p.id}
-                      onClick={() => setProvider(p.id)}
-                      className={`text-left rounded-xl border p-4 bg-gradient-to-br ${p.color} transition-all ${
-                        selected ? "ring-2 ring-primary shadow-lg shadow-primary/20" : "hover:shadow-md"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className="h-9 w-9 rounded-lg bg-background/70 backdrop-blur flex items-center justify-center text-sm font-bold">
-                            {p.initial}
-                          </div>
-                          <div>
-                            <div className="text-sm font-semibold">{p.name}</div>
-                            <Badge variant="outline" className="mt-0.5 text-[10px]">{p.badge}</Badge>
-                          </div>
-                        </div>
-                        {selected && <CheckCircle2 className="h-4 w-4 text-primary" />}
-                      </div>
-                      <p className="mt-3 text-xs text-muted-foreground leading-relaxed">{p.desc}</p>
-                    </button>
-                  );
-                })}
-              </div>
-              {provider !== "platform" && (
-                <div className="mt-4 rounded-lg border border-primary/30 bg-primary/5 p-4 flex items-start gap-3">
-                  <ExternalLink className="h-4 w-4 text-primary mt-0.5" />
-                  <div className="text-xs text-muted-foreground">
-                    点击「提交认证」后将跳转至 <span className="text-foreground font-medium">{providerName}</span> 完成实人核验，
-                    完成后通过回调地址返回认证结果。此处以模拟弹窗展示对接交互。
-                  </div>
-                </div>
-              )}
-            </Card>
-          )}
-
-          {step === 4 && (
+          {step === 3 && (
             <Card className="p-8 text-center">
               {result === "success" && (
                 <>
@@ -523,12 +477,12 @@ export function VerificationFlow({ subject }: Props) {
           )}
 
           {/* Step Footer */}
-          {step < 4 && (
+          {step < 3 && (
             <div className="flex items-center justify-between">
               <Button variant="ghost" onClick={goPrev} disabled={step === 1}>
                 <ArrowLeft className="h-4 w-4 mr-1" /> 上一步
               </Button>
-              {step < 3 ? (
+              {step < 2 ? (
                 <Button onClick={goNext}>
                   下一步 <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
