@@ -891,6 +891,9 @@ function BundleFormDialog({ open, onOpenChange, editing, nextCode, categories, b
           </FormRow>
 
           <FormRow label="套餐项目设置" required error={touched ? errors.items : ""}>
+            <div className="mb-2 rounded-md border border-dashed bg-muted/30 px-3 py-2 text-xs text-muted-foreground leading-relaxed">
+              说明：每条项目仅可选择「通用积分」或「专业积分」其中之一。如需同时发放两类积分，请添加多条项目分别配置，套餐将自动标记为「混合积分」套餐。
+            </div>
             <div className="rounded-lg border overflow-hidden">
               <Table>
                 <TableHeader>
