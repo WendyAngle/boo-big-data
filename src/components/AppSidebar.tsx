@@ -33,7 +33,7 @@ const menu: Root[] = [
     ],
   },
   {
-    label: "积分管理策略",
+    label: "积分管理系统",
     icon: Coins,
     children: [
       {
