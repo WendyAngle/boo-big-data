@@ -483,7 +483,6 @@ function BundleProductsPage() {
                 <TableHead className="whitespace-nowrap">套餐编号</TableHead>
                 <TableHead>套餐名称</TableHead>
                 <TableHead className="min-w-[300px]">产品详情</TableHead>
-                <TableHead className="min-w-[180px]">套餐描述</TableHead>
                 <TableHead className="text-right whitespace-nowrap">套餐现金价(元)</TableHead>
                 <TableHead className="text-right whitespace-nowrap">总基础积分</TableHead>
                 <TableHead className="text-right whitespace-nowrap">总赠送积分</TableHead>
@@ -515,18 +514,6 @@ function BundleProductsPage() {
                             <ItemBadge key={it.id} item={it} label={targetLabel(it)} />
                           ))}
                         </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-xs pt-4">
-                        <TooltipProvider delayDuration={150}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="line-clamp-2 cursor-default">{p.description || "—"}</span>
-                            </TooltipTrigger>
-                            {p.description && (
-                              <TooltipContent className="max-w-xs">{p.description}</TooltipContent>
-                            )}
-                          </Tooltip>
-                        </TooltipProvider>
                       </TableCell>
                       <TableCell className="text-right tabular-nums font-medium pt-4">
                         {Number(p.price).toLocaleString()}
