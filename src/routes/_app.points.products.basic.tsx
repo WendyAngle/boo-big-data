@@ -53,127 +53,36 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ListPagination } from "@/components/ListPagination";
 import { toast } from "sonner";
 import { productCategoriesStore, useProductCategories } from "@/lib/productCategoriesStore";
+import {
+  basicProductsStore,
+  useBasicProducts,
+  type BasicProduct as StoreBasicProduct,
+  type AppLink as StoreAppLink,
+  type UnitKey as StoreUnitKey,
+} from "@/lib/basicProductsStore";
 
 export const Route = createFileRoute("/_app/points/products/basic")({
   head: () => ({ meta: [{ title: "产品管理 · 基础产品 | Boo数据平台" }] }),
   component: BasicProductsPage,
 });
 
-type UnitKey = "次" | "秒" | "分" | "小时" | "天";
+type UnitKey = StoreUnitKey;
 const UNITS: UnitKey[] = ["次", "秒", "分", "小时", "天"];
 
 // 关联应用 mock 列表(与"应用管理"一致)
 const APP_OPTIONS = ["AI视频生成", "SIS", "AIMedia", "Hub"];
 
-interface AppLink {
-  app: string;
-  serviceCode: string;
-}
-
-interface BasicProduct {
-  id: string; // BP000001+
-  category: string; // 产品分类名称
-  name: string;
-  description: string;
-  cashValue: number;
-  pointsCost: number;
-  unit: UnitKey;
-  enabled: boolean;
-  appLinks: AppLink[];
-  createdAt: string;
-}
+type AppLink = StoreAppLink;
+type BasicProduct = StoreBasicProduct;
 
 const DESC_MAX = 200;
 const NAME_MAX = 50;
-
-function genCode(seq: number) {
-  return `BP${String(seq).padStart(6, "0")}`;
-}
-
-const INITIAL: BasicProduct[] = [
-  {
-    id: "BP000058",
-    category: "AI视频制作",
-    name: "ggg",
-    description: "ggg",
-    cashValue: 1,
-    pointsCost: 10,
-    unit: "次",
-    enabled: false,
-    appLinks: [],
-    createdAt: "2026-03-11 17:01:50",
-  },
-  {
-    id: "BP000052",
-    category: "AI客服助手",
-    name: "ggg",
-    description: "gege",
-    cashValue: 0,
-    pointsCost: 222,
-    unit: "次",
-    enabled: false,
-    appLinks: [],
-    createdAt: "2026-03-11 10:20:45",
-  },
-  {
-    id: "BP000043",
-    category: "AI视频制作",
-    name: "AI文生图",
-    description: "文生图",
-    cashValue: 1,
-    pointsCost: 20,
-    unit: "秒",
-    enabled: true,
-    appLinks: [
-      { app: "SIS", serviceCode: "SIS46818" },
-      { app: "AI视频生成", serviceCode: "AG497554" },
-    ],
-    createdAt: "2026-03-10 15:43:27",
-  },
-  {
-    id: "BP000032",
-    category: "AI智能获客",
-    name: "Tiktok获客",
-    description: "获取tiktok账号",
-    cashValue: 2,
-    pointsCost: 20,
-    unit: "次",
-    enabled: true,
-    appLinks: [],
-    createdAt: "2026-03-09 10:12:42",
-  },
-  {
-    id: "BP000030",
-    category: "AI视频制作",
-    name: "AI图生视频",
-    description: "图生数字人视频",
-    cashValue: 1,
-    pointsCost: 10,
-    unit: "秒",
-    enabled: true,
-    appLinks: [],
-    createdAt: "2026-03-09 10:11:15",
-  },
-  {
-    id: "BP000028",
-    category: "AI视频制作",
-    name: "AI视频消除",
-    description: "消除字幕、水印等",
-    cashValue: 1,
-    pointsCost: 10,
-    unit: "分",
-    enabled: true,
-    appLinks: [],
-    createdAt: "2026-03-09 10:02:14",
-  },
-];
 
 function BasicProductsPage() {
   const categories = useProductCategories();
   const enabledCategories = useMemo(() => categories.filter((c) => c.enabled), [categories]);
 
-  const [data, setData] = useState<BasicProduct[]>(INITIAL);
-  const [seq, setSeq] = useState(58);
+  const data = useBasicProducts();
 
   const [kw, setKw] = useState("");
   const [catFilter, setCatFilter] = useState("all");
@@ -210,7 +119,7 @@ function BasicProductsPage() {
   };
 
   const toggleEnabled = (p: BasicProduct) => {
-    setData((d) => d.map((x) => (x.id === p.id ? { ...x, enabled: !x.enabled } : x)));
+    basicProductsStore.update(p.id, { enabled: !p.enabled });
     toast.success(`已${p.enabled ? "停用" : "启用"} ${p.name}`);
   };
 
@@ -411,23 +320,15 @@ function BasicProductsPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         editing={editing}
-        nextCode={genCode(seq + 1)}
+        nextCode={basicProductsStore.nextCode()}
         categories={enabledCategories.map((c) => c.name)}
         onSubmit={(values) => {
           if (editing) {
-            setData((d) =>
-              d.map((x) => (x.id === editing.id ? { ...x, ...values } : x)),
-            );
+            basicProductsStore.update(editing.id, values);
             toast.success(`已更新 ${values.name}`);
           } else {
-            const nextSeq = seq + 1;
-            const id = genCode(nextSeq);
-            const now = new Date();
-            const pad = (n: number) => String(n).padStart(2, "0");
-            const createdAt = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-            setData((d) => [{ id, createdAt, ...values }, ...d]);
-            setSeq(nextSeq);
-            toast.success(`已新增 ${values.name}(${id})`);
+            const created = basicProductsStore.add(values);
+            toast.success(`已新增 ${created.name}(${created.id})`);
           }
           setFormOpen(false);
         }}
@@ -448,7 +349,7 @@ function BasicProductsPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
                 if (delTarget) {
-                  setData((d) => d.filter((x) => x.id !== delTarget.id));
+                basicProductsStore.remove(delTarget.id);
                   toast.success(`已删除 ${delTarget.name}`);
                 }
                 setDelTarget(null);
