@@ -18,6 +18,7 @@ import { Route as AppPointsAppsRouteImport } from './routes/_app.points.apps'
 import { Route as AppAuthUserRouteImport } from './routes/_app.auth.user'
 import { Route as AppAuthAdminRouteImport } from './routes/_app.auth.admin'
 import { Route as AppAuthAdminIndexRouteImport } from './routes/_app.auth.admin.index'
+import { Route as AppPointsProductsRechargeRouteImport } from './routes/_app.points.products.recharge'
 import { Route as AppPointsProductsCategoriesRouteImport } from './routes/_app.points.products.categories'
 import { Route as AppPointsProductsBundlesRouteImport } from './routes/_app.points.products.bundles'
 import { Route as AppPointsProductsBasicRouteImport } from './routes/_app.points.products.basic'
@@ -72,6 +73,12 @@ const AppAuthAdminIndexRoute = AppAuthAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppAuthAdminRoute,
 } as any)
+const AppPointsProductsRechargeRoute =
+  AppPointsProductsRechargeRouteImport.update({
+    id: '/points/products/recharge',
+    path: '/points/products/recharge',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppPointsProductsCategoriesRoute =
   AppPointsProductsCategoriesRouteImport.update({
     id: '/points/products/categories',
@@ -137,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/points/products/basic': typeof AppPointsProductsBasicRoute
   '/points/products/bundles': typeof AppPointsProductsBundlesRoute
   '/points/products/categories': typeof AppPointsProductsCategoriesRoute
+  '/points/products/recharge': typeof AppPointsProductsRechargeRoute
   '/auth/admin/': typeof AppAuthAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -155,6 +163,7 @@ export interface FileRoutesByTo {
   '/points/products/basic': typeof AppPointsProductsBasicRoute
   '/points/products/bundles': typeof AppPointsProductsBundlesRoute
   '/points/products/categories': typeof AppPointsProductsCategoriesRoute
+  '/points/products/recharge': typeof AppPointsProductsRechargeRoute
   '/auth/admin': typeof AppAuthAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -176,6 +185,7 @@ export interface FileRoutesById {
   '/_app/points/products/basic': typeof AppPointsProductsBasicRoute
   '/_app/points/products/bundles': typeof AppPointsProductsBundlesRoute
   '/_app/points/products/categories': typeof AppPointsProductsCategoriesRoute
+  '/_app/points/products/recharge': typeof AppPointsProductsRechargeRoute
   '/_app/auth/admin/': typeof AppAuthAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/points/products/basic'
     | '/points/products/bundles'
     | '/points/products/categories'
+    | '/points/products/recharge'
     | '/auth/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/points/products/basic'
     | '/points/products/bundles'
     | '/points/products/categories'
+    | '/points/products/recharge'
     | '/auth/admin'
   id:
     | '__root__'
@@ -235,6 +247,7 @@ export interface FileRouteTypes {
     | '/_app/points/products/basic'
     | '/_app/points/products/bundles'
     | '/_app/points/products/categories'
+    | '/_app/points/products/recharge'
     | '/_app/auth/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -306,6 +319,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/admin/'
       preLoaderRoute: typeof AppAuthAdminIndexRouteImport
       parentRoute: typeof AppAuthAdminRoute
+    }
+    '/_app/points/products/recharge': {
+      id: '/_app/points/products/recharge'
+      path: '/points/products/recharge'
+      fullPath: '/points/products/recharge'
+      preLoaderRoute: typeof AppPointsProductsRechargeRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/points/products/categories': {
       id: '/_app/points/products/categories'
@@ -418,6 +438,7 @@ interface AppRouteChildren {
   AppPointsProductsBasicRoute: typeof AppPointsProductsBasicRoute
   AppPointsProductsBundlesRoute: typeof AppPointsProductsBundlesRoute
   AppPointsProductsCategoriesRoute: typeof AppPointsProductsCategoriesRoute
+  AppPointsProductsRechargeRoute: typeof AppPointsProductsRechargeRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -431,6 +452,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPointsProductsBasicRoute: AppPointsProductsBasicRoute,
   AppPointsProductsBundlesRoute: AppPointsProductsBundlesRoute,
   AppPointsProductsCategoriesRoute: AppPointsProductsCategoriesRoute,
+  AppPointsProductsRechargeRoute: AppPointsProductsRechargeRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
