@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   ChevronRight,
@@ -222,9 +222,8 @@ export function VerificationFlow({ subject }: Props) {
   ) as ReadonlyArray<{ n: 1 | 2 | 3; title: string; icon: typeof ShieldCheck }>;
 
   // Enterprise skips level selection — start at the fill-in step.
-  useMemo(() => {
+  useEffect(() => {
     if (!isPersonal && step === 1) setStep(2);
-    return null;
   }, [isPersonal, step]);
 
   const updateField = (k: string, v: string) => setForm((s) => ({ ...s, [k]: v }));
