@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -71,10 +72,24 @@ function CategoriesPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [delTarget, setDelTarget] = useState<Category | null>(null);
+  const [toggleTarget, setToggleTarget] = useState<Category | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkAction, setBulkAction] = useState<"enable" | "disable" | null>(null);
 
-  const toggleEnabled = (c: Category) => {
-    productCategoriesStore.update(c.id, { enabled: !c.enabled });
-    toast.success(`已${c.enabled ? "停用" : "启用"} ${c.name}`);
+  const confirmToggle = () => {
+    if (!toggleTarget) return;
+    productCategoriesStore.update(toggleTarget.id, { enabled: !toggleTarget.enabled });
+    toast.success(`已${toggleTarget.enabled ? "停用" : "启用"} ${toggleTarget.name}`);
+    setToggleTarget(null);
+  };
+
+  const confirmBulk = () => {
+    if (!bulkAction || selectedIds.length === 0) return;
+    const enabled = bulkAction === "enable";
+    selectedIds.forEach((id) => productCategoriesStore.update(id, { enabled }));
+    toast.success(`已批量${enabled ? "启用" : "停用"} ${selectedIds.length} 项产品分类`);
+    setSelectedIds([]);
+    setBulkAction(null);
   };
 
   const filtered = useMemo(() => {
@@ -87,6 +102,20 @@ function CategoriesPage() {
 
   const total = filtered.length;
   const pageData = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const pageIds = pageData.map((c) => c.id);
+  const allChecked = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+  const someChecked = pageIds.some((id) => selectedIds.includes(id));
+  const togglePage = (checked: boolean) => {
+    setSelectedIds((prev) =>
+      checked
+        ? Array.from(new Set([...prev, ...pageIds]))
+        : prev.filter((id) => !pageIds.includes(id)),
+    );
+  };
+  const toggleOne = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
+  };
 
   const applySearch = () => {
     setAppliedName(nameKw.trim());
@@ -165,21 +194,49 @@ function CategoriesPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div className="text-sm text-muted-foreground">
             共 <span className="font-semibold text-foreground">{total}</span> 条产品分类
+            {selectedIds.length > 0 && (
+              <span className="ml-2">
+                · 已选 <span className="font-semibold text-foreground">{selectedIds.length}</span> 项
+              </span>
+            )}
           </div>
-          <Button
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4" /> 新增
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              disabled={selectedIds.length === 0}
+              onClick={() => setBulkAction("enable")}
+            >
+              批量启用
+            </Button>
+            <Button
+              variant="outline"
+              disabled={selectedIds.length === 0}
+              onClick={() => setBulkAction("disable")}
+            >
+              批量停用
+            </Button>
+            <Button
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4" /> 新增
+            </Button>
+          </div>
         </div>
 
         <div className="rounded-lg border overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allChecked ? true : someChecked ? "indeterminate" : false}
+                    onCheckedChange={(v) => togglePage(!!v)}
+                    aria-label="全选当前页"
+                  />
+                </TableHead>
                 <TableHead>产品分类名称</TableHead>
                 <TableHead className="whitespace-nowrap">产品分类编码</TableHead>
                 <TableHead>备注</TableHead>
@@ -191,13 +248,20 @@ function CategoriesPage() {
             <TableBody>
               {pageData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                     暂无匹配的产品分类
                   </TableCell>
                 </TableRow>
               ) : (
                 pageData.map((c) => (
                   <TableRow key={c.id} className="hover:bg-accent/30">
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.includes(c.id)}
+                        onCheckedChange={(v) => toggleOne(c.id, !!v)}
+                        aria-label={`选择 ${c.name}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell className="font-mono text-xs">{c.id}</TableCell>
                     <TableCell className="text-muted-foreground max-w-md">
@@ -213,7 +277,7 @@ function CategoriesPage() {
                               type="button"
                               role="switch"
                               aria-checked={c.enabled}
-                              onClick={() => toggleEnabled(c)}
+                              onClick={() => setToggleTarget(c)}
                               className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                                 c.enabled ? "bg-primary" : "bg-input"
                               }`}
@@ -318,6 +382,50 @@ function CategoriesPage() {
               }}
             >
               确认删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!toggleTarget} onOpenChange={(o) => !o && setToggleTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              确认{toggleTarget?.enabled ? "停用" : "启用"}该产品分类?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              即将{toggleTarget?.enabled ? "停用" : "启用"}{" "}
+              <span className="font-medium text-foreground">{toggleTarget?.name}</span>(
+              {toggleTarget?.id})
+              {toggleTarget?.enabled
+                ? ",停用后该分类下的产品在新建/编辑时将不可选择。"
+                : ",启用后该分类将恢复可用。"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmToggle}>
+              确认{toggleTarget?.enabled ? "停用" : "启用"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!bulkAction} onOpenChange={(o) => !o && setBulkAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              确认批量{bulkAction === "enable" ? "启用" : "停用"} {selectedIds.length} 项产品分类?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              该操作将对所选 {selectedIds.length} 项产品分类执行
+              {bulkAction === "enable" ? "启用" : "停用"}操作,请确认后继续。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmBulk}>
+              确认{bulkAction === "enable" ? "启用" : "停用"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
