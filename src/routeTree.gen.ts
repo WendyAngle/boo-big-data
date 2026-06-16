@@ -12,6 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppOutreachIndexRouteImport } from './routes/_app.outreach.index'
+import { Route as AppPointsTransactionsRouteImport } from './routes/_app.points.transactions'
+import { Route as AppPointsTenantsRouteImport } from './routes/_app.points.tenants'
+import { Route as AppPointsProductsRouteImport } from './routes/_app.points.products'
 import { Route as AppAuthUserRouteImport } from './routes/_app.auth.user'
 import { Route as AppAuthAdminRouteImport } from './routes/_app.auth.admin'
 import { Route as AppAuthAdminIndexRouteImport } from './routes/_app.auth.admin.index'
@@ -34,6 +37,21 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const AppOutreachIndexRoute = AppOutreachIndexRouteImport.update({
   id: '/outreach/',
   path: '/outreach/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPointsTransactionsRoute = AppPointsTransactionsRouteImport.update({
+  id: '/points/transactions',
+  path: '/points/transactions',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPointsTenantsRoute = AppPointsTenantsRouteImport.update({
+  id: '/points/tenants',
+  path: '/points/tenants',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPointsProductsRoute = AppPointsProductsRouteImport.update({
+  id: '/points/products',
+  path: '/points/products',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAuthUserRoute = AppAuthUserRouteImport.update({
@@ -86,6 +104,9 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/auth/admin': typeof AppAuthAdminRouteWithChildren
   '/auth/user': typeof AppAuthUserRouteWithChildren
+  '/points/products': typeof AppPointsProductsRoute
+  '/points/tenants': typeof AppPointsTenantsRoute
+  '/points/transactions': typeof AppPointsTransactionsRoute
   '/outreach/': typeof AppOutreachIndexRoute
   '/auth/admin/audit': typeof AppAuthAdminAuditRoute
   '/auth/admin/tenants': typeof AppAuthAdminTenantsRoute
@@ -98,6 +119,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
   '/auth/user': typeof AppAuthUserRouteWithChildren
+  '/points/products': typeof AppPointsProductsRoute
+  '/points/tenants': typeof AppPointsTenantsRoute
+  '/points/transactions': typeof AppPointsTransactionsRoute
   '/outreach': typeof AppOutreachIndexRoute
   '/auth/admin/audit': typeof AppAuthAdminAuditRoute
   '/auth/admin/tenants': typeof AppAuthAdminTenantsRoute
@@ -113,6 +137,9 @@ export interface FileRoutesById {
   '/_app/': typeof AppIndexRoute
   '/_app/auth/admin': typeof AppAuthAdminRouteWithChildren
   '/_app/auth/user': typeof AppAuthUserRouteWithChildren
+  '/_app/points/products': typeof AppPointsProductsRoute
+  '/_app/points/tenants': typeof AppPointsTenantsRoute
+  '/_app/points/transactions': typeof AppPointsTransactionsRoute
   '/_app/outreach/': typeof AppOutreachIndexRoute
   '/_app/auth/admin/audit': typeof AppAuthAdminAuditRoute
   '/_app/auth/admin/tenants': typeof AppAuthAdminTenantsRoute
@@ -128,6 +155,9 @@ export interface FileRouteTypes {
     | '/'
     | '/auth/admin'
     | '/auth/user'
+    | '/points/products'
+    | '/points/tenants'
+    | '/points/transactions'
     | '/outreach/'
     | '/auth/admin/audit'
     | '/auth/admin/tenants'
@@ -140,6 +170,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth/user'
+    | '/points/products'
+    | '/points/tenants'
+    | '/points/transactions'
     | '/outreach'
     | '/auth/admin/audit'
     | '/auth/admin/tenants'
@@ -154,6 +187,9 @@ export interface FileRouteTypes {
     | '/_app/'
     | '/_app/auth/admin'
     | '/_app/auth/user'
+    | '/_app/points/products'
+    | '/_app/points/tenants'
+    | '/_app/points/transactions'
     | '/_app/outreach/'
     | '/_app/auth/admin/audit'
     | '/_app/auth/admin/tenants'
@@ -189,6 +225,27 @@ declare module '@tanstack/react-router' {
       path: '/outreach'
       fullPath: '/outreach/'
       preLoaderRoute: typeof AppOutreachIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/points/transactions': {
+      id: '/_app/points/transactions'
+      path: '/points/transactions'
+      fullPath: '/points/transactions'
+      preLoaderRoute: typeof AppPointsTransactionsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/points/tenants': {
+      id: '/_app/points/tenants'
+      path: '/points/tenants'
+      fullPath: '/points/tenants'
+      preLoaderRoute: typeof AppPointsTenantsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/points/products': {
+      id: '/_app/points/products'
+      path: '/points/products'
+      fullPath: '/points/products'
+      preLoaderRoute: typeof AppPointsProductsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/auth/user': {
@@ -295,6 +352,9 @@ interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppAuthAdminRoute: typeof AppAuthAdminRouteWithChildren
   AppAuthUserRoute: typeof AppAuthUserRouteWithChildren
+  AppPointsProductsRoute: typeof AppPointsProductsRoute
+  AppPointsTenantsRoute: typeof AppPointsTenantsRoute
+  AppPointsTransactionsRoute: typeof AppPointsTransactionsRoute
   AppOutreachIndexRoute: typeof AppOutreachIndexRoute
 }
 
@@ -302,6 +362,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
   AppAuthAdminRoute: AppAuthAdminRouteWithChildren,
   AppAuthUserRoute: AppAuthUserRouteWithChildren,
+  AppPointsProductsRoute: AppPointsProductsRoute,
+  AppPointsTenantsRoute: AppPointsTenantsRoute,
+  AppPointsTransactionsRoute: AppPointsTransactionsRoute,
   AppOutreachIndexRoute: AppOutreachIndexRoute,
 }
 
@@ -313,13 +376,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
