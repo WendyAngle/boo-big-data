@@ -683,7 +683,6 @@ function AuditPage() {
                 <TableHead className="whitespace-nowrap">申请单号</TableHead>
                 <TableHead>租户 / 申请人</TableHead>
                 <TableHead>主体</TableHead>
-                <TableHead>认证等级</TableHead>
                 <TableHead>认证渠道</TableHead>
                 <TableHead>提交时间</TableHead>
                 <TableHead>状态</TableHead>
@@ -692,7 +691,7 @@ function AuditPage() {
             </TableHeader>
             <TableBody>
               {pageData.length === 0 ? (
-                <TableRow><TableCell colSpan={9} className="text-center py-12 text-muted-foreground">暂无匹配的申请单</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">暂无匹配的申请单</TableCell></TableRow>
               ) : pageData.map((t) => {
                 const canAct = t.status === "待审核" || t.status === "审核中";
                 const p = PROVIDERS[t.provider];
@@ -713,11 +712,6 @@ function AuditPage() {
                       <Badge variant="outline" className="font-normal gap-1">
                         {t.subject === "个人" ? <UserIcon className="h-3 w-3" /> : <Building2 className="h-3 w-3" />}
                         {t.subject}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={LEVEL_META[t.level].color}>
-                        {t.level} · {LEVEL_META[t.level].title}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -787,7 +781,7 @@ function AuditPage() {
                 <DialogTitle className="flex items-center gap-3">
                   <span>审核详情</span>
                   <Badge variant="outline" className={STATUS_BADGE[detail.status]}>{detail.status}</Badge>
-                  <Badge variant="outline" className={LEVEL_META[detail.level].color}>{detail.level} · {LEVEL_META[detail.level].title}</Badge>
+                  <Badge variant="outline" className={LEVEL_META.L4.color}>{LEVEL_META.L4.title} · {LEVEL_META.L4.tag}</Badge>
                 </DialogTitle>
                 <DialogDescription className="flex items-center gap-3 flex-wrap pt-1">
                   <span className="font-mono text-xs">{detail.id}</span>
@@ -956,7 +950,7 @@ function FieldIcon({ type }: { type: FieldType }) {
 }
 
 function DetailBody({ detail, comment, setComment, onRecheck, onSync }: { detail: AuditItem; comment: string; setComment: (v: string) => void; onRecheck: () => void; onSync: () => void }) {
-  const fields = detail.subject === "个人" ? PERSONAL_FIELDS[detail.level] : ENTERPRISE_FIELDS[detail.level];
+  const fields = detail.subject === "个人" ? PERSONAL_FIELDS.L4 : ENTERPRISE_FIELDS.L4;
   const p = PROVIDERS[detail.provider];
   const [rawOpen, setRawOpen] = useState(false);
 
@@ -1086,7 +1080,7 @@ function DetailBody({ detail, comment, setComment, onRecheck, onSync }: { detail
             <FileText className="h-4 w-4 text-primary" /> 提交资料
           </div>
           <div className="text-xs text-muted-foreground">
-            按 <span className="font-medium text-foreground">{detail.level} · {LEVEL_META[detail.level].title}</span> 所需字段展示（共 {fields.length} 项）
+            按 <span className="font-medium text-foreground">{LEVEL_META.L4.title}</span> 所需字段展示（共 {fields.length} 项）
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
@@ -1132,7 +1126,7 @@ function DetailBody({ detail, comment, setComment, onRecheck, onSync }: { detail
         </div>
         <div className="mt-4 pt-4 border-t text-xs text-muted-foreground flex items-center gap-2">
           <Activity className="h-3.5 w-3.5" />
-          不同等级所需资料不同：L1 二要素 · L2 + 手机号 · L3 + 人脸 · L4 + 银行卡 / 对公账户
+          完整认证：{detail.subject === "个人" ? "姓名 + 身份证 + 手机号 + 人脸 + 本人银行卡" : "企业四要素 + 营业执照 + 法人人脸核身 + 对公账户"}
         </div>
       </Card>
 
