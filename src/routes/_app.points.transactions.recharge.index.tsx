@@ -87,7 +87,7 @@ interface RechargeRow {
   operator: string;
 }
 
-// 与「积分管理系统 · 租户管理」保持一致的租户名称
+// 与「积分管理系统 · 企业管理」保持一致的企业名称
 export const TENANT_NAMES = [
   "星火短剧工作室F",
   "星火短剧工作室E",
@@ -312,7 +312,7 @@ function buildMock(): RechargeRow[] {
 
 const MOCK = buildMock();
 
-// === 新增充值 向导 · 租户模拟数据 ===
+// === 新增充值 向导 · 企业模拟数据 ===
 export interface WizardTenant {
   id: string;
   name: string;
@@ -704,7 +704,7 @@ function RechargePage() {
           </DialogHeader>
           {detailRow && (
             <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm py-2">
-              <DetailItem label="租户名称" value={detailRow.tenant} />
+              <DetailItem label="企业名称" value={detailRow.tenant} />
               <DetailItem
                 label="充值类型"
                 value={

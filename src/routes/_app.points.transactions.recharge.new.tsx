@@ -68,7 +68,7 @@ function RechargeNewPage() {
 
   const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
 
-  // 第一步:租户
+  // 第一步:企业
   const [pickedTenantIds, setPickedTenantIds] = useState<string[]>([]);
   const [tenantKw, setTenantKw] = useState("");
   const [tenantStatusF, setTenantStatusF] = useState("enabled");
@@ -167,7 +167,7 @@ function RechargeNewPage() {
   const nextStep = () => {
     if (wizardStep === 1) {
       if (pickedTenantIds.length === 0) {
-        toast.error("请至少选择一个租户");
+        toast.error("请至少选择一个企业");
         return;
       }
       setWizardStep(2);
@@ -196,7 +196,7 @@ function RechargeNewPage() {
     const label =
       pickedTenants.length === 1
         ? `「${pickedTenants[0].name}」`
-        : `${pickedTenants.length} 位租户`;
+        : `${pickedTenants.length} 位企业`;
     toast.success(
       `已为${label}创建${summary.type}订单 ¥${summary.amount.toLocaleString()}`,
     );
@@ -230,7 +230,7 @@ function RechargeNewPage() {
           <div>
             <h1 className="text-xl font-bold">新增充值</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              依次完成「选择租户 → 选择产品 → 确认充值」三步,完成后将自动生成充值订单与积分流水
+              依次完成「选择企业 → 选择产品 → 确认充值」三步,完成后将自动生成充值订单与积分流水
             </p>
           </div>
         </div>
@@ -241,7 +241,7 @@ function RechargeNewPage() {
         <Stepper
           current={wizardStep}
           steps={[
-            { label: "选择租户", icon: User },
+            { label: "选择企业", icon: User },
             { label: "选择产品", icon: ShoppingCart },
             { label: "确认充值", icon: CheckCircle2 },
           ]}
@@ -252,7 +252,7 @@ function RechargeNewPage() {
       <Card className="p-6">
         {wizardStep === 1 && (
           <div className="space-y-4">
-            <div className="text-base font-semibold">查找租户</div>
+            <div className="text-base font-semibold">查找企业</div>
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative flex-1 min-w-[260px]">
                 <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -262,7 +262,7 @@ function RechargeNewPage() {
                     setTenantKw(e.target.value);
                     setTenantPage(1);
                   }}
-                  placeholder="输入租户名称 / 手机号 / 租户编号 搜索"
+                  placeholder="输入企业名称 / 手机号 / 企业编号 搜索"
                   className="pl-9"
                 />
               </div>
@@ -298,8 +298,8 @@ function RechargeNewPage() {
                         aria-label="全选当前页"
                       />
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">租户编号</TableHead>
-                    <TableHead className="whitespace-nowrap">租户名称</TableHead>
+                    <TableHead className="whitespace-nowrap">企业编号</TableHead>
+                    <TableHead className="whitespace-nowrap">企业名称</TableHead>
                     <TableHead className="whitespace-nowrap">联系信息</TableHead>
                     <TableHead className="whitespace-nowrap">关联应用</TableHead>
                     <TableHead className="text-right whitespace-nowrap">剩余积分</TableHead>
@@ -311,7 +311,7 @@ function RechargeNewPage() {
                   {tenantPageData.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-10 text-muted-foreground">
-                        没有匹配的租户
+                        没有匹配的企业
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -388,11 +388,11 @@ function RechargeNewPage() {
             {pickedTenant && (
               <div className="rounded-md border bg-muted/30 px-4 py-3 flex items-center justify-between">
                 <div className="text-sm">
-                  <span className="text-muted-foreground">已选租户:</span>{" "}
+                  <span className="text-muted-foreground">已选企业:</span>{" "}
                   <span className="font-medium">{pickedTenant.name}</span>{" "}
                   <span className="font-mono text-xs text-muted-foreground">({pickedTenant.id})</span>
                   {pickedTenants.length > 1 && (
-                    <span className="text-muted-foreground"> 等 {pickedTenants.length} 位租户</span>
+                    <span className="text-muted-foreground"> 等 {pickedTenants.length} 位企业</span>
                   )}
                 </div>
                 <Badge variant="outline" className="bg-accent/40 text-primary border-primary/20">
@@ -654,7 +654,7 @@ function RechargeNewPage() {
                 <div className="flex items-center gap-2 px-5 py-3 border-b-2 border-sky-500/80 bg-sky-50/40">
                   <User className="h-4 w-4 text-sky-600" />
                   <span className="text-sm font-semibold text-sky-700">
-                    选定租户
+                    选定企业
                     {pickedTenants.length > 1 && (
                       <span className="ml-1 text-xs text-sky-600/80">
                         (共 {pickedTenants.length} 位)
@@ -664,8 +664,8 @@ function RechargeNewPage() {
                 </div>
                 <div>
                   <div className="px-5 py-2.5 flex items-center justify-between text-xs text-muted-foreground bg-muted/30 border-b">
-                    <span>租户编号</span>
-                    <span>租户名称</span>
+                    <span>企业编号</span>
+                    <span>企业名称</span>
                   </div>
                   <div className="max-h-[280px] overflow-y-auto divide-y">
                     {pickedTenants.map((t) => (

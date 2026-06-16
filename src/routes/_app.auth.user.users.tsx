@@ -90,7 +90,7 @@ interface AppUser {
   createdAt: string;
 }
 
-// 当前企业（用户端默认租户，登录用户所在企业）
+// 当前企业（用户端默认企业，登录用户所在企业）
 const CURRENT_TENANT = { id: "T202600", name: "字节跳动" };
 
 const USER_NAMES = [
