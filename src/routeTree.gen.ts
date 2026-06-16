@@ -23,7 +23,6 @@ import { Route as AppPointsProductsCategoriesRouteImport } from './routes/_app.p
 import { Route as AppPointsProductsBundlesRouteImport } from './routes/_app.points.products.bundles'
 import { Route as AppPointsProductsBasicRouteImport } from './routes/_app.points.products.basic'
 import { Route as AppAuthUserUsersRouteImport } from './routes/_app.auth.user.users'
-import { Route as AppAuthUserLoginSimRouteImport } from './routes/_app.auth.user.login-sim'
 import { Route as AppPointsTransactionsRechargeIndexRouteImport } from './routes/_app.points.transactions.recharge.index'
 import { Route as AppPointsTransactionsRechargeNewRouteImport } from './routes/_app.points.transactions.recharge.new'
 
@@ -101,11 +100,6 @@ const AppAuthUserUsersRoute = AppAuthUserUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AppAuthUserRoute,
 } as any)
-const AppAuthUserLoginSimRoute = AppAuthUserLoginSimRouteImport.update({
-  id: '/login-sim',
-  path: '/login-sim',
-  getParentRoute: () => AppAuthUserRoute,
-} as any)
 const AppPointsTransactionsRechargeIndexRoute =
   AppPointsTransactionsRechargeIndexRouteImport.update({
     id: '/recharge/',
@@ -126,7 +120,6 @@ export interface FileRoutesByFullPath {
   '/points/tenants': typeof AppPointsTenantsRoute
   '/points/transactions': typeof AppPointsTransactionsRouteWithChildren
   '/outreach/': typeof AppOutreachIndexRoute
-  '/auth/user/login-sim': typeof AppAuthUserLoginSimRoute
   '/auth/user/users': typeof AppAuthUserUsersRoute
   '/points/products/basic': typeof AppPointsProductsBasicRoute
   '/points/products/bundles': typeof AppPointsProductsBundlesRoute
@@ -143,7 +136,6 @@ export interface FileRoutesByTo {
   '/points/apps': typeof AppPointsAppsRoute
   '/points/tenants': typeof AppPointsTenantsRoute
   '/outreach': typeof AppOutreachIndexRoute
-  '/auth/user/login-sim': typeof AppAuthUserLoginSimRoute
   '/auth/user/users': typeof AppAuthUserUsersRoute
   '/points/products/basic': typeof AppPointsProductsBasicRoute
   '/points/products/bundles': typeof AppPointsProductsBundlesRoute
@@ -163,7 +155,6 @@ export interface FileRoutesById {
   '/_app/points/tenants': typeof AppPointsTenantsRoute
   '/_app/points/transactions': typeof AppPointsTransactionsRouteWithChildren
   '/_app/outreach/': typeof AppOutreachIndexRoute
-  '/_app/auth/user/login-sim': typeof AppAuthUserLoginSimRoute
   '/_app/auth/user/users': typeof AppAuthUserUsersRoute
   '/_app/points/products/basic': typeof AppPointsProductsBasicRoute
   '/_app/points/products/bundles': typeof AppPointsProductsBundlesRoute
@@ -183,7 +174,6 @@ export interface FileRouteTypes {
     | '/points/tenants'
     | '/points/transactions'
     | '/outreach/'
-    | '/auth/user/login-sim'
     | '/auth/user/users'
     | '/points/products/basic'
     | '/points/products/bundles'
@@ -200,7 +190,6 @@ export interface FileRouteTypes {
     | '/points/apps'
     | '/points/tenants'
     | '/outreach'
-    | '/auth/user/login-sim'
     | '/auth/user/users'
     | '/points/products/basic'
     | '/points/products/bundles'
@@ -219,7 +208,6 @@ export interface FileRouteTypes {
     | '/_app/points/tenants'
     | '/_app/points/transactions'
     | '/_app/outreach/'
-    | '/_app/auth/user/login-sim'
     | '/_app/auth/user/users'
     | '/_app/points/products/basic'
     | '/_app/points/products/bundles'
@@ -335,13 +323,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthUserUsersRouteImport
       parentRoute: typeof AppAuthUserRoute
     }
-    '/_app/auth/user/login-sim': {
-      id: '/_app/auth/user/login-sim'
-      path: '/login-sim'
-      fullPath: '/auth/user/login-sim'
-      preLoaderRoute: typeof AppAuthUserLoginSimRouteImport
-      parentRoute: typeof AppAuthUserRoute
-    }
     '/_app/points/transactions/recharge/': {
       id: '/_app/points/transactions/recharge/'
       path: '/recharge'
@@ -360,12 +341,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppAuthUserRouteChildren {
-  AppAuthUserLoginSimRoute: typeof AppAuthUserLoginSimRoute
   AppAuthUserUsersRoute: typeof AppAuthUserUsersRoute
 }
 
 const AppAuthUserRouteChildren: AppAuthUserRouteChildren = {
-  AppAuthUserLoginSimRoute: AppAuthUserLoginSimRoute,
   AppAuthUserUsersRoute: AppAuthUserUsersRoute,
 }
 
