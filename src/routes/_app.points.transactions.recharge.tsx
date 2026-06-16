@@ -560,7 +560,7 @@ function RechargePage() {
         toast.error(
           productTab === "bundle"
             ? "请选择一个套餐产品"
-            : "请选择产品分类并输入充值金额",
+            : "请选择充值产品并输入充值金额",
         );
         return;
       }
