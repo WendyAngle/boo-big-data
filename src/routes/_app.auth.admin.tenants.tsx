@@ -145,7 +145,7 @@ interface AuthPolicy {
 const DEFAULT_POLICY: AuthPolicy = {
   enabled: true,
   timing: "首次登录",
-  level: "L2",
+  level: "L4",
   manualReview: false,
   reviewTimeoutHours: 24,
   autoActivateAfterReview: true,
@@ -241,10 +241,9 @@ function TenantsPage() {
   // 初始化：除"待认证"外，其他认证状态的租户都默认带有认证策略（含等级）
   useEffect(() => {
     const init: Record<string, AuthPolicy> = {};
-    const levelPool: LevelKey[] = ["L1", "L2", "L3", "L4"];
-    MOCK.forEach((t, i) => {
+    MOCK.forEach((t) => {
       if (t.authStatus !== "待认证") {
-        init[t.id] = { ...DEFAULT_POLICY, level: levelPool[i % levelPool.length] };
+        init[t.id] = { ...DEFAULT_POLICY, level: "L4" };
       }
     });
     setPolicies(init);
@@ -307,7 +306,6 @@ function TenantsPage() {
       "合作内容",
       "合作状态",
       "认证状态",
-      "认证等级",
       "简介",
     ];
     const csvEscape = (v: unknown) => {
@@ -328,7 +326,6 @@ function TenantsPage() {
           t.coopContent,
           t.coopStatus,
           t.authStatus,
-          policies[t.id]?.level ?? "",
           t.intro,
         ]
           .map(csvEscape)
@@ -540,14 +537,13 @@ function TenantsPage() {
                 <TableHead>合作内容</TableHead>
                 <TableHead>合作状态</TableHead>
                 <TableHead>认证状态</TableHead>
-                <TableHead>认证等级</TableHead>
                 <TableHead className="text-right whitespace-nowrap">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pageData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={13} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={12} className="text-center py-12 text-muted-foreground">
                     暂无匹配的租户
                   </TableCell>
                 </TableRow>
@@ -609,15 +605,6 @@ function TenantsPage() {
                         </TooltipProvider>
                       ) : (
                         <Badge variant="outline" className={authBadge(t.authStatus)}>{t.authStatus}</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {policies[t.id] ? (
-                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-medium tabular-nums">
-                          {policies[t.id].level}
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">未设置</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -941,7 +928,7 @@ function TenantDetailDialog({ tenant, policy, onOpenChange, onEditPolicy }: Tena
                       levelInfo ? (
                         <span className="flex items-center gap-2">
                           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                            {levelInfo.key} · {levelInfo.title}
+                            {levelInfo.title}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
                             {levelInfo.enterpriseTag}
@@ -1587,14 +1574,14 @@ function AuthPolicyDialog({ tenant, existing, onOpenChange, onSubmit }: AuthPoli
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="max-w-[--radix-select-trigger-width]">
-                  {LEVEL_OPTIONS.map((l) => {
+                  {LEVEL_OPTIONS.filter((l) => l.key === "L4").map((l) => {
                     const factors = l.enterpriseFactors;
                     const tag = l.enterpriseTag;
                     return (
                       <SelectItem key={l.key} value={l.key} className="py-2.5">
                         <div className="flex flex-col gap-1.5">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{l.key} · {l.title}</span>
+                            <span className="font-medium">{l.title}</span>
                             <span className="text-xs text-muted-foreground">{tag}</span>
                           </div>
                           <div className="flex flex-wrap gap-1">
