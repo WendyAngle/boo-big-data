@@ -79,7 +79,7 @@ export const Route = createFileRoute("/_app/auth/admin/audit")({
 type Subject = "个人" | "企业";
 type LevelKey = "L1" | "L2" | "L3" | "L4";
 type Status = "待审核" | "审核中" | "已通过" | "已驳回";
-type ProviderId = "platform" | "alipay" | "wechat" | "unionpay" | "cfca";
+type ProviderId = "alipay";
 
 type FieldType = "text" | "id" | "phone" | "upload" | "face" | "bank";
 type FieldDef = { key: string; label: string; type: FieldType };
