@@ -529,7 +529,6 @@ function TenantsPage() {
                 </TableHead>
                 <TableHead className="whitespace-nowrap">租户ID</TableHead>
                 <TableHead>名称</TableHead>
-                <TableHead className="min-w-[220px]">简介</TableHead>
                 <TableHead>类型</TableHead>
                 <TableHead>行业</TableHead>
                 <TableHead>主营产品</TableHead>
@@ -543,7 +542,7 @@ function TenantsPage() {
             <TableBody>
               {pageData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={11} className="text-center py-12 text-muted-foreground">
                     暂无匹配的租户
                   </TableCell>
                 </TableRow>
@@ -559,7 +558,6 @@ function TenantsPage() {
                     </TableCell>
                     <TableCell className="font-mono text-xs">{t.id}</TableCell>
                     <TableCell className="font-medium">{t.name}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground max-w-[260px] truncate">{t.intro}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="font-normal">{t.type}</Badge>
                     </TableCell>
