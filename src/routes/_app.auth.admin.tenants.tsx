@@ -306,7 +306,6 @@ function TenantsPage() {
       "合作内容",
       "合作状态",
       "认证状态",
-      "认证等级",
       "简介",
     ];
     const csvEscape = (v: unknown) => {
@@ -327,7 +326,6 @@ function TenantsPage() {
           t.coopContent,
           t.coopStatus,
           t.authStatus,
-          policies[t.id]?.level ?? "",
           t.intro,
         ]
           .map(csvEscape)
@@ -539,14 +537,13 @@ function TenantsPage() {
                 <TableHead>合作内容</TableHead>
                 <TableHead>合作状态</TableHead>
                 <TableHead>认证状态</TableHead>
-                <TableHead>认证等级</TableHead>
                 <TableHead className="text-right whitespace-nowrap">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pageData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={13} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={12} className="text-center py-12 text-muted-foreground">
                     暂无匹配的租户
                   </TableCell>
                 </TableRow>
@@ -608,15 +605,6 @@ function TenantsPage() {
                         </TooltipProvider>
                       ) : (
                         <Badge variant="outline" className={authBadge(t.authStatus)}>{t.authStatus}</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {policies[t.id] ? (
-                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-medium tabular-nums">
-                          {policies[t.id].level}
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">未设置</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
