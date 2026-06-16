@@ -307,7 +307,7 @@ function RechargeProductsPage() {
       </section>
 
       <Card className="p-5">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div className="relative">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -326,6 +326,17 @@ function RechargeProductsPage() {
               <SelectItem value="all">全部目标类型</SelectItem>
               <SelectItem value="category">按产品分类</SelectItem>
               <SelectItem value="basic">按基础产品</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={modeFilter} onValueChange={(v) => setModeFilter(v as typeof modeFilter)}>
+            <SelectTrigger>
+              <SelectValue placeholder="积分模式" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部积分模式</SelectItem>
+              <SelectItem value="general">仅通用积分</SelectItem>
+              <SelectItem value="professional">仅专业积分</SelectItem>
+              <SelectItem value="mixed">混合发放</SelectItem>
             </SelectContent>
           </Select>
           <Select
