@@ -103,6 +103,11 @@ function CategoriesPage() {
   const [editing, setEditing] = useState<Category | null>(null);
   const [delTarget, setDelTarget] = useState<Category | null>(null);
 
+  const toggleEnabled = (c: Category) => {
+    setData((d) => d.map((x) => (x.id === c.id ? { ...x, enabled: !x.enabled } : x)));
+    toast.success(`已${c.enabled ? "停用" : "启用"} ${c.name}`);
+  };
+
   const filtered = useMemo(() => {
     return data.filter((c) => {
       if (appliedName && !c.name.toLowerCase().includes(appliedName.toLowerCase())) return false;
