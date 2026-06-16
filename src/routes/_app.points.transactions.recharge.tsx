@@ -115,6 +115,48 @@ const APPS: AppRef[] = [
 const PRODUCTS_RECHARGE = ["10 元充值包", "100 元充值包", "500 元充值包", "1000 元充值包"];
 const PRODUCTS_BUNDLE = ["入门版", "标准版", "拓界版", "旗舰版", "test"];
 
+// === 套餐产品库(高保真,字段对齐「套餐产品管理」)===
+interface BundleProduct {
+  id: string;
+  name: string;
+  description: string;
+  amount: number; // 充值金额(元)
+  basicPoints: number;
+  giftPoints: number;
+}
+const BUNDLE_PRODUCTS: BundleProduct[] = [
+  { id: "BD0001", name: "test", description: "11", amount: 10, basicPoints: 10, giftPoints: 10 },
+  { id: "BD0002", name: "基石版", description: "SIS基础包 + AI视频制作(12000积分) + AI智能获客(12000积分)", amount: 69800, basicPoints: 20000, giftPoints: 4000 },
+  { id: "BD0003", name: "拓界版", description: "SIS升级包 + AI视频制作(36000积分) + AI智能获客(36000积分)", amount: 109800, basicPoints: 110000, giftPoints: 16100 },
+  { id: "BD0004", name: "旗舰版", description: "SIS旗舰包 + AI视频制作(80000积分) + AI智能获客(80000积分) + 专属客服", amount: 199800, basicPoints: 220000, giftPoints: 44000 },
+];
+
+// === 充值产品分类 + 阶梯赠送规则 ===
+interface RechargeCategory {
+  id: string;
+  name: string;
+  ratio: number; // 基础积分转化比例(%), 100 = 1元=1积分
+  tiers: { min: number; gift: number }[]; // gift = 赠送比例(%)
+}
+const RECHARGE_CATEGORIES: RechargeCategory[] = [
+  { id: "CT01", name: "AI视频制作", ratio: 100, tiers: [{ min: 100, gift: 5 }, { min: 1000, gift: 10 }, { min: 5000, gift: 30 }, { min: 50000, gift: 35 }] },
+  { id: "CT02", name: "AI智能获客", ratio: 100, tiers: [{ min: 100, gift: 5 }, { min: 1000, gift: 15 }, { min: 10000, gift: 25 }] },
+  { id: "CT03", name: "AI内容创作", ratio: 100, tiers: [{ min: 100, gift: 8 }, { min: 2000, gift: 18 }, { min: 20000, gift: 28 }] },
+  { id: "CT04", name: "AI客服助手", ratio: 100, tiers: [{ min: 100, gift: 10 }, { min: 5000, gift: 20 }] },
+  { id: "CT05", name: "数据洞察", ratio: 100, tiers: [{ min: 500, gift: 5 }, { min: 5000, gift: 15 }] },
+];
+function matchTier(cat: RechargeCategory, amount: number) {
+  let matched = cat.tiers[0];
+  for (const t of cat.tiers) if (amount >= t.min) matched = t;
+  return amount >= cat.tiers[0].min ? matched : null;
+}
+
+function addYears(dateStr: string, years: number) {
+  const d = new Date(dateStr);
+  d.setFullYear(d.getFullYear() + years);
+  return fmtDate(d);
+}
+
 function pad(n: number, len = 2) {
   return String(n).padStart(len, "0");
 }
