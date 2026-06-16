@@ -216,6 +216,18 @@ function TenantsPage() {
   const [keyword, setKeyword] = useState("");
   // 类型筛选已移除（当前仅有"企业用户"一种类型）
   const [industry, setIndustry] = useState("all");
+  const [industries, setIndustries] = useState<string[]>(INDUSTRIES);
+  const addIndustry = (name: string) => {
+    const v = name.trim();
+    if (!v) return false;
+    if (industries.includes(v)) {
+      toast.error("该行业已存在");
+      return false;
+    }
+    setIndustries((arr) => [...arr, v]);
+    toast.success(`已新增行业：${v}`);
+    return true;
+  };
   const [auth, setAuth] = useState("all");
   const [coop, setCoop] = useState("all");
   const [page, setPage] = useState(1);
