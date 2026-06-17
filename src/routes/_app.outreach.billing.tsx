@@ -317,10 +317,18 @@ function BillingPage() {
                     <FieldCell entry={e} />
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground truncate max-w-[320px]">
-                    {e.detail ?? "—"}
+                    {e.kind === "refund"
+                      ? `触达失败退还 · ${e.detail ?? "—"}`
+                      : (e.detail ?? "—")}
                   </TableCell>
-                  <TableCell className="text-right font-semibold tabular-nums text-rose-600">
-                    -{e.cost}
+                  <TableCell
+                    className={cn(
+                      "text-right font-semibold tabular-nums",
+                      e.kind === "refund" ? "text-emerald-600" : "text-rose-600",
+                    )}
+                  >
+                    {e.kind === "refund" ? "+" : "-"}
+                    {e.cost}
                   </TableCell>
                 </TableRow>
               ))}
@@ -338,18 +346,21 @@ function StatCard({
   value,
   unit,
   tone,
+  positive,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
   unit: string;
-  tone: "primary" | "sky" | "violet" | "slate";
+  tone: "primary" | "sky" | "violet" | "slate" | "emerald";
+  positive?: boolean;
 }) {
   const toneMap = {
     primary: "bg-primary/10 text-primary ring-primary/20",
     sky: "bg-sky-50 text-sky-600 ring-sky-200",
     violet: "bg-violet-50 text-violet-600 ring-violet-200",
     slate: "bg-slate-50 text-slate-600 ring-slate-200",
+    emerald: "bg-emerald-50 text-emerald-600 ring-emerald-200",
   } as const;
   return (
     <div className="rounded-xl ring-1 ring-border bg-card p-5 flex items-center gap-4">
@@ -359,7 +370,15 @@ function StatCard({
       <div className="min-w-0">
         <div className="text-xs text-muted-foreground">{label}</div>
         <div className="mt-1 flex items-baseline gap-1.5">
-          <span className="text-2xl font-bold tabular-nums">{value}</span>
+          <span
+            className={cn(
+              "text-2xl font-bold tabular-nums",
+              positive && value > 0 && "text-emerald-600",
+            )}
+          >
+            {positive && value > 0 ? "+" : ""}
+            {value}
+          </span>
           <span className="text-xs text-muted-foreground">{unit}</span>
         </div>
       </div>
@@ -400,6 +419,14 @@ function KindBadge({ entry }: { entry: LedgerEntry }) {
       </span>
     );
   }
+  if (entry.kind === "refund") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-emerald-50 text-emerald-700 border-emerald-200">
+        <Undo2 className="h-3 w-3" />
+        失败退还
+      </span>
+    );
+  }
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-violet-50 text-violet-700 border-violet-200">
       <Send className="h-3 w-3" />
@@ -424,16 +451,18 @@ function FieldCell({ entry }: { entry: LedgerEntry }) {
       </span>
     );
   }
+  // reach or refund — both use channel
+  if (!entry.channel) return <span className="text-xs text-muted-foreground">—</span>;
   const Icon: Record<ReachChannel, typeof Mail> = {
     email: Mail,
     phone: Phone,
     social: Globe,
   };
-  const I = Icon[entry.channel!];
+  const I = Icon[entry.channel];
   return (
     <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
       <I className="h-3.5 w-3.5" />
-      <span className="text-foreground">{REACH_CHANNEL_LABEL[entry.channel!]}</span>
+      <span className="text-foreground">{REACH_CHANNEL_LABEL[entry.channel]}</span>
       {entry.platform && <span>· {entry.platform}</span>}
     </span>
   );
