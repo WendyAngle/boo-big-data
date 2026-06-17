@@ -456,6 +456,8 @@ function FieldCell({ entry }: { entry: LedgerEntry }) {
       phone: Phone,
       social: Globe,
       address: MapPin,
+      title: Briefcase,
+      seniority: BadgeCheck,
     };
     const I = Icon[entry.field!];
     return (
