@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import {
   Box,
   ChevronRight,
+  ChevronDown,
   TrendingDown,
   TrendingUp,
   Info,
@@ -39,6 +40,7 @@ import {
   YAxis,
 } from "recharts";
 import { findByHs } from "@/data/products-catalog";
+import { ENTERPRISES } from "@/data/enterprises";
 
 export const Route = createFileRoute("/_app/outreach/products/$hs")({
   head: () => ({ meta: [{ title: "商品详情 | Boo数据平台" }] }),
@@ -50,7 +52,14 @@ export const Route = createFileRoute("/_app/outreach/products/$hs")({
   component: ProductDetailPage,
 });
 
-const COUNTRIES_IMPORTER = [
+interface TraderRow {
+  name: string;
+  country: string;
+  count: number;
+  matched: boolean;
+}
+
+const COUNTRIES_IMPORTER: TraderRow[] = [
   { name: "STONE UNIVERSE INC", country: "united states", count: 542, matched: false },
   { name: "LIVING SPACES FURNITURE LLC", country: "united states", count: 278, matched: true },
   { name: "NATURAL STONE RESOURCES", country: "united states", count: 223, matched: true },
@@ -60,7 +69,7 @@ const COUNTRIES_IMPORTER = [
   { name: "FBR MARBLE INC", country: "united states", count: 81, matched: false },
 ];
 
-const COUNTRIES_EXPORTER = [
+const COUNTRIES_EXPORTER: TraderRow[] = [
   { name: "STONE SHIPPERS LIMITED", country: "india", count: 356, matched: true },
   { name: "YAMUNA SLATE INDUSTRIES PLOT", country: "india", count: 164, matched: false },
   { name: "YAMUNA SLATE INDUSTRIES PLOT", country: "india", count: 146, matched: false },
@@ -71,6 +80,74 @@ const COUNTRIES_EXPORTER = [
   { name: "STONE UP MADENCILIK IC VE DIS TIC L", country: "turkey", count: 68, matched: false },
   { name: "GALAXY IMPEX", country: "india", count: 68, matched: true },
 ];
+
+// 字符串简易 hash, 用于稳定生成 mock 数据
+function strSeed(s: string): number {
+  let n = 0;
+  for (const c of s) n = (n * 31 + c.charCodeAt(0)) >>> 0;
+  return n;
+}
+
+// 匹配企业 → 平台已有企业 ID, 用于跳转
+function matchedEnterpriseId(name: string): string {
+  const idx = strSeed(name) % ENTERPRISES.length;
+  return ENTERPRISES[idx].id;
+}
+
+interface BillRow {
+  date: string;
+  hs: string;
+  counterparty: string; // 出口企业 / 进口企业 (对手方)
+  desc: string;
+  origin: string;
+  destination: string;
+  carrier: string;
+  ctn: number;
+  weight: string; // 吨
+}
+
+function pad(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function genBills(row: TraderRow, hs: string, mode: "importer" | "exporter"): BillRow[] {
+  const seed = strSeed(row.name + hs);
+  const n = Math.min(row.count, 3 + (seed % 2));
+  const carriers = ["COSCO ITALY", "ONE OWL", "MAERSK SEALAND", "EVERGREEN", "MSC GULSUN"];
+  const origins = [
+    "58201, HONG KONG",
+    "57078, SHANGHAI",
+    "31102, MUMBAI",
+    "46434, ISTANBUL",
+    "32602, KAOHSIUNG",
+  ];
+  const destinations = [
+    "2709, LONG BEACH, CA",
+    "1303, NEW YORK, NY",
+    "1601, SAVANNAH, GA",
+    "2704, OAKLAND, CA",
+    "4601, HOUSTON, TX",
+  ];
+  return Array.from({ length: n }).map((_, k) => {
+    const s = seed + k * 17;
+    const y = 2021 + (s % 4);
+    const m = (s % 12) + 1;
+    const d = (s % 27) + 1;
+    const ctn = 80 + (s % 480);
+    const w = (ctn * (0.005 + ((s % 8) / 1000))).toFixed(2);
+    return {
+      date: `${y}-${pad(m)}-${pad(d)}`,
+      hs,
+      counterparty: mode === "importer" ? row.name : `${row.name.split(" ")[0]} BUYER LTD`,
+      desc: `(S.T.C. ${ctn} CTNS PACKED ${mode === "importer" ? "STONE PAVERS" : "SLATE TILES"}...)`,
+      origin: origins[s % origins.length],
+      destination: destinations[s % destinations.length],
+      carrier: carriers[s % carriers.length],
+      ctn,
+      weight: `${w}吨`,
+    };
+  });
+}
 
 function ProductDetailPage() {
   const { data } = Route.useLoaderData();
@@ -311,14 +388,20 @@ function TraderTable({
   rows,
   hs,
   action,
+  mode,
 }: {
   title: string;
   icon: React.ReactNode;
   subtitle: string;
-  rows: { name: string; country: string; count: number; matched: boolean }[];
+  rows: TraderRow[];
   hs: string;
   action: string;
+  mode: "importer" | "exporter";
 }) {
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+  const toggle = (i: number) =>
+    setExpanded((p) => ({ ...p, [i]: !p[i] }));
+
   return (
     <Card className="p-5">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
@@ -352,47 +435,143 @@ function TraderTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((r, i) => (
-              <TableRow key={`${r.name}-${i}`} className="hover:bg-accent/30">
-                <TableCell>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </TableCell>
-                <TableCell>
-                  <Link
-                    to="/outreach/enterprise"
-                    className="text-primary font-medium hover:underline inline-flex items-center gap-1.5"
+            {rows.map((r, i) => {
+              const isOpen = !!expanded[i];
+              const bills = isOpen ? genBills(r, hs, mode) : [];
+              const enterpriseId = r.matched ? matchedEnterpriseId(r.name) : null;
+              return (
+                <>
+                  <TableRow
+                    key={`${r.name}-${i}`}
+                    className="hover:bg-accent/30 cursor-pointer"
+                    onClick={() => toggle(i)}
                   >
-                    {r.name}
-                    {r.matched && (
-                      <span className="text-primary/70 inline-flex items-center gap-0.5 text-xs">
-                        <ExternalLink className="h-3 w-3" />
-                        详情
-                      </span>
-                    )}
-                  </Link>
-                </TableCell>
-                <TableCell className="text-muted-foreground">{r.country}</TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="font-mono text-xs">
-                    {hs}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right tabular-nums font-medium">
-                  {r.count}
-                </TableCell>
-                <TableCell>
-                  {r.matched ? (
-                    <span className="inline-flex items-center gap-1 text-emerald-600 text-sm">
-                      <CheckCircle2 className="h-4 w-4" /> 已匹配
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-muted-foreground text-sm">
-                      <Circle className="h-4 w-4" /> 未匹配
-                    </span>
+                    <TableCell className="w-8">
+                      <button
+                        type="button"
+                        aria-label={isOpen ? "收起" : "展开"}
+                        className="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-muted text-muted-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggle(i);
+                        }}
+                      >
+                        {isOpen ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </button>
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        onClick={() => toggle(i)}
+                        className="text-primary font-medium hover:underline inline-flex items-center gap-1.5"
+                      >
+                        {r.name}
+                      </button>
+                      {enterpriseId && (
+                        <Link
+                          to="/outreach/enterprise/$id"
+                          params={{ id: enterpriseId }}
+                          className="ml-2 text-primary/70 hover:text-primary inline-flex items-center gap-0.5 text-xs"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          详情
+                        </Link>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{r.country}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="font-mono text-xs">
+                        {hs}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums font-medium">
+                      {r.count}
+                    </TableCell>
+                    <TableCell>
+                      {r.matched ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-600 text-sm">
+                          <CheckCircle2 className="h-4 w-4" /> 已匹配
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-muted-foreground text-sm">
+                          <Circle className="h-4 w-4" /> 未匹配
+                        </span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                  {isOpen && (
+                    <TableRow
+                      key={`${r.name}-${i}-bills`}
+                      className="bg-muted/20 hover:bg-muted/20"
+                    >
+                      <TableCell />
+                      <TableCell colSpan={5} className="p-0">
+                        <div className="px-2 py-3">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-transparent border-b border-border/70">
+                                <TableHead className="text-xs">日期</TableHead>
+                                <TableHead className="text-xs">HS Code</TableHead>
+                                <TableHead className="text-xs">
+                                  {mode === "importer" ? "出口企业" : "进口企业"}
+                                </TableHead>
+                                <TableHead className="text-xs">
+                                  {mode === "importer" ? "进口企业" : "出口企业"}
+                                </TableHead>
+                                <TableHead className="text-xs">产品描述</TableHead>
+                                <TableHead className="text-xs">起运港 → 目的港</TableHead>
+                                <TableHead className="text-xs">承运 / 船名</TableHead>
+                                <TableHead className="text-xs text-right">件数</TableHead>
+                                <TableHead className="text-xs text-right">重量</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {bills.map((b, k) => (
+                                <TableRow key={k} className="hover:bg-background/60">
+                                  <TableCell className="font-mono text-xs tabular-nums">
+                                    {b.date}
+                                  </TableCell>
+                                  <TableCell className="font-mono text-xs">
+                                    {b.hs}
+                                  </TableCell>
+                                  <TableCell className="text-muted-foreground">—</TableCell>
+                                  <TableCell className="text-foreground/90">
+                                    {b.counterparty}
+                                  </TableCell>
+                                  <TableCell className="text-muted-foreground max-w-[260px] truncate">
+                                    {b.desc}
+                                  </TableCell>
+                                  <TableCell className="text-xs whitespace-nowrap">
+                                    <span className="text-muted-foreground">{b.origin}</span>
+                                    <span className="mx-1 text-border">→</span>
+                                    <span className="font-medium">{b.destination}</span>
+                                  </TableCell>
+                                  <TableCell className="text-xs">
+                                    <div className="text-muted-foreground">—</div>
+                                    <div className="font-medium">{b.carrier}</div>
+                                  </TableCell>
+                                  <TableCell className="text-right font-mono tabular-nums">
+                                    {b.ctn} CTN
+                                  </TableCell>
+                                  <TableCell className="text-right tabular-nums">
+                                    {b.weight}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </TableCell>
+                    </TableRow>
                   )}
-                </TableCell>
-              </TableRow>
-            ))}
+                </>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
