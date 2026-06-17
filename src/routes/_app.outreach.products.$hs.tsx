@@ -363,6 +363,45 @@ function KPICard({
   );
 }
 
+function FavoriteButton({ hs }: { hs: string }) {
+  const key = `fav:product:${hs}`;
+  const [fav, setFav] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(key) === "1";
+  });
+  const toggle = () => {
+    setFav((v) => {
+      const next = !v;
+      try {
+        window.localStorage.setItem(key, next ? "1" : "0");
+      } catch {}
+      return next;
+    });
+  };
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggle}
+            aria-label={fav ? "取消收藏" : "收藏"}
+            className={
+              fav
+                ? "border-amber-300 bg-amber-50 text-amber-500 hover:bg-amber-100 hover:text-amber-600"
+                : "text-muted-foreground hover:text-amber-500"
+            }
+          >
+            <Star className={"h-5 w-5 " + (fav ? "fill-amber-400" : "")} />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{fav ? "点击取消收藏" : "点击收藏"}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 function MarketCard({
   title,
   icon,
