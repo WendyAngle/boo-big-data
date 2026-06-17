@@ -19,7 +19,6 @@ import {
   ArrowRight,
   Anchor,
   EyeOff,
-  RotateCcw,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,7 +43,6 @@ import {
   useFavorites,
   removeFavoritesByIds,
   seedDemoFavoritesIfEmpty,
-  resetDemoFavorites,
   type FavoriteKind,
   type FavoriteRecord,
 } from "@/lib/favorites";
