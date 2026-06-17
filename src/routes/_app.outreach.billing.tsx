@@ -17,6 +17,7 @@ import {
   Globe,
   MapPin,
   Undo2,
+  EyeOff,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
