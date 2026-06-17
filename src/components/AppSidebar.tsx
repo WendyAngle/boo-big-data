@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ShieldCheck, ChevronDown, LayoutDashboard, Users, UserCog, Coins, Send, FolderTree, Box, Wallet, Layers, FileText } from "lucide-react";
+import { ShieldCheck, ChevronDown, LayoutDashboard, Users, UserCog, Coins, Send, FolderTree, Box, Wallet, Layers } from "lucide-react";
 
 type Leaf = { label: string; to: string; icon?: typeof Users };
 type Group = { label: string; to?: string; children: Leaf[] };
