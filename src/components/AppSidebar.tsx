@@ -50,6 +50,11 @@ const menu: Root[] = [
     icon: Send,
     children: [
       {
+        label: "线索",
+        to: "/outreach/leads",
+        children: [],
+      },
+      {
         label: "企业",
         to: "/outreach/enterprise",
         children: [],
