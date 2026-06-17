@@ -501,6 +501,35 @@ function FavoriteCard({
   );
 }
 
+function FavoriteSubtitle({ record }: { record: FavoriteRecord }) {
+  if (!record.subtitle) return null;
+  if (record.kind === "contact") {
+    const entId = record.parentRef?.id ?? record.refId.split(":")[0];
+    const idx = record.refId.split(":")[1] ?? "0";
+    const targetId = `${entId}:${idx}`;
+    const parentRef = record.parentRef
+      ? { id: record.parentRef.id, name: record.parentRef.name }
+      : undefined;
+    return (
+      <div className="text-xs text-muted-foreground truncate mt-0.5">
+        <MaskedField
+          targetKind="contact"
+          targetId={targetId}
+          targetName={record.title}
+          parentRef={parentRef}
+          field="title"
+          value={record.subtitle}
+        />
+      </div>
+    );
+  }
+  return (
+    <div className="text-xs text-muted-foreground truncate mt-0.5">
+      {record.subtitle}
+    </div>
+  );
+}
+
 function FavoriteMeta({ record }: { record: FavoriteRecord }) {
   if (record.kind === "enterprise") {
     const m = record.meta || {};
