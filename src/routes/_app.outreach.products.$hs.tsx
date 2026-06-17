@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import {
   Box,
@@ -442,9 +442,8 @@ function TraderTable({
               const bills = isOpen ? genBills(r, hs, mode) : [];
               const enterpriseId = r.matched ? matchedEnterpriseId(r.name) : null;
               return (
-                <>
+                <Fragment key={`${r.name}-${i}`}>
                   <TableRow
-                    key={`${r.name}-${i}`}
                     className="hover:bg-accent/30 cursor-pointer"
                     onClick={() => toggle(i)}
                   >
@@ -508,7 +507,6 @@ function TraderTable({
                   </TableRow>
                   {isOpen && (
                     <TableRow
-                      key={`${r.name}-${i}-bills`}
                       className="bg-muted/20 hover:bg-muted/20"
                     >
                       <TableCell />
@@ -571,7 +569,7 @@ function TraderTable({
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </Fragment>
               );
             })}
           </TableBody>
