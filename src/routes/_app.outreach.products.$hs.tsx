@@ -317,6 +317,7 @@ function ProductDetailPage() {
         rows={COUNTRIES_IMPORTER}
         hs={l4.hs}
         action="发现进口企业"
+        mode="importer"
       />
 
       {/* Exporters */}
@@ -327,6 +328,7 @@ function ProductDetailPage() {
         rows={COUNTRIES_EXPORTER}
         hs={l4.hs}
         action="发现出口企业"
+        mode="exporter"
       />
     </div>
   );
