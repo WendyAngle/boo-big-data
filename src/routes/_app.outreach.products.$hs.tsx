@@ -316,6 +316,7 @@ function ProductDetailPage() {
         subtitle={`共 ${COUNTRIES_IMPORTER.length} 家进口商`}
         rows={COUNTRIES_IMPORTER}
         hs={l4.hs}
+        productName={l4.name}
         action="发现进口企业"
         mode="importer"
       />
@@ -327,6 +328,7 @@ function ProductDetailPage() {
         subtitle={`共 ${COUNTRIES_EXPORTER.length} 家出口商`}
         rows={COUNTRIES_EXPORTER}
         hs={l4.hs}
+        productName={l4.name}
         action="发现出口企业"
         mode="exporter"
       />
@@ -389,6 +391,7 @@ function TraderTable({
   subtitle,
   rows,
   hs,
+  productName,
   action,
   mode,
 }: {
@@ -397,6 +400,7 @@ function TraderTable({
   subtitle: string;
   rows: TraderRow[];
   hs: string;
+  productName: string;
   action: string;
   mode: "importer" | "exporter";
 }) {
@@ -413,9 +417,17 @@ function TraderTable({
           <span className="text-sm text-muted-foreground">{subtitle}</span>
         </div>
         <div className="flex items-center gap-4 text-sm">
-          <button className="text-primary hover:underline inline-flex items-center gap-1">
+          <Link
+            to="/outreach/enterprise"
+            search={{
+              hs,
+              product: productName,
+              role: mode === "importer" ? "进口" : "出口",
+            }}
+            className="text-primary hover:underline inline-flex items-center gap-1"
+          >
             {action} <ChevronRight className="h-4 w-4" />
-          </button>
+          </Link>
           <Link
             to="/outreach/enterprise"
             className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
