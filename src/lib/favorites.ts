@@ -19,7 +19,7 @@ export interface FavoriteRecord extends FavoritePayload {
 }
 
 const STORAGE_KEY = "boo:favorites:v1";
-const SEED_FLAG_KEY = "boo:favorites:v1:seeded";
+const SEED_FLAG_KEY = "boo:favorites:v2:seeded";
 
 function readStore(): Record<string, FavoriteRecord> {
   if (typeof window === "undefined") return {};
