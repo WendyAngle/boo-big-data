@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-export type LedgerKind = "view" | "reach";
+export type LedgerKind = "view" | "reach" | "refund";
 export type ViewField = "email" | "phone" | "social" | "address";
 export type ReachChannel = "email" | "phone" | "social";
 export type ReachStatus = "pending" | "in_progress" | "success" | "failed";
@@ -26,10 +26,12 @@ export interface LedgerEntry {
   detail?: string; // masked or partial; e.g. email/phone/handle
   // demo / override: when set, getReachStatus returns this value directly
   forcedStatus?: ReachStatus;
+  // refund-only: id of the related reach entry being refunded
+  relatedReachId?: string;
 }
 
 const LEDGER_KEY = "boo:ledger:v1";
-const LEDGER_SEED_FLAG = "boo:ledger:v2:seeded";
+const LEDGER_SEED_FLAG = "boo:ledger:v3:seeded";
 const REVEAL_KEY = "boo:reveal:v1";
 
 /* -------------------- ledger store -------------------- */
