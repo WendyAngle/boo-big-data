@@ -167,15 +167,11 @@ function EnterpriseDetailPage() {
           </Field>
           <Field label="一级行政区">{e.province}</Field>
           <Field label="坐标 / 城市">{e.city}</Field>
-          <Field label="社交账号">
-            <div className="flex gap-1.5 mt-0.5">
-              <SocialBadge active={e.socials.linkedin} kind="linkedin" />
-              <SocialBadge active={e.socials.facebook} kind="facebook" />
-              <SocialBadge active={e.socials.twitter} kind="twitter" />
-            </div>
-          </Field>
         </div>
       </Section>
+
+      {/* 社交媒体 */}
+      <SocialMediaSection e={e} />
 
       {/* 关联人物 */}
       <Section
@@ -517,5 +513,179 @@ function SocialBadge({
     >
       <Icon className="h-3.5 w-3.5" />
     </span>
+  );
+}
+
+type SocialKind = "linkedin" | "facebook" | "twitter";
+
+interface SocialAccountInfo {
+  kind: SocialKind;
+  platform: string;
+  active: boolean;
+  handle: string;
+  url: string;
+  followers: number;
+  posts: number;
+  verified: boolean;
+  lastActive: string;
+}
+
+function formatCount(n: number) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
+
+function buildSocialAccounts(e: Enterprise): SocialAccountInfo[] {
+  const seed = Number(e.id.replace(/\D/g, "")) || 0;
+  const slug = e.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const handleBase = slug.slice(0, 16) || "company";
+
+  const make = (
+    kind: SocialKind,
+    platform: string,
+    handlePrefix: string,
+    pathPrefix: string,
+    domain: string,
+    factor: number,
+  ): SocialAccountInfo => {
+    const active = e.socials[kind];
+    const followers = active ? 1200 + ((seed * factor) % 480_000) : 0;
+    const posts = active ? 60 + ((seed * (factor + 1)) % 1800) : 0;
+    const verified = active && (seed * factor) % 5 === 0;
+    const y = 2025 + ((seed + factor) % 2);
+    const m = ((seed * factor) % 12) + 1;
+    const d = ((seed * (factor + 3)) % 27) + 1;
+    return {
+      kind,
+      platform,
+      active,
+      handle: active ? `${handlePrefix}${handleBase}` : "—",
+      url: active ? `${domain}/${pathPrefix}${handleBase}` : "",
+      followers,
+      posts,
+      verified,
+      lastActive: active
+        ? `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`
+        : "",
+    };
+  };
+
+  return [
+    make("linkedin", "LinkedIn", "", "company/", "linkedin.com", 3),
+    make("facebook", "Facebook", "", "", "facebook.com", 7),
+    make("twitter", "Twitter / X", "@", "", "twitter.com", 11),
+  ];
+}
+
+function SocialMediaSection({ e }: { e: Enterprise }) {
+  const accounts = buildSocialAccounts(e);
+  const active = accounts.filter((a) => a.active);
+  const inactive = accounts.filter((a) => !a.active);
+
+  return (
+    <Section
+      icon={<Globe className="h-4 w-4" />}
+      title="社交媒体"
+      subtitle={`已开通 ${active.length} / ${accounts.length}`}
+    >
+      {active.length === 0 ? (
+        <div className="text-sm italic text-muted-foreground py-4">
+          该企业暂未关联任何社交媒体账号
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {active.map((a) => (
+            <SocialAccountCard key={a.kind} account={a} />
+          ))}
+        </div>
+      )}
+
+      {inactive.length > 0 && (
+        <div className="mt-5 pt-4 border-t border-border/70">
+          <div className="text-xs text-muted-foreground mb-2">未开通的平台</div>
+          <div className="flex flex-wrap gap-2">
+            {inactive.map((a) => {
+              const Icon =
+                a.kind === "linkedin" ? Linkedin : a.kind === "facebook" ? Facebook : Twitter;
+              return (
+                <span
+                  key={a.kind}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted text-muted-foreground text-xs"
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {a.platform}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </Section>
+  );
+}
+
+function SocialAccountCard({ account: a }: { account: SocialAccountInfo }) {
+  const Icon =
+    a.kind === "linkedin" ? Linkedin : a.kind === "facebook" ? Facebook : Twitter;
+  const tone =
+    a.kind === "linkedin"
+      ? "bg-[#0a66c2] text-white"
+      : a.kind === "facebook"
+        ? "bg-[#1877f2] text-white"
+        : "bg-foreground text-background";
+
+  return (
+    <a
+      href={`https://${a.url}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group rounded-lg border border-border bg-card hover:ring-1 hover:ring-primary/30 hover:border-primary/40 transition-shadow block"
+    >
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-border/70">
+        <div
+          className={`h-9 w-9 rounded-md flex items-center justify-center ${tone}`}
+        >
+          <Icon className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <span className="font-medium text-sm truncate">{a.platform}</span>
+            {a.verified && (
+              <Badge
+                variant="secondary"
+                className="h-4 px-1.5 text-[10px] bg-sky-100 text-sky-700 border-sky-200"
+              >
+                已认证
+              </Badge>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground font-mono truncate">
+            {a.handle}
+          </div>
+        </div>
+        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+      </div>
+      <div className="px-4 py-3 grid grid-cols-3 gap-2 text-center">
+        <div>
+          <div className="text-sm font-semibold tabular-nums">
+            {formatCount(a.followers)}
+          </div>
+          <div className="text-[11px] text-muted-foreground mt-0.5">粉丝</div>
+        </div>
+        <div className="border-x border-border/60">
+          <div className="text-sm font-semibold tabular-nums">
+            {formatCount(a.posts)}
+          </div>
+          <div className="text-[11px] text-muted-foreground mt-0.5">内容</div>
+        </div>
+        <div>
+          <div className="text-sm font-semibold font-mono tabular-nums">
+            {a.lastActive.slice(5)}
+          </div>
+          <div className="text-[11px] text-muted-foreground mt-0.5">最近活跃</div>
+        </div>
+      </div>
+    </a>
   );
 }
