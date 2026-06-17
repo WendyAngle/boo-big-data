@@ -16,6 +16,7 @@ import {
   XCircle,
   Send,
   RefreshCw,
+  EyeOff,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
