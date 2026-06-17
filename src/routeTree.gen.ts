@@ -14,6 +14,7 @@ import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppOutreachIndexRouteImport } from './routes/_app.outreach.index'
 import { Route as AppPointsTenantsRouteImport } from './routes/_app.points.tenants'
 import { Route as AppPointsAppsRouteImport } from './routes/_app.points.apps'
+import { Route as AppOutreachReachEmptyRouteImport } from './routes/_app.outreach.reach-empty'
 import { Route as AppOutreachReachRouteImport } from './routes/_app.outreach.reach'
 import { Route as AppOutreachLeadsRouteImport } from './routes/_app.outreach.leads'
 import { Route as AppOutreachFootprintsEmptyRouteImport } from './routes/_app.outreach.footprints-empty'
@@ -58,6 +59,11 @@ const AppPointsTenantsRoute = AppPointsTenantsRouteImport.update({
 const AppPointsAppsRoute = AppPointsAppsRouteImport.update({
   id: '/points/apps',
   path: '/points/apps',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOutreachReachEmptyRoute = AppOutreachReachEmptyRouteImport.update({
+  id: '/outreach/reach-empty',
+  path: '/outreach/reach-empty',
   getParentRoute: () => AppRoute,
 } as any)
 const AppOutreachReachRoute = AppOutreachReachRouteImport.update({
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/outreach/footprints-empty': typeof AppOutreachFootprintsEmptyRoute
   '/outreach/leads': typeof AppOutreachLeadsRoute
   '/outreach/reach': typeof AppOutreachReachRoute
+  '/outreach/reach-empty': typeof AppOutreachReachEmptyRoute
   '/points/apps': typeof AppPointsAppsRoute
   '/points/tenants': typeof AppPointsTenantsRoute
   '/outreach/': typeof AppOutreachIndexRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/outreach/footprints-empty': typeof AppOutreachFootprintsEmptyRoute
   '/outreach/leads': typeof AppOutreachLeadsRoute
   '/outreach/reach': typeof AppOutreachReachRoute
+  '/outreach/reach-empty': typeof AppOutreachReachEmptyRoute
   '/points/apps': typeof AppPointsAppsRoute
   '/points/tenants': typeof AppPointsTenantsRoute
   '/outreach': typeof AppOutreachIndexRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/_app/outreach/footprints-empty': typeof AppOutreachFootprintsEmptyRoute
   '/_app/outreach/leads': typeof AppOutreachLeadsRoute
   '/_app/outreach/reach': typeof AppOutreachReachRoute
+  '/_app/outreach/reach-empty': typeof AppOutreachReachEmptyRoute
   '/_app/points/apps': typeof AppPointsAppsRoute
   '/_app/points/tenants': typeof AppPointsTenantsRoute
   '/_app/outreach/': typeof AppOutreachIndexRoute
@@ -270,6 +279,7 @@ export interface FileRouteTypes {
     | '/outreach/footprints-empty'
     | '/outreach/leads'
     | '/outreach/reach'
+    | '/outreach/reach-empty'
     | '/points/apps'
     | '/points/tenants'
     | '/outreach/'
@@ -296,6 +306,7 @@ export interface FileRouteTypes {
     | '/outreach/footprints-empty'
     | '/outreach/leads'
     | '/outreach/reach'
+    | '/outreach/reach-empty'
     | '/points/apps'
     | '/points/tenants'
     | '/outreach'
@@ -323,6 +334,7 @@ export interface FileRouteTypes {
     | '/_app/outreach/footprints-empty'
     | '/_app/outreach/leads'
     | '/_app/outreach/reach'
+    | '/_app/outreach/reach-empty'
     | '/_app/points/apps'
     | '/_app/points/tenants'
     | '/_app/outreach/'
@@ -378,6 +390,13 @@ declare module '@tanstack/react-router' {
       path: '/points/apps'
       fullPath: '/points/apps'
       preLoaderRoute: typeof AppPointsAppsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/outreach/reach-empty': {
+      id: '/_app/outreach/reach-empty'
+      path: '/outreach/reach-empty'
+      fullPath: '/outreach/reach-empty'
+      preLoaderRoute: typeof AppOutreachReachEmptyRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/outreach/reach': {
@@ -586,6 +605,7 @@ interface AppRouteChildren {
   AppOutreachFootprintsEmptyRoute: typeof AppOutreachFootprintsEmptyRoute
   AppOutreachLeadsRoute: typeof AppOutreachLeadsRoute
   AppOutreachReachRoute: typeof AppOutreachReachRoute
+  AppOutreachReachEmptyRoute: typeof AppOutreachReachEmptyRoute
   AppPointsAppsRoute: typeof AppPointsAppsRoute
   AppPointsTenantsRoute: typeof AppPointsTenantsRoute
   AppOutreachIndexRoute: typeof AppOutreachIndexRoute
@@ -609,6 +629,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachFootprintsEmptyRoute: AppOutreachFootprintsEmptyRoute,
   AppOutreachLeadsRoute: AppOutreachLeadsRoute,
   AppOutreachReachRoute: AppOutreachReachRoute,
+  AppOutreachReachEmptyRoute: AppOutreachReachEmptyRoute,
   AppPointsAppsRoute: AppPointsAppsRoute,
   AppPointsTenantsRoute: AppPointsTenantsRoute,
   AppOutreachIndexRoute: AppOutreachIndexRoute,
