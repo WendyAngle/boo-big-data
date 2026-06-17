@@ -607,7 +607,7 @@ function FavoriteMeta({ record }: { record: FavoriteRecord }) {
         )}
         {record.parentRef && (
           <div className="flex items-center gap-1.5">
-            <Briefcase className="h-3 w-3" />
+            <Building2 className="h-3 w-3" />
             <span className="truncate text-primary/90">
               {record.parentRef.name}
             </span>
