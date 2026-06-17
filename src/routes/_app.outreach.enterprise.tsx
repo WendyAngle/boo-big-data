@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Building2,
   ChevronRight,
@@ -10,12 +10,6 @@ import {
   Linkedin,
   Facebook,
   Twitter,
-  Globe,
-  Users,
-  Calendar,
-  Mail,
-  Phone,
-  X as XIcon,
   RotateCcw,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -30,35 +24,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { ListPagination } from "@/components/ListPagination";
 import heroBg from "@/assets/enterprise-hero.jpg";
+import { ENTERPRISES } from "@/data/enterprises";
 
 export const Route = createFileRoute("/_app/outreach/enterprise")({
   head: () => ({ meta: [{ title: "触达客户管理 · 企业 | Boo数据平台" }] }),
   component: OutreachEnterprisePage,
 });
-
-interface Enterprise {
-  id: string;
-  name: string;
-  industry: string; // empty → 未提供行业
-  country: string; // empty → 未提供国家
-  est: string; // 成立年份, "-" 表示未提供
-  employees: string;
-  website: string;
-  email: string;
-  phone: string;
-  desc: string;
-  socials: { linkedin: boolean; facebook: boolean; twitter: boolean };
-  createdAt: string;
-}
 
 const INDUSTRIES = [
   "higher education",
@@ -80,61 +53,7 @@ const COUNTRIES = [
   "singapore",
   "france",
 ];
-const NAMES = [
-  "Aurora Holdings",
-  "Northwind Group",
-  "Skyline Education",
-  "BlueWave Logistics",
-  "Helios Capital",
-  "Greenfield Manufacturing",
-  "Bright Future Media",
-  "Crystal Retail",
-  "Pioneer Robotics",
-  "Summit Healthcare",
-  "Quantum Labs",
-  "Pacific Trading Co.",
-  "Maple Leaf Foods",
-  "Vertex Analytics",
-  "Harbor Shipping",
-  "Echo Marketing",
-  "Stellar University",
-  "Mosaic Studios",
-  "Atlas Engineering",
-  "Lighthouse Ventures",
-];
-
-function pad(n: number, len = 2) {
-  return String(n).padStart(len, "0");
-}
-
-const ALL: Enterprise[] = Array.from({ length: 60 }).map((_, i) => {
-  // 约 35% 条目缺失行业 / 国家，模拟数据真实性
-  const missingIndustry = i % 3 === 1;
-  const missingCountry = i % 3 === 1 || i % 7 === 0;
-  const missingEst = i % 4 === 1;
-  const m = ((i * 11) % 12) + 1;
-  const d = ((i * 7) % 27) + 1;
-  const yy = 2018 + (i % 7);
-  return {
-    id: `E${String(2026000 + i + 1).padStart(7, "0")}`,
-    name: `${NAMES[i % NAMES.length]}${i >= NAMES.length ? ` ${Math.floor(i / NAMES.length) + 1}` : ""}`,
-    industry: missingIndustry ? "" : INDUSTRIES[i % INDUSTRIES.length],
-    country: missingCountry ? "" : COUNTRIES[i % COUNTRIES.length],
-    est: missingEst ? "-" : String(1831 + ((i * 17) % 190)),
-    employees: ["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"][i % 6],
-    website: `www.${NAMES[i % NAMES.length].toLowerCase().replace(/[^a-z]/g, "")}.com`,
-    email: `contact@${NAMES[i % NAMES.length].toLowerCase().replace(/[^a-z]/g, "")}.com`,
-    phone: `+1 (${200 + (i % 700)}) ${100 + (i % 800)}-${1000 + (i % 9000)}`,
-    desc:
-      "该企业是行业内具有代表性的服务型组织，业务覆盖产品研发、客户服务与品牌运营等多个领域，与平台已建立长期合作关系。",
-    socials: {
-      linkedin: i % 2 === 0,
-      facebook: i % 3 !== 2,
-      twitter: i % 2 === 1 || i % 5 === 0,
-    },
-    createdAt: `${yy}-${pad(m)}-${pad(d)}T00:00:00`,
-  };
-});
+const EMPLOYEE_SIZES = ["1-10", "11-50", "51-200", "201-500", "501-1000", "1001-5000", "5000+"];
 
 function OutreachEnterprisePage() {
   const [keyword, setKeyword] = useState("");
@@ -144,11 +63,10 @@ function OutreachEnterprisePage() {
   const [employees, setEmployees] = useState("all");
   const [page, setPage] = useState(1);
   const pageSize = 12;
-  const [viewing, setViewing] = useState<Enterprise | null>(null);
 
   const filtered = useMemo(() => {
     const k = keyword.trim().toLowerCase();
-    return ALL.filter((e) => {
+    return ENTERPRISES.filter((e) => {
       if (k && !e.name.toLowerCase().includes(k)) return false;
       if (industry !== "all" && e.industry !== industry) return false;
       if (country !== "all" && e.country !== country) return false;
@@ -183,7 +101,6 @@ function OutreachEnterprisePage() {
         <span className="text-foreground font-medium">企业</span>
       </div>
 
-      {/* Hero */}
       <section className="relative overflow-hidden rounded-2xl ring-1 ring-border">
         <img
           src={heroBg}
@@ -206,7 +123,6 @@ function OutreachEnterprisePage() {
         </div>
       </section>
 
-      {/* Search bar */}
       <Card className="p-3 flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -299,13 +215,11 @@ function OutreachEnterprisePage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">全部规模</SelectItem>
-                  {["1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"].map(
-                    (e) => (
-                      <SelectItem key={e} value={e}>
-                        {e}
-                      </SelectItem>
-                    ),
-                  )}
+                  {EMPLOYEE_SIZES.map((e) => (
+                    <SelectItem key={e} value={e}>
+                      {e}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -319,12 +233,10 @@ function OutreachEnterprisePage() {
         </Card>
       )}
 
-      {/* Result count */}
       <div className="text-sm text-muted-foreground">
         共找到 <span className="font-semibold text-foreground">{total}</span> 家企业
       </div>
 
-      {/* Grid */}
       {pageData.length === 0 ? (
         <Card className="p-16 text-center text-muted-foreground">
           没有符合条件的企业
@@ -332,11 +244,11 @@ function OutreachEnterprisePage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {pageData.map((e) => (
-            <button
+            <Link
               key={e.id}
-              type="button"
-              onClick={() => setViewing(e)}
-              className="group text-left"
+              to="/outreach/enterprise/$id"
+              params={{ id: e.id }}
+              className="group text-left block"
             >
               <Card className="p-5 h-full ring-1 ring-border hover:ring-primary/40 hover:shadow-md transition-all">
                 <div className="flex items-start justify-between">
@@ -373,7 +285,7 @@ function OutreachEnterprisePage() {
                   </span>
                 </div>
               </Card>
-            </button>
+            </Link>
           ))}
         </div>
       )}
@@ -384,101 +296,6 @@ function OutreachEnterprisePage() {
         total={total}
         onPageChange={setPage}
       />
-
-      {/* Detail dialog */}
-      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
-        <DialogContent className="max-w-2xl">
-          {viewing && (
-            <>
-              <DialogHeader>
-                <div className="flex items-start gap-4">
-                  <div className="h-14 w-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center ring-1 ring-primary/20 shrink-0">
-                    <Building2 className="h-7 w-7" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <DialogTitle className="text-lg truncate">
-                      {viewing.name}
-                    </DialogTitle>
-                    <DialogDescription className="font-mono text-xs mt-1">
-                      {viewing.id}
-                    </DialogDescription>
-                  </div>
-                </div>
-              </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <InfoRow icon={<Briefcase className="h-4 w-4" />} label="行业">
-                  {viewing.industry || (
-                    <span className="italic text-muted-foreground">未提供</span>
-                  )}
-                </InfoRow>
-                <InfoRow icon={<MapPin className="h-4 w-4" />} label="国家 / 地区">
-                  {viewing.country || (
-                    <span className="italic text-muted-foreground">未提供</span>
-                  )}
-                </InfoRow>
-                <InfoRow icon={<Calendar className="h-4 w-4" />} label="成立年份">
-                  {viewing.est}
-                </InfoRow>
-                <InfoRow icon={<Users className="h-4 w-4" />} label="员工规模">
-                  {viewing.employees}
-                </InfoRow>
-                <InfoRow icon={<Globe className="h-4 w-4" />} label="官网">
-                  <span className="text-primary">{viewing.website}</span>
-                </InfoRow>
-                <InfoRow icon={<Mail className="h-4 w-4" />} label="邮箱">
-                  {viewing.email}
-                </InfoRow>
-                <InfoRow icon={<Phone className="h-4 w-4" />} label="电话">
-                  <span className="font-mono">{viewing.phone}</span>
-                </InfoRow>
-                <InfoRow icon={<Calendar className="h-4 w-4" />} label="创建时间">
-                  <span className="font-mono">{viewing.createdAt}</span>
-                </InfoRow>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">企业简介</Label>
-                <p className="mt-1.5 text-sm text-foreground/80 leading-relaxed">
-                  {viewing.desc}
-                </p>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">社交账号</Label>
-                <div className="mt-1.5 flex gap-2">
-                  <SocialBadge active={viewing.socials.linkedin} kind="linkedin" large />
-                  <SocialBadge active={viewing.socials.facebook} kind="facebook" large />
-                  <SocialBadge active={viewing.socials.twitter} kind="twitter" large />
-                </div>
-              </div>
-              <div className="flex justify-end pt-2">
-                <Button variant="outline" onClick={() => setViewing(null)} className="gap-1.5">
-                  <XIcon className="h-4 w-4" />
-                  关闭
-                </Button>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function InfoRow({
-  icon,
-  label,
-  children,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-lg border border-border/70 bg-muted/30 px-3 py-2.5">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        {icon}
-        {label}
-      </div>
-      <div className="mt-1 text-sm font-medium truncate">{children}</div>
     </div>
   );
 }
@@ -486,11 +303,9 @@ function InfoRow({
 function SocialBadge({
   active,
   kind,
-  large,
 }: {
   active: boolean;
   kind: "linkedin" | "facebook" | "twitter";
-  large?: boolean;
 }) {
   const Icon =
     kind === "linkedin" ? Linkedin : kind === "facebook" ? Facebook : Twitter;
@@ -500,16 +315,14 @@ function SocialBadge({
       : kind === "facebook"
         ? "bg-[#1877f2] text-white"
         : "bg-foreground text-background";
-  const size = large ? "h-9 w-9 rounded-lg" : "h-6 w-6 rounded";
-  const iconSize = large ? "h-4 w-4" : "h-3 w-3";
   return (
     <span
-      className={`inline-flex items-center justify-center ${size} ${
+      className={`inline-flex items-center justify-center h-6 w-6 rounded ${
         active ? color : "bg-muted text-muted-foreground/60"
       }`}
       aria-label={kind}
     >
-      <Icon className={iconSize} />
+      <Icon className="h-3 w-3" />
     </span>
   );
 }
