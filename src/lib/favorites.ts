@@ -207,7 +207,7 @@ function buildDemoRecords(): FavoriteRecord[] {
       createdAt: isoDaysAgo(idx + 1, 14, 30 + idx),
       title: contact.name,
       subtitle: contact.title,
-      meta: { email: contact.email },
+      meta: { email: contact.email, phone: contact.phone },
       parentRef: { kind: "enterprise", id: ent.id, name: ent.name },
     });
   });
