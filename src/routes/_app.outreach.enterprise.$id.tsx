@@ -34,7 +34,7 @@ export const Route = createFileRoute("/_app/outreach/enterprise/$id")({
   head: ({ params }) => ({
     meta: [{ title: `企业详情 · ${params.id} | Boo数据平台` }],
   }),
-  loader: ({ params }) => {
+  loader: ({ params }): { enterprise: Enterprise } => {
     const data = findEnterprise(params.id);
     if (!data) throw notFound();
     return { enterprise: data };
