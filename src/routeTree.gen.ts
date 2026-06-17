@@ -16,6 +16,7 @@ import { Route as AppPointsTenantsRouteImport } from './routes/_app.points.tenan
 import { Route as AppPointsAppsRouteImport } from './routes/_app.points.apps'
 import { Route as AppOutreachReachRouteImport } from './routes/_app.outreach.reach'
 import { Route as AppOutreachFootprintsRouteImport } from './routes/_app.outreach.footprints'
+import { Route as AppOutreachFavoritesEmptyRouteImport } from './routes/_app.outreach.favorites-empty'
 import { Route as AppOutreachFavoritesRouteImport } from './routes/_app.outreach.favorites'
 import { Route as AppOutreachEnterpriseRouteImport } from './routes/_app.outreach.enterprise'
 import { Route as AppOutreachBillsRouteImport } from './routes/_app.outreach.bills'
@@ -65,6 +66,12 @@ const AppOutreachFootprintsRoute = AppOutreachFootprintsRouteImport.update({
   path: '/outreach/footprints',
   getParentRoute: () => AppRoute,
 } as any)
+const AppOutreachFavoritesEmptyRoute =
+  AppOutreachFavoritesEmptyRouteImport.update({
+    id: '/outreach/favorites-empty',
+    path: '/outreach/favorites-empty',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppOutreachFavoritesRoute = AppOutreachFavoritesRouteImport.update({
   id: '/outreach/favorites',
   path: '/outreach/favorites',
@@ -148,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/outreach/bills': typeof AppOutreachBillsRoute
   '/outreach/enterprise': typeof AppOutreachEnterpriseRouteWithChildren
   '/outreach/favorites': typeof AppOutreachFavoritesRoute
+  '/outreach/favorites-empty': typeof AppOutreachFavoritesEmptyRoute
   '/outreach/footprints': typeof AppOutreachFootprintsRoute
   '/outreach/reach': typeof AppOutreachReachRoute
   '/points/apps': typeof AppPointsAppsRoute
@@ -169,6 +177,7 @@ export interface FileRoutesByTo {
   '/outreach/billing': typeof AppOutreachBillingRoute
   '/outreach/bills': typeof AppOutreachBillsRoute
   '/outreach/favorites': typeof AppOutreachFavoritesRoute
+  '/outreach/favorites-empty': typeof AppOutreachFavoritesEmptyRoute
   '/outreach/footprints': typeof AppOutreachFootprintsRoute
   '/outreach/reach': typeof AppOutreachReachRoute
   '/points/apps': typeof AppPointsAppsRoute
@@ -193,6 +202,7 @@ export interface FileRoutesById {
   '/_app/outreach/bills': typeof AppOutreachBillsRoute
   '/_app/outreach/enterprise': typeof AppOutreachEnterpriseRouteWithChildren
   '/_app/outreach/favorites': typeof AppOutreachFavoritesRoute
+  '/_app/outreach/favorites-empty': typeof AppOutreachFavoritesEmptyRoute
   '/_app/outreach/footprints': typeof AppOutreachFootprintsRoute
   '/_app/outreach/reach': typeof AppOutreachReachRoute
   '/_app/points/apps': typeof AppPointsAppsRoute
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/outreach/bills'
     | '/outreach/enterprise'
     | '/outreach/favorites'
+    | '/outreach/favorites-empty'
     | '/outreach/footprints'
     | '/outreach/reach'
     | '/points/apps'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/outreach/billing'
     | '/outreach/bills'
     | '/outreach/favorites'
+    | '/outreach/favorites-empty'
     | '/outreach/footprints'
     | '/outreach/reach'
     | '/points/apps'
@@ -261,6 +273,7 @@ export interface FileRouteTypes {
     | '/_app/outreach/bills'
     | '/_app/outreach/enterprise'
     | '/_app/outreach/favorites'
+    | '/_app/outreach/favorites-empty'
     | '/_app/outreach/footprints'
     | '/_app/outreach/reach'
     | '/_app/points/apps'
@@ -330,6 +343,13 @@ declare module '@tanstack/react-router' {
       path: '/outreach/footprints'
       fullPath: '/outreach/footprints'
       preLoaderRoute: typeof AppOutreachFootprintsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/outreach/favorites-empty': {
+      id: '/_app/outreach/favorites-empty'
+      path: '/outreach/favorites-empty'
+      fullPath: '/outreach/favorites-empty'
+      preLoaderRoute: typeof AppOutreachFavoritesEmptyRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/outreach/favorites': {
@@ -467,6 +487,7 @@ interface AppRouteChildren {
   AppOutreachBillsRoute: typeof AppOutreachBillsRoute
   AppOutreachEnterpriseRoute: typeof AppOutreachEnterpriseRouteWithChildren
   AppOutreachFavoritesRoute: typeof AppOutreachFavoritesRoute
+  AppOutreachFavoritesEmptyRoute: typeof AppOutreachFavoritesEmptyRoute
   AppOutreachFootprintsRoute: typeof AppOutreachFootprintsRoute
   AppOutreachReachRoute: typeof AppOutreachReachRoute
   AppPointsAppsRoute: typeof AppPointsAppsRoute
@@ -487,6 +508,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachBillsRoute: AppOutreachBillsRoute,
   AppOutreachEnterpriseRoute: AppOutreachEnterpriseRouteWithChildren,
   AppOutreachFavoritesRoute: AppOutreachFavoritesRoute,
+  AppOutreachFavoritesEmptyRoute: AppOutreachFavoritesEmptyRoute,
   AppOutreachFootprintsRoute: AppOutreachFootprintsRoute,
   AppOutreachReachRoute: AppOutreachReachRoute,
   AppPointsAppsRoute: AppPointsAppsRoute,
