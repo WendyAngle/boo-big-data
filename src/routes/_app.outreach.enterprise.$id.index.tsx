@@ -737,15 +737,26 @@ function SocialAccountCard({
               </Badge>
             )}
           </div>
-          <div className="text-xs text-muted-foreground truncate">
-            <MaskedField
+          <div className="text-xs text-muted-foreground flex items-center gap-1.5 min-w-0">
+            <div className="min-w-0 truncate">
+              <MaskedField
+                targetKind="enterprise"
+                targetId={e.id}
+                targetName={e.name}
+                field="social"
+                subKey={a.platform}
+                value={a.handle}
+                mono
+              />
+            </div>
+            <ReachButton
               targetKind="enterprise"
               targetId={e.id}
               targetName={e.name}
-              field="social"
-              subKey={a.platform}
-              value={a.handle}
-              mono
+              channel="social"
+              platform={a.platform}
+              detail={a.url || a.handle}
+              size="sm"
             />
           </div>
         </div>
@@ -779,17 +790,6 @@ function SocialAccountCard({
           </div>
           <div className="text-[11px] text-muted-foreground mt-0.5">最近活跃</div>
         </div>
-      </div>
-      <div className="px-4 pb-3 flex justify-end">
-        <ReachButton
-          targetKind="enterprise"
-          targetId={e.id}
-          targetName={e.name}
-          channel="social"
-          platform={a.platform}
-          detail={a.url || a.handle}
-          size="sm"
-        />
       </div>
     </div>
   );
