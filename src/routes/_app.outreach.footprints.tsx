@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { ENTERPRISES } from "@/data/enterprises";
-import { findByHs } from "@/data/products-catalog";
+import { CATALOG, findByHs } from "@/data/products-catalog";
 
 export const Route = createFileRoute("/_app/outreach/footprints")({
   head: () => ({ meta: [{ title: "触达客户管理 · 足迹 | Boo数据平台" }] }),
@@ -61,18 +61,20 @@ function h(s: string) {
   return Math.abs(x);
 }
 
-const HS_POOL = [
-  "680100",
-  "680210",
-  "680221",
-  "680223",
-  "390799",
-  "843820",
-  "853110",
-  "902230",
-  "847290",
-  "841490",
-];
+// Build HS pool from actual catalog so detail routes always resolve.
+const HS_POOL: string[] = (() => {
+  const codes: string[] = [];
+  for (const l1 of CATALOG) {
+    for (const l2 of l1.l2) {
+      for (const l3 of l2.l3) {
+        for (const l4 of l3.l4) {
+          codes.push(l4.hs);
+        }
+      }
+    }
+  }
+  return codes;
+})();
 
 const BILL_DESCS = [
   "POLYESTER CURTAIN FABRIC 100% POLY",
