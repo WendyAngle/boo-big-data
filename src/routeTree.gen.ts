@@ -32,6 +32,7 @@ import { Route as AppPointsProductsBasicRouteImport } from './routes/_app.points
 import { Route as AppOutreachProductsHsRouteImport } from './routes/_app.outreach.products.$hs'
 import { Route as AppOutreachEnterpriseIdRouteImport } from './routes/_app.outreach.enterprise.$id'
 import { Route as AppAuthUserUsersRouteImport } from './routes/_app.auth.user.users'
+import { Route as AppOutreachEnterpriseIdIndexRouteImport } from './routes/_app.outreach.enterprise.$id.index'
 import { Route as AppOutreachEnterpriseIdContactIdxRouteImport } from './routes/_app.outreach.enterprise.$id.contact.$idx'
 
 const AppRoute = AppRouteImport.update({
@@ -155,6 +156,12 @@ const AppAuthUserUsersRoute = AppAuthUserUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AppAuthUserRoute,
 } as any)
+const AppOutreachEnterpriseIdIndexRoute =
+  AppOutreachEnterpriseIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AppOutreachEnterpriseIdRoute,
+  } as any)
 const AppOutreachEnterpriseIdContactIdxRoute =
   AppOutreachEnterpriseIdContactIdxRouteImport.update({
     id: '/contact/$idx',
@@ -185,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/points/products/recharge': typeof AppPointsProductsRechargeRoute
   '/outreach/enterprise/': typeof AppOutreachEnterpriseIndexRoute
   '/outreach/products/': typeof AppOutreachProductsIndexRoute
+  '/outreach/enterprise/$id/': typeof AppOutreachEnterpriseIdIndexRoute
   '/outreach/enterprise/$id/contact/$idx': typeof AppOutreachEnterpriseIdContactIdxRoute
 }
 export interface FileRoutesByTo {
@@ -201,7 +209,6 @@ export interface FileRoutesByTo {
   '/points/tenants': typeof AppPointsTenantsRoute
   '/outreach': typeof AppOutreachIndexRoute
   '/auth/user/users': typeof AppAuthUserUsersRoute
-  '/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdRouteWithChildren
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
   '/points/products/basic': typeof AppPointsProductsBasicRoute
   '/points/products/bundles': typeof AppPointsProductsBundlesRoute
@@ -209,6 +216,7 @@ export interface FileRoutesByTo {
   '/points/products/recharge': typeof AppPointsProductsRechargeRoute
   '/outreach/enterprise': typeof AppOutreachEnterpriseIndexRoute
   '/outreach/products': typeof AppOutreachProductsIndexRoute
+  '/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdIndexRoute
   '/outreach/enterprise/$id/contact/$idx': typeof AppOutreachEnterpriseIdContactIdxRoute
 }
 export interface FileRoutesById {
@@ -236,6 +244,7 @@ export interface FileRoutesById {
   '/_app/points/products/recharge': typeof AppPointsProductsRechargeRoute
   '/_app/outreach/enterprise/': typeof AppOutreachEnterpriseIndexRoute
   '/_app/outreach/products/': typeof AppOutreachProductsIndexRoute
+  '/_app/outreach/enterprise/$id/': typeof AppOutreachEnterpriseIdIndexRoute
   '/_app/outreach/enterprise/$id/contact/$idx': typeof AppOutreachEnterpriseIdContactIdxRoute
 }
 export interface FileRouteTypes {
@@ -263,6 +272,7 @@ export interface FileRouteTypes {
     | '/points/products/recharge'
     | '/outreach/enterprise/'
     | '/outreach/products/'
+    | '/outreach/enterprise/$id/'
     | '/outreach/enterprise/$id/contact/$idx'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -279,7 +289,6 @@ export interface FileRouteTypes {
     | '/points/tenants'
     | '/outreach'
     | '/auth/user/users'
-    | '/outreach/enterprise/$id'
     | '/outreach/products/$hs'
     | '/points/products/basic'
     | '/points/products/bundles'
@@ -287,6 +296,7 @@ export interface FileRouteTypes {
     | '/points/products/recharge'
     | '/outreach/enterprise'
     | '/outreach/products'
+    | '/outreach/enterprise/$id'
     | '/outreach/enterprise/$id/contact/$idx'
   id:
     | '__root__'
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/_app/points/products/recharge'
     | '/_app/outreach/enterprise/'
     | '/_app/outreach/products/'
+    | '/_app/outreach/enterprise/$id/'
     | '/_app/outreach/enterprise/$id/contact/$idx'
   fileRoutesById: FileRoutesById
 }
@@ -483,6 +494,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuthUserUsersRouteImport
       parentRoute: typeof AppAuthUserRoute
     }
+    '/_app/outreach/enterprise/$id/': {
+      id: '/_app/outreach/enterprise/$id/'
+      path: '/'
+      fullPath: '/outreach/enterprise/$id/'
+      preLoaderRoute: typeof AppOutreachEnterpriseIdIndexRouteImport
+      parentRoute: typeof AppOutreachEnterpriseIdRoute
+    }
     '/_app/outreach/enterprise/$id/contact/$idx': {
       id: '/_app/outreach/enterprise/$id/contact/$idx'
       path: '/contact/$idx'
@@ -506,11 +524,13 @@ const AppAuthUserRouteWithChildren = AppAuthUserRoute._addFileChildren(
 )
 
 interface AppOutreachEnterpriseIdRouteChildren {
+  AppOutreachEnterpriseIdIndexRoute: typeof AppOutreachEnterpriseIdIndexRoute
   AppOutreachEnterpriseIdContactIdxRoute: typeof AppOutreachEnterpriseIdContactIdxRoute
 }
 
 const AppOutreachEnterpriseIdRouteChildren: AppOutreachEnterpriseIdRouteChildren =
   {
+    AppOutreachEnterpriseIdIndexRoute: AppOutreachEnterpriseIdIndexRoute,
     AppOutreachEnterpriseIdContactIdxRoute:
       AppOutreachEnterpriseIdContactIdxRoute,
   }
