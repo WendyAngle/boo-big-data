@@ -16,6 +16,7 @@ import {
   Phone,
   Globe,
   MapPin,
+  Undo2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ import { cn } from "@/lib/utils";
 import {
   useLedger,
   seedDemoLedgerIfEmpty,
+  syncFailedRefunds,
   REACH_CHANNEL_LABEL,
   VIEW_FIELD_LABEL,
   type LedgerKind,
@@ -59,6 +61,9 @@ function ym(iso: string) {
 function BillingPage() {
   useEffect(() => {
     seedDemoLedgerIfEmpty();
+    syncFailedRefunds();
+    const t = setInterval(() => syncFailedRefunds(), 10000);
+    return () => clearInterval(t);
   }, []);
   const ledger = useLedger();
 
@@ -91,15 +96,22 @@ function BillingPage() {
     const all = ledger;
     const viewSum = all.filter((e) => e.kind === "view").reduce((s, e) => s + e.cost, 0);
     const reachSum = all.filter((e) => e.kind === "reach").reduce((s, e) => s + e.cost, 0);
+    const refundSum = all.filter((e) => e.kind === "refund").reduce((s, e) => s + e.cost, 0);
     return {
-      total: viewSum + reachSum,
+      total: viewSum + reachSum - refundSum,
       view: viewSum,
       reach: reachSum,
+      refund: refundSum,
       count: all.length,
     };
   }, [ledger]);
 
-  const filteredSum = filtered.reduce((s, e) => s + e.cost, 0);
+  const filteredConsume = filtered
+    .filter((e) => e.kind !== "refund")
+    .reduce((s, e) => s + e.cost, 0);
+  const filteredRefund = filtered
+    .filter((e) => e.kind === "refund")
+    .reduce((s, e) => s + e.cost, 0);
 
   return (
     <div className="p-8 space-y-6">
@@ -124,19 +136,24 @@ function BillingPage() {
             </p>
           </div>
           <div className="text-right text-white/90">
-            <div className="text-xs opacity-80">累计消耗</div>
+            <div className="text-xs opacity-80">净消耗（消耗 - 退还）</div>
             <div className="text-2xl font-bold tabular-nums">
               -{stats.total}
               <span className="text-sm font-normal ml-1">积分</span>
             </div>
+            {stats.refund > 0 && (
+              <div className="text-[11px] text-white/75 mt-0.5 tabular-nums">
+                含失败退还 +{stats.refund}
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <StatCard
           icon={<Wallet className="h-5 w-5" />}
-          label="累计总消耗"
+          label="净消耗"
           value={stats.total}
           unit="积分"
           tone="primary"
@@ -154,6 +171,14 @@ function BillingPage() {
           value={stats.reach}
           unit="积分"
           tone="violet"
+        />
+        <StatCard
+          icon={<Undo2 className="h-5 w-5" />}
+          label="失败退还"
+          value={stats.refund}
+          unit="积分"
+          tone="emerald"
+          positive
         />
         <StatCard
           icon={<TrendingDown className="h-5 w-5" />}
@@ -181,6 +206,13 @@ function BillingPage() {
             触达消耗{" "}
             <span className="ml-1 text-muted-foreground">
               {ledger.filter((e) => e.kind === "reach").length}
+            </span>
+          </Tab>
+          <Tab active={tab === "refund"} onClick={() => setTab("refund")}>
+            <Undo2 className="h-3.5 w-3.5 mr-1 inline" />
+            失败退还{" "}
+            <span className="ml-1 text-muted-foreground">
+              {ledger.filter((e) => e.kind === "refund").length}
             </span>
           </Tab>
         </div>
@@ -224,9 +256,26 @@ function BillingPage() {
               清除
             </Button>
           )}
-          <div className="text-sm text-muted-foreground ml-auto">
-            共 <span className="text-foreground font-semibold">{filtered.length}</span> 条 · 合计{" "}
-            <span className="font-semibold text-rose-600 tabular-nums">-{filteredSum}</span> 积分
+          <div className="text-sm text-muted-foreground ml-auto flex items-center gap-3">
+            <span>
+              共 <span className="text-foreground font-semibold">{filtered.length}</span> 条
+            </span>
+            {filteredConsume > 0 && (
+              <span>
+                消耗{" "}
+                <span className="font-semibold text-rose-600 tabular-nums">
+                  -{filteredConsume}
+                </span>
+              </span>
+            )}
+            {filteredRefund > 0 && (
+              <span>
+                退还{" "}
+                <span className="font-semibold text-emerald-600 tabular-nums">
+                  +{filteredRefund}
+                </span>
+              </span>
+            )}
           </div>
         </div>
 
@@ -268,10 +317,18 @@ function BillingPage() {
                     <FieldCell entry={e} />
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground truncate max-w-[320px]">
-                    {e.detail ?? "—"}
+                    {e.kind === "refund"
+                      ? `触达失败退还 · ${e.detail ?? "—"}`
+                      : (e.detail ?? "—")}
                   </TableCell>
-                  <TableCell className="text-right font-semibold tabular-nums text-rose-600">
-                    -{e.cost}
+                  <TableCell
+                    className={cn(
+                      "text-right font-semibold tabular-nums",
+                      e.kind === "refund" ? "text-emerald-600" : "text-rose-600",
+                    )}
+                  >
+                    {e.kind === "refund" ? "+" : "-"}
+                    {e.cost}
                   </TableCell>
                 </TableRow>
               ))}
@@ -289,18 +346,21 @@ function StatCard({
   value,
   unit,
   tone,
+  positive,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
   unit: string;
-  tone: "primary" | "sky" | "violet" | "slate";
+  tone: "primary" | "sky" | "violet" | "slate" | "emerald";
+  positive?: boolean;
 }) {
   const toneMap = {
     primary: "bg-primary/10 text-primary ring-primary/20",
     sky: "bg-sky-50 text-sky-600 ring-sky-200",
     violet: "bg-violet-50 text-violet-600 ring-violet-200",
     slate: "bg-slate-50 text-slate-600 ring-slate-200",
+    emerald: "bg-emerald-50 text-emerald-600 ring-emerald-200",
   } as const;
   return (
     <div className="rounded-xl ring-1 ring-border bg-card p-5 flex items-center gap-4">
@@ -310,7 +370,15 @@ function StatCard({
       <div className="min-w-0">
         <div className="text-xs text-muted-foreground">{label}</div>
         <div className="mt-1 flex items-baseline gap-1.5">
-          <span className="text-2xl font-bold tabular-nums">{value}</span>
+          <span
+            className={cn(
+              "text-2xl font-bold tabular-nums",
+              positive && value > 0 && "text-emerald-600",
+            )}
+          >
+            {positive && value > 0 ? "+" : ""}
+            {value}
+          </span>
           <span className="text-xs text-muted-foreground">{unit}</span>
         </div>
       </div>
@@ -351,6 +419,14 @@ function KindBadge({ entry }: { entry: LedgerEntry }) {
       </span>
     );
   }
+  if (entry.kind === "refund") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-emerald-50 text-emerald-700 border-emerald-200">
+        <Undo2 className="h-3 w-3" />
+        失败退还
+      </span>
+    );
+  }
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-violet-50 text-violet-700 border-violet-200">
       <Send className="h-3 w-3" />
@@ -375,16 +451,18 @@ function FieldCell({ entry }: { entry: LedgerEntry }) {
       </span>
     );
   }
+  // reach or refund — both use channel
+  if (!entry.channel) return <span className="text-xs text-muted-foreground">—</span>;
   const Icon: Record<ReachChannel, typeof Mail> = {
     email: Mail,
     phone: Phone,
     social: Globe,
   };
-  const I = Icon[entry.channel!];
+  const I = Icon[entry.channel];
   return (
     <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
       <I className="h-3.5 w-3.5" />
-      <span className="text-foreground">{REACH_CHANNEL_LABEL[entry.channel!]}</span>
+      <span className="text-foreground">{REACH_CHANNEL_LABEL[entry.channel]}</span>
       {entry.platform && <span>· {entry.platform}</span>}
     </span>
   );

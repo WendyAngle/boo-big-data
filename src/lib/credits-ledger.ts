@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-export type LedgerKind = "view" | "reach";
+export type LedgerKind = "view" | "reach" | "refund";
 export type ViewField = "email" | "phone" | "social" | "address";
 export type ReachChannel = "email" | "phone" | "social";
 export type ReachStatus = "pending" | "in_progress" | "success" | "failed";
@@ -26,10 +26,12 @@ export interface LedgerEntry {
   detail?: string; // masked or partial; e.g. email/phone/handle
   // demo / override: when set, getReachStatus returns this value directly
   forcedStatus?: ReachStatus;
+  // refund-only: id of the related reach entry being refunded
+  relatedReachId?: string;
 }
 
 const LEDGER_KEY = "boo:ledger:v1";
-const LEDGER_SEED_FLAG = "boo:ledger:v2:seeded";
+const LEDGER_SEED_FLAG = "boo:ledger:v3:seeded";
 const REVEAL_KEY = "boo:reveal:v1";
 
 /* -------------------- ledger store -------------------- */
@@ -182,6 +184,57 @@ export const VIEW_FIELD_LABEL: Record<ViewField, string> = {
   social: "社媒账号",
   address: "详细地址",
 };
+
+/* -------------------- refunds for failed reaches -------------------- */
+
+/**
+ * Scan all reach entries: if a reach is currently `failed` and no refund
+ * record exists yet for it, append a refund entry that returns COST_REACH.
+ * Idempotent — safe to call on a timer.
+ */
+export function syncFailedRefunds(now = Date.now()): number {
+  if (typeof window === "undefined") return 0;
+  const refundedIds = new Set(
+    ledger
+      .filter((e) => e.kind === "refund" && e.relatedReachId)
+      .map((e) => e.relatedReachId as string),
+  );
+  const newRefunds: LedgerEntry[] = [];
+  for (const r of ledger) {
+    if (r.kind !== "reach") continue;
+    if (refundedIds.has(r.id)) continue;
+    if (getReachStatus(r, now) !== "failed") continue;
+    newRefunds.push({
+      id: makeId("rf"),
+      kind: "refund",
+      cost: COST_REACH,
+      // refund is recorded slightly after the failed reach time
+      createdAt: new Date(
+        new Date(r.createdAt).getTime() + 1000,
+      ).toISOString(),
+      targetKind: r.targetKind,
+      targetId: r.targetId,
+      targetName: r.targetName,
+      parentRef: r.parentRef,
+      channel: r.channel,
+      platform: r.platform,
+      detail: r.detail,
+      relatedReachId: r.id,
+    });
+  }
+  if (newRefunds.length === 0) return 0;
+  ledger = [...newRefunds, ...ledger];
+  writeLedger(ledger);
+  emitLedger();
+  return newRefunds.length;
+}
+
+/** True if a refund record already exists for the given reach entry id. */
+export function isReachRefunded(reachId: string): boolean {
+  return ledger.some(
+    (e) => e.kind === "refund" && e.relatedReachId === reachId,
+  );
+}
 
 /* -------------------- reveal cache (session) -------------------- */
 

@@ -41,6 +41,9 @@ import {
   getReachStatus,
   seedDemoLedgerIfEmpty,
   resetDemoLedger,
+  syncFailedRefunds,
+  isReachRefunded,
+  COST_REACH,
   REACH_STATUS_LABEL,
   REACH_STATUS_COLOR,
   REACH_CHANNEL_LABEL,
@@ -70,12 +73,16 @@ function relative(iso: string, now: number) {
 function ReachPage() {
   useEffect(() => {
     seedDemoLedgerIfEmpty();
+    syncFailedRefunds();
   }, []);
 
   const ledger = useLedger();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 5000);
+    const t = setInterval(() => {
+      setNow(Date.now());
+      syncFailedRefunds();
+    }, 5000);
     return () => clearInterval(t);
   }, []);
 
@@ -115,7 +122,11 @@ function ReachPage() {
     });
   }, [reachRows, statusTab, channel, kw]);
 
-  const totalCost = reachRows.reduce((s, r) => s + r.cost, 0);
+  const grossCost = reachRows.reduce((s, r) => s + r.cost, 0);
+  const refundTotal = reachRows
+    .filter((r) => r.status === "failed")
+    .reduce((s, r) => s + (isReachRefunded(r.id) ? COST_REACH : 0), 0);
+  const netCost = grossCost - refundTotal;
 
   return (
     <div className="p-8 space-y-6">
@@ -155,11 +166,16 @@ function ReachPage() {
             </p>
           </div>
           <div className="text-right text-white/90">
-            <div className="text-xs opacity-80">累计消耗</div>
+            <div className="text-xs opacity-80">净消耗（消耗 - 退还）</div>
             <div className="text-2xl font-bold tabular-nums">
-              -{totalCost}
+              -{netCost}
               <span className="text-sm font-normal ml-1">积分</span>
             </div>
+            {refundTotal > 0 && (
+              <div className="text-[11px] text-white/75 mt-0.5 tabular-nums">
+                含失败退还 +{refundTotal}
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -295,8 +311,13 @@ function ReachPage() {
                     <div>{fmtTime(r.createdAt)}</div>
                     <div className="text-[11px] opacity-70">{relative(r.createdAt, now)}</div>
                   </TableCell>
-                  <TableCell className="text-right font-semibold tabular-nums text-rose-600">
-                    -{r.cost}
+                  <TableCell className="text-right tabular-nums">
+                    <div className="font-semibold text-rose-600">-{r.cost}</div>
+                    {r.status === "failed" && isReachRefunded(r.id) && (
+                      <div className="text-[11px] font-medium text-emerald-600 mt-0.5">
+                        已退还 +{COST_REACH}
+                      </div>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
