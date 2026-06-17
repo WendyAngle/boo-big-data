@@ -21,6 +21,7 @@ import { Route as AppOutreachEnterpriseRouteImport } from './routes/_app.outreac
 import { Route as AppOutreachBillsRouteImport } from './routes/_app.outreach.bills'
 import { Route as AppAuthUserRouteImport } from './routes/_app.auth.user'
 import { Route as AppOutreachProductsIndexRouteImport } from './routes/_app.outreach.products.index'
+import { Route as AppOutreachEnterpriseIndexRouteImport } from './routes/_app.outreach.enterprise.index'
 import { Route as AppPointsProductsRechargeRouteImport } from './routes/_app.points.products.recharge'
 import { Route as AppPointsProductsCategoriesRouteImport } from './routes/_app.points.products.categories'
 import { Route as AppPointsProductsBundlesRouteImport } from './routes/_app.points.products.bundles'
@@ -89,6 +90,12 @@ const AppOutreachProductsIndexRoute =
     path: '/outreach/products/',
     getParentRoute: () => AppRoute,
   } as any)
+const AppOutreachEnterpriseIndexRoute =
+  AppOutreachEnterpriseIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AppOutreachEnterpriseRoute,
+  } as any)
 const AppPointsProductsRechargeRoute =
   AppPointsProductsRechargeRouteImport.update({
     id: '/points/products/recharge',
@@ -146,13 +153,13 @@ export interface FileRoutesByFullPath {
   '/points/products/bundles': typeof AppPointsProductsBundlesRoute
   '/points/products/categories': typeof AppPointsProductsCategoriesRoute
   '/points/products/recharge': typeof AppPointsProductsRechargeRoute
+  '/outreach/enterprise/': typeof AppOutreachEnterpriseIndexRoute
   '/outreach/products/': typeof AppOutreachProductsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
   '/auth/user': typeof AppAuthUserRouteWithChildren
   '/outreach/bills': typeof AppOutreachBillsRoute
-  '/outreach/enterprise': typeof AppOutreachEnterpriseRouteWithChildren
   '/outreach/favorites': typeof AppOutreachFavoritesRoute
   '/outreach/footprints': typeof AppOutreachFootprintsRoute
   '/outreach/reach': typeof AppOutreachReachRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/points/products/bundles': typeof AppPointsProductsBundlesRoute
   '/points/products/categories': typeof AppPointsProductsCategoriesRoute
   '/points/products/recharge': typeof AppPointsProductsRechargeRoute
+  '/outreach/enterprise': typeof AppOutreachEnterpriseIndexRoute
   '/outreach/products': typeof AppOutreachProductsIndexRoute
 }
 export interface FileRoutesById {
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/_app/points/products/bundles': typeof AppPointsProductsBundlesRoute
   '/_app/points/products/categories': typeof AppPointsProductsCategoriesRoute
   '/_app/points/products/recharge': typeof AppPointsProductsRechargeRoute
+  '/_app/outreach/enterprise/': typeof AppOutreachEnterpriseIndexRoute
   '/_app/outreach/products/': typeof AppOutreachProductsIndexRoute
 }
 export interface FileRouteTypes {
@@ -210,13 +219,13 @@ export interface FileRouteTypes {
     | '/points/products/bundles'
     | '/points/products/categories'
     | '/points/products/recharge'
+    | '/outreach/enterprise/'
     | '/outreach/products/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth/user'
     | '/outreach/bills'
-    | '/outreach/enterprise'
     | '/outreach/favorites'
     | '/outreach/footprints'
     | '/outreach/reach'
@@ -230,6 +239,7 @@ export interface FileRouteTypes {
     | '/points/products/bundles'
     | '/points/products/categories'
     | '/points/products/recharge'
+    | '/outreach/enterprise'
     | '/outreach/products'
   id:
     | '__root__'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/_app/points/products/bundles'
     | '/_app/points/products/categories'
     | '/_app/points/products/recharge'
+    | '/_app/outreach/enterprise/'
     | '/_app/outreach/products/'
   fileRoutesById: FileRoutesById
 }
@@ -344,6 +355,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachProductsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/outreach/enterprise/': {
+      id: '/_app/outreach/enterprise/'
+      path: '/'
+      fullPath: '/outreach/enterprise/'
+      preLoaderRoute: typeof AppOutreachEnterpriseIndexRouteImport
+      parentRoute: typeof AppOutreachEnterpriseRoute
+    }
     '/_app/points/products/recharge': {
       id: '/_app/points/products/recharge'
       path: '/points/products/recharge'
@@ -410,10 +428,12 @@ const AppAuthUserRouteWithChildren = AppAuthUserRoute._addFileChildren(
 
 interface AppOutreachEnterpriseRouteChildren {
   AppOutreachEnterpriseIdRoute: typeof AppOutreachEnterpriseIdRoute
+  AppOutreachEnterpriseIndexRoute: typeof AppOutreachEnterpriseIndexRoute
 }
 
 const AppOutreachEnterpriseRouteChildren: AppOutreachEnterpriseRouteChildren = {
   AppOutreachEnterpriseIdRoute: AppOutreachEnterpriseIdRoute,
+  AppOutreachEnterpriseIndexRoute: AppOutreachEnterpriseIndexRoute,
 }
 
 const AppOutreachEnterpriseRouteWithChildren =
