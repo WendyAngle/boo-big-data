@@ -64,6 +64,21 @@ const menu: Root[] = [
         to: "/outreach/bills",
         children: [],
       },
+      {
+        label: "足迹",
+        to: "/outreach/footprints",
+        children: [],
+      },
+      {
+        label: "收藏",
+        to: "/outreach/favorites",
+        children: [],
+      },
+      {
+        label: "触达",
+        to: "/outreach/reach",
+        children: [],
+      },
     ],
   },
 ];
