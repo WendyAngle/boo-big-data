@@ -405,3 +405,36 @@ function SocialBadge({
     </span>
   );
 }
+
+function ScenarioChip({
+  children,
+  icon,
+  tone,
+  onRemove,
+}: {
+  children: React.ReactNode;
+  icon: React.ReactNode;
+  tone: "primary" | "accent";
+  onRemove: () => void;
+}) {
+  const styles =
+    tone === "primary"
+      ? "bg-primary/10 text-primary"
+      : "bg-amber-100 text-amber-700";
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full text-xs font-medium ${styles}`}
+    >
+      {icon}
+      {children}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="inline-flex items-center justify-center h-4 w-4 rounded-full hover:bg-black/10"
+        aria-label="移除"
+      >
+        <XIcon className="h-3 w-3" />
+      </button>
+    </span>
+  );
+}
