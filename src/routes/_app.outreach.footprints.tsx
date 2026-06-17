@@ -12,6 +12,7 @@ import {
   MapPin,
   ArrowRight,
   ExternalLink,
+  EyeOff,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -258,6 +259,19 @@ function FootprintsPage() {
               <div className="text-white/70 text-xs">活跃天数</div>
             </div>
           </div>
+        </div>
+        <div className="relative mt-4 flex flex-wrap items-center gap-2">
+          <Button
+            asChild
+            size="sm"
+            variant="secondary"
+            className="h-8 bg-white/15 text-white border-white/20 hover:bg-white/25"
+          >
+            <Link to="/outreach/footprints-empty">
+              <EyeOff className="h-3.5 w-3.5 mr-1.5" />
+              查看空状态演示
+            </Link>
+          </Button>
         </div>
       </section>
 
