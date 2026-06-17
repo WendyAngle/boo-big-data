@@ -30,6 +30,8 @@ import { findEnterprise } from "@/data/enterprises";
 import type { Enterprise } from "@/data/enterprises";
 import heroBg from "@/assets/enterprise-hero.jpg";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
+import { MaskedField } from "@/components/MaskedField";
+import { ReachButton } from "@/components/ReachButton";
 
 export const Route = createFileRoute("/_app/outreach/enterprise/$id/")({
   head: ({ params }) => ({
@@ -128,16 +130,48 @@ function EnterpriseDetailPage() {
         </div>
         <div className="mt-5 pt-5 border-t grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-5">
           <Field label="联系邮箱">
-            <span className="inline-flex items-center gap-1.5">
-              <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-              {e.email}
-            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                <MaskedField
+                  targetKind="enterprise"
+                  targetId={e.id}
+                  targetName={e.name}
+                  field="email"
+                  value={e.email}
+                  mono
+                />
+              </span>
+              <ReachButton
+                targetKind="enterprise"
+                targetId={e.id}
+                targetName={e.name}
+                channel="email"
+                detail={e.email}
+              />
+            </div>
           </Field>
           <Field label="联系电话">
-            <span className="inline-flex items-center gap-1.5 font-mono tabular-nums">
-              <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-              {e.phone}
-            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5">
+                <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                <MaskedField
+                  targetKind="enterprise"
+                  targetId={e.id}
+                  targetName={e.name}
+                  field="phone"
+                  value={e.phone}
+                  mono
+                />
+              </span>
+              <ReachButton
+                targetKind="enterprise"
+                targetId={e.id}
+                targetName={e.name}
+                channel="phone"
+                detail={e.phone}
+              />
+            </div>
           </Field>
           <Field label="创建时间">
             <span className="font-mono tabular-nums">{e.createdAt}</span>
@@ -153,7 +187,13 @@ function EnterpriseDetailPage() {
       <Section icon={<MapPin className="h-4 w-4" />} title="地址信息">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-5">
           <Field label="详细地址" className="md:col-span-2 lg:col-span-4">
-            {e.address}
+            <MaskedField
+              targetKind="enterprise"
+              targetId={e.id}
+              targetName={e.name}
+              field="address"
+              value={e.address}
+            />
           </Field>
           <Field label="国家">
             {e.country ? (
@@ -596,7 +636,7 @@ function SocialMediaSection({ e }: { e: Enterprise }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {active.map((a) => (
-            <SocialAccountCard key={a.kind} account={a} />
+            <SocialAccountCard key={a.kind} account={a} enterprise={e} />
           ))}
         </div>
       )}
@@ -625,7 +665,13 @@ function SocialMediaSection({ e }: { e: Enterprise }) {
   );
 }
 
-function SocialAccountCard({ account: a }: { account: SocialAccountInfo }) {
+function SocialAccountCard({
+  account: a,
+  enterprise: e,
+}: {
+  account: SocialAccountInfo;
+  enterprise: Enterprise;
+}) {
   const Icon =
     a.kind === "linkedin" ? Linkedin : a.kind === "facebook" ? Facebook : Twitter;
   const tone =
@@ -636,12 +682,7 @@ function SocialAccountCard({ account: a }: { account: SocialAccountInfo }) {
         : "bg-foreground text-background";
 
   return (
-    <a
-      href={`https://${a.url}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group rounded-lg border border-border bg-card hover:ring-1 hover:ring-primary/30 hover:border-primary/40 transition-shadow block"
-    >
+    <div className="group rounded-lg border border-border bg-card hover:ring-1 hover:ring-primary/30 hover:border-primary/40 transition-shadow">
       <div className="flex items-center gap-3 px-4 py-3 border-b border-border/70">
         <div
           className={`h-9 w-9 rounded-md flex items-center justify-center ${tone}`}
@@ -660,11 +701,28 @@ function SocialAccountCard({ account: a }: { account: SocialAccountInfo }) {
               </Badge>
             )}
           </div>
-          <div className="text-xs text-muted-foreground font-mono truncate">
-            {a.handle}
+          <div className="text-xs text-muted-foreground truncate">
+            <MaskedField
+              targetKind="enterprise"
+              targetId={e.id}
+              targetName={e.name}
+              field="social"
+              subKey={a.platform}
+              value={a.handle}
+              mono
+            />
           </div>
         </div>
-        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        <a
+          href={`https://${a.url}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+          onClick={(ev) => ev.stopPropagation()}
+          aria-label="打开主页"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+        </a>
       </div>
       <div className="px-4 py-3 grid grid-cols-3 gap-2 text-center">
         <div>
@@ -686,6 +744,17 @@ function SocialAccountCard({ account: a }: { account: SocialAccountInfo }) {
           <div className="text-[11px] text-muted-foreground mt-0.5">最近活跃</div>
         </div>
       </div>
-    </a>
+      <div className="px-4 pb-3 flex justify-end">
+        <ReachButton
+          targetKind="enterprise"
+          targetId={e.id}
+          targetName={e.name}
+          channel="social"
+          platform={a.platform}
+          detail={a.url || a.handle}
+          size="sm"
+        />
+      </div>
+    </div>
   );
 }

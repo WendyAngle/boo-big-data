@@ -6,7 +6,6 @@ import {
   Calendar,
   ChevronRight,
   Clock,
-  ExternalLink,
   FileText,
   Globe,
   Info,
@@ -28,6 +27,8 @@ import { findEnterprise } from "@/data/enterprises";
 import type { Enterprise, EnterpriseContact } from "@/data/enterprises";
 import heroBg from "@/assets/enterprise-hero.jpg";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
+import { MaskedField } from "@/components/MaskedField";
+import { ReachButton } from "@/components/ReachButton";
 
 interface ContactDetail {
   enterprise: Enterprise;
@@ -322,40 +323,110 @@ function ContactDetailPage() {
 
       {/* 联系方式 */}
       <Section icon={<Mail className="h-4 w-4" />} title="联系方式">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
           <Field label="邮箱">
-            <span className="inline-flex items-center gap-1.5 font-mono text-xs">
-              <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-              {c.email}
-            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                <MaskedField
+                  targetKind="contact"
+                  targetId={`${e.id}:${d.idx}`}
+                  targetName={c.name}
+                  parentRef={{ id: e.id, name: e.name }}
+                  field="email"
+                  value={c.email}
+                  mono
+                />
+              </span>
+              <ReachButton
+                targetKind="contact"
+                targetId={`${e.id}:${d.idx}`}
+                targetName={c.name}
+                parentRef={{ id: e.id, name: e.name }}
+                channel="email"
+                detail={c.email}
+              />
+            </div>
           </Field>
           <Field label="电话">
             {c.phone ? (
-              <span className="inline-flex items-center gap-1.5 font-mono tabular-nums">
-                <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                {c.phone}
-              </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                  <MaskedField
+                    targetKind="contact"
+                    targetId={`${e.id}:${d.idx}`}
+                    targetName={c.name}
+                    parentRef={{ id: e.id, name: e.name }}
+                    field="phone"
+                    value={c.phone}
+                    mono
+                  />
+                </span>
+                <ReachButton
+                  targetKind="contact"
+                  targetId={`${e.id}:${d.idx}`}
+                  targetName={c.name}
+                  parentRef={{ id: e.id, name: e.name }}
+                  channel="phone"
+                  detail={c.phone}
+                />
+              </div>
             ) : (
               <span className="italic text-muted-foreground">未提供</span>
             )}
           </Field>
           <Field label="LinkedIn">
-            <a
-              href={`https://${d.linkedin}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-primary hover:underline"
-            >
-              <Linkedin className="h-3.5 w-3.5" />
-              {d.linkedin}
-              <ExternalLink className="h-3 w-3 opacity-70" />
-            </a>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5">
+                <Linkedin className="h-3.5 w-3.5 text-[#0a66c2]" />
+                <MaskedField
+                  targetKind="contact"
+                  targetId={`${e.id}:${d.idx}`}
+                  targetName={c.name}
+                  parentRef={{ id: e.id, name: e.name }}
+                  field="social"
+                  subKey="LinkedIn"
+                  value={d.linkedin}
+                  mono
+                />
+              </span>
+              <ReachButton
+                targetKind="contact"
+                targetId={`${e.id}:${d.idx}`}
+                targetName={c.name}
+                parentRef={{ id: e.id, name: e.name }}
+                channel="social"
+                platform="LinkedIn"
+                detail={d.linkedin}
+              />
+            </div>
           </Field>
           <Field label="Twitter">
-            <span className="inline-flex items-center gap-1.5">
-              <Twitter className="h-3.5 w-3.5 text-muted-foreground" />
-              {d.twitter}
-            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5">
+                <Twitter className="h-3.5 w-3.5 text-muted-foreground" />
+                <MaskedField
+                  targetKind="contact"
+                  targetId={`${e.id}:${d.idx}`}
+                  targetName={c.name}
+                  parentRef={{ id: e.id, name: e.name }}
+                  field="social"
+                  subKey="Twitter"
+                  value={d.twitter}
+                  mono
+                />
+              </span>
+              <ReachButton
+                targetKind="contact"
+                targetId={`${e.id}:${d.idx}`}
+                targetName={c.name}
+                parentRef={{ id: e.id, name: e.name }}
+                channel="social"
+                platform="Twitter"
+                detail={d.twitter}
+              />
+            </div>
           </Field>
         </div>
       </Section>
