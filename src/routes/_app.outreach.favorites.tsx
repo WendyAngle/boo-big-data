@@ -15,6 +15,7 @@ import {
   ExternalLink,
   MapPin,
   Mail,
+  Phone,
   Briefcase,
   ArrowRight,
   Anchor,
@@ -46,6 +47,8 @@ import {
   type FavoriteKind,
   type FavoriteRecord,
 } from "@/lib/favorites";
+import { MaskedField } from "@/components/MaskedField";
+import { ReachButton } from "@/components/ReachButton";
 
 export const Route = createFileRoute("/_app/outreach/favorites")({
   head: () => ({ meta: [{ title: "触达客户管理 · 收藏 | Boo数据平台" }] }),
@@ -524,12 +527,56 @@ function FavoriteMeta({ record }: { record: FavoriteRecord }) {
   }
   if (record.kind === "contact") {
     const m = record.meta || {};
+    const entId = record.parentRef?.id ?? record.refId.split(":")[0];
+    const idx = record.refId.split(":")[1] ?? "0";
+    const targetId = `${entId}:${idx}`;
+    const parentRef = record.parentRef
+      ? { id: record.parentRef.id, name: record.parentRef.name }
+      : undefined;
     return (
-      <div className="text-xs text-muted-foreground mt-1.5 space-y-0.5">
+      <div className="text-xs text-muted-foreground mt-1.5 space-y-1">
         {m.email && (
-          <div className="flex items-center gap-1.5">
-            <Mail className="h-3 w-3" />
-            <span className="font-mono truncate">{m.email}</span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Mail className="h-3 w-3 shrink-0" />
+            <MaskedField
+              targetKind="contact"
+              targetId={targetId}
+              targetName={record.title}
+              parentRef={parentRef}
+              field="email"
+              value={m.email}
+              mono
+            />
+            <ReachButton
+              targetKind="contact"
+              targetId={targetId}
+              targetName={record.title}
+              parentRef={parentRef}
+              channel="email"
+              detail={m.email}
+            />
+          </div>
+        )}
+        {m.phone && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Phone className="h-3 w-3 shrink-0" />
+            <MaskedField
+              targetKind="contact"
+              targetId={targetId}
+              targetName={record.title}
+              parentRef={parentRef}
+              field="phone"
+              value={m.phone}
+              mono
+            />
+            <ReachButton
+              targetKind="contact"
+              targetId={targetId}
+              targetName={record.title}
+              parentRef={parentRef}
+              channel="phone"
+              detail={m.phone}
+            />
           </div>
         )}
         {record.parentRef && (
