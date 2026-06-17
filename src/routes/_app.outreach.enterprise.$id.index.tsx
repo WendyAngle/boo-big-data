@@ -253,14 +253,50 @@ function EnterpriseDetailPage() {
                   <Briefcase className="h-3.5 w-3.5" />
                   <span className="truncate">{c.title}</span>
                 </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Mail className="h-3.5 w-3.5" />
-                  <span className="truncate font-mono text-xs">{c.email}</span>
+                <div className="flex items-center gap-2 text-muted-foreground min-w-0">
+                  <Mail className="h-3.5 w-3.5 shrink-0" />
+                  <div className="flex-1 min-w-0 truncate">
+                    <MaskedField
+                      targetKind="contact"
+                      targetId={`${e.id}:${idx}`}
+                      targetName={c.name}
+                      parentRef={{ id: e.id, name: e.name }}
+                      field="email"
+                      value={c.email}
+                      mono
+                    />
+                  </div>
+                  <ReachButton
+                    targetKind="contact"
+                    targetId={`${e.id}:${idx}`}
+                    targetName={c.name}
+                    parentRef={{ id: e.id, name: e.name }}
+                    channel="email"
+                    detail={c.email}
+                  />
                 </div>
                 {c.phone && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Phone className="h-3.5 w-3.5" />
-                    <span className="truncate font-mono text-xs">{c.phone}</span>
+                  <div className="flex items-center gap-2 text-muted-foreground min-w-0">
+                    <Phone className="h-3.5 w-3.5 shrink-0" />
+                    <div className="flex-1 min-w-0 truncate">
+                      <MaskedField
+                        targetKind="contact"
+                        targetId={`${e.id}:${idx}`}
+                        targetName={c.name}
+                        parentRef={{ id: e.id, name: e.name }}
+                        field="phone"
+                        value={c.phone}
+                        mono
+                      />
+                    </div>
+                    <ReachButton
+                      targetKind="contact"
+                      targetId={`${e.id}:${idx}`}
+                      targetName={c.name}
+                      parentRef={{ id: e.id, name: e.name }}
+                      channel="phone"
+                      detail={c.phone}
+                    />
                   </div>
                 )}
               </div>
