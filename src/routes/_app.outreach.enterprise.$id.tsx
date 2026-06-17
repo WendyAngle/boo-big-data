@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { findEnterprise } from "@/data/enterprises";
 import type { Enterprise } from "@/data/enterprises";
 import heroBg from "@/assets/enterprise-hero.jpg";
+import { FavoriteToggle } from "@/components/FavoriteToggle";
 
 export const Route = createFileRoute("/_app/outreach/enterprise/$id")({
   head: ({ params }) => ({
@@ -76,12 +77,28 @@ function EnterpriseDetailPage() {
             {e.name}
           </span>
         </div>
-        <Button asChild variant="outline" size="sm" className="gap-1.5">
-          <Link to="/outreach/enterprise">
-            <ArrowLeft className="h-4 w-4" />
-            返回企业列表
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <FavoriteToggle
+            kind="enterprise"
+            refId={e.id}
+            payload={{
+              title: e.name,
+              subtitle: e.industry || undefined,
+              meta: {
+                country: e.country || "",
+                role: e.tradeRole,
+                est: e.est,
+              },
+            }}
+            stopPropagation={false}
+          />
+          <Button asChild variant="outline" size="sm" className="gap-1.5">
+            <Link to="/outreach/enterprise">
+              <ArrowLeft className="h-4 w-4" />
+              返回企业列表
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Hero */}
@@ -170,13 +187,26 @@ function EnterpriseDetailPage() {
           {e.contacts.map((c, idx) => (
             <div
               key={idx}
+              id={`contact-${idx}`}
               className="rounded-lg border border-border bg-card hover:ring-1 hover:ring-primary/30 transition-shadow"
             >
               <div className="flex items-center gap-3 px-4 py-3 border-b border-border/70">
                 <div className="h-9 w-9 rounded-full bg-primary/15 text-primary flex items-center justify-center font-medium uppercase">
                   {c.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
                 </div>
-                <div className="font-medium">{c.name}</div>
+                <div className="font-medium flex-1 truncate">{c.name}</div>
+                <FavoriteToggle
+                  kind="contact"
+                  refId={`${e.id}:${idx}`}
+                  payload={{
+                    title: c.name,
+                    subtitle: c.title,
+                    meta: { email: c.email, phone: c.phone || "" },
+                    parentRef: { kind: "enterprise", id: e.id, name: e.name },
+                  }}
+                  variant="inline"
+                  size="sm"
+                />
               </div>
               <div className="px-4 py-3 space-y-1.5 text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
