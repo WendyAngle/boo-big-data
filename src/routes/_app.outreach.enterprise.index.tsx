@@ -32,6 +32,7 @@ import {
 import { ListPagination } from "@/components/ListPagination";
 import heroBg from "@/assets/enterprise-hero.jpg";
 import { ENTERPRISES } from "@/data/enterprises";
+import { FavoriteToggle } from "@/components/FavoriteToggle";
 
 export const Route = createFileRoute("/_app/outreach/enterprise/")({
   head: () => ({ meta: [{ title: "触达客户管理 · 企业 | Boo数据平台" }] }),
@@ -334,6 +335,20 @@ function OutreachEnterprisePage() {
                   <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center ring-1 ring-primary/20">
                     <Building2 className="h-5 w-5" />
                   </div>
+                  <FavoriteToggle
+                    kind="enterprise"
+                    refId={e.id}
+                    payload={{
+                      title: e.name,
+                      subtitle: e.industry || undefined,
+                      meta: {
+                        country: e.country || "",
+                        role: e.tradeRole,
+                        est: e.est,
+                      },
+                    }}
+                    variant="overlay"
+                  />
                 </div>
                 <div className="mt-4 space-y-2">
                   <div className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
