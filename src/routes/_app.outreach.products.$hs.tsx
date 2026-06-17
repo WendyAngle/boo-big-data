@@ -34,7 +34,6 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
-  ResponsiveContainer,
   Tooltip as RTooltip,
   XAxis,
   YAxis,
@@ -182,9 +181,13 @@ function ProductDetailPage() {
         <p className="text-xs text-muted-foreground mb-4">
           近 12 个月全球贸易额变化趋势 (来源: 贸易统计)
         </p>
-        <div style={{ width: "100%", height: 288 }}>
-          <ResponsiveContainer>
-            <AreaChart data={trend} margin={{ left: 10, right: 20, top: 10, bottom: 0 }}>
+        <div className="w-full overflow-x-auto">
+          <AreaChart
+            width={900}
+            height={280}
+            data={trend}
+            margin={{ left: 10, right: 20, top: 10, bottom: 0 }}
+          >
               <defs>
                 <linearGradient id="grad-trend" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="hsl(184 70% 42%)" stopOpacity={0.35} />
@@ -211,8 +214,7 @@ function ProductDetailPage() {
                 strokeWidth={2}
                 fill="url(#grad-trend)"
               />
-            </AreaChart>
-          </ResponsiveContainer>
+          </AreaChart>
         </div>
       </Card>
 
