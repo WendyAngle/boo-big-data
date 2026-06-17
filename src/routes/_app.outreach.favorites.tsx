@@ -41,7 +41,6 @@ import { cn } from "@/lib/utils";
 import {
   useFavorites,
   removeFavoritesByIds,
-  FAVORITE_KIND_LABEL,
   type FavoriteKind,
   type FavoriteRecord,
 } from "@/lib/favorites";
@@ -426,7 +425,7 @@ function FavoriteCard({
           <div className="flex items-center gap-2 mb-1">
             <Badge
               variant="outline"
-              className={cn("text-[10px] px-1.5 py-0 h-4", meta.tone, "border-current/40")}
+              className={cn("text-[10px] px-1.5 py-0 h-4 border-current/40", meta.tone)}
             >
               {meta.label}
             </Badge>
@@ -577,6 +576,3 @@ function useTarget(
   if (r.kind === "bill") return { kind: "bill" };
   return null;
 }
-
-// keep FAVORITE_KIND_LABEL reachable so unused-import lint stays quiet
-void FAVORITE_KIND_LABEL;
