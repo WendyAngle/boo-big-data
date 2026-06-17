@@ -57,7 +57,7 @@ export const Route = createFileRoute("/_app/outreach/enterprise/$id")({
 });
 
 function EnterpriseDetailPage() {
-  const { enterprise: e } = Route.useLoaderData();
+  const { enterprise: e } = Route.useLoaderData() as { enterprise: Enterprise };
   return (
     <div className="p-8 space-y-6">
       {/* 面包屑 */}
