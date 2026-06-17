@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Star,
@@ -18,6 +18,8 @@ import {
   Briefcase,
   ArrowRight,
   Anchor,
+  EyeOff,
+  RotateCcw,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,6 +43,8 @@ import { cn } from "@/lib/utils";
 import {
   useFavorites,
   removeFavoritesByIds,
+  seedDemoFavoritesIfEmpty,
+  resetDemoFavorites,
   type FavoriteKind,
   type FavoriteRecord,
 } from "@/lib/favorites";
@@ -91,6 +95,9 @@ function fmtDateKey(d: Date) {
 
 function FavoritesPage() {
   const all = useFavorites();
+  useEffect(() => {
+    seedDemoFavoritesIfEmpty();
+  }, []);
   const [kind, setKind] = useState<KindFilter>("all");
   const [keyword, setKeyword] = useState("");
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -209,6 +216,32 @@ function FavoritesPage() {
               ),
             )}
           </div>
+        </div>
+        <div className="relative mt-4 flex flex-wrap items-center gap-2">
+          <Button
+            asChild
+            size="sm"
+            variant="secondary"
+            className="h-8 bg-white/15 text-white border-white/20 hover:bg-white/25"
+          >
+            <Link to="/outreach/favorites-empty">
+              <EyeOff className="h-3.5 w-3.5 mr-1.5" />
+              查看空状态演示
+            </Link>
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-8 bg-white/15 text-white border-white/20 hover:bg-white/25"
+            onClick={() => {
+              if (window.confirm("将清空当前收藏并重新载入演示数据，是否继续？")) {
+                resetDemoFavorites();
+              }
+            }}
+          >
+            <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+            重置为演示数据
+          </Button>
         </div>
       </section>
 
