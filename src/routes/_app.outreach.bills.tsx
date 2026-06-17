@@ -781,6 +781,7 @@ function SummaryTable({ rows, dim }: { rows: SummaryRow[]; dim: Dim }) {
                         <Table>
                           <TableHeader>
                             <TableRow className="bg-primary/80 hover:bg-primary/80 border-0">
+                              <TableHead className="text-primary-foreground w-[44px]"></TableHead>
                               <TableHead className="text-primary-foreground w-[110px]">日期</TableHead>
                               <TableHead className="text-primary-foreground w-[90px]">HS</TableHead>
                               <TableHead className="text-primary-foreground w-[200px]">出口企业</TableHead>
@@ -791,6 +792,26 @@ function SummaryTable({ rows, dim }: { rows: SummaryRow[]; dim: Dim }) {
                           <TableBody>
                             {r.bills.slice(0, 6).map((b) => (
                               <TableRow key={b.id}>
+                                <TableCell>
+                                  <FavoriteToggle
+                                    kind="bill"
+                                    refId={b.id}
+                                    payload={{
+                                      title: b.id,
+                                      subtitle: b.desc,
+                                      meta: {
+                                        date: b.date,
+                                        hs: b.hs,
+                                        exporter: b.exporter?.name || "",
+                                        importer: b.importer.name,
+                                        fromPort: b.fromPort.name,
+                                        toPort: b.toPort.name,
+                                      },
+                                    }}
+                                    variant="inline"
+                                    size="sm"
+                                  />
+                                </TableCell>
                                 <TableCell className="font-mono text-xs text-muted-foreground">{b.date}</TableCell>
                                 <TableCell className="font-mono text-xs text-muted-foreground">{b.hs}</TableCell>
                                 <TableCell>
