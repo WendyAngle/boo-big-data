@@ -604,6 +604,7 @@ function useTarget(
   r: FavoriteRecord,
 ):
   | { kind: "enterprise"; id: string; hash?: string }
+  | { kind: "contact"; id: string; idx: string }
   | { kind: "product"; id: string }
   | { kind: "bill" }
   | null {
@@ -611,9 +612,9 @@ function useTarget(
   if (r.kind === "contact" && r.parentRef) {
     const contactIdx = r.refId.split(":")[1];
     return {
-      kind: "enterprise",
+      kind: "contact",
       id: r.parentRef.id,
-      hash: contactIdx ? `contact-${contactIdx}` : undefined,
+      idx: contactIdx ?? "0",
     };
   }
   if (r.kind === "product") return { kind: "product", id: r.refId };
