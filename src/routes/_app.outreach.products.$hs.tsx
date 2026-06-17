@@ -41,6 +41,7 @@ import {
 } from "recharts";
 import { findByHs } from "@/data/products-catalog";
 import { ENTERPRISES } from "@/data/enterprises";
+import { FavoriteToggle } from "@/components/FavoriteToggle";
 
 export const Route = createFileRoute("/_app/outreach/products/$hs")({
   head: () => ({ meta: [{ title: "商品详情 | Boo数据平台" }] }),
