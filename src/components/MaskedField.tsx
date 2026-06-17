@@ -17,6 +17,8 @@ import {
   maskPhone,
   maskHandle,
   maskAddress,
+  maskTitle,
+  maskSeniority,
   type TargetKind,
   type ViewField,
   COST_VIEW,
@@ -44,6 +46,10 @@ function maskFor(field: ViewField, value: string) {
       return maskHandle(value);
     case "address":
       return maskAddress(value);
+    case "title":
+      return maskTitle(value);
+    case "seniority":
+      return maskSeniority(value);
   }
 }
 
@@ -80,7 +86,14 @@ export function MaskedField({
       });
       toast.success(`已扣除 ${COST_VIEW} 积分，可在账单查看`, {
         description: `查看了 ${targetName} 的${
-          { email: "邮箱", phone: "电话", social: "社媒账号", address: "详细地址" }[field]
+          {
+            email: "邮箱",
+            phone: "电话",
+            social: "社媒账号",
+            address: "详细地址",
+            title: "职位信息",
+            seniority: "职级信息",
+          }[field]
         }`,
       });
     }
