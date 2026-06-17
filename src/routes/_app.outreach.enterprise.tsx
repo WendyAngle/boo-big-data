@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Building2,
   ChevronRight,
@@ -11,6 +11,11 @@ import {
   Facebook,
   Twitter,
   RotateCcw,
+  X as XIcon,
+  Hash,
+  Package,
+  ArrowDownToLine,
+  ArrowUpFromLine,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +35,14 @@ import { ENTERPRISES } from "@/data/enterprises";
 
 export const Route = createFileRoute("/_app/outreach/enterprise")({
   head: () => ({ meta: [{ title: "触达客户管理 · 企业 | Boo数据平台" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    hs: typeof s.hs === "string" ? s.hs : undefined,
+    product: typeof s.product === "string" ? s.product : undefined,
+    role:
+      s.role === "进口" || s.role === "出口"
+        ? (s.role as "进口" | "出口")
+        : undefined,
+  }),
   component: OutreachEnterprisePage,
 });
 
@@ -56,6 +69,11 @@ const COUNTRIES = [
 const EMPLOYEE_SIZES = ["1-10", "11-50", "51-200", "201-500", "501-1000", "1001-5000", "5000+"];
 
 function OutreachEnterprisePage() {
+  const navigate = useNavigate();
+  const search = Route.useSearch();
+  const { hs, product, role } = search;
+  const hasScenario = !!(hs || product || role);
+
   const [keyword, setKeyword] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [industry, setIndustry] = useState("all");
@@ -71,9 +89,11 @@ function OutreachEnterprisePage() {
       if (industry !== "all" && e.industry !== industry) return false;
       if (country !== "all" && e.country !== country) return false;
       if (employees !== "all" && e.employees !== employees) return false;
+      if (role === "进口" && e.tradeRole === "出口商") return false;
+      if (role === "出口" && e.tradeRole === "进口商") return false;
       return true;
     });
-  }, [keyword, industry, country, employees]);
+  }, [keyword, industry, country, employees, role]);
 
   const total = filtered.length;
   const pageData = useMemo(
@@ -92,6 +112,18 @@ function OutreachEnterprisePage() {
     (industry !== "all" ? 1 : 0) +
     (country !== "all" ? 1 : 0) +
     (employees !== "all" ? 1 : 0);
+
+  const clearScenario = () => {
+    navigate({ to: "/outreach/enterprise", search: {} });
+    setPage(1);
+  };
+  const removeScenarioKey = (k: "hs" | "product" | "role") => {
+    navigate({
+      to: "/outreach/enterprise",
+      search: { ...search, [k]: undefined },
+    });
+    setPage(1);
+  };
 
   return (
     <div className="p-8 space-y-6">
@@ -153,6 +185,53 @@ function OutreachEnterprisePage() {
           )}
         </Button>
       </Card>
+
+      {hasScenario && (
+        <Card className="p-3 flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted-foreground shrink-0">筛选场景：</span>
+          {product && (
+            <ScenarioChip
+              icon={<Package className="h-3.5 w-3.5" />}
+              tone="primary"
+              onRemove={() => removeScenarioKey("product")}
+            >
+              {product}
+            </ScenarioChip>
+          )}
+          {hs && (
+            <ScenarioChip
+              icon={<Hash className="h-3.5 w-3.5" />}
+              tone="primary"
+              onRemove={() => removeScenarioKey("hs")}
+            >
+              <span className="font-mono">{hs}</span>
+            </ScenarioChip>
+          )}
+          {role && (
+            <ScenarioChip
+              icon={
+                role === "进口" ? (
+                  <ArrowDownToLine className="h-3.5 w-3.5" />
+                ) : (
+                  <ArrowUpFromLine className="h-3.5 w-3.5" />
+                )
+              }
+              tone="accent"
+              onRemove={() => removeScenarioKey("role")}
+            >
+              {role}
+            </ScenarioChip>
+          )}
+          <button
+            type="button"
+            onClick={clearScenario}
+            className="ml-auto text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+          >
+            <XIcon className="h-3.5 w-3.5" />
+            清除筛选
+          </button>
+        </Card>
+      )}
 
       {advancedOpen && (
         <Card className="p-5 space-y-4">
@@ -323,6 +402,39 @@ function SocialBadge({
       aria-label={kind}
     >
       <Icon className="h-3 w-3" />
+    </span>
+  );
+}
+
+function ScenarioChip({
+  children,
+  icon,
+  tone,
+  onRemove,
+}: {
+  children: React.ReactNode;
+  icon: React.ReactNode;
+  tone: "primary" | "accent";
+  onRemove: () => void;
+}) {
+  const styles =
+    tone === "primary"
+      ? "bg-primary/10 text-primary"
+      : "bg-amber-100 text-amber-700";
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full text-xs font-medium ${styles}`}
+    >
+      {icon}
+      {children}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="inline-flex items-center justify-center h-4 w-4 rounded-full hover:bg-black/10"
+        aria-label="移除"
+      >
+        <XIcon className="h-3 w-3" />
+      </button>
     </span>
   );
 }
