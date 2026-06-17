@@ -511,7 +511,8 @@ function FavoriteSubtitle({ record }: { record: FavoriteRecord }) {
       ? { id: record.parentRef.id, name: record.parentRef.name }
       : undefined;
     return (
-      <div className="text-xs text-muted-foreground truncate mt-0.5">
+      <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5 min-w-0">
+        <Briefcase className="h-3 w-3 shrink-0" />
         <MaskedField
           targetKind="contact"
           targetId={targetId}
