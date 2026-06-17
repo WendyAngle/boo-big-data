@@ -31,7 +31,7 @@ import type { Enterprise } from "@/data/enterprises";
 import heroBg from "@/assets/enterprise-hero.jpg";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
 
-export const Route = createFileRoute("/_app/outreach/enterprise/$id")({
+export const Route = createFileRoute("/_app/outreach/enterprise/$id/")({
   head: ({ params }) => ({
     meta: [{ title: `企业详情 · ${params.id} | Boo数据平台` }],
   }),
