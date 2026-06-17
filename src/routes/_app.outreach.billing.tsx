@@ -18,6 +18,8 @@ import {
   MapPin,
   Undo2,
   EyeOff,
+  Briefcase,
+  BadgeCheck,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -456,6 +458,8 @@ function FieldCell({ entry }: { entry: LedgerEntry }) {
       phone: Phone,
       social: Globe,
       address: MapPin,
+      title: Briefcase,
+      seniority: BadgeCheck,
     };
     const I = Icon[entry.field!];
     return (

@@ -251,7 +251,16 @@ function EnterpriseDetailPage() {
               <div className="px-4 py-3 space-y-1.5 text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Briefcase className="h-3.5 w-3.5" />
-                  <span className="truncate">{c.title}</span>
+                  <span className="truncate">
+                    <MaskedField
+                      targetKind="contact"
+                      targetId={`${e.id}:${idx}`}
+                      targetName={c.name}
+                      parentRef={{ id: e.id, name: e.name }}
+                      field="title"
+                      value={c.title}
+                    />
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground min-w-0">
                   <Mail className="h-3.5 w-3.5 shrink-0" />

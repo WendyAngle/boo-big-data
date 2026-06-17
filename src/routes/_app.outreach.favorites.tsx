@@ -455,11 +455,7 @@ function FavoriteCard({
             </span>
           </div>
           <div className="font-medium text-sm truncate">{record.title}</div>
-          {record.subtitle && (
-            <div className="text-xs text-muted-foreground truncate mt-0.5">
-              {record.subtitle}
-            </div>
-          )}
+          {record.subtitle && <FavoriteSubtitle record={record} />}
           <FavoriteMeta record={record} />
         </div>
       </div>
@@ -502,6 +498,35 @@ function FavoriteCard({
     <Link to="/outreach/bills" className="group block">
       {inner}
     </Link>
+  );
+}
+
+function FavoriteSubtitle({ record }: { record: FavoriteRecord }) {
+  if (!record.subtitle) return null;
+  if (record.kind === "contact") {
+    const entId = record.parentRef?.id ?? record.refId.split(":")[0];
+    const idx = record.refId.split(":")[1] ?? "0";
+    const targetId = `${entId}:${idx}`;
+    const parentRef = record.parentRef
+      ? { id: record.parentRef.id, name: record.parentRef.name }
+      : undefined;
+    return (
+      <div className="text-xs text-muted-foreground truncate mt-0.5">
+        <MaskedField
+          targetKind="contact"
+          targetId={targetId}
+          targetName={record.title}
+          parentRef={parentRef}
+          field="title"
+          value={record.subtitle}
+        />
+      </div>
+    );
+  }
+  return (
+    <div className="text-xs text-muted-foreground truncate mt-0.5">
+      {record.subtitle}
+    </div>
   );
 }
 

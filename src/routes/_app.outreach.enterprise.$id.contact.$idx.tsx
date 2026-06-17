@@ -239,7 +239,14 @@ function ContactDetailPage() {
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm">
                 <Briefcase className="h-3.5 w-3.5" />
-                {c.title}
+                <MaskedField
+                  targetKind="contact"
+                  targetId={`${e.id}:${d.idx}`}
+                  targetName={c.name}
+                  parentRef={{ id: e.id, name: e.name }}
+                  field="title"
+                  value={c.title}
+                />
               </span>
               <Link
                 to="/outreach/enterprise/$id"
@@ -281,9 +288,27 @@ function ContactDetailPage() {
       <Section icon={<Info className="h-4 w-4" />} title="基本信息">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-5">
           <Field label="姓名"><span className="capitalize">{c.name}</span></Field>
-          <Field label="职位">{c.title}</Field>
+          <Field label="职位">
+            <MaskedField
+              targetKind="contact"
+              targetId={`${e.id}:${d.idx}`}
+              targetName={c.name}
+              parentRef={{ id: e.id, name: e.name }}
+              field="title"
+              value={c.title}
+            />
+          </Field>
           <Field label="所在部门">{d.department}</Field>
-          <Field label="职级">{d.seniority}</Field>
+          <Field label="职级">
+            <MaskedField
+              targetKind="contact"
+              targetId={`${e.id}:${d.idx}`}
+              targetName={c.name}
+              parentRef={{ id: e.id, name: e.name }}
+              field="seniority"
+              value={d.seniority}
+            />
+          </Field>
           <Field label="任职年限">
             <span className="tabular-nums">{d.tenureYears} 年</span>
           </Field>
@@ -493,7 +518,16 @@ function ContactDetailPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="font-medium truncate capitalize">{other.name}</div>
-                      <div className="text-xs text-muted-foreground truncate">{other.title}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        <MaskedField
+                          targetKind="contact"
+                          targetId={`${e.id}:${oIdx}`}
+                          targetName={other.name}
+                          parentRef={{ id: e.id, name: e.name }}
+                          field="title"
+                          value={other.title}
+                        />
+                      </div>
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                   </Link>

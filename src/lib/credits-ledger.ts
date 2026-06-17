@@ -1,7 +1,13 @@
 import { useSyncExternalStore } from "react";
 
 export type LedgerKind = "view" | "reach" | "refund";
-export type ViewField = "email" | "phone" | "social" | "address";
+export type ViewField =
+  | "email"
+  | "phone"
+  | "social"
+  | "address"
+  | "title"
+  | "seniority";
 export type ReachChannel = "email" | "phone" | "social";
 export type ReachStatus = "pending" | "in_progress" | "success" | "failed";
 export type TargetKind = "enterprise" | "contact";
@@ -183,6 +189,8 @@ export const VIEW_FIELD_LABEL: Record<ViewField, string> = {
   phone: "联系电话",
   social: "社媒账号",
   address: "详细地址",
+  title: "职位信息",
+  seniority: "职级信息",
 };
 
 /* -------------------- refunds for failed reaches -------------------- */
@@ -326,6 +334,14 @@ export function maskHandle(handle: string) {
 
 export function maskAddress(_address: string) {
   return "*** *** *** *** ***";
+}
+
+export function maskTitle(_title: string) {
+  return "•••• ••••••";
+}
+
+export function maskSeniority(_seniority: string) {
+  return "•••";
 }
 
 export function maskUrl(url: string) {
