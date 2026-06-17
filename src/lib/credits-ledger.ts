@@ -24,6 +24,8 @@ export interface LedgerEntry {
   channel?: ReachChannel;
   platform?: string; // e.g. "LinkedIn"
   detail?: string; // masked or partial; e.g. email/phone/handle
+  // demo / override: when set, getReachStatus returns this value directly
+  forcedStatus?: ReachStatus;
 }
 
 const LEDGER_KEY = "boo:ledger:v1";
@@ -145,6 +147,7 @@ function hashStr(s: string) {
 
 export function getReachStatus(r: LedgerEntry, now = Date.now()): ReachStatus {
   if (r.kind !== "reach") return "success";
+  if (r.forcedStatus) return r.forcedStatus;
   const t = new Date(r.createdAt).getTime();
   const elapsedSec = (now - t) / 1000;
   if (elapsedSec < 30) return "pending";
@@ -305,6 +308,7 @@ export function seedDemoLedgerIfEmpty() {
         targetName: "Wenzhou Sunrise Textile Co Ltd",
         channel: "email",
         detail: "contact@sunrise-tex.com",
+        forcedStatus: "success",
       },
       {
         id: makeId("r"),
@@ -317,6 +321,7 @@ export function seedDemoLedgerIfEmpty() {
         parentRef: { id: "ENT-0005", name: "Fruticola Olmue S.A." },
         channel: "phone",
         detail: "+56 9 ****55",
+        forcedStatus: "success",
       },
       {
         id: makeId("r"),
@@ -329,6 +334,7 @@ export function seedDemoLedgerIfEmpty() {
         channel: "social",
         platform: "LinkedIn",
         detail: "linkedin.com/company/lotusgourmet",
+        forcedStatus: "in_progress",
       },
       {
         id: makeId("r"),
@@ -341,6 +347,7 @@ export function seedDemoLedgerIfEmpty() {
         parentRef: { id: "ENT-0024", name: "Ningbo Poly Hardware Trading" },
         channel: "email",
         detail: "daniel.chen@ningbopoly.com",
+        forcedStatus: "in_progress",
       },
       {
         id: makeId("r"),
@@ -352,6 +359,48 @@ export function seedDemoLedgerIfEmpty() {
         targetName: "Guangzhou Fortune Metal Co",
         channel: "phone",
         detail: "+86 20 ****88",
+        forcedStatus: "pending",
+      },
+      // ---- 触达失败 (2) ----
+      {
+        id: makeId("r"),
+        kind: "reach",
+        cost: COST_REACH,
+        createdAt: isoMinutesAgo(180),
+        targetKind: "enterprise",
+        targetId: "ENT-0015",
+        targetName: "Shanghai Hema Electronics Ltd",
+        channel: "email",
+        detail: "biz@shhema.com",
+        forcedStatus: "failed",
+      },
+      {
+        id: makeId("r"),
+        kind: "reach",
+        cost: COST_REACH,
+        createdAt: isoMinutesAgo(95),
+        targetKind: "contact",
+        targetId: "ENT-0011:0",
+        targetName: "Jorge Ramirez",
+        parentRef: { id: "ENT-0011", name: "La Loma Del Valle Export" },
+        channel: "social",
+        platform: "LinkedIn",
+        detail: "linkedin.com/in/jorge-ramirez",
+        forcedStatus: "failed",
+      },
+      // ---- 再加 1 个待触达 ----
+      {
+        id: makeId("r"),
+        kind: "reach",
+        cost: COST_REACH,
+        createdAt: isoMinutesAgo(0.1),
+        targetKind: "contact",
+        targetId: "ENT-0001:0",
+        targetName: "Alex Wang",
+        parentRef: { id: "ENT-0001", name: "Wenzhou Sunrise Textile Co Ltd" },
+        channel: "email",
+        detail: "alex.wang@sunrise-tex.com",
+        forcedStatus: "pending",
       },
       // ---- view (6) ----
       {
