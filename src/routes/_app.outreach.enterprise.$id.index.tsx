@@ -32,6 +32,7 @@ import heroBg from "@/assets/enterprise-hero.jpg";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
 import { MaskedField } from "@/components/MaskedField";
 import { ReachButton } from "@/components/ReachButton";
+import { formatDateTime } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_app/outreach/enterprise/$id/")({
   head: ({ params }) => ({
@@ -174,7 +175,7 @@ function EnterpriseDetailPage() {
             </div>
           </Field>
           <Field label="创建时间">
-            <span className="font-mono tabular-nums">{e.createdAt}</span>
+            <span className="font-mono tabular-nums">{formatDateTime(e.createdAt)}</span>
           </Field>
         </div>
         <div className="mt-5 pt-5 border-t">

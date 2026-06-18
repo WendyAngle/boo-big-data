@@ -56,6 +56,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ListPagination } from "@/components/ListPagination";
+import { formatDateTime } from "@/lib/format-date";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/points/apps")({
@@ -499,7 +500,7 @@ function AppsPage() {
                         </TooltipProvider>
                       </TableCell>
                       <TableCell className="font-mono text-xs tabular-nums text-muted-foreground">
-                        {a.expiresAt.slice(0, 10)}
+                        {formatDateTime(a.expiresAt)}
                       </TableCell>
                       <TableCell className="text-muted-foreground max-w-[14rem]">
                         <div className="truncate" title={a.remark}>
