@@ -37,49 +37,33 @@ const menu: Root[] = [
     icon: Send,
     children: [
       {
-        label: "线索",
-        to: "/outreach/leads",
-        children: [],
+        label: "客户发现",
+        children: [
+          { label: "线索", to: "/outreach/leads" },
+          { label: "企业", to: "/outreach/enterprise" },
+          { label: "商品", to: "/outreach/products" },
+          { label: "提单", to: "/outreach/bills" },
+        ],
       },
       {
-        label: "企业",
-        to: "/outreach/enterprise",
-        children: [],
+        label: "客户运营",
+        children: [
+          { label: "收藏", to: "/outreach/favorites" },
+          { label: "足迹", to: "/outreach/footprints" },
+          { label: "触达", to: "/outreach/reach" },
+        ],
       },
       {
-        label: "商品",
-        to: "/outreach/products",
-        children: [],
+        label: "费用中心",
+        children: [
+          { label: "账单", to: "/outreach/billing" },
+        ],
       },
       {
-        label: "提单",
-        to: "/outreach/bills",
-        children: [],
-      },
-      {
-        label: "足迹",
-        to: "/outreach/footprints",
-        children: [],
-      },
-      {
-        label: "收藏",
-        to: "/outreach/favorites",
-        children: [],
-      },
-      {
-        label: "触达",
-        to: "/outreach/reach",
-        children: [],
-      },
-      {
-        label: "账单",
-        to: "/outreach/billing",
-        children: [],
-      },
-      {
-        label: "员工",
-        to: "/outreach/users",
-        children: [],
+        label: "系统管理",
+        children: [
+          { label: "员工", to: "/outreach/users" },
+        ],
       },
     ],
   },
@@ -89,6 +73,8 @@ export function AppSidebar() {
   const { location } = useRouterState();
   const [open, setOpen] = useState<Record<string, boolean>>({
     出海大数据平台: true,
+    客户发现: true,
+    客户运营: true,
   });
 
   return (
