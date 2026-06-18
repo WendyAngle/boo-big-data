@@ -65,7 +65,6 @@ import {
   isBalanceLow,
   isExpiringSoon,
 } from "@/lib/credits-balance";
-import { RechargeDialog } from "@/components/billing/RechargeDialog";
 import { RulesSheet } from "@/components/billing/RulesSheet";
 import {
   DateRangePicker,
@@ -101,7 +100,6 @@ function BillingPage() {
   const [kw, setKw] = useState("");
   const [datePreset, setDatePreset] = useState<PresetId>("all");
   const [customRange, setCustomRange] = useState<DateRangeValue>(undefined);
-  const [rechargeOpen, setRechargeOpen] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
 
   const filtered = useMemo(() => {
