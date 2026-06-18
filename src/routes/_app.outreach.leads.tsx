@@ -363,11 +363,20 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
                 {" "}今日剩余免费推荐 {quotaLeft}/{AI_DAILY_FREE} 次
               </span>
             </div>
+            {profileDirty && (
+              <div className="mt-2 inline-flex items-center gap-2 text-xs text-primary bg-primary/8 px-2.5 py-1 rounded-md">
+                <Sparkles className="h-3 w-3" />
+                画像已更新，建议重新生成推荐以获得更精准的匹配
+              </div>
+            )}
           </div>
           <Button
             size="lg"
             disabled={loading}
-            onClick={handleGenerate}
+            onClick={() => {
+              setProfileDirty(false);
+              handleGenerate();
+            }}
             className="gap-2 h-11 px-6 shrink-0 bg-gradient-to-r from-primary to-accent hover:opacity-90"
           >
             {loading ? (
