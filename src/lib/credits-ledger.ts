@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-export type LedgerKind = "view" | "reach" | "refund";
+export type LedgerKind = "view" | "reach" | "refund" | "recharge";
 export type ViewField =
   | "email"
   | "phone"
@@ -36,10 +36,15 @@ export interface LedgerEntry {
   failReason?: string;
   // refund-only: id of the related reach entry being refunded
   relatedReachId?: string;
+  // recharge-only
+  orderNo?: string;
+  paymentMethod?: "wechat" | "alipay" | "corp";
+  bonus?: number;
+  price?: number;
 }
 
 const LEDGER_KEY = "boo:ledger:v1";
-const LEDGER_SEED_FLAG = "boo:ledger:v3:seeded";
+const LEDGER_SEED_FLAG = "boo:ledger:v4:seeded";
 const REVEAL_KEY = "boo:reveal:v1";
 
 /* -------------------- ledger store -------------------- */
@@ -131,6 +136,37 @@ export function createReach(input: {
     cost: COST_REACH,
     createdAt: new Date().toISOString(),
     ...input,
+  };
+  ledger = [entry, ...ledger];
+  writeLedger(ledger);
+  emitLedger();
+  return entry;
+}
+
+export function recordRecharge(input: {
+  orderNo: string;
+  packageLabel: string;
+  credits: number;
+  bonus: number;
+  price: number;
+  paymentMethod: "wechat" | "alipay" | "corp";
+}): LedgerEntry {
+  const entry: LedgerEntry = {
+    id: makeId("rc"),
+    kind: "recharge",
+    // cost 字段统一为正数表示「积分变动绝对值」，UI 根据 kind 决定 +/-
+    cost: input.credits + input.bonus,
+    createdAt: new Date().toISOString(),
+    targetKind: "enterprise",
+    targetId: "—",
+    targetName: `${input.packageLabel}套餐`,
+    orderNo: input.orderNo,
+    paymentMethod: input.paymentMethod,
+    bonus: input.bonus,
+    price: input.price,
+    detail: `订单 ${input.orderNo} · ¥${input.price}${
+      input.bonus > 0 ? ` · 赠 ${input.bonus} 积分` : ""
+    }`,
   };
   ledger = [entry, ...ledger];
   writeLedger(ledger);
@@ -772,6 +808,49 @@ export function seedDemoLedgerIfEmpty() {
         parentRef: { id: "ENT-0024", name: "Ningbo Poly Hardware Trading" },
         field: "phone",
         detail: "+86 574 ****21",
+      },
+      // ---- recharge (3) ----
+      {
+        id: makeId("rc"),
+        kind: "recharge",
+        cost: 5400,
+        createdAt: isoMinutesAgo(60 * 24 * 70),
+        targetKind: "enterprise",
+        targetId: "—",
+        targetName: "专业套餐",
+        orderNo: "R20260408164422",
+        paymentMethod: "alipay",
+        bonus: 400,
+        price: 429,
+        detail: "订单 R20260408164422 · ¥429 · 赠 400 积分",
+      },
+      {
+        id: makeId("rc"),
+        kind: "recharge",
+        cost: 500,
+        createdAt: isoMinutesAgo(60 * 24 * 29),
+        targetKind: "enterprise",
+        targetId: "—",
+        targetName: "入门套餐",
+        orderNo: "R20260520091205",
+        paymentMethod: "wechat",
+        bonus: 0,
+        price: 49,
+        detail: "订单 R20260520091205 · ¥49",
+      },
+      {
+        id: makeId("rc"),
+        kind: "recharge",
+        cost: 2100,
+        createdAt: isoMinutesAgo(60 * 24 * 6),
+        targetKind: "enterprise",
+        targetId: "—",
+        targetName: "标准套餐",
+        orderNo: "R20260612143012",
+        paymentMethod: "wechat",
+        bonus: 100,
+        price: 179,
+        detail: "订单 R20260612143012 · ¥179 · 赠 100 积分",
       },
     ];
     ledger = [...seed, ...ledger];

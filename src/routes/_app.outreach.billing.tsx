@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { z } from "zod";
 import {
   Receipt,
   ChevronRight,
@@ -75,6 +76,12 @@ import {
 
 export const Route = createFileRoute("/_app/outreach/billing")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 账单 | Boo数据平台" }] }),
+  validateSearch: (s) =>
+    z
+      .object({
+        tab: z.enum(["all", "view", "reach", "refund", "recharge"]).optional(),
+      })
+      .parse(s),
   component: BillingPage,
 });
 
@@ -85,6 +92,7 @@ function fmtTime(iso: string) {
 }
 
 function BillingPage() {
+  const { tab: tabFromUrl } = Route.useSearch();
   useEffect(() => {
     seedDemoLedgerIfEmpty();
     syncFailedRefunds();
@@ -96,7 +104,7 @@ function BillingPage() {
   const lowBalance = isBalanceLow(balance);
   const expiringSoon = isExpiringSoon(balance);
 
-  const [tab, setTab] = useState<"all" | LedgerKind>("all");
+  const [tab, setTab] = useState<"all" | LedgerKind>(tabFromUrl ?? "all");
   const [kw, setKw] = useState("");
   const [datePreset, setDatePreset] = useState<PresetId>("all");
   const [customRange, setCustomRange] = useState<DateRangeValue>(undefined);
@@ -129,20 +137,27 @@ function BillingPage() {
     const viewSum = all.filter((e) => e.kind === "view").reduce((s, e) => s + e.cost, 0);
     const reachSum = all.filter((e) => e.kind === "reach").reduce((s, e) => s + e.cost, 0);
     const refundSum = all.filter((e) => e.kind === "refund").reduce((s, e) => s + e.cost, 0);
+    const rechargeSum = all.filter((e) => e.kind === "recharge").reduce((s, e) => s + e.cost, 0);
+    const rechargeCount = all.filter((e) => e.kind === "recharge").length;
     return {
       total: viewSum + reachSum - refundSum,
       view: viewSum,
       reach: reachSum,
       refund: refundSum,
+      recharge: rechargeSum,
+      rechargeCount,
       count: all.length,
     };
   }, [ledger]);
 
   const filteredConsume = filtered
-    .filter((e) => e.kind !== "refund")
+    .filter((e) => e.kind === "view" || e.kind === "reach")
     .reduce((s, e) => s + e.cost, 0);
   const filteredRefund = filtered
     .filter((e) => e.kind === "refund")
+    .reduce((s, e) => s + e.cost, 0);
+  const filteredRecharge = filtered
+    .filter((e) => e.kind === "recharge")
     .reduce((s, e) => s + e.cost, 0);
 
   function handleExport(format: "csv" | "excel") {
@@ -150,7 +165,13 @@ function BillingPage() {
       ["时间", "类型", "对象类型", "对象", "所属企业", "字段/渠道", "平台", "明细", "消耗"],
       ...filtered.map((e) => [
         fmtTime(e.createdAt),
-        e.kind === "view" ? "信息查看" : e.kind === "reach" ? "触达消耗" : "失败退还",
+        e.kind === "view"
+          ? "信息查看"
+          : e.kind === "reach"
+            ? "触达消耗"
+            : e.kind === "refund"
+              ? "失败退还"
+              : "充值",
         e.targetKind === "enterprise" ? "企业" : "人物",
         e.targetName,
         e.parentRef?.name ?? "",
@@ -161,7 +182,7 @@ function BillingPage() {
             : "",
         e.platform ?? "",
         e.detail ?? "",
-        `${e.kind === "refund" ? "+" : "-"}${e.cost}`,
+        `${e.kind === "refund" || e.kind === "recharge" ? "+" : "-"}${e.cost}`,
       ]),
     ];
     const csv = rows
@@ -212,7 +233,7 @@ function BillingPage() {
           <div className="flex-1">
             <h1 className="text-xl font-bold">账单</h1>
             <p className="text-white/85 text-sm mt-0.5">
-              统一查看关键信息查看与触达动作产生的积分消耗明细
+              统一查看信息查看、触达、退还、充值等积分流水
             </p>
           </div>
           <div className="flex items-stretch gap-4">
@@ -294,7 +315,7 @@ function BillingPage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
         <StatCard
           icon={<Wallet className="h-5 w-5" />}
           label="净消耗"
@@ -320,6 +341,14 @@ function BillingPage() {
           icon={<Undo2 className="h-5 w-5" />}
           label="失败退还"
           value={stats.refund}
+          unit="积分"
+          tone="emerald"
+          positive
+        />
+        <StatCard
+          icon={<Wallet className="h-5 w-5" />}
+          label="累计充值"
+          value={stats.recharge}
           unit="积分"
           tone="emerald"
           positive
@@ -357,6 +386,13 @@ function BillingPage() {
             失败退还{" "}
             <span className="ml-1 text-muted-foreground">
               {ledger.filter((e) => e.kind === "refund").length}
+            </span>
+          </Tab>
+          <Tab active={tab === "recharge"} onClick={() => setTab("recharge")}>
+            <Wallet className="h-3.5 w-3.5 mr-1 inline" />
+            充值{" "}
+            <span className="ml-1 text-muted-foreground">
+              {ledger.filter((e) => e.kind === "recharge").length}
             </span>
           </Tab>
         </div>
@@ -428,6 +464,14 @@ function BillingPage() {
                 </span>
               </span>
             )}
+            {filteredRecharge > 0 && (
+              <span>
+                充值{" "}
+                <span className="font-semibold text-emerald-600 tabular-nums">
+                  +{filteredRecharge}
+                </span>
+              </span>
+            )}
           </div>
         </div>
 
@@ -459,7 +503,7 @@ function BillingPage() {
                 <TableHead>明细</TableHead>
                 <TableHead className="w-[110px] text-right">
                   <span className="inline-flex items-center gap-1">
-                    消耗
+                    积分变动
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
@@ -471,7 +515,7 @@ function BillingPage() {
                         </button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        信息查看 5 / 字段 · 触达 10 / 次 · 失败自动退还
+                        信息查看 5 / 字段 · 触达 10 / 次 · 失败自动退还 · 充值正向入账
                       </TooltipContent>
                     </Tooltip>
                   </span>
@@ -501,10 +545,12 @@ function BillingPage() {
                   <TableCell
                     className={cn(
                       "text-right font-semibold tabular-nums",
-                      e.kind === "refund" ? "text-emerald-600" : "text-rose-600",
+                      e.kind === "refund" || e.kind === "recharge"
+                        ? "text-emerald-600"
+                        : "text-rose-600",
                     )}
                   >
-                    {e.kind === "refund" ? "+" : "-"}
+                    {e.kind === "refund" || e.kind === "recharge" ? "+" : "-"}
                     {e.cost}
                   </TableCell>
                 </TableRow>
@@ -606,6 +652,14 @@ function KindBadge({ entry }: { entry: LedgerEntry }) {
       </span>
     );
   }
+  if (entry.kind === "recharge") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-primary/10 text-primary border-primary/20">
+        <Wallet className="h-3 w-3" />
+        充值
+      </span>
+    );
+  }
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-violet-50 text-violet-700 border-violet-200">
       <Send className="h-3 w-3" />
@@ -615,6 +669,20 @@ function KindBadge({ entry }: { entry: LedgerEntry }) {
 }
 
 function FieldCell({ entry }: { entry: LedgerEntry }) {
+  if (entry.kind === "recharge") {
+    const label =
+      entry.paymentMethod === "alipay"
+        ? "支付宝"
+        : entry.paymentMethod === "corp"
+          ? "对公转账"
+          : "微信支付";
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Wallet className="h-3.5 w-3.5" />
+        <span className="text-foreground">{label}</span>
+      </span>
+    );
+  }
   if (entry.kind === "view") {
     const Icon: Record<ViewField, typeof Mail> = {
       email: Mail,
@@ -650,6 +718,19 @@ function FieldCell({ entry }: { entry: LedgerEntry }) {
 }
 
 function TargetCell({ entry: e }: { entry: LedgerEntry }) {
+  if (e.kind === "recharge") {
+    return (
+      <div className="flex items-center gap-2.5 min-w-0">
+        <div className="h-8 w-8 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+          <Wallet className="h-4 w-4" />
+        </div>
+        <div className="min-w-0">
+          <div className="font-medium truncate text-sm">{e.targetName}</div>
+          <div className="text-xs text-muted-foreground tabular-nums">{e.orderNo ?? "—"}</div>
+        </div>
+      </div>
+    );
+  }
   if (e.targetKind === "enterprise") {
     return (
       <Link

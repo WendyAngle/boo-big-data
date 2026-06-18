@@ -33,6 +33,7 @@ import {
   isExpiringSoon,
   type RechargePackage,
 } from "@/lib/credits-balance";
+import { useLedger, recordRecharge } from "@/lib/credits-ledger";
 
 type FromSource = "billing" | "leads" | "reach" | "home";
 type Intent = "lowBalance" | "expiring" | undefined;
@@ -109,6 +110,11 @@ function RechargePage() {
   const [lastOrder, setLastOrder] = useState<{ no: string; credits: number; price: number } | null>(
     null,
   );
+  const ledger = useLedger();
+  const recentRecharges = useMemo(
+    () => ledger.filter((e) => e.kind === "recharge").slice(0, 5),
+    [ledger],
+  );
 
   const isCustom = selectedId === CUSTOM_ID;
   const pkg = useMemo<RechargePackage | null>(
@@ -147,6 +153,14 @@ function RechargePage() {
     window.setTimeout(() => {
       const no = fmtOrderNo();
       addCredits(totalCredits);
+      recordRecharge({
+        orderNo: no,
+        packageLabel: order.label,
+        credits: order.credits,
+        bonus: order.bonus,
+        price: order.price,
+        paymentMethod: method,
+      });
       setLastOrder({ no, credits: totalCredits, price: order.price });
       setPaying(false);
       toast.success("充值成功（演示）", {
@@ -500,50 +514,44 @@ function RechargePage() {
               <h2 className="text-sm font-semibold">最近充值</h2>
               <Link
                 to="/outreach/billing"
+                search={{ tab: "recharge" }}
                 className="text-xs text-primary hover:underline inline-flex items-center"
               >
                 查看全部账单 <ChevronRight className="h-3.5 w-3.5" />
               </Link>
             </header>
-            <div className="divide-y">
-              {(lastOrder
-                ? [
-                    {
-                      no: lastOrder.no,
-                      time: "刚刚",
-                      credits: lastOrder.credits,
-                      price: lastOrder.price,
-                    },
-                  ]
-                : []
-              )
-                .concat([
-                  { no: "R20260612143012", time: "2026-06-12 14:30", credits: 2100, price: 179 },
-                  { no: "R20260520091205", time: "2026-05-20 09:12", credits: 500, price: 49 },
-                  { no: "R20260408164422", time: "2026-04-08 16:44", credits: 5400, price: 429 },
-                ])
-                .slice(0, 5)
-                .map((r) => (
+            {recentRecharges.length === 0 ? (
+              <div className="px-5 py-10 text-center text-sm text-muted-foreground">
+                还没有充值记录，完成首次充值后将在此显示
+              </div>
+            ) : (
+              <div className="divide-y">
+                {recentRecharges.map((r) => (
                   <div
-                    key={r.no}
+                    key={r.id}
                     className="px-5 py-3 flex items-center justify-between text-sm hover:bg-muted/30"
                   >
                     <div className="flex items-center gap-3">
                       <Receipt className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <div className="font-medium tabular-nums">{r.no}</div>
-                        <div className="text-xs text-muted-foreground tabular-nums">{r.time}</div>
+                        <div className="font-medium tabular-nums">{r.orderNo ?? r.id}</div>
+                        <div className="text-xs text-muted-foreground tabular-nums">
+                          {formatExpiry(r.createdAt).slice(0, 16)} · {r.targetName}
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="font-semibold text-emerald-600 tabular-nums">
-                        +{r.credits.toLocaleString()} 积分
+                        +{r.cost.toLocaleString()} 积分
                       </div>
-                      <div className="text-xs text-muted-foreground tabular-nums">¥ {r.price}</div>
+                      <div className="text-xs text-muted-foreground tabular-nums">
+                        ¥ {r.price ?? "—"}
+                      </div>
                     </div>
                   </div>
                 ))}
-            </div>
+              </div>
+            )}
           </section>
         </div>
 
