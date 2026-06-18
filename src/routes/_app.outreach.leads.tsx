@@ -448,54 +448,96 @@ function SearchTab() {
   const [kw, setKw] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<LeadItem[]>([]);
-  const [activeKw, setActiveKw] = useState("");
+  const [activeKws, setActiveKws] = useState<string[]>([]);
   const [historyTick, setHistoryTick] = useState(0);
   const history = useMemo(() => getSearchHistory(), [historyTick, results]);
 
+  const parseKeywords = (raw: string): string[] => {
+    // 支持 逗号/分号/顿号（中英文）/ 换行 / 中英文空格
+    const parts = raw
+      .split(/[,，;；、\s\u3000\n\r]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    // 去重，保持顺序
+    return Array.from(new Set(parts));
+  };
+
   const submit = (override?: { kw?: string }) => {
-    const word = (override?.kw ?? kw).trim();
-    if (!word) {
+    const raw = override?.kw ?? kw;
+    const words = parseKeywords(raw);
+    if (words.length === 0) {
       toast.error("请输入搜索关键词");
       return;
     }
-    pushSearchHistory(word);
+    words.forEach((w) => pushSearchHistory(w));
     setHistoryTick((n) => n + 1);
-    setActiveKw(word);
-    if (override?.kw !== undefined) setKw(word);
+    setActiveKws(words);
+    if (override?.kw !== undefined) setKw(raw);
     setLoading(true);
     setTimeout(() => {
-      const r = searchLeads(word, "all", 12);
-      setResults(r);
+      // 多关键词合并：以企业 id 聚合，取最高匹配度，合并理由（去重）
+      const merged = new Map<string, LeadItem>();
+      for (const w of words) {
+        const part = searchLeads(w, "all", 24);
+        for (const item of part) {
+          const prev = merged.get(item.enterprise.id);
+          if (!prev) {
+            merged.set(item.enterprise.id, { ...item });
+          } else {
+            prev.matchScore = Math.max(prev.matchScore, item.matchScore);
+            const reasons = Array.from(
+              new Set([...prev.matchReasons, ...item.matchReasons]),
+            ).slice(0, 4);
+            prev.matchReasons = reasons;
+          }
+        }
+      }
+      const list = Array.from(merged.values())
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, 12);
+      setResults(list);
       setLoading(false);
     }, 500);
   };
 
   const clear = () => {
     setResults([]);
-    setActiveKw("");
+    setActiveKws([]);
     setLoading(false);
   };
 
   const hasResults = results.length > 0;
-  const hasSearched = activeKw !== "" && !loading;
+  const hasSearched = activeKws.length > 0 && !loading;
+  const activeKwJoined = activeKws.join(" / ");
 
   return (
     <div className="space-y-5">
       <Card className="p-5 space-y-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-start gap-2">
           <div className="relative flex-1">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
+            <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
+            <Textarea
               value={kw}
               onChange={(e) => setKw(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submit()}
-              placeholder="输入企业 / 商品 / HS 编码关键词…"
-              className="pl-9 h-10"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  submit();
+                }
+              }}
+              placeholder="输入企业 / 商品 / HS 编码关键词，支持多关键词：逗号、分号、顿号、换行或空格分隔（如：花岗岩, 大理石；680100 钢材）"
+              className="pl-9 pt-2 min-h-[64px] resize-y"
+              rows={2}
             />
           </div>
-          <Button onClick={() => submit()} className="h-10 px-5 gap-1.5">
+          <Button onClick={() => submit()} className="h-10 px-5 gap-1.5 shrink-0">
             <Search className="h-4 w-4" /> 搜索线索
           </Button>
+        </div>
+        <div className="text-[11px] text-muted-foreground -mt-2">
+          支持多关键词：<span className="font-mono">,</span> <span className="font-mono">，</span>{" "}
+          <span className="font-mono">;</span> <span className="font-mono">；</span>{" "}
+          <span className="font-mono">、</span> 换行 或 空格 分隔 · Enter 搜索，Shift+Enter 换行
         </div>
 
         <div className="space-y-2">
@@ -541,7 +583,9 @@ function SearchTab() {
       {loading && (
         <Card className="p-12 text-center border-dashed">
           <Loader2 className="h-7 w-7 mx-auto text-primary animate-spin" />
-          <div className="mt-3 font-medium">正在为「{activeKw}」匹配线索…</div>
+          <div className="mt-3 font-medium">
+            正在为「{activeKwJoined}」匹配线索…
+          </div>
           <div className="text-xs text-muted-foreground mt-1">
             扫描企业库、贸易记录与联系方式
           </div>
@@ -551,16 +595,25 @@ function SearchTab() {
       {hasSearched && hasResults && (
         <>
           <Card className="px-5 py-3 flex flex-wrap items-center gap-3 bg-primary/[0.04] border-primary/15">
-            <div className="flex items-center gap-2 text-sm">
-              <Search className="h-4 w-4 text-primary" />
-              <span>
+            <div className="flex items-center gap-2 text-sm flex-wrap">
+              <Search className="h-4 w-4 text-primary shrink-0" />
+              <span className="shrink-0">
                 找到{" "}
                 <span className="font-semibold text-primary tabular-nums">
                   {results.length}
                 </span>{" "}
                 条线索 · 关键词
-                <span className="text-foreground font-medium">「{activeKw}」</span>
               </span>
+              <div className="flex flex-wrap gap-1">
+                {activeKws.map((w) => (
+                  <span
+                    key={w}
+                    className="inline-flex items-center px-2 h-5 rounded-full text-[11px] bg-primary/10 text-primary font-medium"
+                  >
+                    {w}
+                  </span>
+                ))}
+              </div>
             </div>
             <div className="ml-auto flex items-center gap-2">
               <button
@@ -571,7 +624,7 @@ function SearchTab() {
               </button>
               <Link
                 to="/outreach/enterprise"
-                search={{ q: activeKw }}
+                search={{ q: activeKws.join(" ") }}
                 className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
               >
                 在企业库中查看完整结果 <ChevronRight className="h-3.5 w-3.5" />
@@ -593,13 +646,13 @@ function SearchTab() {
             <Search className="h-7 w-7" />
           </div>
           <div className="font-medium">
-            没有找到与「{activeKw}」匹配的线索
+            没有找到与「{activeKwJoined}」匹配的线索
           </div>
           <div className="text-sm text-muted-foreground mt-1">
             建议放宽搜索类型 · 换个关键词 · 或前往
             <Link
               to="/outreach/enterprise"
-              search={{ q: activeKw }}
+              search={{ q: activeKws.join(" ") }}
               className="text-primary hover:underline mx-1"
             >
               企业库
