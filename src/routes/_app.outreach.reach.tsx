@@ -374,7 +374,10 @@ function ReachPage() {
                               <div className="font-medium">失败原因</div>
                               <div className="mt-0.5">{r.failReason}</div>
                               <div className="mt-1 text-muted-foreground">
-                                已自动退还 {COST_REACH} 积分，可在右侧「重新触达」。
+                                已自动退还 {COST_REACH} 积分。
+                                {!isRetryableFailReason(r.failReason) && (
+                                  <> 该原因不支持重新触达，建议核实联系方式后重新发起。</>
+                                )}
                               </div>
                             </div>
                           </TooltipContent>
