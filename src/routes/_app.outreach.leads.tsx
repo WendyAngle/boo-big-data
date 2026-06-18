@@ -29,6 +29,8 @@ import {
   EyeOff,
   Info,
   Undo2,
+  HelpCircle,
+  Coins,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,6 +52,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
 import { MaskedField } from "@/components/MaskedField";
 import { ReachButton } from "@/components/ReachButton";
@@ -67,6 +74,9 @@ import {
   getSearchHistory,
   pushSearchHistory,
   AI_DAILY_FREE,
+  AI_OVERAGE_POINTS,
+  getPointBalance,
+  consumePoints,
   type LeadItem,
   type LeadTier,
   getLeadFeedback,
