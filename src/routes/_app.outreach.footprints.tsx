@@ -563,8 +563,8 @@ function FootprintsPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="text-xs text-muted-foreground">
-                  按范围清理足迹
+                <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+                  选择清理范围
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -577,7 +577,14 @@ function FootprintsPage() {
                     })
                   }
                 >
-                  清理当前筛选 ({filtered.length})
+                  <div className="flex flex-col">
+                    <span>清理当前筛选 ({filtered.length})</span>
+                    {filtered.length === 0 && (
+                      <span className="text-[11px] text-muted-foreground">
+                        当前筛选结果为空
+                      </span>
+                    )}
+                  </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={!date}
@@ -594,7 +601,12 @@ function FootprintsPage() {
                     });
                   }}
                 >
-                  清理选中日期
+                  <div className="flex flex-col">
+                    <span>清理选中日期</span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {date ? formatDateKey(date) : "请先在左侧日历选择日期"}
+                    </span>
+                  </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
