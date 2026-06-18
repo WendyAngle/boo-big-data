@@ -546,6 +546,7 @@ export function seedDemoLedgerIfEmpty() {
         channel: "email",
         detail: "biz@shhema.com",
         forcedStatus: "failed",
+        failReason: "邮箱无效（地址不存在）",
       },
       {
         id: makeId("r"),
@@ -560,6 +561,7 @@ export function seedDemoLedgerIfEmpty() {
         platform: "LinkedIn",
         detail: "linkedin.com/in/jorge-ramirez",
         forcedStatus: "failed",
+        failReason: "私信发送后长期无响应",
       },
       // ---- 再加 1 个待触达 ----
       {
