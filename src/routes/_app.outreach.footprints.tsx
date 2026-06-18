@@ -221,9 +221,25 @@ function FootprintsPage() {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [mod, setMod] = useState<ModuleFilter>("all");
   const [open, setOpen] = useState(false);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirm, setConfirm] = useState<
+    | null
+    | {
+        title: string;
+        desc: string;
+        ids: string[];
+      }
+  >(null);
+
+  const visible = useMemo(
+    () => ALL_FOOTPRINTS.filter((it) => !hiddenIds.has(it.id)),
+    [hiddenIds],
+  );
 
   const filtered = useMemo(() => {
-    return ALL_FOOTPRINTS.filter((it) => {
+    return visible.filter((it) => {
       if (mod !== "all" && it.module !== mod) return false;
       if (date) {
         const key = formatDateKey(date);
@@ -231,7 +247,7 @@ function FootprintsPage() {
       }
       return true;
     });
-  }, [date, mod]);
+  }, [visible, date, mod]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, FootprintItem[]>();
@@ -250,13 +266,101 @@ function FootprintsPage() {
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: 0, enterprise: 0, product: 0, bill: 0 };
-    for (const it of ALL_FOOTPRINTS) {
+    for (const it of visible) {
       if (date && !it.viewedAt.startsWith(formatDateKey(date))) continue;
       c.all++;
       c[it.module]++;
     }
     return c;
-  }, [date]);
+  }, [visible, date]);
+
+  // ---- Insights aggregations (respect hiddenIds, NOT date filter) ----
+  const trend = useMemo(() => {
+    const days: { key: string; count: number }[] = [];
+    const today = new Date(2026, 5, 17);
+    for (let d = 13; d >= 0; d--) {
+      const x = new Date(today);
+      x.setDate(today.getDate() - d);
+      days.push({ key: formatDateKey(x), count: 0 });
+    }
+    const idx = new Map(days.map((x, i) => [x.key, i] as const));
+    for (const it of visible) {
+      const k = it.viewedAt.slice(0, 10);
+      const i = idx.get(k);
+      if (i !== undefined) days[i].count++;
+    }
+    return days;
+  }, [visible]);
+
+  const modDist = useMemo(() => {
+    const c = { enterprise: 0, product: 0, bill: 0 };
+    for (const it of visible) c[it.module]++;
+    const total = c.enterprise + c.product + c.bill || 1;
+    return { ...c, total };
+  }, [visible]);
+
+  const topEnterprises = useMemo(() => {
+    const map = new Map<
+      string,
+      { id: string; name: string; country?: string; count: number }
+    >();
+    for (const it of visible) {
+      if (it.module !== "enterprise" || !it.enterpriseId) continue;
+      const cur = map.get(it.enterpriseId);
+      if (cur) cur.count++;
+      else
+        map.set(it.enterpriseId, {
+          id: it.enterpriseId,
+          name: it.enterpriseName ?? "—",
+          country: it.enterpriseCountry,
+          count: 1,
+        });
+    }
+    return Array.from(map.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+  }, [visible]);
+
+  // ---- Manage / clear handlers ----
+  const allFilteredIds = useMemo(() => filtered.map((f) => f.id), [filtered]);
+  const allSelected =
+    selectMode &&
+    allFilteredIds.length > 0 &&
+    allFilteredIds.every((id) => selectedIds.has(id));
+
+  function toggleOne(id: string) {
+    setSelectedIds((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  }
+
+  function toggleAll() {
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(allFilteredIds));
+  }
+
+  function exitSelect() {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  }
+
+  function applyDelete(ids: string[]) {
+    if (ids.length === 0) return;
+    setHiddenIds((prev) => {
+      const n = new Set(prev);
+      ids.forEach((i) => n.add(i));
+      return n;
+    });
+    setSelectedIds((prev) => {
+      const n = new Set(prev);
+      ids.forEach((i) => n.delete(i));
+      return n;
+    });
+    toast.success(`已清理 ${ids.length} 条足迹`);
+  }
 
   const moduleOptions: { key: ModuleFilter; label: string; icon: typeof Building2 }[] = [
     { key: "all", label: "全部", icon: Footprints },
@@ -266,6 +370,7 @@ function FootprintsPage() {
   ];
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-8 space-y-6">
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <span>触达客户管理</span>
@@ -282,20 +387,48 @@ function FootprintsPage() {
             <Footprints className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">足迹</h1>
+            <div className="flex items-center gap-1.5">
+              <h1 className="text-xl font-bold">足迹</h1>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="足迹与收藏的区别"
+                    className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/15 hover:bg-white/25 text-white/90"
+                  >
+                    <HelpCircle className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-xs">
+                  <div className="space-y-1.5 text-xs leading-relaxed">
+                    <div>
+                      <span className="font-semibold">足迹</span>
+                      ：系统自动记录的浏览轨迹，用于回溯与跟进。
+                    </div>
+                    <div>
+                      <span className="font-semibold">收藏</span>
+                      ：您主动标记的重点对象，长期保留、便于触达。
+                    </div>
+                    <div className="text-muted-foreground">
+                      在足迹卡片上点击 ☆ 可一键收藏。
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </div>
             <p className="text-white/85 text-sm mt-0.5">
               记录您在企业、商品与提单页面的浏览轨迹，便于回溯与快速跟进
             </p>
           </div>
           <div className="ml-auto hidden md:flex items-center gap-6 text-sm">
             <div className="text-center">
-              <div className="text-2xl font-bold">{ALL_FOOTPRINTS.length}</div>
+              <div className="text-2xl font-bold">{visible.length}</div>
               <div className="text-white/70 text-xs">累计浏览</div>
             </div>
             <div className="h-8 w-px bg-white/20" />
             <div className="text-center">
               <div className="text-2xl font-bold">
-                {new Set(ALL_FOOTPRINTS.map((i) => i.viewedAt.slice(0, 10))).size}
+                {new Set(visible.map((i) => i.viewedAt.slice(0, 10))).size}
               </div>
               <div className="text-white/70 text-xs">活跃天数</div>
             </div>
@@ -315,6 +448,8 @@ function FootprintsPage() {
           </Button>
         </div>
       </section>
+
+      <InsightsStrip trend={trend} modDist={modDist} topEnterprises={topEnterprises} />
 
       <Card className="p-4">
         <div className="flex flex-wrap items-center gap-3">
@@ -394,21 +529,137 @@ function FootprintsPage() {
             })}
           </div>
 
-          {(date || mod !== "all") && (
+          <div className="ml-auto flex items-center gap-2">
+            {(date || mod !== "all") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setDate(undefined);
+                  setMod("all");
+                }}
+              >
+                <X className="h-4 w-4 mr-1" />
+                清除筛选
+              </Button>
+            )}
             <Button
-              variant="ghost"
+              variant={selectMode ? "default" : "outline"}
               size="sm"
-              className="ml-auto"
+              className="h-9"
               onClick={() => {
-                setDate(undefined);
-                setMod("all");
+                if (selectMode) exitSelect();
+                else setSelectMode(true);
               }}
             >
-              <X className="h-4 w-4 mr-1" />
-              清除筛选
+              <Settings2 className="h-4 w-4 mr-1" />
+              {selectMode ? "退出管理" : "管理"}
             </Button>
-          )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9">
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  清理
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="text-xs text-muted-foreground">
+                  按范围清理足迹
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  disabled={filtered.length === 0}
+                  onSelect={() =>
+                    setConfirm({
+                      title: "清理当前筛选结果？",
+                      desc: `将清除 ${filtered.length} 条与当前筛选匹配的足迹记录，操作不可撤销。`,
+                      ids: filtered.map((i) => i.id),
+                    })
+                  }
+                >
+                  清理当前筛选 ({filtered.length})
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={!date}
+                  onSelect={() => {
+                    if (!date) return;
+                    const key = formatDateKey(date);
+                    const ids = visible
+                      .filter((i) => i.viewedAt.startsWith(key))
+                      .map((i) => i.id);
+                    setConfirm({
+                      title: `清理 ${key} 当日足迹？`,
+                      desc: `将清除该日全部 ${ids.length} 条浏览记录，操作不可撤销。`,
+                      ids,
+                    });
+                  }}
+                >
+                  清理选中日期
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  disabled={visible.length === 0}
+                  onSelect={() =>
+                    setConfirm({
+                      title: "清理全部足迹？",
+                      desc: `将清除剩余 ${visible.length} 条全部浏览记录，操作不可撤销。`,
+                      ids: visible.map((i) => i.id),
+                    })
+                  }
+                >
+                  清理全部 ({visible.length})
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
+
+        {selectMode && (
+          <div className="mt-3 pt-3 border-t flex flex-wrap items-center gap-2 text-sm">
+            <Checkbox
+              checked={allSelected}
+              onCheckedChange={toggleAll}
+              aria-label="全选"
+            />
+            <button
+              type="button"
+              onClick={toggleAll}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {allSelected ? "取消全选" : "全选当前筛选"}
+            </button>
+            <span className="text-muted-foreground">·</span>
+            <span className="text-muted-foreground">
+              已选 <span className="text-foreground font-medium">{selectedIds.size}</span> 条
+            </span>
+            <div className="ml-auto flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={selectedIds.size === 0}
+                onClick={() => setSelectedIds(new Set())}
+              >
+                取消选择
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={selectedIds.size === 0}
+                onClick={() =>
+                  setConfirm({
+                    title: `删除已选 ${selectedIds.size} 条足迹？`,
+                    desc: "所选浏览记录将被清除，操作不可撤销。",
+                    ids: Array.from(selectedIds),
+                  })
+                }
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                删除选中
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {grouped.length === 0 ? (
@@ -442,14 +693,48 @@ function FootprintsPage() {
               </div>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {list.map((it) => (
-                  <FootprintCard key={it.id} item={it} />
+                  <FootprintCard
+                    key={it.id}
+                    item={it}
+                    selectMode={selectMode}
+                    selected={selectedIds.has(it.id)}
+                    onToggleSelect={() => toggleOne(it.id)}
+                    onDelete={() => applyDelete([it.id])}
+                  />
                 ))}
               </div>
             </div>
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirm?.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirm?.desc}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (confirm) {
+                  applyDelete(confirm.ids);
+                  if (selectMode && confirm.ids.length === selectedIds.size) {
+                    // selection cleared above
+                  }
+                }
+                setConfirm(null);
+              }}
+            >
+              确认清理
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 }
 
