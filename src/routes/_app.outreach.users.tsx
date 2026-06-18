@@ -71,7 +71,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_app/auth/user/users")({
+export const Route = createFileRoute("/_app/outreach/users")({
   head: () => ({ meta: [{ title: "用户管理 · 用户端 | Boo数据平台" }] }),
   component: UserSideUsersPage,
 });

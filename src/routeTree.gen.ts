@@ -14,6 +14,7 @@ import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppOutreachIndexRouteImport } from './routes/_app.outreach.index'
 import { Route as AppPointsTenantsRouteImport } from './routes/_app.points.tenants'
 import { Route as AppPointsAppsRouteImport } from './routes/_app.points.apps'
+import { Route as AppOutreachUsersRouteImport } from './routes/_app.outreach.users'
 import { Route as AppOutreachReachEmptyRouteImport } from './routes/_app.outreach.reach-empty'
 import { Route as AppOutreachReachRouteImport } from './routes/_app.outreach.reach'
 import { Route as AppOutreachLeadsRouteImport } from './routes/_app.outreach.leads'
@@ -25,7 +26,6 @@ import { Route as AppOutreachEnterpriseRouteImport } from './routes/_app.outreac
 import { Route as AppOutreachBillsRouteImport } from './routes/_app.outreach.bills'
 import { Route as AppOutreachBillingEmptyRouteImport } from './routes/_app.outreach.billing-empty'
 import { Route as AppOutreachBillingRouteImport } from './routes/_app.outreach.billing'
-import { Route as AppAuthUserRouteImport } from './routes/_app.auth.user'
 import { Route as AppOutreachProductsIndexRouteImport } from './routes/_app.outreach.products.index'
 import { Route as AppOutreachEnterpriseIndexRouteImport } from './routes/_app.outreach.enterprise.index'
 import { Route as AppPointsProductsRechargeRouteImport } from './routes/_app.points.products.recharge'
@@ -34,7 +34,6 @@ import { Route as AppPointsProductsBundlesRouteImport } from './routes/_app.poin
 import { Route as AppPointsProductsBasicRouteImport } from './routes/_app.points.products.basic'
 import { Route as AppOutreachProductsHsRouteImport } from './routes/_app.outreach.products.$hs'
 import { Route as AppOutreachEnterpriseIdRouteImport } from './routes/_app.outreach.enterprise.$id'
-import { Route as AppAuthUserUsersRouteImport } from './routes/_app.auth.user.users'
 import { Route as AppOutreachEnterpriseIdIndexRouteImport } from './routes/_app.outreach.enterprise.$id.index'
 import { Route as AppOutreachEnterpriseIdContactIdxRouteImport } from './routes/_app.outreach.enterprise.$id.contact.$idx'
 
@@ -60,6 +59,11 @@ const AppPointsTenantsRoute = AppPointsTenantsRouteImport.update({
 const AppPointsAppsRoute = AppPointsAppsRouteImport.update({
   id: '/points/apps',
   path: '/points/apps',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOutreachUsersRoute = AppOutreachUsersRouteImport.update({
+  id: '/outreach/users',
+  path: '/outreach/users',
   getParentRoute: () => AppRoute,
 } as any)
 const AppOutreachReachEmptyRoute = AppOutreachReachEmptyRouteImport.update({
@@ -119,11 +123,6 @@ const AppOutreachBillingRoute = AppOutreachBillingRouteImport.update({
   path: '/outreach/billing',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAuthUserRoute = AppAuthUserRouteImport.update({
-  id: '/auth/user',
-  path: '/auth/user',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppOutreachProductsIndexRoute =
   AppOutreachProductsIndexRouteImport.update({
     id: '/outreach/products/',
@@ -169,11 +168,6 @@ const AppOutreachEnterpriseIdRoute = AppOutreachEnterpriseIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppOutreachEnterpriseRoute,
 } as any)
-const AppAuthUserUsersRoute = AppAuthUserUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AppAuthUserRoute,
-} as any)
 const AppOutreachEnterpriseIdIndexRoute =
   AppOutreachEnterpriseIdIndexRouteImport.update({
     id: '/',
@@ -189,7 +183,6 @@ const AppOutreachEnterpriseIdContactIdxRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
-  '/auth/user': typeof AppAuthUserRouteWithChildren
   '/outreach/billing': typeof AppOutreachBillingRoute
   '/outreach/billing-empty': typeof AppOutreachBillingEmptyRoute
   '/outreach/bills': typeof AppOutreachBillsRoute
@@ -201,10 +194,10 @@ export interface FileRoutesByFullPath {
   '/outreach/leads': typeof AppOutreachLeadsRoute
   '/outreach/reach': typeof AppOutreachReachRoute
   '/outreach/reach-empty': typeof AppOutreachReachEmptyRoute
+  '/outreach/users': typeof AppOutreachUsersRoute
   '/points/apps': typeof AppPointsAppsRoute
   '/points/tenants': typeof AppPointsTenantsRoute
   '/outreach/': typeof AppOutreachIndexRoute
-  '/auth/user/users': typeof AppAuthUserUsersRoute
   '/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdRouteWithChildren
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
   '/points/products/basic': typeof AppPointsProductsBasicRoute
@@ -218,7 +211,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
-  '/auth/user': typeof AppAuthUserRouteWithChildren
   '/outreach/billing': typeof AppOutreachBillingRoute
   '/outreach/billing-empty': typeof AppOutreachBillingEmptyRoute
   '/outreach/bills': typeof AppOutreachBillsRoute
@@ -229,10 +221,10 @@ export interface FileRoutesByTo {
   '/outreach/leads': typeof AppOutreachLeadsRoute
   '/outreach/reach': typeof AppOutreachReachRoute
   '/outreach/reach-empty': typeof AppOutreachReachEmptyRoute
+  '/outreach/users': typeof AppOutreachUsersRoute
   '/points/apps': typeof AppPointsAppsRoute
   '/points/tenants': typeof AppPointsTenantsRoute
   '/outreach': typeof AppOutreachIndexRoute
-  '/auth/user/users': typeof AppAuthUserUsersRoute
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
   '/points/products/basic': typeof AppPointsProductsBasicRoute
   '/points/products/bundles': typeof AppPointsProductsBundlesRoute
@@ -247,7 +239,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/_app/': typeof AppIndexRoute
-  '/_app/auth/user': typeof AppAuthUserRouteWithChildren
   '/_app/outreach/billing': typeof AppOutreachBillingRoute
   '/_app/outreach/billing-empty': typeof AppOutreachBillingEmptyRoute
   '/_app/outreach/bills': typeof AppOutreachBillsRoute
@@ -259,10 +250,10 @@ export interface FileRoutesById {
   '/_app/outreach/leads': typeof AppOutreachLeadsRoute
   '/_app/outreach/reach': typeof AppOutreachReachRoute
   '/_app/outreach/reach-empty': typeof AppOutreachReachEmptyRoute
+  '/_app/outreach/users': typeof AppOutreachUsersRoute
   '/_app/points/apps': typeof AppPointsAppsRoute
   '/_app/points/tenants': typeof AppPointsTenantsRoute
   '/_app/outreach/': typeof AppOutreachIndexRoute
-  '/_app/auth/user/users': typeof AppAuthUserUsersRoute
   '/_app/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdRouteWithChildren
   '/_app/outreach/products/$hs': typeof AppOutreachProductsHsRoute
   '/_app/points/products/basic': typeof AppPointsProductsBasicRoute
@@ -278,7 +269,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/auth/user'
     | '/outreach/billing'
     | '/outreach/billing-empty'
     | '/outreach/bills'
@@ -290,10 +280,10 @@ export interface FileRouteTypes {
     | '/outreach/leads'
     | '/outreach/reach'
     | '/outreach/reach-empty'
+    | '/outreach/users'
     | '/points/apps'
     | '/points/tenants'
     | '/outreach/'
-    | '/auth/user/users'
     | '/outreach/enterprise/$id'
     | '/outreach/products/$hs'
     | '/points/products/basic'
@@ -307,7 +297,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/auth/user'
     | '/outreach/billing'
     | '/outreach/billing-empty'
     | '/outreach/bills'
@@ -318,10 +307,10 @@ export interface FileRouteTypes {
     | '/outreach/leads'
     | '/outreach/reach'
     | '/outreach/reach-empty'
+    | '/outreach/users'
     | '/points/apps'
     | '/points/tenants'
     | '/outreach'
-    | '/auth/user/users'
     | '/outreach/products/$hs'
     | '/points/products/basic'
     | '/points/products/bundles'
@@ -335,7 +324,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_app'
     | '/_app/'
-    | '/_app/auth/user'
     | '/_app/outreach/billing'
     | '/_app/outreach/billing-empty'
     | '/_app/outreach/bills'
@@ -347,10 +335,10 @@ export interface FileRouteTypes {
     | '/_app/outreach/leads'
     | '/_app/outreach/reach'
     | '/_app/outreach/reach-empty'
+    | '/_app/outreach/users'
     | '/_app/points/apps'
     | '/_app/points/tenants'
     | '/_app/outreach/'
-    | '/_app/auth/user/users'
     | '/_app/outreach/enterprise/$id'
     | '/_app/outreach/products/$hs'
     | '/_app/points/products/basic'
@@ -402,6 +390,13 @@ declare module '@tanstack/react-router' {
       path: '/points/apps'
       fullPath: '/points/apps'
       preLoaderRoute: typeof AppPointsAppsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/outreach/users': {
+      id: '/_app/outreach/users'
+      path: '/outreach/users'
+      fullPath: '/outreach/users'
+      preLoaderRoute: typeof AppOutreachUsersRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/outreach/reach-empty': {
@@ -481,13 +476,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachBillingRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/auth/user': {
-      id: '/_app/auth/user'
-      path: '/auth/user'
-      fullPath: '/auth/user'
-      preLoaderRoute: typeof AppAuthUserRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/outreach/products/': {
       id: '/_app/outreach/products/'
       path: '/outreach/products'
@@ -544,13 +532,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachEnterpriseIdRouteImport
       parentRoute: typeof AppOutreachEnterpriseRoute
     }
-    '/_app/auth/user/users': {
-      id: '/_app/auth/user/users'
-      path: '/users'
-      fullPath: '/auth/user/users'
-      preLoaderRoute: typeof AppAuthUserUsersRouteImport
-      parentRoute: typeof AppAuthUserRoute
-    }
     '/_app/outreach/enterprise/$id/': {
       id: '/_app/outreach/enterprise/$id/'
       path: '/'
@@ -567,18 +548,6 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-
-interface AppAuthUserRouteChildren {
-  AppAuthUserUsersRoute: typeof AppAuthUserUsersRoute
-}
-
-const AppAuthUserRouteChildren: AppAuthUserRouteChildren = {
-  AppAuthUserUsersRoute: AppAuthUserUsersRoute,
-}
-
-const AppAuthUserRouteWithChildren = AppAuthUserRoute._addFileChildren(
-  AppAuthUserRouteChildren,
-)
 
 interface AppOutreachEnterpriseIdRouteChildren {
   AppOutreachEnterpriseIdIndexRoute: typeof AppOutreachEnterpriseIdIndexRoute
@@ -614,7 +583,6 @@ const AppOutreachEnterpriseRouteWithChildren =
 
 interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
-  AppAuthUserRoute: typeof AppAuthUserRouteWithChildren
   AppOutreachBillingRoute: typeof AppOutreachBillingRoute
   AppOutreachBillingEmptyRoute: typeof AppOutreachBillingEmptyRoute
   AppOutreachBillsRoute: typeof AppOutreachBillsRoute
@@ -626,6 +594,7 @@ interface AppRouteChildren {
   AppOutreachLeadsRoute: typeof AppOutreachLeadsRoute
   AppOutreachReachRoute: typeof AppOutreachReachRoute
   AppOutreachReachEmptyRoute: typeof AppOutreachReachEmptyRoute
+  AppOutreachUsersRoute: typeof AppOutreachUsersRoute
   AppPointsAppsRoute: typeof AppPointsAppsRoute
   AppPointsTenantsRoute: typeof AppPointsTenantsRoute
   AppOutreachIndexRoute: typeof AppOutreachIndexRoute
@@ -639,7 +608,6 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
-  AppAuthUserRoute: AppAuthUserRouteWithChildren,
   AppOutreachBillingRoute: AppOutreachBillingRoute,
   AppOutreachBillingEmptyRoute: AppOutreachBillingEmptyRoute,
   AppOutreachBillsRoute: AppOutreachBillsRoute,
@@ -651,6 +619,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachLeadsRoute: AppOutreachLeadsRoute,
   AppOutreachReachRoute: AppOutreachReachRoute,
   AppOutreachReachEmptyRoute: AppOutreachReachEmptyRoute,
+  AppOutreachUsersRoute: AppOutreachUsersRoute,
   AppPointsAppsRoute: AppPointsAppsRoute,
   AppPointsTenantsRoute: AppPointsTenantsRoute,
   AppOutreachIndexRoute: AppOutreachIndexRoute,
