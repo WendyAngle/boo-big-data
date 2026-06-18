@@ -422,7 +422,33 @@ function FavoriteCard({
 
   const target = useTarget(record);
 
-  const inner = (
+  const content = (
+    <>
+      <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center shrink-0", meta.toneBg, meta.tone)}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <Badge
+            variant="outline"
+            className={cn("text-[10px] px-1.5 py-0 h-4 border-current/40", meta.tone)}
+          >
+            {meta.label}
+          </Badge>
+          <span className="ml-auto text-[11px] text-muted-foreground font-mono">
+            {record.createdAt.slice(0, 10)}
+          </span>
+        </div>
+        <div className="font-medium text-sm truncate">{record.title}</div>
+        {record.subtitle && <FavoriteSubtitle record={record} />}
+        <FavoriteMeta record={record} />
+      </div>
+    </>
+  );
+
+  const contentClassName = "group flex items-start gap-3 flex-1 min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
+  const card = (linkedContent: React.ReactNode) => (
     <Card
       className={cn(
         "p-4 h-full transition-all relative",
@@ -431,13 +457,7 @@ function FavoriteCard({
       )}
     >
       <div className="flex items-start gap-3">
-        <div
-          className="pt-0.5"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-        >
+        <div className="pt-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
           <Checkbox
             checked={selected}
             onCheckedChange={onToggleSelect}
@@ -445,65 +465,47 @@ function FavoriteCard({
             aria-label="选择"
           />
         </div>
-        <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center shrink-0", meta.toneBg, meta.tone)}>
-          <Icon className="h-5 w-5" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Badge
-              variant="outline"
-              className={cn("text-[10px] px-1.5 py-0 h-4 border-current/40", meta.tone)}
-            >
-              {meta.label}
-            </Badge>
-            <span className="ml-auto text-[11px] text-muted-foreground font-mono">
-              {record.createdAt.slice(0, 10)}
-            </span>
-          </div>
-          <div className="font-medium text-sm truncate">{record.title}</div>
-          {record.subtitle && <FavoriteSubtitle record={record} />}
-          <FavoriteMeta record={record} />
-        </div>
+        {linkedContent}
       </div>
     </Card>
   );
 
-  if (!target) return inner;
+  if (!target) return card(<div className={contentClassName}>{content}</div>);
 
   if (target.kind === "enterprise") {
     return (
-      <Link
+      {card(<Link
         to="/outreach/enterprise/$id"
         params={{ id: target.id }}
         hash={target.hash}
-        className="group block"
+        className={contentClassName}
       >
-        {inner}
-      </Link>
+        {content}
+      </Link>)}
     );
   }
   if (target.kind === "contact") {
     return (
-      <Link
+      {card(<Link
         to="/outreach/enterprise/$id/contact/$idx"
         params={{ id: target.id, idx: target.idx }}
-        className="group block"
+        className={contentClassName}
       >
-        {inner}
-      </Link>
+        {content}
+      </Link>)}
     );
   }
   if (target.kind === "product") {
     return (
-      <Link to="/outreach/products/$hs" params={{ hs: target.id }} className="group block">
-        {inner}
-      </Link>
+      {card(<Link to="/outreach/products/$hs" params={{ hs: target.id }} className={contentClassName}>
+        {content}
+      </Link>)}
     );
   }
   return (
-    <Link to="/outreach/bills" className="group block">
-      {inner}
-    </Link>
+    {card(<Link to="/outreach/bills" className={contentClassName}>
+      {content}
+    </Link>)}
   );
 }
 
