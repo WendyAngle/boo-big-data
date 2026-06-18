@@ -114,7 +114,8 @@ function genFootprints(): FootprintItem[] {
         moduleIdx === 0 ? "enterprise" : moduleIdx === 1 ? "product" : "bill";
       const hh = String(8 + ((s >> 3) % 12)).padStart(2, "0");
       const mm = String((s >> 5) % 60).padStart(2, "0");
-      const viewedAt = `${dateStr} ${hh}:${mm}`;
+      const ss = String((s >> 7) % 60).padStart(2, "0");
+      const viewedAt = `${dateStr} ${hh}:${mm}:${ss}`;
       if (moduleKey === "enterprise") {
         const ent = ENTERPRISES[s % ENTERPRISES.length];
         items.push({
@@ -436,7 +437,7 @@ function FootprintCard({ item }: { item: FootprintItem }) {
                 </Badge>
                 <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  {item.viewedAt.slice(11)}
+                  {formatTime(item.viewedAt)}
                 </span>
               </div>
               <div className="font-medium text-sm truncate group-hover:text-primary">
@@ -486,7 +487,7 @@ function FootprintCard({ item }: { item: FootprintItem }) {
                 </Badge>
                 <span className="ml-auto text-[11px] text-muted-foreground flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  {item.viewedAt.slice(11)}
+                  {formatTime(item.viewedAt)}
                 </span>
               </div>
               <div className="font-medium text-sm truncate group-hover:text-primary">
@@ -527,7 +528,7 @@ function FootprintCard({ item }: { item: FootprintItem }) {
               <span className="text-[11px] text-muted-foreground font-mono">{item.billNo}</span>
               <span className="ml-auto text-[11px] text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {item.viewedAt.slice(11)}
+                {formatTime(item.viewedAt)}
               </span>
             </div>
             <div className="font-medium text-sm truncate group-hover:text-primary">
