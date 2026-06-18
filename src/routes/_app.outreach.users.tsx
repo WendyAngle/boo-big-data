@@ -931,7 +931,7 @@ function DetailRow({ k, v }: { k: string; v: React.ReactNode }) {
 
 /* ---------------- Stat Card ---------------- */
 
-type Tone = "primary" | "emerald" | "cyan";
+type Tone = "primary" | "emerald" | "cyan" | "rose";
 const toneMap: Record<Tone, { bg: string; icon: string; ring: string }> = {
   primary: {
     bg: "from-primary/15 to-primary/0",
@@ -947,6 +947,11 @@ const toneMap: Record<Tone, { bg: string; icon: string; ring: string }> = {
     bg: "from-cyan-200/40 to-cyan-100/0",
     icon: "bg-cyan-100 text-cyan-700",
     ring: "ring-cyan-200/40",
+  },
+  rose: {
+    bg: "from-rose-200/40 to-rose-100/0",
+    icon: "bg-rose-100 text-rose-700",
+    ring: "ring-rose-200/40",
   },
 };
 
