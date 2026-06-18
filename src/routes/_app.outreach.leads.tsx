@@ -308,51 +308,12 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
   return (
     <div className="space-y-5">
       {/* 画像摘要 + 操作 */}
-      <Card className="p-5 flex flex-col md:flex-row gap-5 items-stretch md:items-center">
-        <div className="flex items-start gap-4 flex-1 min-w-0">
-          <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center ring-1 ring-primary/20 shrink-0">
-            <Target className="h-6 w-6" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <div className="font-semibold">当前企业画像</div>
-              <Badge
-                variant="secondary"
-                className="text-[10px] bg-primary/10 text-primary"
-              >
-                完整度 {completeness}%
-              </Badge>
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
-              <span>
-                行业：
-                <span className="text-foreground">
-                  {profile.industries.join("、") || "未填写"}
-                </span>
-              </span>
-              <span>
-                主营：
-                <span className="text-foreground">
-                  {profile.mainProducts.join("、") || "未填写"}
-                </span>
-              </span>
-              <span>
-                目标市场：
-                <span className="text-foreground">
-                  {profile.targetCountries.join("、") || "未填写"}
-                </span>
-              </span>
-            </div>
-            <Progress value={completeness} className="mt-2 h-1.5" />
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" onClick={onGoProfile} className="gap-1.5">
-            <Wand2 className="h-4 w-4" />
-            完善画像
-          </Button>
-        </div>
-      </Card>
+      <ProfileHealthCard
+        profile={profile}
+        completeness={completeness}
+        onPatch={handleProfilePatch}
+        onOpenFull={onGoProfile}
+      />
 
       {/* 演示提示 + 偏好控制 */}
       <Card className="px-4 py-3 flex flex-wrap items-center gap-3 bg-amber-50/60 border-amber-200/70 text-amber-900">
