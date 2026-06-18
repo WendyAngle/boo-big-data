@@ -388,6 +388,13 @@ function BillingPage() {
               {ledger.filter((e) => e.kind === "refund").length}
             </span>
           </Tab>
+          <Tab active={tab === "recharge"} onClick={() => setTab("recharge")}>
+            <Wallet className="h-3.5 w-3.5 mr-1 inline" />
+            充值{" "}
+            <span className="ml-1 text-muted-foreground">
+              {ledger.filter((e) => e.kind === "recharge").length}
+            </span>
+          </Tab>
         </div>
         <div className="px-5 py-3 flex items-center gap-3 flex-wrap border-b border-border bg-muted/20">
           <DateRangePicker
