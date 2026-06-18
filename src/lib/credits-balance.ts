@@ -91,12 +91,21 @@ export function useCreditBalance(): CreditBalance {
   );
 }
 
-export const RECHARGE_PACKAGES = [
+export interface RechargePackage {
+  id: string;
+  credits: number;
+  bonus: number;
+  price: number;
+  label: string;
+  popular?: boolean;
+}
+
+export const RECHARGE_PACKAGES: RechargePackage[] = [
   { id: "starter", credits: 500, bonus: 0, price: 49, label: "入门" },
   { id: "standard", credits: 2000, bonus: 100, price: 179, label: "标准", popular: true },
   { id: "pro", credits: 5000, bonus: 400, price: 429, label: "专业" },
   { id: "enterprise", credits: 10000, bonus: 1200, price: 799, label: "企业" },
-] as const;
+];
 
 export function isBalanceLow(b: CreditBalance) {
   return b.balance < 50;
