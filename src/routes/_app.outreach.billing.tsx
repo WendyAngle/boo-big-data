@@ -545,10 +545,12 @@ function BillingPage() {
                   <TableCell
                     className={cn(
                       "text-right font-semibold tabular-nums",
-                      e.kind === "refund" ? "text-emerald-600" : "text-rose-600",
+                      e.kind === "refund" || e.kind === "recharge"
+                        ? "text-emerald-600"
+                        : "text-rose-600",
                     )}
                   >
-                    {e.kind === "refund" ? "+" : "-"}
+                    {e.kind === "refund" || e.kind === "recharge" ? "+" : "-"}
                     {e.cost}
                   </TableCell>
                 </TableRow>
