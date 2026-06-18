@@ -137,20 +137,27 @@ function BillingPage() {
     const viewSum = all.filter((e) => e.kind === "view").reduce((s, e) => s + e.cost, 0);
     const reachSum = all.filter((e) => e.kind === "reach").reduce((s, e) => s + e.cost, 0);
     const refundSum = all.filter((e) => e.kind === "refund").reduce((s, e) => s + e.cost, 0);
+    const rechargeSum = all.filter((e) => e.kind === "recharge").reduce((s, e) => s + e.cost, 0);
+    const rechargeCount = all.filter((e) => e.kind === "recharge").length;
     return {
       total: viewSum + reachSum - refundSum,
       view: viewSum,
       reach: reachSum,
       refund: refundSum,
+      recharge: rechargeSum,
+      rechargeCount,
       count: all.length,
     };
   }, [ledger]);
 
   const filteredConsume = filtered
-    .filter((e) => e.kind !== "refund")
+    .filter((e) => e.kind === "view" || e.kind === "reach")
     .reduce((s, e) => s + e.cost, 0);
   const filteredRefund = filtered
     .filter((e) => e.kind === "refund")
+    .reduce((s, e) => s + e.cost, 0);
+  const filteredRecharge = filtered
+    .filter((e) => e.kind === "recharge")
     .reduce((s, e) => s + e.cost, 0);
 
   function handleExport(format: "csv" | "excel") {
