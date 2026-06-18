@@ -17,10 +17,31 @@ import {
   Send,
   RefreshCw,
   EyeOff,
+  Info,
+  RotateCcw,
+  Play,
+  Ban,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -44,6 +65,9 @@ import {
   resetDemoLedger,
   syncFailedRefunds,
   isReachRefunded,
+  triggerReachNow,
+  cancelPendingReach,
+  retryFailedReach,
   COST_REACH,
   REACH_STATUS_LABEL,
   REACH_STATUS_COLOR,
@@ -90,6 +114,14 @@ function ReachPage() {
   const [statusTab, setStatusTab] = useState<"all" | ReachStatus>("all");
   const [channel, setChannel] = useState<"all" | ReachChannel>("all");
   const [kw, setKw] = useState("");
+  const [confirm, setConfirm] = useState<
+    | null
+    | {
+        kind: "trigger" | "cancel" | "retry";
+        id: string;
+        target: string;
+      }
+  >(null);
 
   const reachRows = useMemo(() => {
     return ledger
@@ -130,6 +162,7 @@ function ReachPage() {
   const netCost = grossCost - refundTotal;
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -301,9 +334,10 @@ function ReachPage() {
                 <TableHead className="w-[280px]">触达对象</TableHead>
                 <TableHead className="w-[140px]">渠道</TableHead>
                 <TableHead>触达明细</TableHead>
-                <TableHead className="w-[110px]">状态</TableHead>
+                <TableHead className="w-[220px]">状态 / 原因</TableHead>
                 <TableHead className="w-[170px]">触达时间</TableHead>
                 <TableHead className="w-[90px] text-right">消耗</TableHead>
+                <TableHead className="w-[160px] text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -319,7 +353,33 @@ function ReachPage() {
                     {r.detail}
                   </TableCell>
                   <TableCell>
-                    <StatusBadge status={r.status} />
+                    <div className="flex flex-col items-start gap-1">
+                      <StatusBadge status={r.status} />
+                      {r.status === "failed" && r.failReason && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1 text-[11px] text-rose-600 hover:text-rose-700"
+                            >
+                              <Info className="h-3 w-3" />
+                              <span className="truncate max-w-[180px]">
+                                {r.failReason}
+                              </span>
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[260px]">
+                            <div className="text-xs leading-relaxed">
+                              <div className="font-medium">失败原因</div>
+                              <div className="mt-0.5">{r.failReason}</div>
+                              <div className="mt-1 text-muted-foreground">
+                                已自动退还 {COST_REACH} 积分，可在右侧「重新触达」。
+                              </div>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="font-mono tabular-nums text-xs text-muted-foreground">
                     <div>{fmtTime(r.createdAt)}</div>
@@ -333,13 +393,79 @@ function ReachPage() {
                       </div>
                     )}
                   </TableCell>
+                  <TableCell className="text-right">
+                    <ActionCell
+                      row={r}
+                      onTrigger={() =>
+                        setConfirm({ kind: "trigger", id: r.id, target: r.targetName })
+                      }
+                      onCancel={() =>
+                        setConfirm({ kind: "cancel", id: r.id, target: r.targetName })
+                      }
+                      onRetry={() =>
+                        setConfirm({ kind: "retry", id: r.id, target: r.targetName })
+                      }
+                    />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         )}
       </Card>
+
+      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirm?.kind === "trigger" && "立即触达？"}
+              {confirm?.kind === "cancel" && "取消该触达？"}
+              {confirm?.kind === "retry" && "重新触达？"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirm?.kind === "trigger" && (
+                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。该条触达将立即进入"触达中"状态。</>
+              )}
+              {confirm?.kind === "cancel" && (
+                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。取消后将自动退还 {COST_REACH} 积分。</>
+              )}
+              {confirm?.kind === "retry" && (
+                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。将基于原渠道与明细发起一条新的触达，并扣除 {COST_REACH} 积分。</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>关闭</AlertDialogCancel>
+            <AlertDialogAction
+              className={cn(
+                confirm?.kind === "cancel" &&
+                  "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+              )}
+              onClick={() => {
+                if (!confirm) return;
+                if (confirm.kind === "trigger") {
+                  if (triggerReachNow(confirm.id))
+                    toast.success("已立即触达，状态切换为「触达中」");
+                  else toast.error("当前状态不可执行立即触达");
+                } else if (confirm.kind === "cancel") {
+                  if (cancelPendingReach(confirm.id))
+                    toast.success(`已取消触达，退还 ${COST_REACH} 积分`);
+                  else toast.error("仅"待触达"状态可取消");
+                } else if (confirm.kind === "retry") {
+                  if (retryFailedReach(confirm.id))
+                    toast.success(`已重新触达，扣除 ${COST_REACH} 积分`);
+                  else toast.error("仅"触达失败"记录可重新触达");
+                }
+                setConfirm(null);
+              }}
+            >
+              确认
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 }
 
