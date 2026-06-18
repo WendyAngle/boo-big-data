@@ -288,19 +288,15 @@ function UserSideUsersPage() {
         />
         <StatCard
           icon={<UserCheck className="h-5 w-5" />}
-          label="正常 / 停用"
-          mainValue={`${stats.active} / ${stats.disabled}`}
+          label="正常"
+          mainValue={stats.active}
           tone="emerald"
-          subs={[
-            { k: "正常", v: stats.active },
-            { k: "停用", v: stats.disabled },
-          ]}
         />
         <StatCard
           icon={<UserX className="h-5 w-5" />}
-          label="员工账户"
-          mainValue={stats.total}
-          tone="cyan"
+          label="停用"
+          mainValue={stats.disabled}
+          tone="rose"
         />
       </div>
 
@@ -935,7 +931,7 @@ function DetailRow({ k, v }: { k: string; v: React.ReactNode }) {
 
 /* ---------------- Stat Card ---------------- */
 
-type Tone = "primary" | "emerald" | "cyan";
+type Tone = "primary" | "emerald" | "cyan" | "rose";
 const toneMap: Record<Tone, { bg: string; icon: string; ring: string }> = {
   primary: {
     bg: "from-primary/15 to-primary/0",
@@ -951,6 +947,11 @@ const toneMap: Record<Tone, { bg: string; icon: string; ring: string }> = {
     bg: "from-cyan-200/40 to-cyan-100/0",
     icon: "bg-cyan-100 text-cyan-700",
     ring: "ring-cyan-200/40",
+  },
+  rose: {
+    bg: "from-rose-200/40 to-rose-100/0",
+    icon: "bg-rose-100 text-rose-700",
+    ring: "ring-rose-200/40",
   },
 };
 
