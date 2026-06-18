@@ -795,6 +795,8 @@ function ProfileTab() {
               options={INDUSTRY_OPTIONS}
               value={draft.industries}
               onChange={(v) => set("industries", v)}
+              allowCustom
+              addPlaceholder="输入行业名后回车，可自定义添加"
             />
           </Field>
           <Field label="主营产品">
@@ -842,6 +844,8 @@ function ProfileTab() {
               options={COUNTRY_OPTIONS}
               value={draft.targetCountries}
               onChange={(v) => set("targetCountries", v)}
+              allowCustom
+              addPlaceholder="输入国家 / 地区后回车，可自定义添加"
             />
           </Field>
           <Field label="目标客户行业（多选）">
@@ -849,6 +853,8 @@ function ProfileTab() {
               options={INDUSTRY_OPTIONS}
               value={draft.targetIndustries}
               onChange={(v) => set("targetIndustries", v)}
+              allowCustom
+              addPlaceholder="输入目标行业后回车，可自定义添加"
             />
           </Field>
           <Field label="目标客户规模">
@@ -1007,18 +1013,43 @@ function MultiPick({
   options,
   value,
   onChange,
+  allowCustom,
+  addPlaceholder,
 }: {
   options: string[];
   value: string[];
   onChange: (v: string[]) => void;
+  allowCustom?: boolean;
+  addPlaceholder?: string;
 }) {
+  const [adding, setAdding] = useState(false);
+  const [draftInput, setDraftInput] = useState("");
+
   const toggle = (o: string) => {
     if (value.includes(o)) onChange(value.filter((x) => x !== o));
     else onChange([...value, o]);
   };
+
+  const commitAdd = () => {
+    const v = draftInput.trim();
+    if (!v) {
+      setAdding(false);
+      return;
+    }
+    if (!value.includes(v)) onChange([...value, v]);
+    setDraftInput("");
+    setAdding(false);
+  };
+
+  // 把自定义添加的（不在 options 内的）也一并显示为选项 chip（已选状态）
+  const merged = [
+    ...options,
+    ...value.filter((v) => !options.includes(v)),
+  ];
+
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {options.map((o) => {
+    <div className="flex flex-wrap gap-1.5 items-center">
+      {merged.map((o) => {
         const on = value.includes(o);
         return (
           <button
@@ -1035,6 +1066,36 @@ function MultiPick({
           </button>
         );
       })}
+      {allowCustom &&
+        (adding ? (
+          <span className="inline-flex items-center gap-1">
+            <Input
+              autoFocus
+              value={draftInput}
+              onChange={(e) => setDraftInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  commitAdd();
+                } else if (e.key === "Escape") {
+                  setDraftInput("");
+                  setAdding(false);
+                }
+              }}
+              onBlur={commitAdd}
+              placeholder={addPlaceholder ?? "输入后回车"}
+              className="h-7 w-48 text-xs"
+            />
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="px-2.5 h-7 rounded-full text-xs font-medium border border-dashed border-border text-muted-foreground hover:text-primary hover:border-primary inline-flex items-center gap-1"
+          >
+            <Plus className="h-3.5 w-3.5" /> 添加
+          </button>
+        ))}
     </div>
   );
 }
