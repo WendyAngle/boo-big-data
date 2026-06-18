@@ -33,6 +33,7 @@ import { ListPagination } from "@/components/ListPagination";
 import heroBg from "@/assets/enterprise-hero.jpg";
 import { ENTERPRISES } from "@/data/enterprises";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
+import { formatDateTime } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_app/outreach/enterprise/")({
   head: () => ({ meta: [{ title: "触达客户管理 · 企业 | Boo数据平台" }] }),
