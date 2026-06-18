@@ -21,6 +21,12 @@ const REASONS_AI = [
   "员工规模匹配目标客户画像",
 ];
 
+const REASONS_SEARCH_DEFAULT = [
+  "贸易记录活跃",
+  "联系方式完整",
+  "近半年有同类品交易",
+];
+
 function hash(s: string) {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
@@ -84,6 +90,94 @@ export function generateAiLeads(
   return scored.slice(0, count).map((x) => ({
     enterprise: x.enterprise,
     source: "ai" as const,
+    matchScore: x.score,
+    matchReasons: x.reasons,
+    generatedAt: new Date().toISOString(),
+  }));
+}
+
+/** 主动搜索：根据关键词与类型在企业库中筛选并打分（mock） */
+export type SearchType = "all" | "enterprise" | "product" | "hs";
+
+export function searchLeads(
+  keyword: string,
+  type: SearchType,
+  count = 12,
+): LeadItem[] {
+  const kw = keyword.trim().toLowerCase();
+  if (!kw) return [];
+
+  const scored = ENTERPRISES.map((e) => {
+    const reasons: string[] = [];
+    let score = 0;
+    const nameHit = e.name.toLowerCase().includes(kw);
+    const industryHit = e.industry.toLowerCase().includes(kw);
+    const productHit = e.products.some((p) => p.toLowerCase().includes(kw));
+    const hsHit = e.hsCodes.some((h) => h.toLowerCase().includes(kw));
+    const countryHit = e.country.toLowerCase().includes(kw);
+
+    if (type === "hs") {
+      if (hsHit) {
+        score += 50;
+        reasons.push(`命中 HS 编码 ${kw}`);
+      } else return null;
+    } else if (type === "product") {
+      if (productHit) {
+        score += 45;
+        reasons.push("主营产品命中");
+      } else if (industryHit) {
+        score += 20;
+        reasons.push("所属行业相关");
+      } else return null;
+    } else if (type === "enterprise") {
+      if (nameHit) {
+        score += 50;
+        reasons.push("企业名称匹配");
+      } else return null;
+    } else {
+      if (nameHit) {
+        score += 40;
+        reasons.push("企业名称匹配");
+      }
+      if (productHit) {
+        score += 30;
+        reasons.push("主营产品命中");
+      }
+      if (hsHit) {
+        score += 25;
+        reasons.push(`HS 编码命中 ${kw}`);
+      }
+      if (industryHit) {
+        score += 15;
+        reasons.push("行业相关");
+      }
+      if (countryHit) {
+        score += 10;
+        reasons.push("国家/地区匹配");
+      }
+      if (score === 0) return null;
+    }
+
+    if (e.tradeRole === "进口商" || e.tradeRole === "进出口商") {
+      score += 4;
+      reasons.push("具备进口意向");
+    }
+    // 用稳定 hash 给出 60-92 的基础匹配度，再叠加命中加分
+    const base = 60 + (hash(e.id + kw) % 20);
+    const matchScore = Math.min(99, base + Math.min(20, Math.floor(score / 3)));
+
+    if (reasons.length === 0) {
+      reasons.push(REASONS_SEARCH_DEFAULT[hash(e.id) % REASONS_SEARCH_DEFAULT.length]);
+    }
+
+    return { enterprise: e, score: matchScore, reasons: reasons.slice(0, 3) };
+  }).filter(Boolean) as Array<{ enterprise: Enterprise; score: number; reasons: string[] }>;
+
+  scored.sort((a, b) => b.score - a.score);
+
+  return scored.slice(0, count).map((x) => ({
+    enterprise: x.enterprise,
+    source: "search" as const,
     matchScore: x.score,
     matchReasons: x.reasons,
     generatedAt: new Date().toISOString(),
