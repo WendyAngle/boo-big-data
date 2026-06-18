@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ENTERPRISES } from "@/data/enterprises";
 import { CATALOG, findByHs } from "@/data/products-catalog";
+import { formatTime } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_app/outreach/footprints")({
   head: () => ({ meta: [{ title: "触达客户管理 · 足迹 | Boo数据平台" }] }),

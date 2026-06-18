@@ -49,6 +49,7 @@ import {
 } from "@/lib/favorites";
 import { MaskedField } from "@/components/MaskedField";
 import { ReachButton } from "@/components/ReachButton";
+import { formatDateTime } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_app/outreach/favorites")({
   head: () => ({ meta: [{ title: "触达客户管理 · 收藏 | Boo数据平台" }] }),
