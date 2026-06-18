@@ -194,6 +194,23 @@ export const FAIL_REASONS: Record<ReachChannel, string[]> = {
   social: ["账号已失效或停用", "私信发送后长期无响应", "消息被平台拦截"],
 };
 
+/**
+ * 永久性失败原因：联系方式本身存在问题或对方明确拒绝，重新触达基本无意义。
+ * 其余原因视为临时性失败，允许重新触达。
+ */
+const NON_RETRYABLE_FAIL_REASONS: ReadonlySet<string> = new Set([
+  "邮箱无效（地址不存在）",
+  "对方拒收 / 标记为垃圾邮件",
+  "对方主动拒接",
+  "账号已失效或停用",
+  "消息被平台拦截",
+]);
+
+export function isRetryableFailReason(reason?: string): boolean {
+  if (!reason) return true;
+  return !NON_RETRYABLE_FAIL_REASONS.has(reason);
+}
+
 function pickFailReason(channel: ReachChannel | undefined, seed: string): string {
   const ch: ReachChannel = channel ?? "email";
   const list = FAIL_REASONS[ch];
