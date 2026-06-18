@@ -450,11 +450,11 @@ function ReachPage() {
                 } else if (confirm.kind === "cancel") {
                   if (cancelPendingReach(confirm.id))
                     toast.success(`已取消触达，退还 ${COST_REACH} 积分`);
-                  else toast.error("仅"待触达"状态可取消");
+                  else toast.error("仅「待触达」状态可取消");
                 } else if (confirm.kind === "retry") {
                   if (retryFailedReach(confirm.id))
                     toast.success(`已重新触达，扣除 ${COST_REACH} 积分`);
-                  else toast.error("仅"触达失败"记录可重新触达");
+                  else toast.error("仅「触达失败」记录可重新触达");
                 }
                 setConfirm(null);
               }}
