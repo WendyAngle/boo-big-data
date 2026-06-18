@@ -558,6 +558,7 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
   const [loading, setLoading] = useState(false);
   const [leads, setLeads] = useState<LeadItem[]>([]);
   const [quotaLeft, setQuotaLeft] = useState(() => getAiQuotaLeft());
+  const [pointBalance, setPointBalance] = useState(() => getPointBalance());
   const [seed, setSeed] = useState(1);
   const [view, setView] = useState<AiView>("new");
   const [filteredOut, setFilteredOut] = useState(0);
@@ -575,10 +576,12 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
 
   const handleGenerate = () => {
     if (quotaLeft <= 0) {
-      toast.error("今日免费推荐次数已用完", {
-        description: "明日 00:00 自动重置，或联系商务购买扩容包",
-      });
-      return;
+      if (pointBalance < AI_OVERAGE_POINTS) {
+        toast.error("今日免费次数已用完，积分余额不足", {
+          description: `本次需 ${AI_OVERAGE_POINTS} 积分，当前余额 ${pointBalance}，请购买扩容包`,
+        });
+        return;
+      }
     }
     setLoading(true);
     setView("new");
@@ -595,12 +598,20 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
       setFilteredOut(prevIds.length);
       setLeads(next);
       setSeed((s) => s + 1);
-      const left = consumeAiQuota();
-      setQuotaLeft(left);
+      let billDesc = "";
+      if (quotaLeft > 0) {
+        const left = consumeAiQuota();
+        setQuotaLeft(left);
+      } else {
+        const nextBalance = consumePoints(AI_OVERAGE_POINTS);
+        setPointBalance(nextBalance);
+        billDesc = `本次扣减 ${AI_OVERAGE_POINTS} 积分，剩余 ${nextBalance}`;
+      }
       setLoading(false);
-      const desc = prevIds.length > 0
+      const baseDesc = prevIds.length > 0
         ? `已为您过滤 ${prevIds.length} 家已浏览企业，本批含拓展 / 探索分层`
         : "结果免费查看，查看联系方式 / 触达按规则扣减积分";
+      const desc = billDesc ? `${billDesc}｜${baseDesc}` : baseDesc;
       toast.success(`已为您匹配 ${next.length} 条潜在线索`, { description: desc });
     }, 1100);
   };
