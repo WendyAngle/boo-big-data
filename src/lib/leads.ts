@@ -4,12 +4,17 @@ import type { LeadProfile } from "./lead-profile";
 
 export type LeadSource = "ai" | "search";
 
+/** 推荐分层：精准匹配 / 相邻拓展 / 探索惊喜 */
+export type LeadTier = "precise" | "expand" | "explore";
+
 export interface LeadItem {
   enterprise: Enterprise;
   source: LeadSource;
   matchScore: number; // 60-99
   matchReasons: string[];
   generatedAt: string;
+  /** 仅 AI 推荐时存在 */
+  tier?: LeadTier;
 }
 
 const REASONS_AI = [
@@ -33,7 +38,13 @@ function hash(s: string) {
   return Math.abs(h);
 }
 
-/** 基于画像生成 AI 推荐线索（mock，确定性 + seed 可变） */
+/**
+ * 基于画像生成 AI 推荐线索（mock）
+ * 分层混合策略：精准匹配 60% + 相邻拓展 30% + 探索惊喜 10%
+ * - 自动剔除"已忽略"企业
+ * - 已浏览企业默认不再出现（除非候选池耗尽兜底）
+ * - 已收藏 / 已触达的企业，其同国家 / 同行业可获得偏好加权
+ */
 export function generateAiLeads(
   profile: LeadProfile,
   seed: number,
@@ -41,8 +52,22 @@ export function generateAiLeads(
 ): LeadItem[] {
   const targetCountries = profile.targetCountries.map((c) => c.toLowerCase());
   const targetIndustries = profile.targetIndustries.map((c) => c.toLowerCase());
+  const fb = getLeadFeedback();
+  const seen = new Set(fb.seen);
+  const ignored = new Set(fb.ignored);
+  const liked = new Set(fb.liked);
 
-  const scored = ENTERPRISES.map((e) => {
+  // 偏好画像：从已收藏企业中提炼国家 / 行业偏好
+  const prefCountries = new Set<string>();
+  const prefIndustries = new Set<string>();
+  for (const id of liked) {
+    const ent = ENTERPRISES.find((e) => e.id === id);
+    if (!ent) continue;
+    if (ent.country) prefCountries.add(ent.country);
+    if (ent.industry) prefIndustries.add(ent.industry);
+  }
+
+  const scored = ENTERPRISES.filter((e) => !ignored.has(e.id)).map((e) => {
     let score = 60 + (hash(e.id + seed) % 25);
     const reasons: string[] = [];
     if (targetCountries.length > 0 && targetCountries.includes(e.country)) {
@@ -74,6 +99,15 @@ export function generateAiLeads(
       score += 6;
       reasons.push("与主营产品高度匹配");
     }
+    // 偏好加权：基于历史收藏 / 触达行为
+    if (prefCountries.has(e.country)) {
+      score += 5;
+      reasons.push("与您关注的市场相似");
+    }
+    if (prefIndustries.has(e.industry)) {
+      score += 4;
+      reasons.push("与您关注的行业相似");
+    }
     // 即使画像空，也补一个随机理由让用户体验完整
     if (reasons.length === 0) {
       reasons.push(REASONS_AI[hash(e.id) % REASONS_AI.length]);
@@ -87,13 +121,64 @@ export function generateAiLeads(
 
   scored.sort((a, b) => b.score - a.score);
 
-  return scored.slice(0, count).map((x) => ({
-    enterprise: x.enterprise,
-    source: "ai" as const,
-    matchScore: x.score,
-    matchReasons: x.reasons,
-    generatedAt: new Date().toISOString(),
-  }));
+  // —— 分层选取：默认排除已浏览，候选耗尽时降级 ——
+  const preciseCnt = Math.max(1, Math.round(count * 0.6));
+  const expandCnt = Math.max(1, Math.round(count * 0.3));
+  const exploreCnt = Math.max(1, count - preciseCnt - expandCnt);
+
+  const unseenPool = scored.filter((x) => !seen.has(x.enterprise.id));
+  // 若过滤后不足，回退到全量（保证页面始终有结果）
+  const pool = unseenPool.length >= count ? unseenPool : scored;
+
+  // 精准层：Top-N
+  const precise = pool.slice(0, preciseCnt);
+
+  // 拓展层：在中段 (N ~ 2N) 随机取
+  const expandPool = pool.slice(preciseCnt, preciseCnt + expandCnt * 4);
+  const expand = pickRandom(expandPool, expandCnt, seed + 7);
+
+  // 探索层：在剩余池中随机取（带来"惊喜"）
+  const taken = new Set([
+    ...precise.map((x) => x.enterprise.id),
+    ...expand.map((x) => x.enterprise.id),
+  ]);
+  const explorePool = pool.filter((x) => !taken.has(x.enterprise.id));
+  const explore = pickRandom(explorePool, exploreCnt, seed + 17);
+
+  const tag = (
+    list: typeof scored,
+    tier: LeadTier,
+    extraReason?: string,
+  ): LeadItem[] =>
+    list.map((x) => ({
+      enterprise: x.enterprise,
+      source: "ai" as const,
+      matchScore: x.score,
+      matchReasons: extraReason
+        ? Array.from(new Set([extraReason, ...x.reasons])).slice(0, 3)
+        : x.reasons,
+      generatedAt: new Date().toISOString(),
+      tier,
+    }));
+
+  const result = [
+    ...tag(precise, "precise"),
+    ...tag(expand, "expand", "相邻市场拓展"),
+    ...tag(explore, "explore", "探索惊喜推荐"),
+  ];
+
+  return result;
+}
+
+function pickRandom<T>(arr: T[], n: number, seed: number): T[] {
+  if (arr.length <= n) return arr.slice();
+  // 确定性洗牌
+  const idxs = arr.map((_, i) => i);
+  for (let i = idxs.length - 1; i > 0; i--) {
+    const j = (hash("rnd" + seed + i) % (i + 1)) | 0;
+    [idxs[i], idxs[j]] = [idxs[j], idxs[i]];
+  }
+  return idxs.slice(0, n).map((i) => arr[i]);
 }
 
 /** 主动搜索：根据关键词与类型在企业库中筛选并打分（mock） */
@@ -245,4 +330,71 @@ export function pushSearchHistory(kw: string) {
   const cur = getSearchHistory().filter((x) => x !== k);
   cur.unshift(k);
   window.localStorage.setItem(HISTORY_KEY, JSON.stringify(cur.slice(0, 8)));
+}
+
+/* -------- 推荐行为反馈（已浏览 / 已收藏 / 已忽略） -------- */
+
+const FEEDBACK_KEY = "boo:lead:feedback:v1";
+
+export interface LeadFeedback {
+  seen: string[]; // 已被推荐过的企业 id（用于去重）
+  liked: string[]; // 收藏 / 触达过的企业 id（正向信号）
+  ignored: string[]; // 用户点击"不感兴趣"的企业 id（负向信号）
+}
+
+const EMPTY_FB: LeadFeedback = { seen: [], liked: [], ignored: [] };
+
+export function getLeadFeedback(): LeadFeedback {
+  if (typeof window === "undefined") return { ...EMPTY_FB };
+  try {
+    const raw = window.localStorage.getItem(FEEDBACK_KEY);
+    if (!raw) return { ...EMPTY_FB };
+    const obj = JSON.parse(raw);
+    return {
+      seen: Array.isArray(obj.seen) ? obj.seen : [],
+      liked: Array.isArray(obj.liked) ? obj.liked : [],
+      ignored: Array.isArray(obj.ignored) ? obj.ignored : [],
+    };
+  } catch {
+    return { ...EMPTY_FB };
+  }
+}
+
+function saveFeedback(fb: LeadFeedback) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(FEEDBACK_KEY, JSON.stringify(fb));
+  window.dispatchEvent(new CustomEvent("lead-feedback-change"));
+}
+
+export function markLeadsSeen(ids: string[]) {
+  if (ids.length === 0) return;
+  const fb = getLeadFeedback();
+  const set = new Set(fb.seen);
+  ids.forEach((id) => set.add(id));
+  fb.seen = Array.from(set);
+  saveFeedback(fb);
+}
+
+export function markLeadLiked(id: string) {
+  const fb = getLeadFeedback();
+  if (!fb.liked.includes(id)) fb.liked.push(id);
+  fb.ignored = fb.ignored.filter((x) => x !== id);
+  saveFeedback(fb);
+}
+
+export function markLeadIgnored(id: string) {
+  const fb = getLeadFeedback();
+  if (!fb.ignored.includes(id)) fb.ignored.push(id);
+  fb.liked = fb.liked.filter((x) => x !== id);
+  saveFeedback(fb);
+}
+
+export function unmarkLeadIgnored(id: string) {
+  const fb = getLeadFeedback();
+  fb.ignored = fb.ignored.filter((x) => x !== id);
+  saveFeedback(fb);
+}
+
+export function resetLeadFeedback() {
+  saveFeedback({ ...EMPTY_FB });
 }

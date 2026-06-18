@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Sparkles,
@@ -23,6 +23,12 @@ import {
   TrendingUp,
   Upload,
   ImageIcon,
+  ThumbsDown,
+  RotateCcw,
+  Eye,
+  EyeOff,
+  Info,
+  Undo2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,8 +63,19 @@ import {
   pushSearchHistory,
   AI_DAILY_FREE,
   type LeadItem,
+  type LeadTier,
+  getLeadFeedback,
+  markLeadsSeen,
+  markLeadLiked,
+  markLeadIgnored,
+  unmarkLeadIgnored,
+  resetLeadFeedback,
+  type LeadFeedback,
 } from "@/lib/leads";
 import { searchLeads } from "@/lib/leads";
+import { ENTERPRISES } from "@/data/enterprises";
+
+const ENTERPRISES_LOOKUP = new Map(ENTERPRISES.map((e) => [e.id, e]));
 
 export const Route = createFileRoute("/_app/outreach/leads")({
   head: () => ({
@@ -139,6 +156,22 @@ function LeadsPage() {
 
 /* ============================ AI 推荐 ============================ */
 
+type AiView = "new" | "seen" | "ignored";
+
+function useLeadFeedbackState(): LeadFeedback {
+  const [fb, setFb] = useState<LeadFeedback>(() => getLeadFeedback());
+  useEffect(() => {
+    const onChange = () => setFb(getLeadFeedback());
+    window.addEventListener("lead-feedback-change", onChange);
+    window.addEventListener("storage", onChange);
+    return () => {
+      window.removeEventListener("lead-feedback-change", onChange);
+      window.removeEventListener("storage", onChange);
+    };
+  }, []);
+  return fb;
+}
+
 function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
   const profile = useLeadProfile();
   const completeness = profileCompleteness(profile);
@@ -146,6 +179,9 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
   const [leads, setLeads] = useState<LeadItem[]>([]);
   const [quotaLeft, setQuotaLeft] = useState(() => getAiQuotaLeft());
   const [seed, setSeed] = useState(1);
+  const [view, setView] = useState<AiView>("new");
+  const [filteredOut, setFilteredOut] = useState(0);
+  const fb = useLeadFeedbackState();
 
   const handleGenerate = () => {
     if (quotaLeft <= 0) {
@@ -155,18 +191,104 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
       return;
     }
     setLoading(true);
+    setView("new");
+    // 把当前展示中的企业先记入"已浏览"，下一轮自动去重
+    const prevIds = leads.map((l) => l.enterprise.id);
+    if (prevIds.length > 0) markLeadsSeen(prevIds);
+
     setTimeout(() => {
       const next = generateAiLeads(profile, seed, 9);
+      const seenBefore = new Set(getLeadFeedback().seen);
+      const skipped = next.filter((l) => seenBefore.has(l.enterprise.id)).length;
+      setFilteredOut(prevIds.length === 0 ? 0 : Math.max(0, prevIds.length - skipped));
+      // 简化：用上一轮 id 数近似展示"已过滤"数量
+      setFilteredOut(prevIds.length);
       setLeads(next);
       setSeed((s) => s + 1);
       const left = consumeAiQuota();
       setQuotaLeft(left);
       setLoading(false);
-      toast.success(`已为您匹配 ${next.length} 条潜在线索`, {
-        description: "结果免费查看，查看联系方式 / 触达按规则扣减积分",
-      });
+      const desc = prevIds.length > 0
+        ? `已为您过滤 ${prevIds.length} 家已浏览企业，本批含拓展 / 探索分层`
+        : "结果免费查看，查看联系方式 / 触达按规则扣减积分";
+      toast.success(`已为您匹配 ${next.length} 条潜在线索`, { description: desc });
     }, 1100);
   };
+
+  const handleIgnore = (l: LeadItem) => {
+    markLeadIgnored(l.enterprise.id);
+    setLeads((cur) => cur.filter((x) => x.enterprise.id !== l.enterprise.id));
+    toast("已标记为不感兴趣", {
+      description: `${l.enterprise.name} 将不再出现在推荐流中`,
+      action: {
+        label: "撤销",
+        onClick: () => {
+          unmarkLeadIgnored(l.enterprise.id);
+          setLeads((cur) =>
+            cur.some((x) => x.enterprise.id === l.enterprise.id)
+              ? cur
+              : [l, ...cur],
+          );
+        },
+      },
+    });
+  };
+
+  const handleLike = (l: LeadItem) => {
+    markLeadLiked(l.enterprise.id);
+  };
+
+  const handleRestore = (id: string) => {
+    unmarkLeadIgnored(id);
+    toast.success("已恢复推荐", { description: "该企业将参与下一轮匹配" });
+  };
+
+  const handleReset = () => {
+    resetLeadFeedback();
+    setLeads([]);
+    setSeed(1);
+    setFilteredOut(0);
+    setView("new");
+    toast.success("推荐偏好已重置", {
+      description: "已清空浏览 / 收藏 / 忽略记录，可重新演示推荐效果",
+    });
+  };
+
+  // 已查看 / 已忽略 视图所用的企业列表（从 mock 库中查找）
+  const seenLeads = useMemo<LeadItem[]>(() => {
+    return fb.seen
+      .map((id) => {
+        const ent = ENTERPRISES_LOOKUP.get(id);
+        if (!ent) return null;
+        return {
+          enterprise: ent,
+          source: "ai" as const,
+          matchScore: 70,
+          matchReasons: ["历史推荐"],
+          generatedAt: new Date().toISOString(),
+        } as LeadItem;
+      })
+      .filter(Boolean) as LeadItem[];
+  }, [fb.seen]);
+
+  const ignoredLeads = useMemo<LeadItem[]>(() => {
+    return fb.ignored
+      .map((id) => {
+        const ent = ENTERPRISES_LOOKUP.get(id);
+        if (!ent) return null;
+        return {
+          enterprise: ent,
+          source: "ai" as const,
+          matchScore: 65,
+          matchReasons: ["已忽略"],
+          generatedAt: new Date().toISOString(),
+        } as LeadItem;
+      })
+      .filter(Boolean) as LeadItem[];
+  }, [fb.ignored]);
+
+  const visibleLeads =
+    view === "new" ? leads : view === "seen" ? seenLeads : ignoredLeads;
 
   return (
     <div className="space-y-5">
@@ -217,6 +339,33 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
         </div>
       </Card>
 
+      {/* 演示提示 + 偏好控制 */}
+      <Card className="px-4 py-3 flex flex-wrap items-center gap-3 bg-amber-50/60 border-amber-200/70 text-amber-900">
+        <Info className="h-4 w-4 shrink-0 text-amber-600" />
+        <div className="text-xs leading-relaxed flex-1 min-w-[260px]">
+          <span className="font-semibold">演示提示：</span>
+          连续点击 <span className="font-mono">「重新生成推荐」</span> 体验"去重 + 分层"——
+          已浏览企业不再重复，结果含
+          <span className="mx-1 inline-flex items-center gap-1"><TierDot tier="precise" />精准</span>+
+          <span className="mx-1 inline-flex items-center gap-1"><TierDot tier="expand" />拓展</span>+
+          <span className="mx-1 inline-flex items-center gap-1"><TierDot tier="explore" />探索</span>
+          三层。收藏 / 触达 → 偏好加权；点 <ThumbsDown className="h-3 w-3 inline" /> → 永不再推。
+        </div>
+        <div className="flex items-center gap-3 text-[11px] text-amber-800/80">
+          <span>已浏览 <b className="tabular-nums">{fb.seen.length}</b></span>
+          <span>已收藏 <b className="tabular-nums">{fb.liked.length}</b></span>
+          <span>已忽略 <b className="tabular-nums">{fb.ignored.length}</b></span>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleReset}
+          className="h-7 gap-1 border-amber-300 text-amber-900 hover:bg-amber-100"
+        >
+          <RotateCcw className="h-3.5 w-3.5" /> 重置推荐偏好
+        </Button>
+      </Card>
+
       {/* 生成按钮 */}
       <Card className="relative overflow-hidden">
         <div
@@ -265,7 +414,42 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
         </div>
       </Card>
 
-      {leads.length === 0 && !loading && (
+      {/* 视图切换 */}
+      {(leads.length > 0 || fb.seen.length > 0 || fb.ignored.length > 0) && !loading && (
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <Tabs value={view} onValueChange={(v) => setView(v as AiView)}>
+            <TabsList className="h-9 bg-muted/60 p-1">
+              <TabsTrigger value="new" className="gap-1.5 px-3 text-xs">
+                <Sparkles className="h-3.5 w-3.5" /> 本轮推荐
+                {leads.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-4 px-1.5 text-[10px]">
+                    {leads.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="seen" className="gap-1.5 px-3 text-xs">
+                <Eye className="h-3.5 w-3.5" /> 历史已查看
+                <Badge variant="secondary" className="ml-1 h-4 px-1.5 text-[10px]">
+                  {fb.seen.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="ignored" className="gap-1.5 px-3 text-xs">
+                <EyeOff className="h-3.5 w-3.5" /> 已忽略
+                <Badge variant="secondary" className="ml-1 h-4 px-1.5 text-[10px]">
+                  {fb.ignored.length}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {view === "new" && filteredOut > 0 && (
+            <div className="text-xs text-muted-foreground">
+              已为您过滤 <b className="text-foreground">{filteredOut}</b> 家已浏览企业
+            </div>
+          )}
+        </div>
+      )}
+
+      {visibleLeads.length === 0 && !loading && view === "new" && (
         <Card className="p-12 text-center border-dashed">
           <div className="h-14 w-14 mx-auto rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-3">
             <Sparkles className="h-7 w-7" />
@@ -277,10 +461,28 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
         </Card>
       )}
 
-      {leads.length > 0 && (
+      {visibleLeads.length === 0 && !loading && view !== "new" && (
+        <Card className="p-10 text-center border-dashed">
+          <div className="text-sm text-muted-foreground">
+            {view === "seen" ? "尚无历史浏览记录" : "尚无被忽略的企业"}
+          </div>
+        </Card>
+      )}
+
+      {visibleLeads.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {leads.map((l) => (
-            <LeadCard key={l.enterprise.id} lead={l} />
+          {visibleLeads.map((l) => (
+            <LeadCard
+              key={l.enterprise.id}
+              lead={l}
+              onIgnore={view === "new" ? () => handleIgnore(l) : undefined}
+              onLike={view === "new" ? () => handleLike(l) : undefined}
+              onRestore={
+                view === "ignored" ? () => handleRestore(l.enterprise.id) : undefined
+              }
+              isIgnoredView={view === "ignored"}
+              isSeenView={view === "seen"}
+            />
           ))}
         </div>
       )}
@@ -288,13 +490,64 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
   );
 }
 
+const TIER_META: Record<LeadTier, { label: string; cls: string; dot: string }> = {
+  precise: {
+    label: "精准匹配",
+    cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    dot: "bg-emerald-500",
+  },
+  expand: {
+    label: "相邻拓展",
+    cls: "bg-sky-50 text-sky-700 border-sky-200",
+    dot: "bg-sky-500",
+  },
+  explore: {
+    label: "探索惊喜",
+    cls: "bg-amber-50 text-amber-700 border-amber-200",
+    dot: "bg-amber-500",
+  },
+};
+
+function TierDot({ tier }: { tier: LeadTier }) {
+  return <span className={`inline-block h-2 w-2 rounded-full ${TIER_META[tier].dot}`} />;
+}
+
 /* ============================ 线索卡片 ============================ */
 
-function LeadCard({ lead }: { lead: LeadItem }) {
+function LeadCard({
+  lead,
+  onIgnore,
+  onLike,
+  onRestore,
+  isIgnoredView,
+  isSeenView,
+}: {
+  lead: LeadItem;
+  onIgnore?: () => void;
+  onLike?: () => void;
+  onRestore?: () => void;
+  isIgnoredView?: boolean;
+  isSeenView?: boolean;
+}) {
   const e = lead.enterprise;
   const firstContact = e.contacts[0];
+  const tierMeta = lead.tier ? TIER_META[lead.tier] : null;
   return (
-    <Card className="p-5 ring-1 ring-border hover:ring-primary/40 hover:shadow-md transition-all flex flex-col">
+    <Card
+      className={`p-5 ring-1 hover:shadow-md transition-all flex flex-col relative ${
+        isIgnoredView
+          ? "ring-border opacity-70"
+          : "ring-border hover:ring-primary/40"
+      }`}
+    >
+      {tierMeta && !isIgnoredView && !isSeenView && (
+        <div
+          className={`absolute top-0 left-5 -translate-y-1/2 inline-flex items-center gap-1 px-2 h-5 rounded-full text-[10px] font-medium border ${tierMeta.cls}`}
+        >
+          <span className={`h-1.5 w-1.5 rounded-full ${tierMeta.dot}`} />
+          {tierMeta.label}
+        </div>
+      )}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary/15 to-accent/15 text-primary flex items-center justify-center ring-1 ring-primary/20 shrink-0">
@@ -322,16 +575,38 @@ function LeadCard({ lead }: { lead: LeadItem }) {
             </div>
           </div>
         </div>
-        <FavoriteToggle
-          kind="enterprise"
-          refId={e.id}
-          payload={{
-            title: e.name,
-            subtitle: e.industry || undefined,
-            meta: { country: e.country || "", role: e.tradeRole, est: e.est },
-          }}
-          variant="overlay"
-        />
+        <div className="flex items-center gap-0.5 shrink-0">
+          <span onClick={onLike}>
+            <FavoriteToggle
+              kind="enterprise"
+              refId={e.id}
+              payload={{
+                title: e.name,
+                subtitle: e.industry || undefined,
+                meta: { country: e.country || "", role: e.tradeRole, est: e.est },
+              }}
+              variant="overlay"
+            />
+          </span>
+          {onIgnore && (
+            <button
+              onClick={onIgnore}
+              title="不感兴趣，不再推荐"
+              className="h-7 w-7 rounded-md inline-flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+            >
+              <ThumbsDown className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {onRestore && (
+            <button
+              onClick={onRestore}
+              title="恢复推荐"
+              className="h-7 px-2 rounded-md inline-flex items-center gap-1 text-xs text-primary hover:bg-primary/10 transition-colors"
+            >
+              <Undo2 className="h-3.5 w-3.5" /> 恢复
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
