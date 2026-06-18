@@ -399,9 +399,6 @@ function ReachPage() {
                       onTrigger={() =>
                         setConfirm({ kind: "trigger", id: r.id, target: r.targetName })
                       }
-                      onCancel={() =>
-                        setConfirm({ kind: "cancel", id: r.id, target: r.targetName })
-                      }
                       onRetry={() =>
                         setConfirm({ kind: "retry", id: r.id, target: r.targetName })
                       }
