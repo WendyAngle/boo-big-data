@@ -24,14 +24,14 @@ function Home() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <Link to="/auth/user/users" className="group rounded-xl border bg-card p-6 hover:border-primary hover:shadow-md transition-all">
+        <Link to="/outreach/users" className="group rounded-xl border bg-card p-6 hover:border-primary hover:shadow-md transition-all">
           <div className="flex items-center gap-3">
             <div className="h-11 w-11 rounded-lg bg-accent flex items-center justify-center">
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">实名认证 · 用户端</h3>
-              <p className="text-sm text-muted-foreground">用户提交认证资料</p>
+              <h3 className="font-semibold text-foreground">触达客户管理 · 用户管理</h3>
+              <p className="text-sm text-muted-foreground">管理本企业的员工账号与登录状态</p>
             </div>
           </div>
         </Link>
