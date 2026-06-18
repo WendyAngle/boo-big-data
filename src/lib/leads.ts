@@ -309,6 +309,33 @@ export function consumeAiQuota(): number {
   return Math.max(0, AI_DAILY_FREE - used);
 }
 
+/* -------- 积分余额（演示用 / 超额扣减） -------- */
+
+const POINTS_KEY = "boo:points:balance:v1";
+export const AI_OVERAGE_POINTS = 20; // 超额单次 AI 推荐扣减积分
+export const AI_DEMO_BALANCE = 1280; // 初始演示余额
+
+export function getPointBalance(): number {
+  if (typeof window === "undefined") return AI_DEMO_BALANCE;
+  try {
+    const raw = window.localStorage.getItem(POINTS_KEY);
+    if (raw == null) return AI_DEMO_BALANCE;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : AI_DEMO_BALANCE;
+  } catch {
+    return AI_DEMO_BALANCE;
+  }
+}
+
+export function consumePoints(n: number): number {
+  const cur = getPointBalance();
+  const next = Math.max(0, cur - n);
+  try {
+    window.localStorage.setItem(POINTS_KEY, String(next));
+  } catch {}
+  return next;
+}
+
 /* -------- 搜索历史 -------- */
 
 const HISTORY_KEY = "boo:lead:search-history:v1";
