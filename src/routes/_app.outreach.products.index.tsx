@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Package,
   Search,
   ChevronRight,
   ChevronDown,
   Box,
+  Sparkles,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,10 @@ const L1_EMOJI: Record<string, string> = {
 };
 
 function ProductsPage() {
+  const navigate = useNavigate();
   const [keyword, setKeyword] = useState("");
+  const [scope, setScope] = useState<"product" | "hs" | "enterprise">("product");
+  const [userScope, setUserScope] = useState<"product" | "hs" | "enterprise">("product");
   const [openL1, setOpenL1] = useState<Record<string, boolean>>({
     "建材、陶瓷、玻璃与石材": true,
   });
@@ -64,21 +68,28 @@ function ProductsPage() {
     };
   }, []);
 
+  // 智能识别: 纯数字且 ≥4 位 → 自动切到 HS 编码作用域
+  const isDigits = /^\d{4,}$/.test(keyword.trim());
+  const effectiveScope: "product" | "hs" | "enterprise" =
+    isDigits && userScope !== "enterprise" ? "hs" : userScope;
+
   // 关键词搜索: 按名称 / 英文名 / HS 编码匹配,自动展开所在分类
   const searchHits = useMemo(() => {
     const k = keyword.trim().toLowerCase();
     if (!k) return null;
+    if (effectiveScope === "enterprise") return null;
     const out: { l1: string; l2: string; l3: string; l4: L4Item }[] = [];
     for (const l1 of CATALOG) {
       for (const l2 of l1.l2) {
         for (const l3 of l2.l3) {
           for (const l4 of l3.l4) {
-            if (
-              l4.name.toLowerCase().includes(k) ||
-              l4.en.toLowerCase().includes(k) ||
-              l4.hs.includes(k) ||
-              l1.name.toLowerCase().includes(k)
-            ) {
+            const hit =
+              effectiveScope === "hs"
+                ? l4.hs.includes(k)
+                : l4.name.toLowerCase().includes(k) ||
+                  l4.en.toLowerCase().includes(k) ||
+                  l1.name.toLowerCase().includes(k);
+            if (hit) {
               out.push({ l1: l1.name, l2: l2.name, l3: l3.name, l4 });
             }
           }
@@ -86,7 +97,39 @@ function ProductsPage() {
       }
     }
     return out.slice(0, 50);
-  }, [keyword]);
+  }, [keyword, effectiveScope]);
+
+  const goEnterprise = () => {
+    const q = keyword.trim();
+    navigate({ to: "/outreach/enterprise", search: q ? { q } : {} });
+  };
+
+  const onSearchSubmit = () => {
+    if (effectiveScope === "enterprise") goEnterprise();
+  };
+
+  const SCOPE_META: Record<
+    "product" | "hs" | "enterprise",
+    { label: string; placeholder: string; helper: string }
+  > = {
+    product: {
+      label: "商品",
+      placeholder: "输入商品中 / 英文名称,例如 瓷砖 / ceramic tile",
+      helper: `在 ${CATALOG.length} 个一级品类下按商品名称匹配`,
+    },
+    hs: {
+      label: "HS 编码",
+      placeholder: "输入 6 / 8 / 10 位 HS 编码,例如 690721",
+      helper: "命中后直达商品详情与提单数据",
+    },
+    enterprise: {
+      label: "企业",
+      placeholder: '输入企业名称,例如 "Acme Logistics"',
+      helper: "回车跳转「企业」页继续筛选",
+    },
+  };
+  const meta = SCOPE_META[effectiveScope];
+  const autoSwitched = effectiveScope !== userScope;
 
   const toggleL1 = (n: string) =>
     setOpenL1((s) => ({ ...s, [n]: !s[n] }));
@@ -128,20 +171,61 @@ function ProductsPage() {
       </section>
 
       {/* Search */}
-      <Card className="p-3 flex items-center gap-2">
-        <div className="relative flex-1">
-          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            placeholder="商品 / 企业 关键词,或输入HS编码直达提单..."
-            className="pl-9 h-10 border-0 shadow-none focus-visible:ring-0 bg-transparent"
-          />
+      <Card className="p-3 space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="inline-flex items-center gap-0.5 rounded-lg bg-muted p-0.5 shrink-0">
+            {(["product", "hs", "enterprise"] as const).map((s) => {
+              const active = effectiveScope === s;
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setUserScope(s)}
+                  className={`px-3 h-8 rounded-md text-sm font-medium transition-colors ${
+                    active
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {SCOPE_META[s].label}
+                </button>
+              );
+            })}
+          </div>
+          <div className="relative flex-1">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") onSearchSubmit();
+              }}
+              placeholder={meta.placeholder}
+              className="pl-9 h-10 border-0 shadow-none focus-visible:ring-0 bg-transparent"
+            />
+          </div>
+          <Button className="h-10 gap-1.5" onClick={onSearchSubmit}>
+            <Search className="h-4 w-4" />
+            搜索
+          </Button>
         </div>
-        <Button className="h-10 gap-1.5">
-          <Search className="h-4 w-4" />
-          搜索
-        </Button>
+        <div className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
+          <Sparkles className="h-3 w-3 text-primary" />
+          {autoSwitched ? (
+            <span>
+              已识别为 HS 编码,自动切换搜索范围 ·{" "}
+              <button
+                type="button"
+                onClick={() => setUserScope("product")}
+                className="text-primary hover:underline"
+              >
+                改回商品
+              </button>
+            </span>
+          ) : (
+            <span>{meta.helper}</span>
+          )}
+        </div>
       </Card>
 
       {/* Search results take over the list area */}
