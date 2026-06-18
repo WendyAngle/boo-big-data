@@ -17,6 +17,7 @@ export interface LeadProfile {
   brandStory: string;
   certifications: string[];
   exportQualifications: string[];
+  exportQualificationFiles: { id: string; name: string; dataUrl: string }[];
 }
 
 const KEY = "boo:lead:profile:v1";
@@ -45,6 +46,7 @@ export const EMPTY_PROFILE: LeadProfile = {
   brandStory: "",
   certifications: [],
   exportQualifications: [],
+  exportQualificationFiles: [],
 };
 
 function readProfile(): LeadProfile {
