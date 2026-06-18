@@ -1771,18 +1771,26 @@ function MultiPick({
   onChange,
   allowCustom,
   addPlaceholder,
+  labelMap,
+  hint,
 }: {
   options: string[];
   value: string[];
   onChange: (v: string[]) => void;
   allowCustom?: boolean;
   addPlaceholder?: string;
+  labelMap?: Record<string, string>;
+  hint?: string;
 }) {
   const [adding, setAdding] = useState(false);
   const [draftInput, setDraftInput] = useState("");
 
+  // 大小写不敏感去重
+  const eq = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+  const hasVal = (arr: string[], v: string) => arr.some((x) => eq(x, v));
+
   const toggle = (o: string) => {
-    if (value.includes(o)) onChange(value.filter((x) => x !== o));
+    if (hasVal(value, o)) onChange(value.filter((x) => !eq(x, o)));
     else onChange([...value, o]);
   };
 
@@ -1792,36 +1800,43 @@ function MultiPick({
       setAdding(false);
       return;
     }
-    if (!value.includes(v)) onChange([...value, v]);
+    // 优先复用已有英文标准选项的大小写
+    const canonical = options.find((o) => eq(o, v)) ?? v;
+    if (!hasVal(value, canonical)) onChange([...value, canonical]);
     setDraftInput("");
     setAdding(false);
   };
 
-  // 把自定义添加的（不在 options 内的）也一并显示为选项 chip（已选状态）
-  const merged = [
-    ...options,
-    ...value.filter((v) => !options.includes(v)),
-  ];
+  // 合并：内置选项 + 用户自定义添加（去重，保留首次出现的大小写）
+  const merged: string[] = [];
+  for (const o of [...options, ...value]) {
+    if (!hasVal(merged, o)) merged.push(o);
+  }
+
+  const cn = (o: string) => labelMap?.[o.toLowerCase()];
 
   return (
-    <div className="flex flex-wrap gap-1.5 items-center">
-      {merged.map((o) => {
-        const on = value.includes(o);
-        return (
-          <button
-            key={o}
-            type="button"
-            onClick={() => toggle(o)}
-            className={`px-2.5 h-7 rounded-full text-xs font-medium border transition-colors ${
-              on
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-background text-muted-foreground border-border hover:text-foreground"
-            }`}
-          >
-            {o}
-          </button>
-        );
-      })}
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap gap-1.5 items-center">
+        {merged.map((o) => {
+          const on = hasVal(value, o);
+          const tip = cn(o);
+          return (
+            <button
+              key={o}
+              type="button"
+              onClick={() => toggle(o)}
+              title={tip ? `${o}（${tip}）` : o}
+              className={`px-2.5 h-7 rounded-full text-xs font-medium border transition-colors ${
+                on
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground border-border hover:text-foreground"
+              }`}
+            >
+              {o}
+            </button>
+          );
+        })}
       {allowCustom &&
         (adding ? (
           <span className="inline-flex items-center gap-1">
@@ -1852,6 +1867,12 @@ function MultiPick({
             <Plus className="h-3.5 w-3.5" /> 添加
           </button>
         ))}
+      </div>
+      {hint && (
+        <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+          <Info className="h-3 w-3" /> {hint}
+        </div>
+      )}
     </div>
   );
 }
