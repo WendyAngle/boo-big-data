@@ -808,11 +808,7 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
                       size="sm"
                       variant="outline"
                       className="h-7 px-2.5 text-xs gap-1"
-                      onClick={() =>
-                        toast("购买扩容包", {
-                          description: "演示环境：可在「积分管理 - 充值产品」中配置套餐",
-                        })
-                      }
+                      onClick={() => setPacksOpen(true)}
                     >
                       <Coins className="h-3 w-3" /> 购买扩容包
                     </Button>
