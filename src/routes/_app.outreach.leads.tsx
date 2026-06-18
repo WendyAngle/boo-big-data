@@ -743,11 +743,70 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
           </div>
           <div className="flex-1 text-center md:text-left">
             <div className="font-semibold text-lg">基于您的企业画像，匹配全球潜在客户</div>
-            <div className="text-sm text-muted-foreground mt-1">
-              结合主营产品、目标市场、HS 编码及竞品客户网络综合排序 ·
+            <div className="text-sm text-muted-foreground mt-1 flex flex-wrap items-center justify-center md:justify-start gap-x-1 gap-y-1">
+              <span>结合主营产品、目标市场、HS 编码及竞品客户网络综合排序 ·</span>
               <span className="text-primary font-medium">
-                {" "}今日剩余免费推荐 {quotaLeft}/{AI_DAILY_FREE} 次
+                今日剩余免费推荐 {quotaLeft}/{AI_DAILY_FREE} 次
               </span>
+              <HoverCard openDelay={120} closeDelay={80}>
+                <HoverCardTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="查看 AI 推荐计费规则"
+                    className="inline-flex items-center justify-center h-4 w-4 rounded-full text-muted-foreground hover:text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <HelpCircle className="h-3.5 w-3.5" />
+                  </button>
+                </HoverCardTrigger>
+                <HoverCardContent align="start" className="w-[300px] p-0 text-left">
+                  <div className="px-3.5 py-2.5 border-b">
+                    <div className="text-sm font-semibold">AI 推荐计费规则</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      推荐结果免费查看，联系方式 / 触达另按既有规则扣减
+                    </div>
+                  </div>
+                  <div className="px-3.5 py-2.5 text-xs space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">每日免费配额</span>
+                      <span className="font-medium">{AI_DAILY_FREE} 次 / 自然日</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">重置时间</span>
+                      <span className="font-medium">次日 00:00 自动恢复</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">超额单价</span>
+                      <span className="font-medium text-primary">
+                        {AI_OVERAGE_POINTS} 积分 / 次
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">当前积分余额</span>
+                      <span className="font-medium">{pointBalance.toLocaleString()} 分</span>
+                    </div>
+                  </div>
+                  <div className="px-3.5 py-2 border-t flex items-center justify-between gap-2">
+                    <Link
+                      to="/outreach/billing"
+                      className="text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-0.5"
+                    >
+                      查看积分明细 <ChevronRight className="h-3 w-3" />
+                    </Link>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2.5 text-xs gap-1"
+                      onClick={() =>
+                        toast("购买扩容包", {
+                          description: "演示环境：可在「积分管理 - 充值产品」中配置套餐",
+                        })
+                      }
+                    >
+                      <Coins className="h-3 w-3" /> 购买扩容包
+                    </Button>
+                  </div>
+                </HoverCardContent>
+              </HoverCard>
             </div>
             {profileDirty && (
               <div className="mt-2 inline-flex items-center gap-2 text-xs text-primary bg-primary/8 px-2.5 py-1 rounded-md">
@@ -769,6 +828,11 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 AI 正在匹配…
+              </>
+            ) : quotaLeft <= 0 ? (
+              <>
+                <Coins className="h-4 w-4" />
+                继续推荐（扣 {AI_OVERAGE_POINTS} 积分）
               </>
             ) : leads.length > 0 ? (
               <>
