@@ -605,6 +605,13 @@ function SearchTab() {
               </button>
               <Link
                 to="/outreach/enterprise"
+                search={
+                  activeType === "hs"
+                    ? { hs: activeKw }
+                    : activeType === "product"
+                      ? { product: activeKw }
+                      : { q: activeKw }
+                }
                 className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
               >
                 在企业库中查看完整结果 <ChevronRight className="h-3.5 w-3.5" />
