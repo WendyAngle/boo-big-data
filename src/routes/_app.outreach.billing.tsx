@@ -74,6 +74,7 @@ import {
   isExpiringSoon,
 } from "@/lib/credits-balance";
 import { RulesSheet } from "@/components/billing/RulesSheet";
+import { ListPagination } from "@/components/ListPagination";
 import {
   DateRangePicker,
   resolvePreset,
@@ -116,6 +117,8 @@ function BillingPage() {
   const [datePreset, setDatePreset] = useState<PresetId>("all");
   const [customRange, setCustomRange] = useState<DateRangeValue>(undefined);
   const [rulesOpen, setRulesOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const filtered = useMemo(() => {
     const k = kw.trim().toLowerCase();
@@ -138,6 +141,15 @@ function BillingPage() {
       );
     });
   }, [ledger, tab, datePreset, customRange, kw]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [tab, kw, datePreset, customRange]);
+
+  const pageData = useMemo(
+    () => filtered.slice((page - 1) * pageSize, page * pageSize),
+    [filtered, page],
+  );
 
   const stats = useMemo(() => {
     const all = ledger;
