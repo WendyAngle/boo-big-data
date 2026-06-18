@@ -143,6 +143,37 @@ export function createReach(input: {
   return entry;
 }
 
+export function recordRecharge(input: {
+  orderNo: string;
+  packageLabel: string;
+  credits: number;
+  bonus: number;
+  price: number;
+  paymentMethod: "wechat" | "alipay" | "corp";
+}): LedgerEntry {
+  const entry: LedgerEntry = {
+    id: makeId("rc"),
+    kind: "recharge",
+    // cost 字段统一为正数表示「积分变动绝对值」，UI 根据 kind 决定 +/-
+    cost: input.credits + input.bonus,
+    createdAt: new Date().toISOString(),
+    targetKind: "enterprise",
+    targetId: "—",
+    targetName: `${input.packageLabel}套餐`,
+    orderNo: input.orderNo,
+    paymentMethod: input.paymentMethod,
+    bonus: input.bonus,
+    price: input.price,
+    detail: `订单 ${input.orderNo} · ¥${input.price}${
+      input.bonus > 0 ? ` · 赠 ${input.bonus} 积分` : ""
+    }`,
+  };
+  ledger = [entry, ...ledger];
+  writeLedger(ledger);
+  emitLedger();
+  return entry;
+}
+
 export function useLedger(): LedgerEntry[] {
   useSyncExternalStore(subscribeLedger, getLedgerVersion, getLedgerVersion);
   return ledger;
