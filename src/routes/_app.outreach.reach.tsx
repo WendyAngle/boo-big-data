@@ -558,11 +558,57 @@ function StatusBadge({ status }: { status: ReachStatus }) {
   );
 }
 
-function TargetCell({
+function ActionCell({
   row,
+  onTrigger,
+  onCancel,
+  onRetry,
 }: {
-  row: { targetKind: "enterprise" | "contact"; targetId: string; targetName: string; parentRef?: { id: string; name: string } };
-}): React.ReactElement;
+  row: { id: string; status: ReachStatus };
+  onTrigger: () => void;
+  onCancel: () => void;
+  onRetry: () => void;
+}) {
+  if (row.status === "pending") {
+    return (
+      <div className="inline-flex items-center gap-1">
+        <Button
+          size="sm"
+          variant="default"
+          className="h-7 gap-1 px-2 text-xs"
+          onClick={onTrigger}
+        >
+          <Play className="h-3 w-3" />
+          立即触达
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-destructive hover:border-destructive/40"
+          onClick={onCancel}
+        >
+          <Ban className="h-3 w-3" />
+          取消
+        </Button>
+      </div>
+    );
+  }
+  if (row.status === "failed") {
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-7 gap-1 px-2 text-xs text-primary border-primary/40 hover:bg-primary/10"
+        onClick={onRetry}
+      >
+        <RotateCcw className="h-3 w-3" />
+        重新触达
+      </Button>
+    );
+  }
+  return <span className="text-xs text-muted-foreground">—</span>;
+}
+
 function TargetCell({
   row,
 }: {
