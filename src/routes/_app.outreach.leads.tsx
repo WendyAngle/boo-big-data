@@ -883,10 +883,11 @@ function ProfileTab() {
             />
           </Field>
           <Field label="差异化优势">
-            <Textarea
+            <CountedTextarea
               rows={3}
+              max={2000}
               value={draft.advantage}
-              onChange={(e) => set("advantage", e.target.value)}
+              onChange={(v) => set("advantage", v)}
               placeholder="简述您的产品 / 服务相较竞品的核心差异化优势"
             />
           </Field>
@@ -910,19 +911,34 @@ function ProfileTab() {
             </Field>
           </Grid2>
           <Field label="品牌故事 / 简介">
-            <Textarea
-              rows={3}
+            <CountedTextarea
+              rows={4}
+              max={2000}
               value={draft.brandStory}
-              onChange={(e) => set("brandStory", e.target.value)}
+              onChange={(v) => set("brandStory", v)}
               placeholder="一段简短的企业故事，将用于 AI 理解品牌定位"
             />
           </Field>
           <Field label="出口资质">
-            <ChipInput
-              placeholder="自营进出口权、AEO 认证…"
-              value={draft.exportQualifications}
-              onChange={(v) => set("exportQualifications", v)}
-            />
+            <div className="space-y-2.5">
+              <ChipInput
+                placeholder="自营进出口权、AEO 认证…"
+                value={draft.exportQualifications}
+                onChange={(v) => set("exportQualifications", v)}
+              />
+              <QualificationUploader
+                files={draft.exportQualificationFiles}
+                onChange={(f) => set("exportQualificationFiles", f)}
+                onRecognize={(name) => {
+                  if (!draft.exportQualifications.includes(name)) {
+                    set("exportQualifications", [
+                      ...draft.exportQualifications,
+                      name,
+                    ]);
+                  }
+                }}
+              />
+            </div>
           </Field>
         </Section>
 
