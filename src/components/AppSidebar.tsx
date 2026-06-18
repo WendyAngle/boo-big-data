@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ShieldCheck, ChevronDown, LayoutDashboard, Users, UserCog, Coins, Send, FolderTree, Box, Wallet, Layers, Receipt } from "lucide-react";
+import { ShieldCheck, ChevronDown, LayoutDashboard, Users, UserCog, Coins, Send, FolderTree, Box, Wallet, Layers, Receipt, FileText } from "lucide-react";
 
 type Leaf = { label: string; to: string; icon?: typeof Users };
 type Group = { label: string; to?: string; children: Leaf[] };
@@ -58,6 +58,7 @@ const menu: Root[] = [
         children: [
           { label: "账单", to: "/outreach/billing" },
           { label: "充值", to: "/outreach/recharge" },
+          { label: "发票", to: "/outreach/invoices" },
         ],
       },
       {
