@@ -88,8 +88,7 @@ const menu: Root[] = [
 export function AppSidebar() {
   const { location } = useRouterState();
   const [open, setOpen] = useState<Record<string, boolean>>({
-    实名认证: true,
-    用户端: true,
+    触达客户管理: true,
   });
 
   return (
