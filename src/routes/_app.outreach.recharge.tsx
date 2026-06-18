@@ -33,6 +33,7 @@ import {
   isExpiringSoon,
   type RechargePackage,
 } from "@/lib/credits-balance";
+import { useLedger, recordRecharge } from "@/lib/credits-ledger";
 
 type FromSource = "billing" | "leads" | "reach" | "home";
 type Intent = "lowBalance" | "expiring" | undefined;
