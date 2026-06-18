@@ -738,140 +738,473 @@ function FootprintsPage() {
   );
 }
 
-function FootprintCard({ item }: { item: FootprintItem }) {
+interface CardProps {
+  item: FootprintItem;
+  selectMode: boolean;
+  selected: boolean;
+  onToggleSelect: () => void;
+  onDelete: () => void;
+}
+
+function buildFavorite(
+  item: FootprintItem,
+): { kind: FavoriteKind; refId: string; payload: FavoritePayload } | null {
+  if (item.module === "enterprise" && item.enterpriseId) {
+    return {
+      kind: "enterprise",
+      refId: item.enterpriseId,
+      payload: {
+        title: item.enterpriseName ?? "—",
+        subtitle: item.enterpriseIndustry,
+        meta: {
+          ...(item.enterpriseCountry ? { country: item.enterpriseCountry } : {}),
+          ...(item.enterpriseRole ? { role: item.enterpriseRole } : {}),
+        },
+      },
+    };
+  }
+  if (item.module === "product" && item.hs) {
+    return {
+      kind: "product",
+      refId: item.hs,
+      payload: {
+        title: item.productName ?? item.hs,
+        subtitle: item.productEn,
+        meta: {
+          hs: item.hs,
+          ...(item.productCategory ? { category: item.productCategory } : {}),
+        },
+      },
+    };
+  }
+  if (item.module === "bill" && item.billNo) {
+    return {
+      kind: "bill",
+      refId: item.billNo,
+      payload: {
+        title: `提单 ${item.billNo}`,
+        subtitle: `${item.exporter ?? ""} → ${item.importer ?? ""}`,
+        meta: {
+          ...(item.exporter ? { exporter: item.exporter } : {}),
+          ...(item.importer ? { importer: item.importer } : {}),
+          ...(item.fromPort ? { fromPort: item.fromPort } : {}),
+          ...(item.toPort ? { toPort: item.toPort } : {}),
+          ...(item.hs ? { hs: item.hs } : {}),
+          ...(item.billDate ? { date: item.billDate } : {}),
+        },
+      },
+    };
+  }
+  return null;
+}
+
+function FootprintCard({
+  item,
+  selectMode,
+  selected,
+  onToggleSelect,
+  onDelete,
+}: CardProps) {
+  const fav = buildFavorite(item);
+  const favored = fav ? isFavorited(fav.kind, fav.refId) : false;
+  const [, force] = useState(0);
+
+  const handleStar = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!fav) return;
+    const nowFavored = toggleFavorite(fav.kind, fav.refId, fav.payload);
+    toast.success(nowFavored ? "已加入收藏" : "已取消收藏");
+    force((n) => n + 1);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDelete();
+  };
+
+  const overlay = (
+    <>
+      {selectMode && (
+        <div className="absolute top-2 left-2 z-10">
+          <Checkbox
+            checked={selected}
+            onCheckedChange={onToggleSelect}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-background border-border shadow-sm"
+            aria-label="选择此条足迹"
+          />
+        </div>
+      )}
+      <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {fav && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={handleStar}
+                className={cn(
+                  "h-7 w-7 inline-flex items-center justify-center rounded-md border bg-background/95 backdrop-blur hover:bg-muted",
+                  favored && "text-amber-500 border-amber-300",
+                )}
+                aria-label={favored ? "取消收藏" : "加入收藏"}
+              >
+                <Star
+                  className={cn("h-3.5 w-3.5", favored && "fill-current")}
+                />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              {favored ? "已收藏（点击取消）" : "加入收藏"}
+            </TooltipContent>
+          </Tooltip>
+        )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="h-7 w-7 inline-flex items-center justify-center rounded-md border bg-background/95 backdrop-blur hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40"
+              aria-label="删除此条足迹"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">删除该足迹</TooltipContent>
+        </Tooltip>
+      </div>
+    </>
+  );
+
+  const inner = renderCardInner(item);
+
+  if (selectMode) {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggleSelect}
+        onKeyDown={(e) => {
+          if (e.key === " " || e.key === "Enter") {
+            e.preventDefault();
+            onToggleSelect();
+          }
+        }}
+        className={cn(
+          "relative group block text-left cursor-pointer rounded-lg",
+          selected && "ring-2 ring-primary ring-offset-1",
+        )}
+      >
+        {overlay}
+        {inner}
+      </div>
+    );
+  }
+
+  const linkProps = getLinkProps(item);
+  return (
+    <div className="relative group">
+      {overlay}
+      <Link {...linkProps} className="block">
+        {inner}
+      </Link>
+    </div>
+  );
+}
+
+function getLinkProps(item: FootprintItem): React.ComponentProps<typeof Link> {
+  if (item.module === "enterprise") {
+    return {
+      to: "/outreach/enterprise/$id",
+      params: { id: item.enterpriseId! },
+    } as React.ComponentProps<typeof Link>;
+  }
+  if (item.module === "product") {
+    return {
+      to: "/outreach/products/$hs",
+      params: { hs: item.hs! },
+    } as React.ComponentProps<typeof Link>;
+  }
+  return { to: "/outreach/bills" } as React.ComponentProps<typeof Link>;
+}
+
+function renderCardInner(item: FootprintItem) {
   if (item.module === "enterprise") {
     return (
-      <Link
-        to="/outreach/enterprise/$id"
-        params={{ id: item.enterpriseId! }}
-        className="group block"
-      >
-        <Card className="p-4 h-full hover:shadow-md hover:border-primary/40 transition-all">
-          <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <Building2 className="h-5 w-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <Badge
-                  variant="outline"
-                  className="text-[10px] px-1.5 py-0 h-4 text-primary border-primary/40"
-                >
-                  企业
-                </Badge>
-                <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {formatTime(item.viewedAt)}
-                </span>
-              </div>
-              <div className="font-medium text-sm truncate group-hover:text-primary">
-                {item.enterpriseName}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {item.enterpriseCountry}
-                </span>
-                <span>·</span>
-                <span className="truncate">{item.enterpriseIndustry}</span>
-              </div>
-              <div className="mt-2 flex items-center gap-2">
-                <Badge variant="secondary" className="text-[10px]">
-                  {item.enterpriseRole}
-                </Badge>
-                <span className="ml-auto text-[11px] text-primary opacity-0 group-hover:opacity-100 inline-flex items-center gap-0.5">
-                  查看详情 <ExternalLink className="h-3 w-3" />
-                </span>
-              </div>
-            </div>
-          </div>
-        </Card>
-      </Link>
-    );
-  }
-
-  if (item.module === "product") {
-    return (
-      <Link to="/outreach/products/$hs" params={{ hs: item.hs! }} className="group block">
-        <Card className="p-4 h-full hover:shadow-md hover:border-primary/40 transition-all">
-          <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
-              <Package className="h-5 w-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <Badge
-                  variant="outline"
-                  className="text-[10px] px-1.5 py-0 h-4 text-amber-600 border-amber-300"
-                >
-                  商品
-                </Badge>
-                <Badge variant="secondary" className="text-[10px] font-mono">
-                  HS {item.hs}
-                </Badge>
-                <span className="ml-auto text-[11px] text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {formatTime(item.viewedAt)}
-                </span>
-              </div>
-              <div className="font-medium text-sm truncate group-hover:text-primary">
-                {item.productName}
-              </div>
-              {item.productEn && (
-                <div className="text-xs text-muted-foreground truncate italic">
-                  {item.productEn}
-                </div>
-              )}
-              {item.productCategory && (
-                <div className="text-xs text-muted-foreground mt-1 truncate">
-                  {item.productCategory}
-                </div>
-              )}
-            </div>
-          </div>
-        </Card>
-      </Link>
-    );
-  }
-
-  return (
-    <Link to="/outreach/bills" className="group block">
       <Card className="p-4 h-full hover:shadow-md hover:border-primary/40 transition-all">
         <div className="flex items-start gap-3">
-          <div className="h-10 w-10 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-            <FileText className="h-5 w-5" />
+          <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Building2 className="h-5 w-5" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <Badge
                 variant="outline"
-                className="text-[10px] px-1.5 py-0 h-4 text-emerald-600 border-emerald-300"
+                className="text-[10px] px-1.5 py-0 h-4 text-primary border-primary/40"
               >
-                提单
+                企业
               </Badge>
-              <span className="text-[11px] text-muted-foreground font-mono">{item.billNo}</span>
+              <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {formatTime(item.viewedAt)}
+              </span>
+            </div>
+            <div className="font-medium text-sm truncate group-hover:text-primary">
+              {item.enterpriseName}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {item.enterpriseCountry}
+              </span>
+              <span>·</span>
+              <span className="truncate">{item.enterpriseIndustry}</span>
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <Badge variant="secondary" className="text-[10px]">
+                {item.enterpriseRole}
+              </Badge>
+              <span className="ml-auto text-[11px] text-primary opacity-0 group-hover:opacity-100 inline-flex items-center gap-0.5">
+                查看详情 <ExternalLink className="h-3 w-3" />
+              </span>
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  if (item.module === "product") {
+    return (
+      <Card className="p-4 h-full hover:shadow-md hover:border-primary/40 transition-all">
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+            <Package className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1.5 py-0 h-4 text-amber-600 border-amber-300"
+              >
+                商品
+              </Badge>
+              <Badge variant="secondary" className="text-[10px] font-mono">
+                HS {item.hs}
+              </Badge>
               <span className="ml-auto text-[11px] text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {formatTime(item.viewedAt)}
               </span>
             </div>
             <div className="font-medium text-sm truncate group-hover:text-primary">
-              {item.desc}
+              {item.productName}
             </div>
-            <div className="text-xs text-muted-foreground mt-1 truncate">
-              <span className="text-foreground/80">{item.exporter}</span>
-              <ArrowRight className="inline h-3 w-3 mx-1" />
-              <span className="text-foreground/80">{item.importer}</span>
-            </div>
-            <div className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1 font-mono">
-              <MapPin className="h-3 w-3" />
-              {item.fromPort}
-              <ArrowRight className="h-3 w-3" />
-              {item.toPort}
-            </div>
+            {item.productEn && (
+              <div className="text-xs text-muted-foreground truncate italic">
+                {item.productEn}
+              </div>
+            )}
+            {item.productCategory && (
+              <div className="text-xs text-muted-foreground mt-1 truncate">
+                {item.productCategory}
+              </div>
+            )}
           </div>
         </div>
       </Card>
-    </Link>
+    );
+  }
+
+  return (
+    <Card className="p-4 h-full hover:shadow-md hover:border-primary/40 transition-all">
+      <div className="flex items-start gap-3">
+        <div className="h-10 w-10 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+          <FileText className="h-5 w-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <Badge
+              variant="outline"
+              className="text-[10px] px-1.5 py-0 h-4 text-emerald-600 border-emerald-300"
+            >
+              提单
+            </Badge>
+            <span className="text-[11px] text-muted-foreground font-mono">{item.billNo}</span>
+            <span className="ml-auto text-[11px] text-muted-foreground flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {formatTime(item.viewedAt)}
+            </span>
+          </div>
+          <div className="font-medium text-sm truncate group-hover:text-primary">
+            {item.desc}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1 truncate">
+            <span className="text-foreground/80">{item.exporter}</span>
+            <ArrowRight className="inline h-3 w-3 mx-1" />
+            <span className="text-foreground/80">{item.importer}</span>
+          </div>
+          <div className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1 font-mono">
+            <MapPin className="h-3 w-3" />
+            {item.fromPort}
+            <ArrowRight className="h-3 w-3" />
+            {item.toPort}
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/* ---------------- Insights Strip ---------------- */
+
+interface InsightsProps {
+  trend: { key: string; count: number }[];
+  modDist: { enterprise: number; product: number; bill: number; total: number };
+  topEnterprises: { id: string; name: string; country?: string; count: number }[];
+}
+
+function InsightsStrip({ trend, modDist, topEnterprises }: InsightsProps) {
+  const max = Math.max(1, ...trend.map((t) => t.count));
+  const w = 220;
+  const h = 44;
+  const pad = 2;
+  const stepX = (w - pad * 2) / Math.max(1, trend.length - 1);
+  const points = trend
+    .map((t, i) => {
+      const x = pad + i * stepX;
+      const y = pad + (h - pad * 2) * (1 - t.count / max);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+  const areaPath =
+    `M ${pad},${h - pad} ` +
+    trend
+      .map((t, i) => {
+        const x = pad + i * stepX;
+        const y = pad + (h - pad * 2) * (1 - t.count / max);
+        return `L ${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(" ") +
+    ` L ${(pad + stepX * (trend.length - 1)).toFixed(1)},${h - pad} Z`;
+
+  const total14 = trend.reduce((s, t) => s + t.count, 0);
+
+  const segs: { key: keyof typeof modDist; label: string; cls: string }[] = [
+    { key: "enterprise", label: "企业", cls: "bg-primary" },
+    { key: "product", label: "商品", cls: "bg-amber-500" },
+    { key: "bill", label: "提单", cls: "bg-emerald-500" },
+  ];
+
+  return (
+    <Card className="p-4">
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Trend */}
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <TrendingUp className="h-4 w-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xs text-muted-foreground">近 14 天浏览</span>
+              <span className="text-sm font-semibold">{total14}</span>
+              <span className="text-[11px] text-muted-foreground">次</span>
+            </div>
+            <svg
+              viewBox={`0 0 ${w} ${h}`}
+              className="mt-1 w-full h-9"
+              preserveAspectRatio="none"
+            >
+              <path d={areaPath} fill="hsl(var(--primary) / 0.12)" />
+              <polyline
+                points={points}
+                fill="none"
+                stroke="hsl(var(--primary))"
+                strokeWidth={1.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
+
+        {/* Module distribution */}
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-lg bg-muted text-foreground flex items-center justify-center shrink-0">
+            <CheckCheck className="h-4 w-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs text-muted-foreground mb-1.5">模块分布</div>
+            <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
+              {segs.map((s) => {
+                const v = modDist[s.key] as number;
+                const pct = (v / modDist.total) * 100;
+                if (pct <= 0) return null;
+                return (
+                  <div
+                    key={s.key}
+                    className={s.cls}
+                    style={{ width: `${pct}%` }}
+                    title={`${s.label} ${v}`}
+                  />
+                );
+              })}
+            </div>
+            <div className="mt-1.5 flex items-center gap-3 text-[11px] text-muted-foreground">
+              {segs.map((s) => (
+                <span key={s.key} className="inline-flex items-center gap-1">
+                  <span className={cn("h-2 w-2 rounded-sm", s.cls)} />
+                  {s.label}
+                  <span className="text-foreground font-medium">
+                    {modDist[s.key] as number}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Top enterprises */}
+        <div className="flex items-start gap-3">
+          <div className="h-9 w-9 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+            <Trophy className="h-4 w-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs text-muted-foreground mb-1.5">高频访问 TOP 3 企业</div>
+            {topEnterprises.length === 0 ? (
+              <div className="text-xs text-muted-foreground">暂无企业访问记录</div>
+            ) : (
+              <ul className="space-y-1">
+                {topEnterprises.map((e, i) => (
+                  <li key={e.id} className="flex items-center gap-2 text-xs">
+                    <span
+                      className={cn(
+                        "h-4 w-4 rounded text-[10px] font-semibold inline-flex items-center justify-center",
+                        i === 0 && "bg-amber-500 text-white",
+                        i === 1 && "bg-zinc-400 text-white",
+                        i === 2 && "bg-amber-700 text-white",
+                      )}
+                    >
+                      {i + 1}
+                    </span>
+                    <Link
+                      to="/outreach/enterprise/$id"
+                      params={{ id: e.id }}
+                      className="truncate hover:text-primary font-medium"
+                    >
+                      {e.name}
+                    </Link>
+                    <span className="ml-auto text-muted-foreground shrink-0">
+                      {e.count} 次
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+    </Card>
   );
 }
