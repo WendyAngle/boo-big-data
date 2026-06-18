@@ -256,18 +256,20 @@ function BillingPage() {
         </div>
         <div className="relative mt-4 flex flex-wrap items-center gap-2">
           <Button
+            asChild
             size="sm"
-            onClick={() => setRechargeOpen(true)}
             className={cn(
               "h-8 bg-white text-primary hover:bg-white/90 font-medium",
               lowBalance && "ring-2 ring-amber-300",
             )}
           >
-            <Wallet className="h-3.5 w-3.5 mr-1.5" />
-            积分充值
-            {lowBalance && (
-              <span className="ml-1.5 inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
-            )}
+            <Link to="/outreach/recharge" search={{ from: "billing" }}>
+              <Wallet className="h-3.5 w-3.5 mr-1.5" />
+              积分充值
+              {lowBalance && (
+                <span className="ml-1.5 inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
+              )}
+            </Link>
           </Button>
           <Button
             size="sm"
@@ -437,12 +439,13 @@ function BillingPage() {
             <div className="text-base font-medium">暂无账单记录</div>
             <div className="text-sm text-muted-foreground max-w-md">
               查看企业 / 人物的关键信息或发起触达后，账单会在此处汇总。积分不足？
-              <button
-                onClick={() => setRechargeOpen(true)}
+              <Link
+                to="/outreach/recharge"
+                search={{ from: "billing" }}
                 className="text-primary hover:underline ml-1"
               >
                 立即充值
-              </button>
+              </Link>
             </div>
           </div>
         ) : (
@@ -510,7 +513,6 @@ function BillingPage() {
           </Table>
         )}
       </Card>
-      <RechargeDialog open={rechargeOpen} onOpenChange={setRechargeOpen} />
       <RulesSheet open={rulesOpen} onOpenChange={setRulesOpen} />
     </div>
     </TooltipProvider>
