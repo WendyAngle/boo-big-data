@@ -41,6 +41,17 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -1681,9 +1692,30 @@ function ProfileTab() {
         </Section>
 
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setDraft(current)}>
-            重置
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline">重置</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>确认重置画像编辑？</AlertDialogTitle>
+                <AlertDialogDescription>
+                  将放弃本次未保存的修改，恢复到上次保存的画像内容。此操作不可撤销。
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>取消</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    setDraft(current);
+                    toast.success("已恢复到上次保存的画像");
+                  }}
+                >
+                  确认重置
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button onClick={handleSave} className="gap-1.5">
             <Save className="h-4 w-4" /> 保存画像
           </Button>
