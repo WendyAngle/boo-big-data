@@ -650,6 +650,14 @@ function KindBadge({ entry }: { entry: LedgerEntry }) {
       </span>
     );
   }
+  if (entry.kind === "recharge") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-primary/10 text-primary border-primary/20">
+        <Wallet className="h-3 w-3" />
+        充值
+      </span>
+    );
+  }
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-violet-50 text-violet-700 border-violet-200">
       <Send className="h-3 w-3" />
@@ -659,6 +667,20 @@ function KindBadge({ entry }: { entry: LedgerEntry }) {
 }
 
 function FieldCell({ entry }: { entry: LedgerEntry }) {
+  if (entry.kind === "recharge") {
+    const label =
+      entry.paymentMethod === "alipay"
+        ? "支付宝"
+        : entry.paymentMethod === "corp"
+          ? "对公转账"
+          : "微信支付";
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Wallet className="h-3.5 w-3.5" />
+        <span className="text-foreground">{label}</span>
+      </span>
+    );
+  }
   if (entry.kind === "view") {
     const Icon: Record<ViewField, typeof Mail> = {
       email: Mail,
