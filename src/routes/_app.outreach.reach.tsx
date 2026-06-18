@@ -175,7 +175,7 @@ function ReachPage() {
           size="sm"
           className="gap-1.5 text-muted-foreground"
           onClick={() => {
-            if (confirm("将清空当前触达记录并重新加载演示数据，确认？")) {
+            if (window.confirm("将清空当前触达记录并重新加载演示数据，确认？")) {
               resetDemoLedger();
             }
           }}
