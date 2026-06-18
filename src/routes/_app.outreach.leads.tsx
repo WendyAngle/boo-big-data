@@ -73,6 +73,9 @@ import {
   type LeadFeedback,
 } from "@/lib/leads";
 import { searchLeads } from "@/lib/leads";
+import { ENTERPRISES } from "@/data/enterprises";
+
+const ENTERPRISES_LOOKUP = new Map(ENTERPRISES.map((e) => [e.id, e]));
 
 export const Route = createFileRoute("/_app/outreach/leads")({
   head: () => ({
