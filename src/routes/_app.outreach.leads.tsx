@@ -71,6 +71,7 @@ import {
 import { FavoriteToggle } from "@/components/FavoriteToggle";
 import { MaskedField } from "@/components/MaskedField";
 import { ReachButton } from "@/components/ReachButton";
+import { AiQuotaPacksDialog } from "@/components/leads/AiQuotaPacksDialog";
 import { toast } from "sonner";
 import {
   useLeadProfile,
