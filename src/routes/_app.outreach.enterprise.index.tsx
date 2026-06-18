@@ -348,7 +348,7 @@ function OutreachEnterprisePage() {
                         est: e.est,
                       },
                     }}
-                    variant="overlay"
+                    variant="inline"
                   />
                 </div>
                 <div className="mt-4 space-y-2">
