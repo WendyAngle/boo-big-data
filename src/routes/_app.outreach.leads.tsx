@@ -435,7 +435,14 @@ function LeadCard({ lead }: { lead: LeadItem }) {
 
 /* ============================ 主动搜索 ============================ */
 
-const HOT = ["纺织面料", "led 灯具", "皮革", "680100", "厨房用具", "汽配"];
+const HOT = [
+  "花岗岩",
+  "大理石",
+  "石膏板",
+  "680100",
+  "manufacturing",
+  "germany",
+];
 
 function SearchTab() {
   const [kw, setKw] = useState("");
