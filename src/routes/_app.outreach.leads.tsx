@@ -795,6 +795,8 @@ function ProfileTab() {
               options={INDUSTRY_OPTIONS}
               value={draft.industries}
               onChange={(v) => set("industries", v)}
+              allowCustom
+              addPlaceholder="输入行业名后回车，可自定义添加"
             />
           </Field>
           <Field label="主营产品">
@@ -842,6 +844,8 @@ function ProfileTab() {
               options={COUNTRY_OPTIONS}
               value={draft.targetCountries}
               onChange={(v) => set("targetCountries", v)}
+              allowCustom
+              addPlaceholder="输入国家 / 地区后回车，可自定义添加"
             />
           </Field>
           <Field label="目标客户行业（多选）">
@@ -849,6 +853,8 @@ function ProfileTab() {
               options={INDUSTRY_OPTIONS}
               value={draft.targetIndustries}
               onChange={(v) => set("targetIndustries", v)}
+              allowCustom
+              addPlaceholder="输入目标行业后回车，可自定义添加"
             />
           </Field>
           <Field label="目标客户规模">
