@@ -500,7 +500,7 @@ function AppsPage() {
                         </TooltipProvider>
                       </TableCell>
                       <TableCell className="font-mono text-xs tabular-nums text-muted-foreground">
-                        {a.expiresAt.slice(0, 10)}
+                        {formatDateTime(a.expiresAt)}
                       </TableCell>
                       <TableCell className="text-muted-foreground max-w-[14rem]">
                         <div className="truncate" title={a.remark}>

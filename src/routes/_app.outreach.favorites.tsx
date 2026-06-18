@@ -437,7 +437,7 @@ function FavoriteCard({
             {meta.label}
           </Badge>
           <span className="ml-auto text-[11px] text-muted-foreground font-mono">
-            {record.createdAt.slice(0, 10)}
+            {formatDateTime(record.createdAt)}
           </span>
         </div>
         <div className="font-medium text-sm truncate">{record.title}</div>
