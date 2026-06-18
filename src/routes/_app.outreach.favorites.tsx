@@ -103,7 +103,15 @@ function FavoritesPage() {
   const [kind, setKind] = useState<KindFilter>("all");
   const [keyword, setKeyword] = useState("");
   const [date, setDate] = useState<Date | undefined>(undefined);
-  const [sort, setSort] = useState<"newest" | "oldest">("newest");
+  type SortKey =
+    | "newest"
+    | "oldest"
+    | "name-asc"
+    | "name-desc"
+    | "kind"
+    | "relevance";
+  const [sort, setSort] = useState<SortKey>("newest");
+  const [lastNonRelevance, setLastNonRelevance] = useState<SortKey>("newest");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [calOpen, setCalOpen] = useState(false);
 
@@ -122,13 +130,61 @@ function FavoritesPage() {
     return c;
   }, [all]);
 
+  const trimmed = keyword.trim().toLowerCase();
+  const hasKeyword = trimmed.length > 0;
+
+  // Auto-switch sort when keyword toggles
+  useEffect(() => {
+    if (hasKeyword && sort !== "relevance") {
+      setLastNonRelevance(sort);
+      setSort("relevance");
+    } else if (!hasKeyword && sort === "relevance") {
+      setSort(lastNonRelevance);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasKeyword]);
+
+  function relevanceScore(r: FavoriteRecord, k: string): number {
+    if (!k) return 0;
+    const fields: { v: string; w: number }[] = [
+      { v: r.title, w: 3 },
+      { v: r.subtitle ?? "", w: 2 },
+      { v: r.parentRef?.name ?? "", w: 2 },
+      ...Object.values(r.meta ?? {}).map((v) => ({ v, w: 1 })),
+    ];
+    let score = 0;
+    for (const f of fields) {
+      const s = f.v.toLowerCase();
+      if (!s) continue;
+      const idx = s.indexOf(k);
+      if (idx < 0) continue;
+      score += f.w * 10;
+      if (idx === 0) score += f.w * 5; // prefix bonus
+      // additional occurrences
+      let from = idx + k.length;
+      while (true) {
+        const j = s.indexOf(k, from);
+        if (j < 0) break;
+        score += f.w;
+        from = j + k.length;
+      }
+    }
+    return score;
+  }
+
+  const KIND_ORDER: Record<FavoriteKind, number> = {
+    enterprise: 0,
+    contact: 1,
+    bill: 2,
+    product: 3,
+  };
+
   const filtered = useMemo(() => {
-    const k = keyword.trim().toLowerCase();
     const dKey = date ? fmtDateKey(date) : null;
     const list = all.filter((r) => {
       if (kind !== "all" && r.kind !== kind) return false;
       if (dKey && !r.createdAt.startsWith(dKey)) return false;
-      if (k) {
+      if (trimmed) {
         const hay = [
           r.title,
           r.subtitle || "",
@@ -137,21 +193,46 @@ function FavoritesPage() {
         ]
           .join(" ")
           .toLowerCase();
-        if (!hay.includes(k)) return false;
+        if (!hay.includes(trimmed)) return false;
       }
       return true;
     });
-    list.sort((a, b) =>
-      sort === "newest"
-        ? a.createdAt < b.createdAt
-          ? 1
-          : -1
-        : a.createdAt < b.createdAt
-          ? -1
-          : 1,
-    );
+    const cmpNewest = (a: FavoriteRecord, b: FavoriteRecord) =>
+      a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0;
+    const cmpName = (a: FavoriteRecord, b: FavoriteRecord) =>
+      a.title.localeCompare(b.title, "zh-Hans-CN");
+    switch (sort) {
+      case "oldest":
+        list.sort((a, b) => -cmpNewest(a, b));
+        break;
+      case "name-asc":
+        list.sort(cmpName);
+        break;
+      case "name-desc":
+        list.sort((a, b) => -cmpName(a, b));
+        break;
+      case "kind":
+        list.sort(
+          (a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || cmpNewest(a, b),
+        );
+        break;
+      case "relevance": {
+        const k = trimmed;
+        list.sort((a, b) => {
+          const sa = relevanceScore(a, k);
+          const sb = relevanceScore(b, k);
+          if (sa !== sb) return sb - sa;
+          return cmpNewest(a, b);
+        });
+        break;
+      }
+      case "newest":
+      default:
+        list.sort(cmpNewest);
+        break;
+    }
     return list;
-  }, [all, kind, keyword, date, sort]);
+  }, [all, kind, trimmed, date, sort]);
 
   const allSelected =
     filtered.length > 0 && filtered.every((r) => selected.has(r.id));
@@ -315,14 +396,27 @@ function FavoritesPage() {
               />
             </PopoverContent>
           </Popover>
-          <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
-            <SelectTrigger className="h-9 w-[160px]">
+          <Select
+            value={sort}
+            onValueChange={(v) => {
+              const next = v as SortKey;
+              setSort(next);
+              if (next !== "relevance") setLastNonRelevance(next);
+            }}
+          >
+            <SelectTrigger className="h-9 w-[170px]">
               <ArrowUpDown className="h-3.5 w-3.5 mr-1" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              {hasKeyword && (
+                <SelectItem value="relevance">匹配度（关键词）</SelectItem>
+              )}
               <SelectItem value="newest">最近收藏</SelectItem>
               <SelectItem value="oldest">最早收藏</SelectItem>
+              <SelectItem value="name-asc">名称 A → Z</SelectItem>
+              <SelectItem value="name-desc">名称 Z → A</SelectItem>
+              <SelectItem value="kind">按类型分组</SelectItem>
             </SelectContent>
           </Select>
           {(date || keyword || kind !== "all") && (
