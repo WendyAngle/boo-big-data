@@ -76,6 +76,12 @@ import {
 
 export const Route = createFileRoute("/_app/outreach/billing")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 账单 | Boo数据平台" }] }),
+  validateSearch: (s) =>
+    z
+      .object({
+        tab: z.enum(["all", "view", "reach", "refund", "recharge"]).optional(),
+      })
+      .parse(s),
   component: BillingPage,
 });
 
