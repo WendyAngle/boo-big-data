@@ -562,6 +562,11 @@ function TargetCell({
   row,
 }: {
   row: { targetKind: "enterprise" | "contact"; targetId: string; targetName: string; parentRef?: { id: string; name: string } };
+}): React.ReactElement;
+function TargetCell({
+  row,
+}: {
+  row: { targetKind: "enterprise" | "contact"; targetId: string; targetName: string; parentRef?: { id: string; name: string } };
 }) {
   if (row.targetKind === "enterprise") {
     return (
