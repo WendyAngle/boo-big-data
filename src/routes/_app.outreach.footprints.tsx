@@ -13,20 +13,59 @@ import {
   ArrowRight,
   ExternalLink,
   EyeOff,
+  HelpCircle,
+  Star,
+  Trash2,
+  Settings2,
+  CheckCheck,
+  TrendingUp,
+  Trophy,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ENTERPRISES } from "@/data/enterprises";
 import { CATALOG, findByHs } from "@/data/products-catalog";
 import { formatTime } from "@/lib/format-date";
+import {
+  isFavorited,
+  toggleFavorite,
+  type FavoriteKind,
+  type FavoritePayload,
+} from "@/lib/favorites";
 
 export const Route = createFileRoute("/_app/outreach/footprints")({
   head: () => ({ meta: [{ title: "触达客户管理 · 足迹 | Boo数据平台" }] }),
