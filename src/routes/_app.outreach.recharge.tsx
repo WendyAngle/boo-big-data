@@ -260,6 +260,15 @@ function RechargePage() {
             <Button asChild variant="outline" size="sm" className="h-8">
               <Link to="/outreach/billing">查看账单</Link>
             </Button>
+            <Button asChild size="sm" className="h-8">
+              <Link
+                to="/outreach/invoices"
+                search={{ action: "apply", orderNo: lastOrder.no }}
+              >
+                <FileText className="h-3.5 w-3.5 mr-1" />
+                申请发票
+              </Link>
+            </Button>
             <Button variant="ghost" size="sm" className="h-8" onClick={() => setLastOrder(null)}>
               知道了
             </Button>
