@@ -637,7 +637,11 @@ function SearchTab() {
           </div>
           <div className="text-sm text-muted-foreground mt-1">
             建议放宽搜索类型 · 换个关键词 · 或前往
-            <Link to="/outreach/enterprise" className="text-primary hover:underline mx-1">
+            <Link
+              to="/outreach/enterprise"
+              search={{ q: activeKw }}
+              className="text-primary hover:underline mx-1"
+            >
               企业库
             </Link>
             做更精细的多维筛选
