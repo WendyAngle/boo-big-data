@@ -99,17 +99,18 @@ const SCOPES: ScopeDef[] = [
 function SearchPage() {
   const navigate = useNavigate();
   const [kw, setKw] = useState("");
-  const [focused, setFocused] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const [activeIdx, setActiveIdx] = useState(1); // 默认高亮"搜索商品"，与附图一致
   const [recentTick, setRecentTick] = useState(0);
   const recent = useMemo(() => loadRecent(), [recentTick]);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // 点击页面其它区域收起下拉
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
       if (!wrapRef.current) return;
-      if (!wrapRef.current.contains(e.target as Node)) setFocused(false);
+      if (!wrapRef.current.contains(e.target as Node)) setDismissed(true);
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
@@ -117,7 +118,7 @@ function SearchPage() {
 
   const trimmed = kw.trim();
   const hasKw = trimmed.length > 0;
-  const showDropdown = focused && hasKw;
+  const showDropdown = hasKw && !dismissed;
 
   const go = (scope: SearchScope, keyword: string) => {
     const k = keyword.trim();
@@ -127,7 +128,7 @@ function SearchPage() {
     }
     pushRecent(k);
     setRecentTick((n) => n + 1);
-    setFocused(false);
+    setDismissed(true);
     if (scope === "leads") {
       navigate({ to: "/outreach/leads" });
     } else if (scope === "enterprise") {
@@ -157,7 +158,7 @@ function SearchPage() {
       e.preventDefault();
       go(SCOPES[activeIdx].key, kw);
     } else if (e.key === "Escape") {
-      setFocused(false);
+      setDismissed(true);
     }
   };
 
@@ -187,17 +188,19 @@ function SearchPage() {
         <div ref={wrapRef} className="relative mx-auto mt-10 max-w-3xl">
           <div
             className={`flex items-center gap-3 rounded-2xl bg-white px-5 h-16 shadow-[0_18px_60px_-20px_rgba(56,189,248,0.45)] ring-1 transition-all ${
-              focused ? "ring-primary/60" : "ring-white/80"
+              showDropdown ? "ring-primary/60" : "ring-white/80"
             }`}
           >
             <Search className="h-5 w-5 text-muted-foreground shrink-0" />
             <Input
+              ref={inputRef}
               value={kw}
               onChange={(e) => {
                 setKw(e.target.value);
                 setActiveIdx(1);
+                setDismissed(false);
               }}
-              onFocus={() => setFocused(true)}
+              onFocus={() => setDismissed(false)}
               onKeyDown={onKeyDown}
               placeholder="搜索线索、商品或企业关键词，支持 HS 编码"
               className="border-0 shadow-none focus-visible:ring-0 text-base h-12 px-0 placeholder:text-muted-foreground/70"
@@ -263,7 +266,8 @@ function SearchPage() {
                       key={r}
                       onClick={() => {
                         setKw(r);
-                        setFocused(true);
+                        setDismissed(false);
+                        inputRef.current?.focus();
                       }}
                       className="group inline-flex max-w-[280px] items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-sm text-slate-700 ring-1 ring-slate-200 hover:ring-primary/50 hover:text-primary transition-colors"
                     >
@@ -301,7 +305,8 @@ function SearchPage() {
                     key={h}
                     onClick={() => {
                       setKw(h);
-                      setFocused(true);
+                      setDismissed(false);
+                      inputRef.current?.focus();
                     }}
                     className="rounded-full bg-primary/8 px-3 py-1 text-sm text-primary/90 hover:bg-primary/12 transition-colors"
                     style={{ backgroundColor: "rgba(20,184,166,0.08)" }}
