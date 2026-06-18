@@ -39,6 +39,7 @@ export const Route = createFileRoute("/_app/outreach/enterprise/")({
   validateSearch: (s: Record<string, unknown>) => ({
     hs: typeof s.hs === "string" ? s.hs : undefined,
     product: typeof s.product === "string" ? s.product : undefined,
+    q: typeof s.q === "string" ? s.q : undefined,
     role:
       s.role === "进口" || s.role === "出口"
         ? (s.role as "进口" | "出口")
@@ -72,10 +73,10 @@ const EMPLOYEE_SIZES = ["1-10", "11-50", "51-200", "201-500", "501-1000", "1001-
 function OutreachEnterprisePage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
-  const { hs, product, role } = search;
+  const { hs, product, role, q } = search;
   const hasScenario = !!(hs || product || role);
 
-  const [keyword, setKeyword] = useState("");
+  const [keyword, setKeyword] = useState(q ?? "");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [industry, setIndustry] = useState("all");
   const [country, setCountry] = useState("all");

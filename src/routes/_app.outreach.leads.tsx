@@ -605,6 +605,13 @@ function SearchTab() {
               </button>
               <Link
                 to="/outreach/enterprise"
+                search={
+                  activeType === "hs"
+                    ? { hs: activeKw }
+                    : activeType === "product"
+                      ? { product: activeKw }
+                      : { q: activeKw }
+                }
                 className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
               >
                 在企业库中查看完整结果 <ChevronRight className="h-3.5 w-3.5" />
@@ -630,7 +637,11 @@ function SearchTab() {
           </div>
           <div className="text-sm text-muted-foreground mt-1">
             建议放宽搜索类型 · 换个关键词 · 或前往
-            <Link to="/outreach/enterprise" className="text-primary hover:underline mx-1">
+            <Link
+              to="/outreach/enterprise"
+              search={{ q: activeKw }}
+              className="text-primary hover:underline mx-1"
+            >
               企业库
             </Link>
             做更精细的多维筛选
