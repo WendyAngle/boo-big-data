@@ -233,7 +233,7 @@ function BillingPage() {
           <div className="flex-1">
             <h1 className="text-xl font-bold">账单</h1>
             <p className="text-white/85 text-sm mt-0.5">
-              统一查看关键信息查看与触达动作产生的积分消耗明细
+              统一查看信息查看、触达、退还、充值等积分流水
             </p>
           </div>
           <div className="flex items-stretch gap-4">
