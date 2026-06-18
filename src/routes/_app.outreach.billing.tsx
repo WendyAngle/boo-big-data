@@ -47,6 +47,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -416,6 +423,38 @@ function BillingPage() {
               if (c !== undefined) setCustomRange(c);
             }}
           />
+          <Select value={tab} onValueChange={(v) => setTab(v as "all" | LedgerKind)}>
+            <SelectTrigger className="h-9 w-[148px] bg-background">
+              <SelectValue placeholder="类型" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部类型</SelectItem>
+              <SelectItem value="view">
+                <span className="inline-flex items-center gap-1.5">
+                  <Eye className="h-3.5 w-3.5 text-sky-600" />
+                  信息查看
+                </span>
+              </SelectItem>
+              <SelectItem value="reach">
+                <span className="inline-flex items-center gap-1.5">
+                  <Send className="h-3.5 w-3.5 text-violet-600" />
+                  触达消耗
+                </span>
+              </SelectItem>
+              <SelectItem value="refund">
+                <span className="inline-flex items-center gap-1.5">
+                  <Undo2 className="h-3.5 w-3.5 text-emerald-600" />
+                  失败退还
+                </span>
+              </SelectItem>
+              <SelectItem value="recharge">
+                <span className="inline-flex items-center gap-1.5">
+                  <Wallet className="h-3.5 w-3.5 text-emerald-600" />
+                  充值
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
           <div className="relative flex-1 min-w-[220px]">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
