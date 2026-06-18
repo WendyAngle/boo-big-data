@@ -69,6 +69,7 @@ import {
   cancelPendingReach,
   retryFailedReach,
   COST_REACH,
+  isRetryableFailReason,
   REACH_STATUS_LABEL,
   REACH_STATUS_COLOR,
   REACH_CHANNEL_LABEL,
@@ -373,7 +374,10 @@ function ReachPage() {
                               <div className="font-medium">失败原因</div>
                               <div className="mt-0.5">{r.failReason}</div>
                               <div className="mt-1 text-muted-foreground">
-                                已自动退还 {COST_REACH} 积分，可在右侧「重新触达」。
+                                已自动退还 {COST_REACH} 积分。
+                                {!isRetryableFailReason(r.failReason) && (
+                                  <> 该原因不支持重新触达，建议核实联系方式后重新发起。</>
+                                )}
                               </div>
                             </div>
                           </TooltipContent>
@@ -402,6 +406,7 @@ function ReachPage() {
                       onRetry={() =>
                         setConfirm({ kind: "retry", id: r.id, target: r.targetName })
                       }
+                      retryable={isRetryableFailReason(r.failReason)}
                     />
                   </TableCell>
                 </TableRow>
@@ -559,10 +564,12 @@ function ActionCell({
   row,
   onTrigger,
   onRetry,
+  retryable = true,
 }: {
   row: { id: string; status: ReachStatus };
   onTrigger: () => void;
   onRetry: () => void;
+  retryable?: boolean;
 }) {
   if (row.status === "pending") {
     return (
@@ -581,15 +588,34 @@ function ActionCell({
   }
   if (row.status === "failed") {
     return (
-      <Button
-        size="sm"
-        variant="outline"
-        className="h-7 gap-1 px-2 text-xs text-primary border-primary/40 hover:bg-primary/10"
-        onClick={onRetry}
-      >
-        <RotateCcw className="h-3 w-3" />
-        重新触达
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!retryable}
+              className={cn(
+                "h-7 gap-1 px-2 text-xs",
+                retryable
+                  ? "text-primary border-primary/40 hover:bg-primary/10"
+                  : "text-muted-foreground",
+              )}
+              onClick={retryable ? onRetry : undefined}
+            >
+              <RotateCcw className="h-3 w-3" />
+              重新触达
+            </Button>
+          </span>
+        </TooltipTrigger>
+        {!retryable && (
+          <TooltipContent side="top" className="max-w-[220px]">
+            <div className="text-xs leading-relaxed">
+              该失败原因不支持重新触达，建议核实联系方式后重新发起。
+            </div>
+          </TooltipContent>
+        )}
+      </Tooltip>
     );
   }
   return <span className="text-xs text-muted-foreground">—</span>;
