@@ -503,7 +503,7 @@ function BillingPage() {
                 <TableHead>明细</TableHead>
                 <TableHead className="w-[110px] text-right">
                   <span className="inline-flex items-center gap-1">
-                    消耗
+                    积分变动
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
@@ -515,7 +515,7 @@ function BillingPage() {
                         </button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        信息查看 5 / 字段 · 触达 10 / 次 · 失败自动退还
+                        信息查看 5 / 字段 · 触达 10 / 次 · 失败自动退还 · 充值正向入账
                       </TooltipContent>
                     </Tooltip>
                   </span>
