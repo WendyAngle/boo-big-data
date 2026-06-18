@@ -406,6 +406,7 @@ function ReachPage() {
                       onRetry={() =>
                         setConfirm({ kind: "retry", id: r.id, target: r.targetName })
                       }
+                      retryable={isRetryableFailReason(r.failReason)}
                     />
                   </TableCell>
                 </TableRow>
