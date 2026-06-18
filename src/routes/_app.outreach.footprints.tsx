@@ -902,31 +902,32 @@ function FootprintCard({
     );
   }
 
-  const linkProps = getLinkProps(item);
   return (
     <div className="relative group">
       {overlay}
-      <Link {...linkProps} className="block">
-        {inner}
-      </Link>
+      {item.module === "enterprise" ? (
+        <Link
+          to="/outreach/enterprise/$id"
+          params={{ id: item.enterpriseId! }}
+          className="block"
+        >
+          {inner}
+        </Link>
+      ) : item.module === "product" ? (
+        <Link
+          to="/outreach/products/$hs"
+          params={{ hs: item.hs! }}
+          className="block"
+        >
+          {inner}
+        </Link>
+      ) : (
+        <Link to="/outreach/bills" className="block">
+          {inner}
+        </Link>
+      )}
     </div>
   );
-}
-
-function getLinkProps(item: FootprintItem): React.ComponentProps<typeof Link> {
-  if (item.module === "enterprise") {
-    return {
-      to: "/outreach/enterprise/$id",
-      params: { id: item.enterpriseId! },
-    } as React.ComponentProps<typeof Link>;
-  }
-  if (item.module === "product") {
-    return {
-      to: "/outreach/products/$hs",
-      params: { hs: item.hs! },
-    } as React.ComponentProps<typeof Link>;
-  }
-  return { to: "/outreach/bills" } as React.ComponentProps<typeof Link>;
 }
 
 function renderCardInner(item: FootprintItem) {
