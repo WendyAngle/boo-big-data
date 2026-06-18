@@ -57,6 +57,7 @@ const menu: Root[] = [
         label: "费用中心",
         children: [
           { label: "账单", to: "/outreach/billing" },
+          { label: "充值", to: "/outreach/recharge" },
         ],
       },
       {
