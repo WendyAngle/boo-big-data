@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { z } from "zod";
 import {
   Wallet,
@@ -89,7 +89,6 @@ function RechargePage() {
   const from = search.from as FromSource | undefined;
   const intent = search.intent as Intent;
   const router = useRouter();
-  const navigate = useNavigate();
   const balance = useCreditBalance();
   const lowBalance = isBalanceLow(balance);
   const expiringSoon = isExpiringSoon(balance);
