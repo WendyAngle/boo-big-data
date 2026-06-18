@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ShieldCheck, ChevronDown, LayoutDashboard, Users, UserCog, Coins, Send, FolderTree, Box, Wallet, Layers, Receipt, FileText } from "lucide-react";
+import { ShieldCheck, ChevronDown, Users, UserCog, Coins, Send, FolderTree, Box, Wallet, Layers, Receipt, FileText } from "lucide-react";
+import { AccountMenu } from "@/components/account/AccountMenu";
 
 type Leaf = { label: string; to: string; icon?: typeof Users };
 type Group = { label: string; to?: string; children: Leaf[] };
@@ -179,8 +180,9 @@ export function AppSidebar() {
           );
         })}
       </nav>
-      <div className="p-4 text-xs text-muted-foreground border-t border-sidebar-border flex items-center gap-2">
-        <LayoutDashboard className="h-3.5 w-3.5" /> v1.0.0
+      <div className="p-2 border-t border-sidebar-border space-y-1">
+        <AccountMenu />
+        <div className="px-3 text-[10px] text-muted-foreground/70 tracking-wide">v1.0.0</div>
       </div>
     </aside>
   );
