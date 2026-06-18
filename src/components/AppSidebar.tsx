@@ -8,19 +8,6 @@ type Root = { label: string; icon: typeof ShieldCheck; children: Group[] };
 
 const menu: Root[] = [
   {
-    label: "实名认证",
-    icon: ShieldCheck,
-    children: [
-      {
-        label: "用户端",
-        to: "/auth/user/users",
-        children: [
-          { label: "用户管理", to: "/auth/user/users", icon: UserCog },
-        ],
-      },
-    ],
-  },
-  {
     label: "积分管理系统",
     icon: Coins,
     children: [
@@ -87,6 +74,11 @@ const menu: Root[] = [
       {
         label: "账单",
         to: "/outreach/billing",
+        children: [],
+      },
+      {
+        label: "用户管理",
+        to: "/outreach/users",
         children: [],
       },
     ],
