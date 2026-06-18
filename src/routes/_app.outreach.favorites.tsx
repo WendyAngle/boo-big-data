@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Star,
@@ -448,7 +448,7 @@ function FavoriteCard({
 
   const contentClassName = "group flex items-start gap-3 flex-1 min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-  const card = (linkedContent: React.ReactNode) => (
+  const card = (linkedContent: ReactNode) => (
     <Card
       className={cn(
         "p-4 h-full transition-all relative",
@@ -473,39 +473,39 @@ function FavoriteCard({
   if (!target) return card(<div className={contentClassName}>{content}</div>);
 
   if (target.kind === "enterprise") {
-    return (
-      {card(<Link
+    return card(
+      <Link
         to="/outreach/enterprise/$id"
         params={{ id: target.id }}
         hash={target.hash}
         className={contentClassName}
       >
         {content}
-      </Link>)}
+      </Link>,
     );
   }
   if (target.kind === "contact") {
-    return (
-      {card(<Link
+    return card(
+      <Link
         to="/outreach/enterprise/$id/contact/$idx"
         params={{ id: target.id, idx: target.idx }}
         className={contentClassName}
       >
         {content}
-      </Link>)}
+      </Link>,
     );
   }
   if (target.kind === "product") {
-    return (
-      {card(<Link to="/outreach/products/$hs" params={{ hs: target.id }} className={contentClassName}>
+    return card(
+      <Link to="/outreach/products/$hs" params={{ hs: target.id }} className={contentClassName}>
         {content}
-      </Link>)}
+      </Link>,
     );
   }
-  return (
-    {card(<Link to="/outreach/bills" className={contentClassName}>
+  return card(
+    <Link to="/outreach/bills" className={contentClassName}>
       {content}
-    </Link>)}
+    </Link>,
   );
 }
 
