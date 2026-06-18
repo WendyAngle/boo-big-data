@@ -77,7 +77,7 @@ const menu: Root[] = [
         children: [],
       },
       {
-        label: "用户管理",
+        label: "员工",
         to: "/outreach/users",
         children: [],
       },

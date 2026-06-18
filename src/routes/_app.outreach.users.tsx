@@ -72,7 +72,7 @@ import {
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/outreach/users")({
-  head: () => ({ meta: [{ title: "出海大数据平台 · 用户管理 | Boo数据平台" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 · 我的员工 | Boo数据平台" }] }),
   component: UserSideUsersPage,
 });
 
@@ -243,7 +243,7 @@ function UserSideUsersPage() {
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <span>出海大数据平台</span>
         <ChevronRight className="h-3.5 w-3.5" />
-        <span className="text-foreground font-medium">用户管理</span>
+        <span className="text-foreground font-medium">员工</span>
       </div>
 
       {/* Hero */}
@@ -257,7 +257,7 @@ function UserSideUsersPage() {
               <UserCog className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">用户管理</h1>
+              <h1 className="text-xl font-bold">我的员工</h1>
               <p className="text-white/85 text-sm mt-0.5">
                 管理本企业的员工账号、登录状态与基础信息
               </p>
