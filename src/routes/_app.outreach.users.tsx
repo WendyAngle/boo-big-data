@@ -241,11 +241,7 @@ function UserSideUsersPage() {
     <div className="p-8 space-y-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <span>实名认证</span>
-        <ChevronRight className="h-3.5 w-3.5" />
-        <Link to="/auth/user" className="hover:text-foreground">
-          用户端
-        </Link>
+        <span>触达客户管理</span>
         <ChevronRight className="h-3.5 w-3.5" />
         <span className="text-foreground font-medium">用户管理</span>
       </div>
