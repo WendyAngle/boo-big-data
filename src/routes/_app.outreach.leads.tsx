@@ -85,10 +85,7 @@ function LeadsPage() {
       <section className="relative overflow-hidden rounded-2xl ring-1 ring-border">
         <div
           className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(120deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%)",
-          }}
+          style={{ background: "var(--gradient-hero)" }}
         />
         <div
           className="absolute inset-0 opacity-30 pointer-events-none"
