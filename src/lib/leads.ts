@@ -272,41 +272,71 @@ export function searchLeads(
 /* -------- AI 免费生成次数（每日） -------- */
 
 const QUOTA_KEY = "boo:lead:ai-quota:v1";
+const BONUS_KEY = "boo:lead:ai-bonus:v1";
 export const AI_DAILY_FREE = 5;
 
 function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function getAiQuotaLeft(): number {
-  if (typeof window === "undefined") return AI_DAILY_FREE;
+function readUsed(): number {
+  if (typeof window === "undefined") return 0;
   try {
     const raw = window.localStorage.getItem(QUOTA_KEY);
-    if (!raw) return AI_DAILY_FREE;
+    if (!raw) return 0;
     const obj = JSON.parse(raw) as { date: string; used: number };
-    if (obj.date !== today()) return AI_DAILY_FREE;
-    return Math.max(0, AI_DAILY_FREE - obj.used);
+    if (obj.date !== today()) return 0;
+    return obj.used;
   } catch {
-    return AI_DAILY_FREE;
+    return 0;
   }
+}
+
+export function getAiBonusQuota(): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    const raw = window.localStorage.getItem(BONUS_KEY);
+    if (!raw) return 0;
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function writeBonus(n: number) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(BONUS_KEY, String(Math.max(0, Math.floor(n))));
+  } catch {}
+}
+
+export function addAiBonusQuota(n: number) {
+  writeBonus(getAiBonusQuota() + Math.max(0, Math.floor(n)));
+}
+
+export function getAiFreeLeft(): number {
+  return Math.max(0, AI_DAILY_FREE - readUsed());
+}
+
+export function getAiQuotaLeft(): number {
+  return getAiFreeLeft() + getAiBonusQuota();
 }
 
 export function consumeAiQuota(): number {
   if (typeof window === "undefined") return AI_DAILY_FREE;
-  let used = 0;
-  try {
-    const raw = window.localStorage.getItem(QUOTA_KEY);
-    if (raw) {
-      const obj = JSON.parse(raw) as { date: string; used: number };
-      if (obj.date === today()) used = obj.used;
-    }
-  } catch {}
-  used += 1;
-  window.localStorage.setItem(
-    QUOTA_KEY,
-    JSON.stringify({ date: today(), used }),
-  );
-  return Math.max(0, AI_DAILY_FREE - used);
+  const used = readUsed();
+  // 优先消耗每日免费额度，之后再扣扩容包
+  if (used < AI_DAILY_FREE) {
+    window.localStorage.setItem(
+      QUOTA_KEY,
+      JSON.stringify({ date: today(), used: used + 1 }),
+    );
+  } else {
+    const bonus = getAiBonusQuota();
+    if (bonus > 0) writeBonus(bonus - 1);
+  }
+  return getAiQuotaLeft();
 }
 
 /* -------- 积分余额（演示用 / 超额扣减） -------- */

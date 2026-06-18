@@ -71,6 +71,7 @@ import {
 import { FavoriteToggle } from "@/components/FavoriteToggle";
 import { MaskedField } from "@/components/MaskedField";
 import { ReachButton } from "@/components/ReachButton";
+import { AiQuotaPacksDialog } from "@/components/leads/AiQuotaPacksDialog";
 import { toast } from "sonner";
 import {
   useLeadProfile,
@@ -575,6 +576,7 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
   const [filteredOut, setFilteredOut] = useState(0);
   const fb = useLeadFeedbackState();
   const [profileDirty, setProfileDirty] = useState(false);
+  const [packsOpen, setPacksOpen] = useState(false);
 
   // 画像被 inline 修改后，提示用户重新生成；leads 已存在才有意义
   const handleProfilePatch = <K extends keyof LeadProfile>(
@@ -807,11 +809,7 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
                       size="sm"
                       variant="outline"
                       className="h-7 px-2.5 text-xs gap-1"
-                      onClick={() =>
-                        toast("购买扩容包", {
-                          description: "演示环境：可在「积分管理 - 充值产品」中配置套餐",
-                        })
-                      }
+                      onClick={() => setPacksOpen(true)}
                     >
                       <Coins className="h-3 w-3" /> 购买扩容包
                     </Button>
@@ -932,6 +930,14 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
           ))}
         </div>
       )}
+      <AiQuotaPacksDialog
+        open={packsOpen}
+        onOpenChange={setPacksOpen}
+        onPurchased={() => {
+          setQuotaLeft(getAiQuotaLeft());
+          setPointBalance(getPointBalance());
+        }}
+      />
     </div>
   );
 }
