@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Sparkles,
@@ -23,6 +23,12 @@ import {
   TrendingUp,
   Upload,
   ImageIcon,
+  ThumbsDown,
+  RotateCcw,
+  Eye,
+  EyeOff,
+  Info,
+  Undo2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,6 +63,14 @@ import {
   pushSearchHistory,
   AI_DAILY_FREE,
   type LeadItem,
+  type LeadTier,
+  getLeadFeedback,
+  markLeadsSeen,
+  markLeadLiked,
+  markLeadIgnored,
+  unmarkLeadIgnored,
+  resetLeadFeedback,
+  type LeadFeedback,
 } from "@/lib/leads";
 import { searchLeads } from "@/lib/leads";
 
