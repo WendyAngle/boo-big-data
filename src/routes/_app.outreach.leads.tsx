@@ -123,7 +123,7 @@ function LeadsPage() {
   return (
     <div className="p-8 space-y-6">
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <span>触达客户管理</span>
+        <span>出海大数据平台</span>
         <ChevronRight className="h-3.5 w-3.5" />
         <span className="text-foreground font-medium">线索</span>
       </div>

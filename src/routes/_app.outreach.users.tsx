@@ -72,7 +72,7 @@ import {
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/outreach/users")({
-  head: () => ({ meta: [{ title: "触达客户管理 · 用户管理 | Boo数据平台" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 · 用户管理 | Boo数据平台" }] }),
   component: UserSideUsersPage,
 });
 
@@ -90,7 +90,7 @@ interface AppUser {
   createdAt: string;
 }
 
-// 当前企业（用户端默认企业，登录用户所在企业）
+// 当前企业（登录用户所在企业）
 const CURRENT_TENANT = { id: "T202600", name: "字节跳动" };
 
 const USER_NAMES = [
@@ -241,7 +241,7 @@ function UserSideUsersPage() {
     <div className="p-8 space-y-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <span>触达客户管理</span>
+        <span>出海大数据平台</span>
         <ChevronRight className="h-3.5 w-3.5" />
         <span className="text-foreground font-medium">用户管理</span>
       </div>

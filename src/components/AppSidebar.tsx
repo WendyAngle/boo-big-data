@@ -33,7 +33,7 @@ const menu: Root[] = [
     ],
   },
   {
-    label: "触达客户管理",
+    label: "出海大数据平台",
     icon: Send,
     children: [
       {
@@ -88,7 +88,7 @@ const menu: Root[] = [
 export function AppSidebar() {
   const { location } = useRouterState();
   const [open, setOpen] = useState<Record<string, boolean>>({
-    触达客户管理: true,
+    出海大数据平台: true,
   });
 
   return (

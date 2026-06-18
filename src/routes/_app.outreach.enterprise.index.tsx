@@ -36,7 +36,7 @@ import { FavoriteToggle } from "@/components/FavoriteToggle";
 import { formatDateTime } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_app/outreach/enterprise/")({
-  head: () => ({ meta: [{ title: "触达客户管理 · 企业 | Boo数据平台" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 · 企业 | Boo数据平台" }] }),
   validateSearch: (s: Record<string, unknown>) => ({
     hs: typeof s.hs === "string" ? s.hs : undefined,
     product: typeof s.product === "string" ? s.product : undefined,
@@ -131,7 +131,7 @@ function OutreachEnterprisePage() {
   return (
     <div className="p-8 space-y-6">
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <span>触达客户管理</span>
+        <span>出海大数据平台</span>
         <ChevronRight className="h-3.5 w-3.5" />
         <span className="text-foreground font-medium">企业</span>
       </div>

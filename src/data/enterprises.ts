@@ -1,4 +1,4 @@
-// 触达客户管理 · 企业 mock 数据
+// 出海大数据平台 · 企业 mock 数据
 // 列表页与详情页共享同一份数据,保证两端展示一致
 
 import { findByHs } from "./products-catalog";

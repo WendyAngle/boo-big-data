@@ -75,7 +75,7 @@ import {
 } from "@/components/billing/DateRangePicker";
 
 export const Route = createFileRoute("/_app/outreach/billing")({
-  head: () => ({ meta: [{ title: "触达客户管理 · 账单 | Boo数据平台" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 · 账单 | Boo数据平台" }] }),
   component: BillingPage,
 });
 
@@ -198,7 +198,7 @@ function BillingPage() {
     <TooltipProvider delayDuration={200}>
     <div className="p-8 space-y-6">
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <span>触达客户管理</span>
+        <span>出海大数据平台</span>
         <ChevronRight className="h-3.5 w-3.5" />
         <span className="text-foreground font-medium">账单</span>
       </div>

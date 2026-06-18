@@ -68,7 +68,7 @@ import {
 } from "@/lib/favorites";
 
 export const Route = createFileRoute("/_app/outreach/footprints")({
-  head: () => ({ meta: [{ title: "触达客户管理 · 足迹 | Boo数据平台" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 · 足迹 | Boo数据平台" }] }),
   component: FootprintsPage,
 });
 
@@ -373,7 +373,7 @@ function FootprintsPage() {
     <TooltipProvider delayDuration={150}>
     <div className="p-8 space-y-6">
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <span>触达客户管理</span>
+        <span>出海大数据平台</span>
         <ChevronRight className="h-3.5 w-3.5" />
         <span className="text-foreground font-medium">足迹</span>
       </div>

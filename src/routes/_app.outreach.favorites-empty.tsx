@@ -26,7 +26,7 @@ function FavoritesEmptyDemo() {
       {/* 面包屑 + 返回 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <span>触达客户管理</span>
+          <span>出海大数据平台</span>
           <ChevronRight className="h-3.5 w-3.5" />
           <Link to="/outreach/favorites" className="hover:text-foreground">
             收藏

@@ -30,7 +30,7 @@ function Home() {
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">触达客户管理 · 用户管理</h3>
+              <h3 className="font-semibold text-foreground">出海大数据平台 · 用户管理</h3>
               <p className="text-sm text-muted-foreground">管理本企业的员工账号与登录状态</p>
             </div>
           </div>
