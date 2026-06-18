@@ -376,7 +376,7 @@ function OutreachEnterprisePage() {
                   <SocialBadge active={e.socials.facebook} kind="facebook" />
                   <SocialBadge active={e.socials.twitter} kind="twitter" />
                   <span className="ml-1 font-mono tabular-nums truncate">
-                    {e.createdAt}
+                    {formatDateTime(e.createdAt)}
                   </span>
                 </div>
               </Card>
