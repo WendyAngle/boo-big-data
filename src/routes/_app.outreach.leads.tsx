@@ -929,6 +929,14 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
           ))}
         </div>
       )}
+      <AiQuotaPacksDialog
+        open={packsOpen}
+        onOpenChange={setPacksOpen}
+        onPurchased={() => {
+          setQuotaLeft(getAiQuotaLeft());
+          setPointBalance(getPointBalance());
+        }}
+      />
     </div>
   );
 }
