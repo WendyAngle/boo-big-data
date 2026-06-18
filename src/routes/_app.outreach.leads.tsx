@@ -56,6 +56,7 @@ import {
   AI_DAILY_FREE,
   type LeadItem,
 } from "@/lib/leads";
+import { searchLeads } from "@/lib/leads";
 
 export const Route = createFileRoute("/_app/outreach/leads")({
   head: () => ({
