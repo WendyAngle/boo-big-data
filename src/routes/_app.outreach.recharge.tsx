@@ -85,7 +85,9 @@ function bonusForCustom(amount: number) {
 }
 
 function RechargePage() {
-  const { from, intent } = Route.useSearch();
+  const search = Route.useSearch();
+  const from = search.from as FromSource | undefined;
+  const intent = search.intent as Intent;
   const router = useRouter();
   const navigate = useNavigate();
   const balance = useCreditBalance();
