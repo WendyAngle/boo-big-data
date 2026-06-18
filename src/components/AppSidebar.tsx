@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ShieldCheck, ChevronDown, Users, UserCog, Coins, Send, FolderTree, Box, Wallet, Layers, Receipt, FileText } from "lucide-react";
+import { ShieldCheck, ChevronDown, Users, UserCog, Coins, Send, FolderTree, Box, Wallet, Layers, Receipt, FileText, Search } from "lucide-react";
 import { AccountMenu } from "@/components/account/AccountMenu";
 
 type Leaf = { label: string; to: string; icon?: typeof Users };
@@ -37,6 +37,11 @@ const menu: Root[] = [
     label: "出海大数据平台",
     icon: Send,
     children: [
+      {
+        label: "搜索",
+        to: "/outreach/search",
+        children: [],
+      },
       {
         label: "客户发现",
         children: [
