@@ -576,7 +576,7 @@ function LeadCard({
           </div>
         </div>
         <div className="flex items-center gap-0.5 shrink-0">
-          <span onClick={onLike}>
+          <span onClick={onLike} className="inline-flex">
             <FavoriteToggle
               kind="enterprise"
               refId={e.id}
@@ -585,7 +585,8 @@ function LeadCard({
                 subtitle: e.industry || undefined,
                 meta: { country: e.country || "", role: e.tradeRole, est: e.est },
               }}
-              variant="overlay"
+              variant="inline"
+              size="sm"
             />
           </span>
           {onIgnore && (
