@@ -569,32 +569,119 @@ function SearchTab() {
         )}
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-        <ShortcutCard
-          icon={<Package className="h-5 w-5" />}
-          title="按商品类目"
-          desc="从商品库进入，反向找到出口/进口该类商品的企业"
-          to="/outreach/products"
-        />
-        <ShortcutCard
-          icon={<Hash className="h-5 w-5" />}
-          title="按 HS 编码"
-          desc="精确锁定海关编码，查全部相关贸易企业"
-          to="/outreach/products"
-        />
-        <ShortcutCard
-          icon={<Building2 className="h-5 w-5" />}
-          title="企业库"
-          desc="按行业、国家、规模等多维筛选企业"
-          to="/outreach/enterprise"
-        />
-        <ShortcutCard
-          icon={<Target className="h-5 w-5" />}
-          title="按提单"
-          desc="通过历史贸易记录挖掘潜在客户"
-          to="/outreach/bills"
-        />
-      </div>
+      {/* 搜索结果区 */}
+      {loading && (
+        <Card className="p-12 text-center border-dashed">
+          <Loader2 className="h-7 w-7 mx-auto text-primary animate-spin" />
+          <div className="mt-3 font-medium">正在为「{activeKw}」匹配线索…</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            扫描企业库、贸易记录与联系方式
+          </div>
+        </Card>
+      )}
+
+      {hasSearched && hasResults && (
+        <>
+          <Card className="px-5 py-3 flex flex-wrap items-center gap-3 bg-primary/[0.04] border-primary/15">
+            <div className="flex items-center gap-2 text-sm">
+              <Search className="h-4 w-4 text-primary" />
+              <span>
+                找到{" "}
+                <span className="font-semibold text-primary tabular-nums">
+                  {results.length}
+                </span>{" "}
+                条线索 · 类型
+                <span className="text-foreground font-medium">「{typeLabel}」</span>
+                · 关键词
+                <span className="text-foreground font-medium">「{activeKw}」</span>
+              </span>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                onClick={clear}
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+              >
+                <XIcon className="h-3.5 w-3.5" /> 清除结果
+              </button>
+              <Link
+                to="/outreach/enterprise"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                在企业库中查看完整结果 <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {results.map((l) => (
+              <LeadCard key={l.enterprise.id} lead={l} />
+            ))}
+          </div>
+        </>
+      )}
+
+      {hasSearched && !hasResults && (
+        <Card className="p-12 text-center border-dashed">
+          <div className="h-14 w-14 mx-auto rounded-2xl bg-muted text-muted-foreground flex items-center justify-center mb-3">
+            <Search className="h-7 w-7" />
+          </div>
+          <div className="font-medium">
+            没有找到与「{activeKw}」匹配的线索
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">
+            建议放宽搜索类型 · 换个关键词 · 或前往
+            <Link to="/outreach/enterprise" className="text-primary hover:underline mx-1">
+              企业库
+            </Link>
+            做更精细的多维筛选
+          </div>
+        </Card>
+      )}
+
+      {/* 快捷入口 —— 未搜索时展开网格；已有结果时折叠为一行 */}
+      {!hasSearched && !loading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <ShortcutCard
+            icon={<Package className="h-5 w-5" />}
+            title="按商品类目"
+            desc="从商品库进入，反向找到出口/进口该类商品的企业"
+            to="/outreach/products"
+          />
+          <ShortcutCard
+            icon={<Hash className="h-5 w-5" />}
+            title="按 HS 编码"
+            desc="精确锁定海关编码，查全部相关贸易企业"
+            to="/outreach/products"
+          />
+          <ShortcutCard
+            icon={<Building2 className="h-5 w-5" />}
+            title="企业库"
+            desc="按行业、国家、规模等多维筛选企业"
+            to="/outreach/enterprise"
+          />
+          <ShortcutCard
+            icon={<Target className="h-5 w-5" />}
+            title="按提单"
+            desc="通过历史贸易记录挖掘潜在客户"
+            to="/outreach/bills"
+          />
+        </div>
+      )}
+
+      {hasSearched && (
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span>换个方式继续找：</span>
+          <Link to="/outreach/products" className="hover:text-primary inline-flex items-center gap-1">
+            <Package className="h-3.5 w-3.5" /> 商品类目
+          </Link>
+          <Link to="/outreach/enterprise" className="hover:text-primary inline-flex items-center gap-1">
+            <Building2 className="h-3.5 w-3.5" /> 企业库
+          </Link>
+          <Link to="/outreach/bills" className="hover:text-primary inline-flex items-center gap-1">
+            <Target className="h-3.5 w-3.5" /> 提单挖掘
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
