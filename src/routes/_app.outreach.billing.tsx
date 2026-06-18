@@ -307,6 +307,17 @@ function BillingPage() {
             variant="secondary"
             className="h-8 bg-white/15 text-white border-white/20 hover:bg-white/25"
           >
+            <Link to="/outreach/invoices">
+              <Receipt className="h-3.5 w-3.5 mr-1.5" />
+              发票中心
+            </Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            variant="secondary"
+            className="h-8 bg-white/15 text-white border-white/20 hover:bg-white/25"
+          >
             <Link to="/outreach/billing-empty">
               <EyeOff className="h-3.5 w-3.5 mr-1.5" />
               查看空状态演示
