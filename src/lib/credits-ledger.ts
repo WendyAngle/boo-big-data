@@ -32,6 +32,8 @@ export interface LedgerEntry {
   detail?: string; // masked or partial; e.g. email/phone/handle
   // demo / override: when set, getReachStatus returns this value directly
   forcedStatus?: ReachStatus;
+  // reach-only: populated when status is failed
+  failReason?: string;
   // refund-only: id of the related reach entry being refunded
   relatedReachId?: string;
 }
@@ -184,6 +186,25 @@ export const REACH_CHANNEL_LABEL: Record<ReachChannel, string> = {
   social: "社媒",
 };
 
+/* -------------------- fail reasons -------------------- */
+
+export const FAIL_REASONS: Record<ReachChannel, string[]> = {
+  email: ["邮箱无效（地址不存在）", "对方邮件服务器退信", "对方拒收 / 标记为垃圾邮件"],
+  phone: ["对方手机关机或无信号", "多次拨打无人接听", "对方主动拒接"],
+  social: ["账号已失效或停用", "私信发送后长期无响应", "消息被平台拦截"],
+};
+
+function pickFailReason(channel: ReachChannel | undefined, seed: string): string {
+  const ch: ReachChannel = channel ?? "email";
+  const list = FAIL_REASONS[ch];
+  return list[hashStr(seed) % list.length];
+}
+
+function persistLedger() {
+  writeLedger(ledger);
+  emitLedger();
+}
+
 export const VIEW_FIELD_LABEL: Record<ViewField, string> = {
   email: "联系邮箱",
   phone: "联系电话",
@@ -208,10 +229,16 @@ export function syncFailedRefunds(now = Date.now()): number {
       .map((e) => e.relatedReachId as string),
   );
   const newRefunds: LedgerEntry[] = [];
+  let reasonsChanged = false;
   for (const r of ledger) {
     if (r.kind !== "reach") continue;
-    if (refundedIds.has(r.id)) continue;
     if (getReachStatus(r, now) !== "failed") continue;
+    // backfill fail reason on any failed reach lacking one
+    if (!r.failReason) {
+      r.failReason = pickFailReason(r.channel, r.id);
+      reasonsChanged = true;
+    }
+    if (refundedIds.has(r.id)) continue;
     newRefunds.push({
       id: makeId("rf"),
       kind: "refund",
@@ -230,11 +257,88 @@ export function syncFailedRefunds(now = Date.now()): number {
       relatedReachId: r.id,
     });
   }
-  if (newRefunds.length === 0) return 0;
-  ledger = [...newRefunds, ...ledger];
-  writeLedger(ledger);
-  emitLedger();
+  if (newRefunds.length === 0 && !reasonsChanged) return 0;
+  if (newRefunds.length > 0) ledger = [...newRefunds, ...ledger];
+  persistLedger();
   return newRefunds.length;
+}
+
+/* -------------------- reach actions -------------------- */
+
+/**
+ * Immediately advance a pending reach to in_progress.
+ * Clears any forcedStatus override and resets createdAt to now so the
+ * natural status timeline (in_progress -> success/failed) takes effect.
+ */
+export function triggerReachNow(reachId: string): boolean {
+  const idx = ledger.findIndex((e) => e.id === reachId && e.kind === "reach");
+  if (idx < 0) return false;
+  const r = ledger[idx];
+  const status = getReachStatus(r);
+  if (status !== "pending") return false;
+  const updated: LedgerEntry = {
+    ...r,
+    // Backdate so getReachStatus() returns in_progress (30s..180s window)
+    createdAt: new Date(Date.now() - 31_000).toISOString(),
+    forcedStatus: undefined,
+  };
+  ledger = [...ledger.slice(0, idx), updated, ...ledger.slice(idx + 1)];
+  persistLedger();
+  return true;
+}
+
+/**
+ * Cancel a pending reach and refund its cost. Removes the reach entry
+ * and appends a refund record so the credit balance reconciles.
+ */
+export function cancelPendingReach(reachId: string): boolean {
+  const r = ledger.find((e) => e.id === reachId && e.kind === "reach");
+  if (!r) return false;
+  if (getReachStatus(r) !== "pending") return false;
+  const refund: LedgerEntry = {
+    id: makeId("rf"),
+    kind: "refund",
+    cost: COST_REACH,
+    createdAt: new Date().toISOString(),
+    targetKind: r.targetKind,
+    targetId: r.targetId,
+    targetName: r.targetName,
+    parentRef: r.parentRef,
+    channel: r.channel,
+    platform: r.platform,
+    detail: r.detail,
+    relatedReachId: r.id,
+  };
+  ledger = [refund, ...ledger.filter((e) => e.id !== reachId)];
+  persistLedger();
+  return true;
+}
+
+/**
+ * Retry a failed reach by creating a fresh pending reach entry that
+ * targets the same contact/enterprise via the same channel. Charges
+ * COST_REACH again (the original failure was already refunded).
+ */
+export function retryFailedReach(reachId: string): LedgerEntry | null {
+  const r = ledger.find((e) => e.id === reachId && e.kind === "reach");
+  if (!r) return null;
+  if (getReachStatus(r) !== "failed") return null;
+  const fresh: LedgerEntry = {
+    id: makeId("r"),
+    kind: "reach",
+    cost: COST_REACH,
+    createdAt: new Date().toISOString(),
+    targetKind: r.targetKind,
+    targetId: r.targetId,
+    targetName: r.targetName,
+    parentRef: r.parentRef,
+    channel: r.channel,
+    platform: r.platform,
+    detail: r.detail,
+  };
+  ledger = [fresh, ...ledger];
+  persistLedger();
+  return fresh;
 }
 
 /** True if a refund record already exists for the given reach entry id. */
