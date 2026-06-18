@@ -165,7 +165,13 @@ function BillingPage() {
       ["时间", "类型", "对象类型", "对象", "所属企业", "字段/渠道", "平台", "明细", "消耗"],
       ...filtered.map((e) => [
         fmtTime(e.createdAt),
-        e.kind === "view" ? "信息查看" : e.kind === "reach" ? "触达消耗" : "失败退还",
+        e.kind === "view"
+          ? "信息查看"
+          : e.kind === "reach"
+            ? "触达消耗"
+            : e.kind === "refund"
+              ? "失败退还"
+              : "充值",
         e.targetKind === "enterprise" ? "企业" : "人物",
         e.targetName,
         e.parentRef?.name ?? "",
@@ -176,7 +182,7 @@ function BillingPage() {
             : "",
         e.platform ?? "",
         e.detail ?? "",
-        `${e.kind === "refund" ? "+" : "-"}${e.cost}`,
+        `${e.kind === "refund" || e.kind === "recharge" ? "+" : "-"}${e.cost}`,
       ]),
     ];
     const csv = rows
