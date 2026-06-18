@@ -1530,7 +1530,9 @@ function ProfileTab() {
               value={draft.industries}
               onChange={(v) => set("industries", v)}
               allowCustom
-              addPlaceholder="输入行业名后回车，可自定义添加"
+              addPlaceholder="推荐输入英文，例如 manufacturing"
+              labelMap={INDUSTRY_CN}
+              hint="为提升 AI 匹配精度，建议使用英文名称"
             />
           </Field>
           <Field label="主营产品">
@@ -1579,7 +1581,9 @@ function ProfileTab() {
               value={draft.targetCountries}
               onChange={(v) => set("targetCountries", v)}
               allowCustom
-              addPlaceholder="输入国家 / 地区后回车，可自定义添加"
+              addPlaceholder="推荐输入英文，例如 united states"
+              labelMap={COUNTRY_CN}
+              hint="为提升 AI 匹配精度，建议使用英文名称"
             />
           </Field>
           <Field label="目标客户行业（多选）">
@@ -1588,7 +1592,9 @@ function ProfileTab() {
               value={draft.targetIndustries}
               onChange={(v) => set("targetIndustries", v)}
               allowCustom
-              addPlaceholder="输入目标行业后回车，可自定义添加"
+              addPlaceholder="推荐输入英文，例如 retail"
+              labelMap={INDUSTRY_CN}
+              hint="为提升 AI 匹配精度，建议使用英文名称"
             />
           </Field>
           <Field label="目标客户规模">
