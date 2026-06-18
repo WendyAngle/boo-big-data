@@ -435,29 +435,17 @@ function LeadCard({ lead }: { lead: LeadItem }) {
 
 /* ============================ 主动搜索 ============================ */
 
-const SEARCH_TYPES = [
-  { key: "all", label: "全部" },
-  { key: "enterprise", label: "企业" },
-  { key: "product", label: "商品" },
-  { key: "hs", label: "HS 编码" },
-] as const;
-
-type SearchType = (typeof SEARCH_TYPES)[number]["key"];
-
 const HOT = ["纺织面料", "led 灯具", "皮革", "680100", "厨房用具", "汽配"];
 
 function SearchTab() {
-  const [type, setType] = useState<SearchType>("all");
   const [kw, setKw] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<LeadItem[]>([]);
   const [activeKw, setActiveKw] = useState("");
-  const [activeType, setActiveType] = useState<SearchType>("all");
   const [historyTick, setHistoryTick] = useState(0);
   const history = useMemo(() => getSearchHistory(), [historyTick, results]);
 
-  const submit = (override?: { type?: SearchType; kw?: string }) => {
-    const t = override?.type ?? type;
+  const submit = (override?: { kw?: string }) => {
     const word = (override?.kw ?? kw).trim();
     if (!word) {
       toast.error("请输入搜索关键词");
@@ -466,12 +454,10 @@ function SearchTab() {
     pushSearchHistory(word);
     setHistoryTick((n) => n + 1);
     setActiveKw(word);
-    setActiveType(t);
     if (override?.kw !== undefined) setKw(word);
-    if (override?.type !== undefined) setType(t);
     setLoading(true);
     setTimeout(() => {
-      const r = searchLeads(word, t, 12);
+      const r = searchLeads(word, "all", 12);
       setResults(r);
       setLoading(false);
     }, 500);
@@ -485,27 +471,10 @@ function SearchTab() {
 
   const hasResults = results.length > 0;
   const hasSearched = activeKw !== "" && !loading;
-  const typeLabel =
-    SEARCH_TYPES.find((s) => s.key === activeType)?.label ?? "全部";
 
   return (
     <div className="space-y-5">
       <Card className="p-5 space-y-4">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {SEARCH_TYPES.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setType(t.key)}
-              className={`px-3 h-7 rounded-full text-xs font-medium transition-colors border ${
-                type === t.key
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-background text-muted-foreground border-border hover:text-foreground"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -513,15 +482,7 @@ function SearchTab() {
               value={kw}
               onChange={(e) => setKw(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && submit()}
-              placeholder={
-                type === "hs"
-                  ? "输入 HS 编码（如 680100）"
-                  : type === "product"
-                    ? "输入商品名（如 纺织面料）"
-                    : type === "enterprise"
-                      ? "输入企业名"
-                      : "输入企业 / 商品 / HS 编码关键词…"
-              }
+              placeholder="输入企业 / 商品 / HS 编码关键词…"
               className="pl-9 h-10"
             />
           </div>
@@ -590,9 +551,7 @@ function SearchTab() {
                 <span className="font-semibold text-primary tabular-nums">
                   {results.length}
                 </span>{" "}
-                条线索 · 类型
-                <span className="text-foreground font-medium">「{typeLabel}」</span>
-                · 关键词
+                条线索 · 关键词
                 <span className="text-foreground font-medium">「{activeKw}」</span>
               </span>
             </div>
@@ -605,13 +564,7 @@ function SearchTab() {
               </button>
               <Link
                 to="/outreach/enterprise"
-                search={
-                  activeType === "hs"
-                    ? { hs: activeKw }
-                    : activeType === "product"
-                      ? { product: activeKw }
-                      : { q: activeKw }
-                }
+                search={{ q: activeKw }}
                 className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
               >
                 在企业库中查看完整结果 <ChevronRight className="h-3.5 w-3.5" />
