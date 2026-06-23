@@ -102,17 +102,23 @@ export function ReachButton({
       senderEmail: isEmail ? sender?.email : undefined,
     });
     setOpen(false);
-    toast.success(`已加入触达队列，扣除 ${COST_REACH} 积分`, {
-      description: isEmail
-        ? `通过 ${sender?.email} 触达 ${targetName}，可在「触达」模块查看进度`
-        : `通过${channelLabel}触达 ${targetName}，可在「触达」模块查看进度`,
-    });
+    toast.success(
+      isEmail
+        ? `邮件已加入发送队列，扣除 ${COST_REACH} 积分`
+        : `已加入触达队列，扣除 ${COST_REACH} 积分`,
+      {
+        description: isEmail
+          ? `通过 ${sender?.email} 发送邮件至 ${targetName}，可在「触达」模块查看进度`
+          : `通过${channelLabel}触达 ${targetName}，可在「触达」模块查看进度`,
+      },
+    );
   };
 
+  const verb = isEmail ? "发送邮件" : "触达";
   let label: React.ReactNode = (
     <>
       <Send className="h-3 w-3" />
-      触达
+      {verb}
     </>
   );
   let tone =
@@ -122,12 +128,12 @@ export function ReachButton({
       active!.status === "pending" ? (
         <>
           <Clock className="h-3 w-3" />
-          待触达
+          {isEmail ? "待发送" : "待触达"}
         </>
       ) : (
         <>
           <Loader2 className="h-3 w-3 animate-spin" />
-          触达中
+          {isEmail ? "发送中" : "触达中"}
         </>
       );
     tone = "border-amber-200 text-amber-700 bg-amber-50";
@@ -135,7 +141,7 @@ export function ReachButton({
     label = (
       <>
         <CheckCircle2 className="h-3 w-3" />
-        再次触达
+        {isEmail ? "再次发送" : "再次触达"}
       </>
     );
     tone = "border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100";
@@ -143,7 +149,7 @@ export function ReachButton({
     label = (
       <>
         <XCircle className="h-3 w-3" />
-        重新触达
+        {isEmail ? "重新发送" : "重新触达"}
       </>
     );
     tone = "border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100";
@@ -181,7 +187,9 @@ export function ReachButton({
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Send className="h-5 w-5 text-primary" />
-              通过{channelLabel}{platform ? `（${platform}）` : ""}触达
+              {isEmail
+                ? "发送邮件"
+                : `通过${channelLabel}${platform ? `（${platform}）` : ""}触达`}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm">
@@ -254,7 +262,7 @@ export function ReachButton({
               disabled={isEmail && !sender}
               className="bg-primary"
             >
-              确认触达（-{COST_REACH}）
+              {isEmail ? `确认发送（-${COST_REACH}）` : `确认触达（-${COST_REACH}）`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
