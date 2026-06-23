@@ -25,6 +25,10 @@ import {
   ArrowRight,
   Anchor,
   EyeOff,
+  Linkedin,
+  Facebook,
+  Twitter,
+  MessageCircle,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,6 +58,7 @@ import {
 } from "@/lib/favorites";
 import { MaskedField } from "@/components/MaskedField";
 import { ReachButton } from "@/components/ReachButton";
+import { findEnterprise } from "@/data/enterprises";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -867,22 +872,87 @@ function FavoriteSubtitle({ record }: { record: FavoriteRecord }) {
 }
 
 function FavoriteMeta({ record }: { record: FavoriteRecord }) {
+  // declared below
+  return _renderMeta(record);
+}
+
+function SocialMiniBadge({
+  active,
+  kind,
+}: {
+  active: boolean;
+  kind: "linkedin" | "facebook" | "twitter" | "whatsapp";
+}) {
+  const Icon =
+    kind === "linkedin"
+      ? Linkedin
+      : kind === "facebook"
+        ? Facebook
+        : kind === "whatsapp"
+          ? MessageCircle
+          : Twitter;
+  const color =
+    kind === "linkedin"
+      ? "bg-[#0a66c2] text-white"
+      : kind === "facebook"
+        ? "bg-[#1877f2] text-white"
+        : kind === "whatsapp"
+          ? "bg-[#25d366] text-white"
+          : "bg-foreground text-background";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center justify-center h-5 w-5 rounded",
+        active ? color : "bg-muted text-muted-foreground/60",
+      )}
+      aria-label={kind}
+    >
+      <Icon className="h-2.5 w-2.5" />
+    </span>
+  );
+}
+
+function _renderMeta(record: FavoriteRecord) {
   if (record.kind === "enterprise") {
     const m = record.meta || {};
+    const e = findEnterprise(record.refId);
+    const industry = e?.industry || "";
+    const country = e?.country || m.country || "";
+    const est = e?.est || m.est || "";
+    const role = e?.tradeRole || m.role || "";
+    const socials = e?.socials;
     return (
-      <div className="text-xs text-muted-foreground mt-1.5 flex items-center gap-2 flex-wrap">
-        {m.country && (
-          <span className="inline-flex items-center gap-1">
-            <MapPin className="h-3 w-3" />
-            {m.country}
+      <div className="mt-1.5 space-y-2">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Briefcase className="h-3 w-3 shrink-0" />
+          <span className={cn("truncate", !industry && "italic")}>
+            {industry || "未提供行业"}
           </span>
+          {role && (
+            <Badge variant="secondary" className="text-[10px] h-4 px-1.5 ml-auto shrink-0">
+              {role}
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <MapPin className="h-3 w-3 shrink-0" />
+          <span className={cn("flex-1 truncate", !country && "italic")}>
+            {country || "未提供国家"}
+          </span>
+          {est && (
+            <span className="font-mono tabular-nums text-foreground/80 shrink-0">
+              est. {est}
+            </span>
+          )}
+        </div>
+        {socials && (
+          <div className="pt-2 border-t flex items-center gap-1.5">
+            <SocialMiniBadge active={socials.linkedin} kind="linkedin" />
+            <SocialMiniBadge active={socials.facebook} kind="facebook" />
+            <SocialMiniBadge active={socials.twitter} kind="twitter" />
+            <SocialMiniBadge active={socials.whatsapp} kind="whatsapp" />
+          </div>
         )}
-        {m.role && (
-          <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-            {m.role}
-          </Badge>
-        )}
-        {m.est && <span className="font-mono">est. {m.est}</span>}
       </div>
     );
   }
