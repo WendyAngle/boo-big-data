@@ -14,6 +14,7 @@ import {
   Mail,
   MapPin,
   MessageSquare,
+  MessageCircle,
   Phone,
   Sparkles,
   Twitter,
@@ -434,6 +435,27 @@ function ContactDetailPage() {
                 />
               </span>
             </div>
+          </Field>
+          <Field label="WhatsApp">
+            {c.whatsapp ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5">
+                  <MessageCircle className="h-3.5 w-3.5 text-[#25d366]" />
+                  <MaskedField
+                    targetKind="contact"
+                    targetId={`${e.id}:${d.idx}`}
+                    targetName={c.name}
+                    parentRef={{ id: e.id, name: e.name }}
+                    field="social"
+                    subKey="WhatsApp"
+                    value={c.whatsapp}
+                    mono
+                  />
+                </span>
+              </div>
+            ) : (
+              <span className="italic text-muted-foreground">未提供</span>
+            )}
           </Field>
         </div>
       </Section>
