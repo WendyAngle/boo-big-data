@@ -85,6 +85,7 @@ export function ReachButton({
 
   const inFlight = active && (active.status === "pending" || active.status === "in_progress");
   const channelLabel = { email: "邮件", phone: "电话", social: "社媒" }[channel];
+  const isPhone = channel === "phone";
 
   const confirm = () => {
     if (isEmail && !sender) {
@@ -105,16 +106,20 @@ export function ReachButton({
     toast.success(
       isEmail
         ? `邮件已加入发送队列，扣除 ${COST_REACH} 积分`
+        : isPhone
+        ? `短信已加入发送队列，扣除 ${COST_REACH} 积分`
         : `已加入触达队列，扣除 ${COST_REACH} 积分`,
       {
         description: isEmail
           ? `通过 ${sender?.email} 发送邮件至 ${targetName}，可在「触达」模块查看进度`
+          : isPhone
+          ? `通过短信触达 ${targetName}（${detail}），可在「触达」模块查看进度`
           : `通过${channelLabel}触达 ${targetName}，可在「触达」模块查看进度`,
       },
     );
   };
 
-  const verb = isEmail ? "发送邮件" : "触达";
+  const verb = isEmail ? "发送邮件" : isPhone ? "发送短信" : "触达";
   let label: React.ReactNode = (
     <>
       <Send className="h-3 w-3" />
@@ -128,12 +133,12 @@ export function ReachButton({
       active!.status === "pending" ? (
         <>
           <Clock className="h-3 w-3" />
-          {isEmail ? "待发送" : "待触达"}
+          {isEmail || isPhone ? "待发送" : "待触达"}
         </>
       ) : (
         <>
           <Loader2 className="h-3 w-3 animate-spin" />
-          {isEmail ? "发送中" : "触达中"}
+          {isEmail || isPhone ? "发送中" : "触达中"}
         </>
       );
     tone = "border-amber-200 text-amber-700 bg-amber-50";
@@ -141,7 +146,7 @@ export function ReachButton({
     label = (
       <>
         <CheckCircle2 className="h-3 w-3" />
-        {isEmail ? "再次发送" : "再次触达"}
+        {isEmail || isPhone ? "再次发送" : "再次触达"}
       </>
     );
     tone = "border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100";
@@ -149,7 +154,7 @@ export function ReachButton({
     label = (
       <>
         <XCircle className="h-3 w-3" />
-        {isEmail ? "重新发送" : "重新触达"}
+        {isEmail || isPhone ? "重新发送" : "重新触达"}
       </>
     );
     tone = "border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100";
@@ -189,6 +194,8 @@ export function ReachButton({
               <Send className="h-5 w-5 text-primary" />
               {isEmail
                 ? "发送邮件"
+                : isPhone
+                ? "发送短信"
                 : `通过${channelLabel}${platform ? `（${platform}）` : ""}触达`}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
@@ -262,7 +269,7 @@ export function ReachButton({
               disabled={isEmail && !sender}
               className="bg-primary"
             >
-              {isEmail ? `确认发送（-${COST_REACH}）` : `确认触达（-${COST_REACH}）`}
+              {isEmail || isPhone ? `确认发送（-${COST_REACH}）` : `确认触达（-${COST_REACH}）`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
