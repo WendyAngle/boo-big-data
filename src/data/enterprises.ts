@@ -8,6 +8,7 @@ export interface EnterpriseContact {
   title: string;
   email: string; // masked
   phone?: string;
+  whatsapp?: string; // WhatsApp 账号（国际格式手机号）
 }
 
 export interface EnterpriseBill {
@@ -33,7 +34,8 @@ export interface Enterprise {
   email: string;
   phone: string;
   desc: string;
-  socials: { linkedin: boolean; facebook: boolean; twitter: boolean };
+  socials: { linkedin: boolean; facebook: boolean; twitter: boolean; whatsapp: boolean };
+  whatsapp?: string; // 企业 WhatsApp 账号（国际格式手机号）
   createdAt: string;
   tradeRole: "出口商" | "进口商" | "进出口商";
   totalBills: number;
@@ -177,6 +179,10 @@ export const ENTERPRISES: Enterprise[] = Array.from({ length: 60 }).map((_, i) =
       title: TITLES[(i + k) % TITLES.length],
       email: `${local.toLowerCase()}@${s}.com`,
       phone: k === 0 ? `+1 (${200 + (i % 700)}) ${100 + (i % 800)}-${1000 + (i % 9000)}` : undefined,
+      whatsapp:
+        (i + k) % 3 !== 2
+          ? `+${1 + ((i + k) % 9)}${String(13000000000 + ((i + k) * 9176543)).slice(0, 10)}`
+          : undefined,
     };
   });
   const bills = makeBills(i, tradeRole);
@@ -206,7 +212,12 @@ export const ENTERPRISES: Enterprise[] = Array.from({ length: 60 }).map((_, i) =
       linkedin: i % 2 === 0,
       facebook: i % 3 !== 2,
       twitter: i % 2 === 1 || i % 5 === 0,
+      whatsapp: i % 4 !== 3,
     },
+    whatsapp:
+      i % 4 !== 3
+        ? `+${1 + (i % 9)}${String(15000000000 + (i * 7654321)).slice(0, 10)}`
+        : undefined,
     createdAt: `${yy}-${pad(m)}-${pad(d)}T00:00:00`,
     tradeRole,
     totalBills,
