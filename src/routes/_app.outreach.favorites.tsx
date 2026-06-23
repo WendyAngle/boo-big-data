@@ -602,7 +602,7 @@ function FavoritesPage() {
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm">
                 <div className="text-muted-foreground">
-                  即将向已选 <span className="font-semibold text-foreground">{selected.size}</span> 条收藏对象发送邮件。
+                  即将向已选 <span className="font-semibold text-foreground">{selected.size}</span> 条收藏对象发送邮件，无邮箱的对象将被跳过。
                 </div>
                 <div className="rounded-md border border-primary/20 bg-primary/5 p-3 space-y-2">
                   <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
