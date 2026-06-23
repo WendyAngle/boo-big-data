@@ -689,6 +689,34 @@ function FavoritesPage() {
                   usableMailboxes.find((m) => m.id === batchSenderId) ??
                   usableMailboxes[0];
                 setBatchEmailOpen(false);
+                for (const r of selectedRecords) {
+                  if (r.kind === "enterprise") {
+                    const e = findEnterprise(r.refId);
+                    if (!e?.email) continue;
+                    createReach({
+                      targetKind: "enterprise",
+                      targetId: r.refId,
+                      targetName: r.title,
+                      channel: "email",
+                      detail: e.email,
+                      senderEmail: sender?.email,
+                    });
+                  } else if (r.kind === "contact" && r.meta?.email) {
+                    const entId = r.parentRef?.id ?? r.refId.split(":")[0];
+                    const idx = r.refId.split(":")[1] ?? "0";
+                    createReach({
+                      targetKind: "contact",
+                      targetId: `${entId}:${idx}`,
+                      targetName: r.title,
+                      parentRef: r.parentRef
+                        ? { id: r.parentRef.id, name: r.parentRef.name }
+                        : undefined,
+                      channel: "email",
+                      detail: r.meta.email,
+                      senderEmail: sender?.email,
+                    });
+                  }
+                }
                 toast.success(`已加入发送队列：${validEmailCount} 封邮件`, {
                   description: `发件邮箱 ${sender?.email}，扣除 ${batchEmailCost} 积分，可在「触达」模块查看进度`,
                 });
@@ -728,6 +756,32 @@ function FavoritesPage() {
               disabled={validSmsCount === 0}
               onClick={() => {
                 setBatchSmsOpen(false);
+                for (const r of selectedRecords) {
+                  if (r.kind === "enterprise") {
+                    const e = findEnterprise(r.refId);
+                    if (!e?.phone) continue;
+                    createReach({
+                      targetKind: "enterprise",
+                      targetId: r.refId,
+                      targetName: r.title,
+                      channel: "phone",
+                      detail: e.phone,
+                    });
+                  } else if (r.kind === "contact" && r.meta?.phone) {
+                    const entId = r.parentRef?.id ?? r.refId.split(":")[0];
+                    const idx = r.refId.split(":")[1] ?? "0";
+                    createReach({
+                      targetKind: "contact",
+                      targetId: `${entId}:${idx}`,
+                      targetName: r.title,
+                      parentRef: r.parentRef
+                        ? { id: r.parentRef.id, name: r.parentRef.name }
+                        : undefined,
+                      channel: "phone",
+                      detail: r.meta.phone,
+                    });
+                  }
+                }
                 toast.success(`已加入发送队列：${validSmsCount} 条短信`, {
                   description: `扣除 ${batchSmsCost} 积分，可在「触达」模块查看进度`,
                 });
