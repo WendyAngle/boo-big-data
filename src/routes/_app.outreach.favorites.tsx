@@ -872,6 +872,47 @@ function FavoriteSubtitle({ record }: { record: FavoriteRecord }) {
 }
 
 function FavoriteMeta({ record }: { record: FavoriteRecord }) {
+  // declared below
+  return _renderMeta(record);
+}
+
+function SocialMiniBadge({
+  active,
+  kind,
+}: {
+  active: boolean;
+  kind: "linkedin" | "facebook" | "twitter" | "whatsapp";
+}) {
+  const Icon =
+    kind === "linkedin"
+      ? Linkedin
+      : kind === "facebook"
+        ? Facebook
+        : kind === "whatsapp"
+          ? MessageCircle
+          : Twitter;
+  const color =
+    kind === "linkedin"
+      ? "bg-[#0a66c2] text-white"
+      : kind === "facebook"
+        ? "bg-[#1877f2] text-white"
+        : kind === "whatsapp"
+          ? "bg-[#25d366] text-white"
+          : "bg-foreground text-background";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center justify-center h-5 w-5 rounded",
+        active ? color : "bg-muted text-muted-foreground/60",
+      )}
+      aria-label={kind}
+    >
+      <Icon className="h-2.5 w-2.5" />
+    </span>
+  );
+}
+
+function _renderMeta(record: FavoriteRecord) {
   if (record.kind === "enterprise") {
     const m = record.meta || {};
     const e = findEnterprise(record.refId);
