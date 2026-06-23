@@ -64,6 +64,16 @@ export function MaskedField({
   className,
   mono = false,
 }: Props) {
+  // 职位信息按产品要求始终明文展示,不消耗积分
+  if (field === "title") {
+    return (
+      <span className={cn("inline-flex items-center", className)}>
+        <span className={cn("select-text", mono && "font-mono tabular-nums text-xs")}>
+          {value}
+        </span>
+      </span>
+    );
+  }
   const key = revealKey(targetKind, targetId, field, subKey);
   const revealed = useRevealed(key);
 
