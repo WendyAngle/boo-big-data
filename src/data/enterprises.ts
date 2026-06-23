@@ -116,11 +116,6 @@ function slug(name: string) {
   return name.toLowerCase().replace(/[^a-z]/g, "");
 }
 
-function maskEmail(local: string, domain: string) {
-  const head = local.slice(0, Math.min(3, local.length));
-  return `${head}***@${domain}`;
-}
-
 function makeBills(i: number, role: Enterprise["tradeRole"]): EnterpriseBill[] {
   const n = 1 + (i % 4);
   return Array.from({ length: n }).map((_, k) => {
