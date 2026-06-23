@@ -133,6 +133,12 @@ function FavoritesPage() {
   const [sort, setSort] = useState<SortKey>("newest");
   const [lastNonRelevance, setLastNonRelevance] = useState<SortKey>("newest");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const navigate = useNavigate();
+  const usableMailboxes = useUsableMailboxes();
+  const [noMailboxOpen, setNoMailboxOpen] = useState(false);
+  const [batchEmailOpen, setBatchEmailOpen] = useState(false);
+  const [batchSmsOpen, setBatchSmsOpen] = useState(false);
+  const [batchSenderId, setBatchSenderId] = useState("");
   const [calOpen, setCalOpen] = useState(false);
 
   const counts = useMemo(() => {
@@ -475,11 +481,28 @@ function FavoritesPage() {
               disabled={selected.size === 0}
               className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
               onClick={() => {
-                toast.info(`已选 ${selected.size} 条，批量触达功能即将上线`);
+                if (usableMailboxes.length === 0) {
+                  setNoMailboxOpen(true);
+                  return;
+                }
+                setBatchSenderId(
+                  getDefaultUsableMailbox(usableMailboxes)?.id ?? "",
+                );
+                setBatchEmailOpen(true);
               }}
             >
-              <Send className="h-4 w-4" />
-              批量触达
+              <MailPlus className="h-4 w-4" />
+              批量发邮件
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={selected.size === 0}
+              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+              onClick={() => setBatchSmsOpen(true)}
+            >
+              <MessageSquare className="h-4 w-4" />
+              批量发短信
             </Button>
             {selected.size > 0 && (
               <Button
