@@ -78,6 +78,7 @@ import {
   saveProfile,
   profileCompleteness,
   type LeadProfile,
+  type QualificationItem,
 } from "@/lib/lead-profile";
 import {
   generateAiLeads,
@@ -233,8 +234,6 @@ const PROFILE_FIELDS: ProfileFieldMeta[] = [
   { key: "advantage", label: "差异化优势", weight: 4, type: "text", placeholder: "简述核心差异化优势", multiline: true },
   { key: "website", label: "企业官网", weight: 2, type: "text", placeholder: "https://" },
   { key: "brandStory", label: "品牌故事", weight: 2, type: "text", placeholder: "一句话品牌故事", multiline: true },
-  { key: "certifications", label: "资质证书", weight: 2, type: "array", placeholder: "输入证书名后回车" },
-  { key: "exportQualifications", label: "出口资质", weight: 2, type: "array", placeholder: "输入出口资质后回车" },
 ];
 
 function isFieldMissing(p: LeadProfile, f: ProfileFieldMeta): boolean {
@@ -1657,13 +1656,7 @@ function ProfileTab() {
                 placeholder="https://"
               />
             </Field>
-            <Field label="认证资质">
-              <ChipInput
-                placeholder="ISO 9001、CE…"
-                value={draft.certifications}
-                onChange={(v) => set("certifications", v)}
-              />
-            </Field>
+            <div />
           </Grid2>
           <Field label="品牌故事 / 简介">
             <CountedTextarea
@@ -1674,26 +1667,11 @@ function ProfileTab() {
               placeholder="一段简短的企业故事，将用于 AI 理解品牌定位"
             />
           </Field>
-          <Field label="出口资质">
-            <div className="space-y-2.5">
-              <ChipInput
-                placeholder="自营进出口权、AEO 认证…"
-                value={draft.exportQualifications}
-                onChange={(v) => set("exportQualifications", v)}
-              />
-              <QualificationUploader
-                files={draft.exportQualificationFiles}
-                onChange={(f) => set("exportQualificationFiles", f)}
-                onRecognize={(name) => {
-                  if (!draft.exportQualifications.includes(name)) {
-                    set("exportQualifications", [
-                      ...draft.exportQualifications,
-                      name,
-                    ]);
-                  }
-                }}
-              />
-            </div>
+          <Field label="企业资质">
+            <QualificationsEditor
+              items={draft.qualifications}
+              onChange={(v) => set("qualifications", v)}
+            />
           </Field>
         </Section>
 
@@ -2017,131 +1995,217 @@ function CountedTextarea({
 
 /* ============================ 出口资质附件上传 ============================ */
 
-const QUALIFICATION_DICT = [
-  "AEO 高级认证",
-  "自营进出口经营权",
-  "出口食品生产企业备案",
-  "CCIC 检验证书",
-  "FORM E 原产地证",
-  "CE 认证",
-  "FDA 注册",
-  "ISO 9001 质量管理体系",
-  "海关 RCEP 优惠认证",
-  "进出口商品检验检疫证明",
-];
+/* ============================ 企业资质 ============================ */
 
-function QualificationUploader({
-  files,
+const ACCEPTED_MIME = ["image/png", "image/jpeg", "application/pdf"];
+const ACCEPT_ATTR = ".png,.jpg,.jpeg,.pdf,image/png,image/jpeg,application/pdf";
+const MAX_FILES_PER_ITEM = 8;
+
+function newQualificationId() {
+  return `q-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function QualificationsEditor({
+  items,
   onChange,
-  onRecognize,
 }: {
-  files: { id: string; name: string; dataUrl: string }[];
-  onChange: (next: { id: string; name: string; dataUrl: string }[]) => void;
-  onRecognize: (name: string) => void;
+  items: QualificationItem[];
+  onChange: (next: QualificationItem[]) => void;
 }) {
-  const MAX = 10;
-  const inputId = "qualification-upload-input";
-  const remaining = MAX - files.length;
+  const update = (id: string, patch: Partial<QualificationItem>) => {
+    onChange(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  };
+  const remove = (id: string) => {
+    onChange(items.filter((it) => it.id !== id));
+  };
+  const add = () => {
+    onChange([
+      ...items,
+      { id: newQualificationId(), name: "", desc: "", files: [] },
+    ]);
+  };
+
+  return (
+    <div className="space-y-3">
+      {items.length === 0 && (
+        <div className="rounded-lg border border-dashed bg-muted/30 px-3 py-6 text-center text-xs text-muted-foreground">
+          暂未添加企业资质，点击下方按钮新增
+        </div>
+      )}
+      {items.map((it, idx) => (
+        <QualificationItemCard
+          key={it.id}
+          index={idx}
+          item={it}
+          onChange={(patch) => update(it.id, patch)}
+          onRemove={() => remove(it.id)}
+        />
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={add}
+        className="gap-1.5"
+      >
+        <Plus className="h-3.5 w-3.5" /> 新增企业资质
+      </Button>
+    </div>
+  );
+}
+
+function QualificationItemCard({
+  index,
+  item,
+  onChange,
+  onRemove,
+}: {
+  index: number;
+  item: QualificationItem;
+  onChange: (patch: Partial<QualificationItem>) => void;
+  onRemove: () => void;
+}) {
+  const inputId = `qualification-files-${item.id}`;
 
   const handleFiles = async (list: FileList | null) => {
     if (!list || !list.length) return;
-    const imgs = Array.from(list).filter((f) => f.type.startsWith("image/"));
-    if (!imgs.length) {
-      toast.error("仅支持图片格式");
-      return;
+    const valid = Array.from(list).filter((f) => ACCEPTED_MIME.includes(f.type));
+    const invalidCount = list.length - valid.length;
+    if (invalidCount > 0) {
+      toast.error(`已忽略 ${invalidCount} 个不支持的文件（仅支持 PNG / JPG / PDF）`);
     }
-    const room = MAX - files.length;
-    if (imgs.length > room) {
-      toast.warning(`最多上传 ${MAX} 张，已为您截取前 ${room} 张`);
+    if (!valid.length) return;
+    const room = MAX_FILES_PER_ITEM - item.files.length;
+    if (valid.length > room) {
+      toast.warning(`每项资质最多 ${MAX_FILES_PER_ITEM} 个文件，已截取前 ${room} 个`);
     }
-    const picked = imgs.slice(0, room);
-    const next = [...files];
+    const picked = valid.slice(0, room);
+    const next = [...item.files];
     for (const f of picked) {
       const dataUrl = await new Promise<string>((resolve) => {
         const r = new FileReader();
         r.onload = () => resolve(String(r.result || ""));
         r.readAsDataURL(f);
       });
-      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      next.push({ id, name: f.name, dataUrl });
+      next.push({
+        id: `f-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        name: f.name,
+        dataUrl,
+        mime: f.type,
+      });
     }
-    onChange(next);
+    onChange({ files: next });
+  };
 
-    // 模拟 AI 识别
-    setTimeout(() => {
-      const recognized = picked
-        .map(
-          (_, i) =>
-            QUALIFICATION_DICT[
-              (next.length - picked.length + i) % QUALIFICATION_DICT.length
-            ],
-        )
-        .filter(Boolean);
-      const uniq = Array.from(new Set(recognized));
-      uniq.forEach((n) => onRecognize(n));
-      if (uniq.length) {
-        toast.success(`AI 已识别 ${uniq.length} 项资质`, {
-          description: uniq.join("、"),
-        });
-      }
-    }, 600);
+  const removeFile = (fid: string) => {
+    onChange({ files: item.files.filter((f) => f.id !== fid) });
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1">
-          <ImageIcon className="h-3.5 w-3.5" />
-          上传资质图片，AI 自动识别（支持 PNG / JPG，最多 {MAX} 张）
-        </span>
-        <span className="tabular-nums">{files.length}/{MAX}</span>
+    <div className="rounded-lg border bg-card p-3 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-medium text-muted-foreground">
+          资质 #{index + 1}
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onRemove}
+          className="h-7 px-2 text-muted-foreground hover:text-destructive"
+        >
+          <XIcon className="h-3.5 w-3.5" /> 删除
+        </Button>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <Label className="text-xs">资质名称</Label>
+          <Input
+            value={item.name}
+            onChange={(e) => onChange({ name: e.target.value })}
+            placeholder="例如：ISO 9001 质量管理体系"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">资质描述</Label>
+          <Input
+            value={item.desc}
+            onChange={(e) => onChange({ desc: e.target.value })}
+            placeholder="发证机构 / 有效期 / 备注"
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-        {files.map((f) => (
-          <div
-            key={f.id}
-            className="group relative aspect-square rounded-lg ring-1 ring-border overflow-hidden bg-muted/30"
-          >
-            <img
-              src={f.dataUrl}
-              alt={f.name}
-              className="h-full w-full object-cover"
-            />
-            <button
-              type="button"
-              onClick={() => onChange(files.filter((x) => x.id !== f.id))}
-              className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              aria-label="删除"
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1">
+            <ImageIcon className="h-3.5 w-3.5" />
+            上传资质图片或文件（支持 PNG / JPG / PDF）
+          </span>
+          <span className="tabular-nums">
+            {item.files.length}/{MAX_FILES_PER_ITEM}
+          </span>
+        </div>
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+          {item.files.map((f) => {
+            const isPdf = f.mime === "application/pdf";
+            return (
+              <div
+                key={f.id}
+                className="group relative aspect-square rounded-lg ring-1 ring-border overflow-hidden bg-muted/30"
+              >
+                {isPdf ? (
+                  <a
+                    href={f.dataUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="h-full w-full flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary p-2"
+                  >
+                    <Upload className="h-5 w-5" />
+                    <span className="text-[10px] uppercase tracking-wide">PDF</span>
+                  </a>
+                ) : (
+                  <img
+                    src={f.dataUrl}
+                    alt={f.name}
+                    className="h-full w-full object-cover"
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeFile(f.id)}
+                  className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="删除"
+                >
+                  <XIcon className="h-3 w-3" />
+                </button>
+                <div className="absolute bottom-0 inset-x-0 px-1.5 py-1 text-[10px] text-white bg-gradient-to-t from-black/70 to-transparent truncate">
+                  {f.name}
+                </div>
+              </div>
+            );
+          })}
+          {item.files.length < MAX_FILES_PER_ITEM && (
+            <label
+              htmlFor={inputId}
+              className="aspect-square rounded-lg ring-1 ring-dashed ring-border hover:ring-primary/50 hover:bg-primary/5 transition-colors flex flex-col items-center justify-center gap-1 cursor-pointer text-muted-foreground"
             >
-              <XIcon className="h-3 w-3" />
-            </button>
-            <div className="absolute bottom-0 inset-x-0 px-1.5 py-1 text-[10px] text-white bg-gradient-to-t from-black/70 to-transparent truncate">
-              {f.name}
-            </div>
-          </div>
-        ))}
-
-        {remaining > 0 && (
-          <label
-            htmlFor={inputId}
-            className="aspect-square rounded-lg ring-1 ring-dashed ring-border hover:ring-primary/50 hover:bg-primary/5 transition-colors flex flex-col items-center justify-center gap-1 cursor-pointer text-muted-foreground"
-          >
-            <Upload className="h-4 w-4" />
-            <span className="text-[11px]">点击上传</span>
-            <input
-              id={inputId}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                handleFiles(e.target.files);
-                e.currentTarget.value = "";
-              }}
-            />
-          </label>
-        )}
+              <Upload className="h-4 w-4" />
+              <span className="text-[11px]">点击上传</span>
+              <input
+                id={inputId}
+                type="file"
+                accept={ACCEPT_ATTR}
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  handleFiles(e.target.files);
+                  e.currentTarget.value = "";
+                }}
+              />
+            </label>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -15,9 +15,21 @@ export interface LeadProfile {
   advantage: string;
   website: string;
   brandStory: string;
-  certifications: string[];
-  exportQualifications: string[];
-  exportQualificationFiles: { id: string; name: string; dataUrl: string }[];
+  qualifications: QualificationItem[];
+}
+
+export interface QualificationFile {
+  id: string;
+  name: string;
+  dataUrl: string;
+  mime: string;
+}
+
+export interface QualificationItem {
+  id: string;
+  name: string;
+  desc: string;
+  files: QualificationFile[];
 }
 
 const KEY = "boo:lead:profile:v1";
@@ -44,9 +56,7 @@ export const EMPTY_PROFILE: LeadProfile = {
   advantage: "自有钢厂 + 唐山/宁波港口现货 + 7×24 中英阿俄多语客服",
   website: "",
   brandStory: "",
-  certifications: [],
-  exportQualifications: [],
-  exportQualificationFiles: [],
+  qualifications: [],
 };
 
 function readProfile(): LeadProfile {
@@ -107,8 +117,7 @@ export function profileCompleteness(p: LeadProfile): number {
     [!!p.advantage, 4],
     [!!p.website, 2],
     [!!p.brandStory, 2],
-    [p.certifications.length > 0, 2],
-    [p.exportQualifications.length > 0, 2],
+    [p.qualifications.length > 0, 4],
   ];
   return weights.reduce((s, [ok, w]) => s + (ok ? w : 0), 0);
 }
