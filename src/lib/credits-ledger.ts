@@ -30,6 +30,8 @@ export interface LedgerEntry {
   channel?: ReachChannel;
   platform?: string; // e.g. "LinkedIn"
   detail?: string; // masked or partial; e.g. email/phone/handle
+  // reach-only: 发件邮箱（channel=email 时）
+  senderEmail?: string;
   // demo / override: when set, getReachStatus returns this value directly
   forcedStatus?: ReachStatus;
   // reach-only: populated when status is failed
@@ -129,6 +131,7 @@ export function createReach(input: {
   channel: ReachChannel;
   platform?: string;
   detail: string;
+  senderEmail?: string;
 }): LedgerEntry {
   const entry: LedgerEntry = {
     id: makeId("r"),

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Send, Loader2, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Send, Loader2, CheckCircle2, XCircle, Clock, MailWarning, Mailbox as MailboxIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -11,8 +11,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useNavigate } from "@tanstack/react-router";
+import { useUsableMailboxes, getDefaultUsableMailbox } from "@/lib/mailboxes";
 import {
   createReach,
   useLedger,
@@ -49,6 +58,15 @@ export function ReachButton({
 }: Props) {
   const ledger = useLedger();
   const [open, setOpen] = useState(false);
+  const [noMailboxOpen, setNoMailboxOpen] = useState(false);
+  const [senderId, setSenderId] = useState<string>("");
+  const navigate = useNavigate();
+  const mailboxes = useUsableMailboxes();
+  const isEmail = channel === "email";
+  const sender = useMemo(
+    () => mailboxes.find((m) => m.id === senderId) ?? getDefaultUsableMailbox(mailboxes),
+    [mailboxes, senderId],
+  );
 
   // 找 (target, channel, platform) 最近一次未结束的触达
   const active = useMemo(() => {
@@ -69,6 +87,10 @@ export function ReachButton({
   const channelLabel = { email: "邮件", phone: "电话", social: "社媒" }[channel];
 
   const confirm = () => {
+    if (isEmail && !sender) {
+      toast.error("请先选择发件邮箱");
+      return;
+    }
     createReach({
       targetKind,
       targetId,
@@ -77,10 +99,13 @@ export function ReachButton({
       channel,
       platform,
       detail,
+      senderEmail: isEmail ? sender?.email : undefined,
     });
     setOpen(false);
     toast.success(`已加入触达队列，扣除 ${COST_REACH} 积分`, {
-      description: `通过${channelLabel}触达 ${targetName}，可在「触达」模块查看进度`,
+      description: isEmail
+        ? `通过 ${sender?.email} 触达 ${targetName}，可在「触达」模块查看进度`
+        : `通过${channelLabel}触达 ${targetName}，可在「触达」模块查看进度`,
     });
   };
 
@@ -132,6 +157,13 @@ export function ReachButton({
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          if (isEmail && mailboxes.length === 0) {
+            setNoMailboxOpen(true);
+            return;
+          }
+          if (isEmail) {
+            setSenderId(getDefaultUsableMailbox(mailboxes)?.id ?? "");
+          }
           setOpen(true);
         }}
         className={cn(
@@ -179,13 +211,83 @@ export function ReachButton({
                     <span className="font-mono text-foreground truncate max-w-[260px]">{detail}</span>
                   </div>
                 </div>
+                {isEmail && (
+                  <div className="rounded-md border border-primary/20 bg-primary/5 p-3 space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
+                      <MailboxIcon className="h-3.5 w-3.5" />
+                      发件邮箱
+                    </div>
+                    {mailboxes.length === 1 ? (
+                      <div className="text-xs">
+                        <span className="font-mono">{mailboxes[0].email}</span>
+                        <span className="text-muted-foreground ml-2">
+                          · {mailboxes[0].displayName}
+                        </span>
+                      </div>
+                    ) : (
+                      <Select value={sender?.id ?? ""} onValueChange={setSenderId}>
+                        <SelectTrigger className="h-9 bg-background">
+                          <SelectValue placeholder="选择发件邮箱" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {mailboxes.map((m) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              <span className="font-mono">{m.email}</span>
+                              <span className="text-muted-foreground ml-2 text-xs">
+                                · {m.displayName}
+                                {m.isDefault ? " · 默认" : ""}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                )}
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={confirm} className="bg-primary">
+            <AlertDialogAction
+              onClick={confirm}
+              disabled={isEmail && !sender}
+              className="bg-primary"
+            >
               确认触达（-{COST_REACH}）
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={noMailboxOpen} onOpenChange={setNoMailboxOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-amber-700">
+              <MailWarning className="h-5 w-5" />
+              未配置发件邮箱
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p className="text-muted-foreground">
+                  邮件触达需要先在「邮箱」模块配置至少一个状态为「正常」的发件邮箱，用于发送本次邮件。
+                </p>
+                <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+                  请先前往「系统管理 · 邮箱」新增邮箱并完成连接测试。
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-primary"
+              onClick={() => {
+                setNoMailboxOpen(false);
+                navigate({ to: "/outreach/mailboxes" });
+              }}
+            >
+              去设置邮箱
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
