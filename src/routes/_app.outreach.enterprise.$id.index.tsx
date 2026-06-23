@@ -22,6 +22,7 @@ import {
   ArrowLeft,
   Hash,
   UserRound,
+  MessageCircle,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -602,7 +603,7 @@ function SocialBadge({
   );
 }
 
-type SocialKind = "linkedin" | "facebook" | "twitter";
+type SocialKind = "linkedin" | "facebook" | "twitter" | "whatsapp";
 
 interface SocialAccountInfo {
   kind: SocialKind;
@@ -661,6 +662,30 @@ function buildSocialAccounts(e: Enterprise): SocialAccountInfo[] {
     make("linkedin", "LinkedIn", "", "company/", "linkedin.com", 3),
     make("facebook", "Facebook", "", "", "facebook.com", 7),
     make("twitter", "Twitter / X", "@", "", "twitter.com", 11),
+    (() => {
+      const active = !!e.whatsapp;
+      const number = e.whatsapp ?? "";
+      const digits = number.replace(/\D/g, "");
+      const followers = active ? 200 + ((seed * 13) % 8000) : 0;
+      const posts = active ? 20 + ((seed * 17) % 600) : 0;
+      const verified = active && (seed * 13) % 6 === 0;
+      const y = 2025 + ((seed + 13) % 2);
+      const m = ((seed * 13) % 12) + 1;
+      const d = ((seed * 16) % 27) + 1;
+      return {
+        kind: "whatsapp" as SocialKind,
+        platform: "WhatsApp",
+        active,
+        handle: active ? number : "—",
+        url: active ? `wa.me/${digits}` : "",
+        followers,
+        posts,
+        verified,
+        lastActive: active
+          ? `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`
+          : "",
+      };
+    })(),
   ];
 }
 
@@ -697,13 +722,21 @@ function SocialAccountCard({
   enterprise: Enterprise;
 }) {
   const Icon =
-    a.kind === "linkedin" ? Linkedin : a.kind === "facebook" ? Facebook : Twitter;
+    a.kind === "linkedin"
+      ? Linkedin
+      : a.kind === "facebook"
+        ? Facebook
+        : a.kind === "whatsapp"
+          ? MessageCircle
+          : Twitter;
   const tone =
     a.kind === "linkedin"
       ? "bg-[#0a66c2] text-white"
       : a.kind === "facebook"
         ? "bg-[#1877f2] text-white"
-        : "bg-foreground text-background";
+        : a.kind === "whatsapp"
+          ? "bg-[#25d366] text-white"
+          : "bg-foreground text-background";
 
   return (
     <div className="group rounded-lg border border-border bg-card hover:ring-1 hover:ring-primary/30 hover:border-primary/40 transition-shadow">
