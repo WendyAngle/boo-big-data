@@ -768,9 +768,11 @@ function FavoriteCard({
           >
             {meta.label}
           </Badge>
-          <span className="ml-auto text-[11px] text-muted-foreground font-mono">
-            {formatDateTime(record.createdAt)}
-          </span>
+          {record.kind !== "enterprise" && (
+            <span className="ml-auto mr-8 text-[11px] text-muted-foreground font-mono truncate">
+              {formatDateTime(record.createdAt)}
+            </span>
+          )}
         </div>
         <div className="font-medium text-sm truncate">{record.title}</div>
         {record.subtitle && <FavoriteSubtitle record={record} />}
@@ -789,6 +791,23 @@ function FavoriteCard({
         selected && "ring-2 ring-primary/50",
       )}
     >
+      <div
+        className="absolute top-2 right-2 z-10"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <FavoriteToggle
+          kind={record.kind}
+          refId={record.refId}
+          payload={{
+            title: record.title,
+            subtitle: record.subtitle,
+            meta: record.meta,
+            parentRef: record.parentRef,
+          }}
+          variant="inline"
+          size="sm"
+        />
+      </div>
       <div className="flex items-start gap-3">
         <div className="pt-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
           <Checkbox
