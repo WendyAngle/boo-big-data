@@ -142,6 +142,31 @@ function FavoritesPage() {
   const [batchSenderId, setBatchSenderId] = useState("");
   const [calOpen, setCalOpen] = useState(false);
 
+  const selectedRecords = useMemo(
+    () => all.filter((r) => selected.has(r.id)),
+    [all, selected],
+  );
+  const validEmailCount = useMemo(
+    () =>
+      selectedRecords.filter(
+        (r) =>
+          r.kind === "enterprise" ||
+          (r.kind === "contact" && !!r.meta?.email),
+      ).length,
+    [selectedRecords],
+  );
+  const validSmsCount = useMemo(
+    () =>
+      selectedRecords.filter(
+        (r) =>
+          r.kind === "enterprise" ||
+          (r.kind === "contact" && !!r.meta?.phone),
+      ).length,
+    [selectedRecords],
+  );
+  const batchEmailCost = validEmailCount * COST_REACH;
+  const batchSmsCost = validSmsCount * COST_REACH;
+
   const counts = useMemo(() => {
     const c: Record<string, number> = {
       all: 0,
