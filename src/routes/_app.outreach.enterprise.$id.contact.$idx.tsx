@@ -14,6 +14,7 @@ import {
   Mail,
   MapPin,
   MessageSquare,
+  MessageCircle,
   Phone,
   Sparkles,
   Twitter,
