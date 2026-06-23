@@ -556,6 +556,137 @@ function FavoritesPage() {
           ))}
         </div>
       )}
+
+      {/* 未配置邮箱提示 */}
+      <AlertDialog open={noMailboxOpen} onOpenChange={setNoMailboxOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-amber-700">
+              <MailWarning className="h-5 w-5" />
+              未配置发件邮箱
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p className="text-muted-foreground">
+                  批量发邮件需要先在「邮箱」模块配置至少一个状态为「正常」的发件邮箱。
+                </p>
+                <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+                  请先前往「系统管理 · 邮箱」新增邮箱并完成连接测试。
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-primary"
+              onClick={() => {
+                setNoMailboxOpen(false);
+                navigate({ to: "/outreach/mailboxes" });
+              }}
+            >
+              去设置邮箱
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* 批量发邮件确认 */}
+      <AlertDialog open={batchEmailOpen} onOpenChange={setBatchEmailOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <MailPlus className="h-5 w-5 text-primary" />
+              批量发邮件
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <div className="text-muted-foreground">
+                  即将向已选 <span className="font-semibold text-foreground">{selected.size}</span> 条收藏对象发送邮件。
+                </div>
+                <div className="rounded-md border border-primary/20 bg-primary/5 p-3 space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
+                    <MailboxIcon className="h-3.5 w-3.5" />
+                    发件邮箱
+                  </div>
+                  {usableMailboxes.length === 1 ? (
+                    <div className="text-xs">
+                      <span className="font-mono">{usableMailboxes[0].email}</span>
+                      <span className="text-muted-foreground ml-2">
+                        · {usableMailboxes[0].displayName}
+                      </span>
+                    </div>
+                  ) : (
+                    <Select value={batchSenderId} onValueChange={setBatchSenderId}>
+                      <SelectTrigger className="h-9 bg-background">
+                        <SelectValue placeholder="选择发件邮箱" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {usableMailboxes.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            <span className="font-mono">{m.email}</span>
+                            <span className="text-muted-foreground ml-2 text-xs">
+                              · {m.displayName}
+                              {m.isDefault ? " · 默认" : ""}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-primary"
+              disabled={!batchSenderId && usableMailboxes.length !== 1}
+              onClick={() => {
+                const sender =
+                  usableMailboxes.find((m) => m.id === batchSenderId) ??
+                  usableMailboxes[0];
+                setBatchEmailOpen(false);
+                toast.success(`已加入发送队列：${selected.size} 封邮件`, {
+                  description: `发件邮箱 ${sender?.email}，可在「触达」模块查看进度`,
+                });
+              }}
+            >
+              确认发送
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* 批量发短信确认 */}
+      <AlertDialog open={batchSmsOpen} onOpenChange={setBatchSmsOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-primary" />
+              批量发短信
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              即将向已选 <span className="font-semibold text-foreground">{selected.size}</span> 条收藏对象的联系电话发送短信，无电话的对象将被跳过。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-primary"
+              onClick={() => {
+                setBatchSmsOpen(false);
+                toast.success(`已加入发送队列：${selected.size} 条短信`, {
+                  description: "可在「触达」模块查看进度",
+                });
+              }}
+            >
+              确认发送
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
