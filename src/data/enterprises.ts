@@ -175,7 +175,7 @@ export const ENTERPRISES: Enterprise[] = Array.from({ length: 60 }).map((_, i) =
     return {
       name: cname,
       title: TITLES[(i + k) % TITLES.length],
-      email: maskEmail(local, `${s}.com`),
+      email: `${local.toLowerCase()}@${s}.com`,
       phone: k === 0 ? `+1 (${200 + (i % 700)}) ${100 + (i % 800)}-${1000 + (i % 9000)}` : undefined,
     };
   });
