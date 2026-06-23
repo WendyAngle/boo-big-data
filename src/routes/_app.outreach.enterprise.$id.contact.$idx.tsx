@@ -416,15 +416,6 @@ function ContactDetailPage() {
                   mono
                 />
               </span>
-              <ReachButton
-                targetKind="contact"
-                targetId={`${e.id}:${d.idx}`}
-                targetName={c.name}
-                parentRef={{ id: e.id, name: e.name }}
-                channel="social"
-                platform="LinkedIn"
-                detail={d.linkedin}
-              />
             </div>
           </Field>
           <Field label="Twitter">
@@ -442,15 +433,6 @@ function ContactDetailPage() {
                   mono
                 />
               </span>
-              <ReachButton
-                targetKind="contact"
-                targetId={`${e.id}:${d.idx}`}
-                targetName={c.name}
-                parentRef={{ id: e.id, name: e.name }}
-                channel="social"
-                platform="Twitter"
-                detail={d.twitter}
-              />
             </div>
           </Field>
         </div>
