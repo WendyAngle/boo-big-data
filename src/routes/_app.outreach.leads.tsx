@@ -233,8 +233,6 @@ const PROFILE_FIELDS: ProfileFieldMeta[] = [
   { key: "advantage", label: "差异化优势", weight: 4, type: "text", placeholder: "简述核心差异化优势", multiline: true },
   { key: "website", label: "企业官网", weight: 2, type: "text", placeholder: "https://" },
   { key: "brandStory", label: "品牌故事", weight: 2, type: "text", placeholder: "一句话品牌故事", multiline: true },
-  { key: "certifications", label: "资质证书", weight: 2, type: "array", placeholder: "输入证书名后回车" },
-  { key: "exportQualifications", label: "出口资质", weight: 2, type: "array", placeholder: "输入出口资质后回车" },
 ];
 
 function isFieldMissing(p: LeadProfile, f: ProfileFieldMeta): boolean {
