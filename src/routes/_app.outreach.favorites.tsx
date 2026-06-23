@@ -12,6 +12,7 @@ import {
   X,
   ArrowUpDown,
   Trash2,
+  Send,
   ExternalLink,
   MapPin,
   Mail,
@@ -50,6 +51,7 @@ import {
 import { MaskedField } from "@/components/MaskedField";
 import { ReachButton } from "@/components/ReachButton";
 import { formatDateTime } from "@/lib/format-date";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/outreach/favorites")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 收藏 | Boo数据平台" }] }),
@@ -448,17 +450,31 @@ function FavoritesPage() {
             已选 <span className="text-foreground font-medium">{selected.size}</span> /{" "}
             {filtered.length} 条
           </span>
-          {selected.size > 0 && (
+          <div className="ml-auto flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              className="ml-auto gap-1.5 text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10"
-              onClick={removeSelected}
+              disabled={selected.size === 0}
+              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+              onClick={() => {
+                toast.info(`已选 ${selected.size} 条，批量触达功能即将上线`);
+              }}
             >
-              <Trash2 className="h-4 w-4" />
-              取消收藏所选
+              <Send className="h-4 w-4" />
+              批量触达
             </Button>
-          )}
+            {selected.size > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10"
+                onClick={removeSelected}
+              >
+                <Trash2 className="h-4 w-4" />
+                取消收藏所选
+              </Button>
+            )}
+          </div>
         </div>
       )}
 
