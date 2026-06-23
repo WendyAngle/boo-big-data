@@ -468,8 +468,13 @@ export function useRevealed(key: string): boolean {
 
 /* -------------------- masking helpers -------------------- */
 
-export function maskEmail(_email: string) {
-  return "****@****.com";
+export function maskEmail(email: string) {
+  if (!email) return "—";
+  const at = email.indexOf("@");
+  if (at <= 0) return `${email[0] ?? ""}***`;
+  const local = email.slice(0, at);
+  const domain = email.slice(at + 1);
+  return `${local[0]}***@${domain}`;
 }
 
 export function maskPhone(phone: string) {

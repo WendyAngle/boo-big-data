@@ -116,11 +116,6 @@ function slug(name: string) {
   return name.toLowerCase().replace(/[^a-z]/g, "");
 }
 
-function maskEmail(local: string, domain: string) {
-  const head = local.slice(0, Math.min(3, local.length));
-  return `${head}***@${domain}`;
-}
-
 function makeBills(i: number, role: Enterprise["tradeRole"]): EnterpriseBill[] {
   const n = 1 + (i % 4);
   return Array.from({ length: n }).map((_, k) => {
@@ -180,7 +175,7 @@ export const ENTERPRISES: Enterprise[] = Array.from({ length: 60 }).map((_, i) =
     return {
       name: cname,
       title: TITLES[(i + k) % TITLES.length],
-      email: maskEmail(local, `${s}.com`),
+      email: `${local.toLowerCase()}@${s}.com`,
       phone: k === 0 ? `+1 (${200 + (i % 700)}) ${100 + (i % 800)}-${1000 + (i % 9000)}` : undefined,
     };
   });
