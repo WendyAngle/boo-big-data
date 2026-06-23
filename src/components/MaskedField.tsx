@@ -64,8 +64,8 @@ export function MaskedField({
   className,
   mono = false,
 }: Props) {
-  // 职位信息按产品要求始终明文展示,不消耗积分
-  if (field === "title") {
+  // 职位信息与详细地址按产品要求始终明文展示,不消耗积分
+  if (field === "title" || field === "address") {
     return (
       <span className={cn("inline-flex items-center", className)}>
         <span className={cn("select-text", mono && "font-mono tabular-nums text-xs")}>
