@@ -378,7 +378,10 @@ function OutreachEnterprisePage() {
                   <SocialBadge active={e.socials.facebook} kind="facebook" />
                   <SocialBadge active={e.socials.twitter} kind="twitter" />
                   <SocialBadge active={e.socials.whatsapp} kind="whatsapp" />
-                  <span className="ml-1 font-mono tabular-nums truncate">
+                  <span
+                    className="ml-1 font-mono tabular-nums truncate"
+                    title={formatDateTime(e.createdAt)}
+                  >
                     {formatDateTime(e.createdAt)}
                   </span>
                 </div>
