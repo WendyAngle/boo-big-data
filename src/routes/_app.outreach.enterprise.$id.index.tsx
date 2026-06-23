@@ -737,15 +737,6 @@ function SocialAccountCard({
                 mono
               />
             </div>
-            <ReachButton
-              targetKind="enterprise"
-              targetId={e.id}
-              targetName={e.name}
-              channel="social"
-              platform={a.platform}
-              detail={a.url || a.handle}
-              size="sm"
-            />
           </div>
         </div>
         <a
