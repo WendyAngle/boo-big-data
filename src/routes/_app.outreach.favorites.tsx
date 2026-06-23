@@ -25,6 +25,10 @@ import {
   ArrowRight,
   Anchor,
   EyeOff,
+  Linkedin,
+  Facebook,
+  Twitter,
+  MessageCircle,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,6 +58,7 @@ import {
 } from "@/lib/favorites";
 import { MaskedField } from "@/components/MaskedField";
 import { ReachButton } from "@/components/ReachButton";
+import { findEnterprise } from "@/data/enterprises";
 import {
   AlertDialog,
   AlertDialogAction,
