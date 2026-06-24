@@ -1537,6 +1537,12 @@ function ProfileTab() {
               <Input value={draft.uscc} disabled />
             </Field>
           </Grid2>
+          <Field label="营业执照">
+            <BusinessLicenseUpload
+              value={draft.businessLicense}
+              onChange={(v) => set("businessLicense", v)}
+            />
+          </Field>
         </Section>
 
         <Section title="主营业务" icon={<Briefcase className="h-4 w-4" />}>
