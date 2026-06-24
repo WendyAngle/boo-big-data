@@ -79,6 +79,7 @@ import {
   profileCompleteness,
   type LeadProfile,
   type QualificationItem,
+  type QualificationFile,
 } from "@/lib/lead-profile";
 import {
   generateAiLeads,
