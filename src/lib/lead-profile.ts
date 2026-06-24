@@ -16,6 +16,7 @@ export interface LeadProfile {
   website: string;
   brandStory: string;
   qualifications: QualificationItem[];
+  businessLicense?: QualificationFile;
 }
 
 export interface QualificationFile {

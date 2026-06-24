@@ -79,6 +79,7 @@ import {
   profileCompleteness,
   type LeadProfile,
   type QualificationItem,
+  type QualificationFile,
 } from "@/lib/lead-profile";
 import {
   generateAiLeads,
@@ -1537,6 +1538,12 @@ function ProfileTab() {
               <Input value={draft.uscc} disabled />
             </Field>
           </Grid2>
+          <Field label="营业执照">
+            <BusinessLicenseUpload
+              value={draft.businessLicense}
+              onChange={(v) => set("businessLicense", v)}
+            />
+          </Field>
         </Section>
 
         <Section title="主营业务" icon={<Briefcase className="h-4 w-4" />}>
@@ -2208,5 +2215,106 @@ function QualificationItemCard({
         </div>
       </div>
     </div>
+  );
+}
+
+function BusinessLicenseUpload({
+  value,
+  onChange,
+}: {
+  value?: QualificationFile;
+  onChange: (v: QualificationFile | undefined) => void;
+}) {
+  const inputId = "business-license-upload";
+
+  const handleFiles = async (list: FileList | null) => {
+    const file = list?.[0];
+    if (!file) return;
+    if (!ACCEPTED_MIME.includes(file.type)) {
+      toast.error("仅支持 PNG / JPG / PDF 格式");
+      return;
+    }
+    const dataUrl = await new Promise<string>((resolve) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result || ""));
+      r.readAsDataURL(file);
+    });
+    onChange({
+      id: `bl-${Date.now()}`,
+      name: file.name,
+      dataUrl,
+      mime: file.type,
+    });
+  };
+
+  if (value) {
+    const isPdf = value.mime === "application/pdf";
+    return (
+      <div className="flex items-center gap-3">
+        <div className="relative h-20 w-20 rounded-lg ring-1 ring-border overflow-hidden bg-muted/30 shrink-0">
+          {isPdf ? (
+            <a
+              href={value.dataUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="h-full w-full flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary"
+            >
+              <Upload className="h-5 w-5" />
+              <span className="text-[10px] uppercase tracking-wide">PDF</span>
+            </a>
+          ) : (
+            <img src={value.dataUrl} alt={value.name} className="h-full w-full object-cover" />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm truncate">{value.name}</div>
+          <div className="mt-1 flex items-center gap-2">
+            <label
+              htmlFor={inputId}
+              className="text-xs text-primary hover:underline cursor-pointer"
+            >
+              重新上传
+            </label>
+            <button
+              type="button"
+              onClick={() => onChange(undefined)}
+              className="text-xs text-muted-foreground hover:text-destructive"
+            >
+              删除
+            </button>
+            <input
+              id={inputId}
+              type="file"
+              accept={ACCEPT_ATTR}
+              className="hidden"
+              onChange={(e) => {
+                handleFiles(e.target.files);
+                e.currentTarget.value = "";
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <label
+      htmlFor={inputId}
+      className="flex items-center gap-3 rounded-lg ring-1 ring-dashed ring-border hover:ring-primary/50 hover:bg-primary/5 transition-colors px-3 py-3 cursor-pointer text-muted-foreground"
+    >
+      <Upload className="h-4 w-4" />
+      <span className="text-sm">点击上传营业执照（支持 PNG / JPG / PDF）</span>
+      <input
+        id={inputId}
+        type="file"
+        accept={ACCEPT_ATTR}
+        className="hidden"
+        onChange={(e) => {
+          handleFiles(e.target.files);
+          e.currentTarget.value = "";
+        }}
+      />
+    </label>
   );
 }
