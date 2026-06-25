@@ -192,10 +192,12 @@ function BillingPage() {
         e.kind === "view"
           ? "信息查看"
           : e.kind === "reach"
-            ? "触达消耗"
-            : e.kind === "refund"
-              ? "失败退还"
-              : "充值",
+            ? "触达-发送内容消耗"
+            : e.kind === "ai_generate"
+              ? "触达-AI生成内容消耗"
+              : e.kind === "refund"
+                ? "失败退还"
+                : "充值",
         e.targetKind === "enterprise" ? "企业" : "人物",
         e.targetName,
         e.parentRef?.name ?? "",
