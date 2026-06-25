@@ -23,6 +23,7 @@ import {
   HelpCircle,
   Download,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -87,7 +88,9 @@ export const Route = createFileRoute("/_app/outreach/billing")({
   validateSearch: (s) =>
     z
       .object({
-        tab: z.enum(["all", "view", "reach", "refund", "recharge"]).optional(),
+        tab: z
+          .enum(["all", "view", "reach", "ai_generate", "refund", "recharge"])
+          .optional(),
       })
       .parse(s),
   component: BillingPage,
@@ -155,13 +158,15 @@ function BillingPage() {
     const all = ledger;
     const viewSum = all.filter((e) => e.kind === "view").reduce((s, e) => s + e.cost, 0);
     const reachSum = all.filter((e) => e.kind === "reach").reduce((s, e) => s + e.cost, 0);
+    const aiSum = all.filter((e) => e.kind === "ai_generate").reduce((s, e) => s + e.cost, 0);
     const refundSum = all.filter((e) => e.kind === "refund").reduce((s, e) => s + e.cost, 0);
     const rechargeSum = all.filter((e) => e.kind === "recharge").reduce((s, e) => s + e.cost, 0);
     const rechargeCount = all.filter((e) => e.kind === "recharge").length;
     return {
-      total: viewSum + reachSum - refundSum,
+      total: viewSum + reachSum + aiSum - refundSum,
       view: viewSum,
       reach: reachSum,
+      ai: aiSum,
       refund: refundSum,
       recharge: rechargeSum,
       rechargeCount,
@@ -170,7 +175,7 @@ function BillingPage() {
   }, [ledger]);
 
   const filteredConsume = filtered
-    .filter((e) => e.kind === "view" || e.kind === "reach")
+    .filter((e) => e.kind === "view" || e.kind === "reach" || e.kind === "ai_generate")
     .reduce((s, e) => s + e.cost, 0);
   const filteredRefund = filtered
     .filter((e) => e.kind === "refund")
@@ -187,10 +192,12 @@ function BillingPage() {
         e.kind === "view"
           ? "信息查看"
           : e.kind === "reach"
-            ? "触达消耗"
-            : e.kind === "refund"
-              ? "失败退还"
-              : "充值",
+            ? "触达-发送内容消耗"
+            : e.kind === "ai_generate"
+              ? "触达-AI生成内容消耗"
+              : e.kind === "refund"
+                ? "失败退还"
+                : "充值",
         e.targetKind === "enterprise" ? "企业" : "人物",
         e.targetName,
         e.parentRef?.name ?? "",
@@ -345,7 +352,7 @@ function BillingPage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-4">
         <StatCard
           icon={<Wallet className="h-5 w-5" />}
           label="净消耗"
@@ -362,10 +369,17 @@ function BillingPage() {
         />
         <StatCard
           icon={<Send className="h-5 w-5" />}
-          label="触达消耗"
+          label="触达-发送内容消耗"
           value={stats.reach}
           unit="积分"
           tone="violet"
+        />
+        <StatCard
+          icon={<Sparkles className="h-5 w-5" />}
+          label="触达-AI生成内容消耗"
+          value={stats.ai}
+          unit="积分"
+          tone="amber"
         />
         <StatCard
           icon={<Undo2 className="h-5 w-5" />}
@@ -406,9 +420,16 @@ function BillingPage() {
           </Tab>
           <Tab active={tab === "reach"} onClick={() => setTab("reach")}>
             <Send className="h-3.5 w-3.5 mr-1 inline" />
-            触达消耗{" "}
+            触达-发送{" "}
             <span className="ml-1 text-muted-foreground">
               {ledger.filter((e) => e.kind === "reach").length}
+            </span>
+          </Tab>
+          <Tab active={tab === "ai_generate"} onClick={() => setTab("ai_generate")}>
+            <Sparkles className="h-3.5 w-3.5 mr-1 inline" />
+            触达-AI生成{" "}
+            <span className="ml-1 text-muted-foreground">
+              {ledger.filter((e) => e.kind === "ai_generate").length}
             </span>
           </Tab>
           <Tab active={tab === "refund"} onClick={() => setTab("refund")}>
@@ -450,7 +471,13 @@ function BillingPage() {
               <SelectItem value="reach">
                 <span className="inline-flex items-center gap-1.5">
                   <Send className="h-3.5 w-3.5 text-violet-600" />
-                  触达消耗
+                  触达-发送内容消耗
+                </span>
+              </SelectItem>
+              <SelectItem value="ai_generate">
+                <span className="inline-flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                  触达-AI生成内容消耗
                 </span>
               </SelectItem>
               <SelectItem value="refund">
@@ -577,7 +604,7 @@ function BillingPage() {
                         </button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        信息查看 5 / 字段 · 触达 10 / 次 · 失败自动退还 · 充值正向入账
+                        信息查看 5 积分/字段 · 触达-发送 1~10 积分/次 · 触达-AI生成 2~3 积分/次 · 失败自动退还
                       </TooltipContent>
                     </Tooltip>
                   </span>
@@ -649,7 +676,7 @@ function StatCard({
   label: string;
   value: number;
   unit: string;
-  tone: "primary" | "sky" | "violet" | "slate" | "emerald";
+  tone: "primary" | "sky" | "violet" | "slate" | "emerald" | "amber";
   positive?: boolean;
 }) {
   const toneMap = {
@@ -658,6 +685,7 @@ function StatCard({
     violet: "bg-violet-50 text-violet-600 ring-violet-200",
     slate: "bg-slate-50 text-slate-600 ring-slate-200",
     emerald: "bg-emerald-50 text-emerald-600 ring-emerald-200",
+    amber: "bg-amber-50 text-amber-600 ring-amber-200",
   } as const;
   return (
     <div className="rounded-xl ring-1 ring-border bg-card p-5 flex items-center gap-4">
@@ -732,10 +760,18 @@ function KindBadge({ entry }: { entry: LedgerEntry }) {
       </span>
     );
   }
+  if (entry.kind === "ai_generate") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-amber-50 text-amber-700 border-amber-200">
+        <Sparkles className="h-3 w-3" />
+        触达-AI生成
+      </span>
+    );
+  }
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-violet-50 text-violet-700 border-violet-200">
       <Send className="h-3 w-3" />
-      触达消耗
+      触达-发送
     </span>
   );
 }

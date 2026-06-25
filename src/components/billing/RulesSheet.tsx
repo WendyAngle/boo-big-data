@@ -1,4 +1,4 @@
-import { Eye, Send, Undo2, Wallet, Info } from "lucide-react";
+import { Eye, Send, Undo2, Wallet, Info, Sparkles } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -6,7 +6,14 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { COST_VIEW, COST_REACH } from "@/lib/credits-ledger";
+import {
+  COST_VIEW,
+  COST_REACH_EMAIL,
+  COST_REACH_SMS,
+  COST_REACH_SOCIAL,
+  COST_AI_EMAIL,
+  COST_AI_SMS,
+} from "@/lib/credits-ledger";
 
 export function RulesSheet({
   open,
@@ -39,9 +46,16 @@ export function RulesSheet({
           <RuleCard
             tone="violet"
             icon={<Send className="h-4 w-4" />}
-            title="触达消耗"
-            cost={`${COST_REACH} 积分 / 次`}
-            desc="按渠道与目标人/企业逐次计费，包括邮件、电话、社媒（含 LinkedIn / WhatsApp 等）。"
+            title="触达-发送内容消耗"
+            cost={`邮件 ${COST_REACH_EMAIL} / 短信 ${COST_REACH_SMS} / 社媒 ${COST_REACH_SOCIAL} 积分`}
+            desc="按渠道与目标人/企业逐次计费；短信按 70/140 字拆分为多条计费。"
+          />
+          <RuleCard
+            tone="amber"
+            icon={<Sparkles className="h-4 w-4" />}
+            title="触达-AI生成内容消耗"
+            cost={`邮件 ${COST_AI_EMAIL} / 短信 ${COST_AI_SMS} 积分 / 次`}
+            desc="使用 AI 自动撰写邮件或短信文案时按次计费；生成失败不扣费，可重新生成。"
           />
           <RuleCard
             tone="emerald"
@@ -78,13 +92,14 @@ function RuleCard({
   title: string;
   cost: string;
   desc: string;
-  tone: "sky" | "violet" | "emerald" | "primary";
+  tone: "sky" | "violet" | "emerald" | "primary" | "amber";
 }) {
   const tones = {
     sky: "bg-sky-50 text-sky-700 ring-sky-200",
     violet: "bg-violet-50 text-violet-700 ring-violet-200",
     emerald: "bg-emerald-50 text-emerald-700 ring-emerald-200",
     primary: "bg-primary/10 text-primary ring-primary/20",
+    amber: "bg-amber-50 text-amber-700 ring-amber-200",
   } as const;
   return (
     <div className="rounded-xl ring-1 ring-border p-4">
