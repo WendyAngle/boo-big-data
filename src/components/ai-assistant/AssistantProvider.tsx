@@ -7,10 +7,16 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { askAssistant } from "@/lib/api/ai-assistant.functions";
+import { askAssistant, translateMessages } from "@/lib/api/ai-assistant.functions";
 import { SUGGESTIONS, UI_TEXT, type Lang } from "./suggestions";
 
-type Msg = { role: "user" | "assistant"; content: string };
+type Msg = {
+  id: string;
+  role: "user" | "assistant";
+  variants: Partial<Record<Lang, string>>;
+  /** 该消息最初产生时所用语言（作为翻译源） */
+  source: Lang;
+};
 
 const FAB_KEY = "ai-assistant:fab-pos";
 const PANEL_KEY = "ai-assistant:panel-pos";
@@ -112,6 +118,7 @@ export function AssistantProvider() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -135,18 +142,35 @@ export function AssistantProvider() {
   }, [messages, loading]);
 
   const ask = useServerFn(askAssistant);
+  const translate = useServerFn(translateMessages);
 
   const send = useCallback(
     async (text: string) => {
       const t = text.trim();
       if (!t || loading) return;
-      const next: Msg[] = [...messages, { role: "user", content: t }];
+      const userMsg: Msg = {
+        id: `u-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        role: "user",
+        variants: { [lang]: t } as Partial<Record<Lang, string>>,
+        source: lang,
+      };
+      const next: Msg[] = [...messages, userMsg];
       setMessages(next);
       setInput("");
       setLoading(true);
       try {
-        const res = await ask({ data: { messages: next, lang } });
-        setMessages([...next, { role: "assistant", content: res.content || "(空回复)" }]);
+        const flat = next.map((m) => ({
+          role: m.role,
+          content: m.variants[lang] ?? m.variants[m.source] ?? "",
+        }));
+        const res = await ask({ data: { messages: flat, lang } });
+        const aMsg: Msg = {
+          id: `a-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          role: "assistant",
+          variants: { [lang]: res.content || "(空回复)" } as Partial<Record<Lang, string>>,
+          source: lang,
+        };
+        setMessages([...next, aMsg]);
       } catch (e) {
         const msg = e instanceof Error ? e.message : "AI 调用失败";
         toast.error(msg);
@@ -158,12 +182,35 @@ export function AssistantProvider() {
     [ask, lang, loading, messages],
   );
 
-  const handleLangChange = (v: string) => {
+  const handleLangChange = async (v: string) => {
     const l = v as Lang;
     setLang(l);
     try {
       window.localStorage.setItem(LANG_KEY, l);
     } catch {}
+    // 翻译当前会话中缺失目标语言版本的消息
+    setMessages((cur) => cur); // no-op, just for type
+    const missing = messages
+      .filter((m) => !m.variants[l])
+      .map((m) => ({ id: m.id, text: m.variants[m.source] ?? Object.values(m.variants)[0] ?? "" }))
+      .filter((it) => it.text);
+    if (missing.length === 0) return;
+    setTranslating(true);
+    try {
+      const { translations } = await translate({ data: { items: missing, target: l } });
+      setMessages((cur) =>
+        cur.map((m) =>
+          translations[m.id]
+            ? { ...m, variants: { ...m.variants, [l]: translations[m.id] } }
+            : m,
+        ),
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "翻译失败";
+      toast.error(msg);
+    } finally {
+      setTranslating(false);
+    }
   };
 
   const suggestions = useMemo(() => SUGGESTIONS[lang], [lang]);
@@ -284,45 +331,48 @@ export function AssistantProvider() {
             {messages.length === 0 && (
               <div className="text-xs text-muted-foreground whitespace-pre-line py-2">{t.empty}</div>
             )}
-            {messages.map((m, i) => (
-              <div key={i} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
+            {messages.map((m) => {
+              const text = m.variants[lang];
+              return (
+              <div key={m.id} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
                 <div
                   className={cn(
                     "max-w-[85%] rounded-lg px-3 py-2 whitespace-pre-wrap break-words leading-relaxed",
                     m.role === "user"
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-foreground",
+                    !text && "italic opacity-70",
                   )}
                 >
-                  {m.content}
+                  {text ?? (translating ? t.translating : (m.variants[m.source] ?? ""))}
                 </div>
               </div>
-            ))}
-            {loading && (
+              );
+            })}
+            {(loading || translating) && (
               <div className="flex justify-start">
                 <div className="bg-muted rounded-lg px-3 py-2 text-xs text-muted-foreground inline-flex items-center gap-1.5">
                   <span className="size-1.5 rounded-full bg-foreground/50 animate-bounce" style={{ animationDelay: "0ms" }} />
                   <span className="size-1.5 rounded-full bg-foreground/50 animate-bounce" style={{ animationDelay: "120ms" }} />
                   <span className="size-1.5 rounded-full bg-foreground/50 animate-bounce" style={{ animationDelay: "240ms" }} />
-                  <span className="ml-1.5">{t.thinking}</span>
+                  <span className="ml-1.5">{translating ? t.translating : t.thinking}</span>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Suggestions */}
-          {messages.length === 0 && (
-            <div className="px-3 pb-2 border-t pt-2 bg-muted/30">
+          {/* Suggestions (常显) */}
+          <div className="px-3 pb-2 border-t pt-2 bg-muted/30">
               <div className="text-[11px] text-muted-foreground mb-1.5 flex items-center gap-1">
                 <Sparkles className="size-3" />
                 {t.suggestionsTitle}
               </div>
-              <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+              <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
                 {suggestions.map((s) => (
                   <button
                     key={s}
                     type="button"
-                    disabled={loading}
+                    disabled={loading || translating}
                     onClick={() => send(s)}
                     className="text-[11px] leading-tight px-2 py-1 rounded-md border bg-background hover:bg-accent hover:text-accent-foreground transition-colors text-left disabled:opacity-50"
                   >
@@ -330,8 +380,7 @@ export function AssistantProvider() {
                   </button>
                 ))}
               </div>
-            </div>
-          )}
+          </div>
 
           {/* Input */}
           <div className="border-t p-2 flex items-end gap-2 bg-background">
