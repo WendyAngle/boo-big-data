@@ -352,7 +352,7 @@ function BillingPage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-4">
         <StatCard
           icon={<Wallet className="h-5 w-5" />}
           label="净消耗"
@@ -369,10 +369,17 @@ function BillingPage() {
         />
         <StatCard
           icon={<Send className="h-5 w-5" />}
-          label="触达消耗"
+          label="触达-发送内容消耗"
           value={stats.reach}
           unit="积分"
           tone="violet"
+        />
+        <StatCard
+          icon={<Sparkles className="h-5 w-5" />}
+          label="触达-AI生成内容消耗"
+          value={stats.ai}
+          unit="积分"
+          tone="amber"
         />
         <StatCard
           icon={<Undo2 className="h-5 w-5" />}
