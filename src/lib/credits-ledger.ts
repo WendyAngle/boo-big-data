@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { ENTERPRISES } from "@/data/enterprises";
 
 export type LedgerKind = "view" | "reach" | "refund" | "recharge" | "ai_generate";
 export type ViewField =
