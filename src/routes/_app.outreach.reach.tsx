@@ -21,10 +21,19 @@ import {
   RotateCcw,
   Play,
   Ban,
+  FileText,
+  Sparkles,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -351,7 +360,19 @@ function ReachPage() {
                     <ChannelBadge channel={r.channel!} platform={r.platform} />
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground truncate max-w-[320px]">
-                    {r.detail}
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate">{r.detail}</span>
+                      {(r.subject || r.content) && (
+                        <button
+                          type="button"
+                          title="查看发送内容"
+                          onClick={() => setViewing(r)}
+                          className="shrink-0 inline-flex h-5 w-5 items-center justify-center rounded text-primary hover:bg-primary/10"
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col items-start gap-1">
