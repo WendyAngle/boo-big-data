@@ -23,6 +23,7 @@ import {
   HelpCircle,
   Download,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -87,7 +88,9 @@ export const Route = createFileRoute("/_app/outreach/billing")({
   validateSearch: (s) =>
     z
       .object({
-        tab: z.enum(["all", "view", "reach", "refund", "recharge"]).optional(),
+        tab: z
+          .enum(["all", "view", "reach", "ai_generate", "refund", "recharge"])
+          .optional(),
       })
       .parse(s),
   component: BillingPage,
