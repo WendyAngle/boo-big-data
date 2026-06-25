@@ -158,13 +158,15 @@ function BillingPage() {
     const all = ledger;
     const viewSum = all.filter((e) => e.kind === "view").reduce((s, e) => s + e.cost, 0);
     const reachSum = all.filter((e) => e.kind === "reach").reduce((s, e) => s + e.cost, 0);
+    const aiSum = all.filter((e) => e.kind === "ai_generate").reduce((s, e) => s + e.cost, 0);
     const refundSum = all.filter((e) => e.kind === "refund").reduce((s, e) => s + e.cost, 0);
     const rechargeSum = all.filter((e) => e.kind === "recharge").reduce((s, e) => s + e.cost, 0);
     const rechargeCount = all.filter((e) => e.kind === "recharge").length;
     return {
-      total: viewSum + reachSum - refundSum,
+      total: viewSum + reachSum + aiSum - refundSum,
       view: viewSum,
       reach: reachSum,
+      ai: aiSum,
       refund: refundSum,
       recharge: rechargeSum,
       rechargeCount,
@@ -173,7 +175,7 @@ function BillingPage() {
   }, [ledger]);
 
   const filteredConsume = filtered
-    .filter((e) => e.kind === "view" || e.kind === "reach")
+    .filter((e) => e.kind === "view" || e.kind === "reach" || e.kind === "ai_generate")
     .reduce((s, e) => s + e.cost, 0);
   const filteredRefund = filtered
     .filter((e) => e.kind === "refund")
