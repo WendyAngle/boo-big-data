@@ -68,7 +68,7 @@ export interface LedgerEntry {
 }
 
 const LEDGER_KEY = "boo:ledger:v1";
-const LEDGER_SEED_FLAG = "boo:ledger:v5:seeded";
+const LEDGER_SEED_FLAG = "boo:ledger:v6:seeded";
 const REVEAL_KEY = "boo:reveal:v1";
 
 /* -------------------- ledger store -------------------- */
@@ -690,6 +690,136 @@ export function seedDemoLedgerIfEmpty() {
       };
     };
     const seed: LedgerEntry[] = [
+      // ---- 富文本触达记录(含主题/正文/发件人,覆盖企业&联系人 × 邮件&短信)----
+      (() => {
+        const e = pickEnt(2);
+        return {
+          id: makeId("r"),
+          kind: "reach",
+          cost: COST_REACH_EMAIL,
+          createdAt: isoMinutesAgo(45),
+          targetKind: "enterprise" as TargetKind,
+          targetId: e.id,
+          targetName: e.name,
+          channel: "email" as ReachChannel,
+          detail: e.email,
+          senderEmail: "sales@boo-demo.com",
+          subject: `关于与 ${e.name} 的供应合作机会`,
+          content: `${e.name} 团队您好,\n\n我们关注到贵司在 ${e.industry} 领域的业务表现,希望就潜在的供应链合作进行初步沟通。期待回复。\n\n顺祝商祺`,
+          aiGenerated: false,
+          forcedStatus: "success" as ReachStatus,
+        };
+      })(),
+      (() => {
+        const e = pickEnt(5);
+        return {
+          id: makeId("r"),
+          kind: "reach",
+          cost: COST_REACH_SMS,
+          createdAt: isoMinutesAgo(33),
+          targetKind: "enterprise" as TargetKind,
+          targetId: e.id,
+          targetName: e.name,
+          channel: "phone" as ReachChannel,
+          detail: maskPhone(e.phone),
+          content: `【Boo】您好,我们是 Boo 出海平台,希望与 ${e.name} 就采购合作做简短沟通,方便时回拨此号码。`,
+          aiGenerated: true,
+          forcedStatus: "success" as ReachStatus,
+        };
+      })(),
+      (() => {
+        const e = pickEnt(8);
+        const idx = 0;
+        const c = e.contacts[idx];
+        return {
+          id: makeId("r"),
+          kind: "reach",
+          cost: COST_REACH_EMAIL,
+          createdAt: isoMinutesAgo(22),
+          targetKind: "contact" as TargetKind,
+          targetId: `${e.id}:${idx}`,
+          targetName: c.name,
+          parentRef: { id: e.id, name: e.name },
+          channel: "email" as ReachChannel,
+          detail: c.email,
+          senderEmail: "bd@boo-demo.com",
+          subject: `Hi ${c.name}, 一次关于 ${e.name} 的合作探讨`,
+          content: `Hi ${c.name},\n\n看到您在 ${e.name} 担任${c.title},我们近期有一批适配贵司业务的方案,想与您预约 15 分钟做简短交流。\n\nThanks,\nBoo 团队`,
+          aiGenerated: true,
+          forcedStatus: "success" as ReachStatus,
+        };
+      })(),
+      (() => {
+        const e = pickEnt(15);
+        const idx = e.contacts.length > 1 ? 1 : 0;
+        const c = e.contacts[idx];
+        return {
+          id: makeId("r"),
+          kind: "reach",
+          cost: COST_REACH_SMS,
+          createdAt: isoMinutesAgo(12),
+          targetKind: "contact" as TargetKind,
+          targetId: `${e.id}:${idx}`,
+          targetName: c.name,
+          parentRef: { id: e.id, name: e.name },
+          channel: "phone" as ReachChannel,
+          detail: maskPhone(c.phone ?? e.phone),
+          content: `【Boo】${c.name} 您好,我们针对 ${e.name} 的业务方向准备了一份简报,如方便请回拨此号码或回复 1。`,
+          aiGenerated: false,
+          forcedStatus: "in_progress" as ReachStatus,
+        };
+      })(),
+      (() => {
+        const e = pickEnt(19);
+        return {
+          id: makeId("r"),
+          kind: "reach",
+          cost: COST_REACH_EMAIL,
+          createdAt: isoMinutesAgo(150),
+          targetKind: "enterprise" as TargetKind,
+          targetId: e.id,
+          targetName: e.name,
+          channel: "email" as ReachChannel,
+          detail: e.email,
+          senderEmail: "sales@boo-demo.com",
+          subject: `${e.name} - 出海合作邀约`,
+          content: `您好,\n\n我们希望与 ${e.name} 就跨境业务展开合作,详细资料见附件。\n\nBoo 团队`,
+          aiGenerated: false,
+          forcedStatus: "failed" as ReachStatus,
+          failReason: "对方邮件服务器退信",
+        };
+      })(),
+      (() => {
+        const e = pickEnt(25);
+        const idx = 0;
+        const c = e.contacts[idx];
+        return {
+          id: makeId("ai"),
+          kind: "ai_generate" as LedgerKind,
+          cost: COST_AI_EMAIL,
+          createdAt: isoMinutesAgo(23),
+          targetKind: "contact" as TargetKind,
+          targetId: `${e.id}:${idx}`,
+          targetName: c.name,
+          parentRef: { id: e.id, name: e.name },
+          channel: "email" as ReachChannel,
+          detail: "AI 生成邮件文案",
+        };
+      })(),
+      (() => {
+        const e = pickEnt(5);
+        return {
+          id: makeId("ai"),
+          kind: "ai_generate" as LedgerKind,
+          cost: COST_AI_SMS,
+          createdAt: isoMinutesAgo(34),
+          targetKind: "enterprise" as TargetKind,
+          targetId: e.id,
+          targetName: e.name,
+          channel: "phone" as ReachChannel,
+          detail: "AI 生成短信文案",
+        };
+      })(),
       // ---- reach 终态 / 进行中 / 待触达 ----
       reachEnt(0, "email", 60, "success"),
       reachContact(4, 1, "phone", 20, "success"),
