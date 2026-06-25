@@ -28,6 +28,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { findEnterprise } from "@/data/enterprises";
 import {
   Table,
   TableBody,
@@ -840,6 +841,20 @@ function TargetCell({ entry: e }: { entry: LedgerEntry }) {
     );
   }
   if (e.targetKind === "enterprise") {
+    const exists = !!findEnterprise(e.targetId);
+    if (!exists) {
+      return (
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="h-8 w-8 rounded-md bg-muted text-muted-foreground flex items-center justify-center shrink-0">
+            <Building2 className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="font-medium truncate capitalize text-sm">{e.targetName}</div>
+            <div className="text-xs text-muted-foreground">企业</div>
+          </div>
+        </div>
+      );
+    }
     return (
       <Link
         to="/outreach/enterprise/$id"
@@ -859,6 +874,22 @@ function TargetCell({ entry: e }: { entry: LedgerEntry }) {
     );
   }
   const [entId, idx] = e.targetId.split(":");
+  const parentExists = !!findEnterprise(entId);
+  if (!parentExists) {
+    return (
+      <div className="flex items-center gap-2.5 min-w-0">
+        <div className="h-8 w-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center shrink-0">
+          <UserRound className="h-4 w-4" />
+        </div>
+        <div className="min-w-0">
+          <div className="font-medium truncate capitalize text-sm">{e.targetName}</div>
+          <div className="text-xs text-muted-foreground truncate">
+            {e.parentRef?.name ?? "—"}
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <Link
       to="/outreach/enterprise/$id/contact/$idx"
