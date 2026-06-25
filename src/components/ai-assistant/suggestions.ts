@@ -15,6 +15,7 @@ export const UI_TEXT: Record<Lang, {
   suggestionsTitle: string;
   newChat: string;
   empty: string;
+  translating: string;
 }> = {
   bi: {
     title: "智能助手 · Assistant",
@@ -25,6 +26,7 @@ export const UI_TEXT: Record<Lang, {
     suggestionsTitle: "你可能想问 / You may ask",
     newChat: "新会话",
     empty: "向我提问，或选择下方常见问题开始。\nAsk me anything, or pick a question below.",
+    translating: "切换语言中…  Translating…",
   },
   zh: {
     title: "智能助手",
@@ -35,6 +37,7 @@ export const UI_TEXT: Record<Lang, {
     suggestionsTitle: "你可能想问",
     newChat: "新会话",
     empty: "向我提问，或选择下方常见问题开始。",
+    translating: "切换语言中…",
   },
   en: {
     title: "AI Assistant",
@@ -45,6 +48,7 @@ export const UI_TEXT: Record<Lang, {
     suggestionsTitle: "You may ask",
     newChat: "New chat",
     empty: "Ask me anything, or pick a question below to start.",
+    translating: "Translating…",
   },
 };
 
