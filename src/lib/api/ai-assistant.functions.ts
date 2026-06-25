@@ -11,6 +11,14 @@ const InputSchema = z.object({
   lang: z.enum(["bi", "zh", "en"]).default("bi"),
 });
 
+const TranslateSchema = z.object({
+  items: z
+    .array(z.object({ id: z.string(), text: z.string().min(1).max(4000) }))
+    .min(1)
+    .max(40),
+  target: z.enum(["bi", "zh", "en"]),
+});
+
 const PLATFORM_CONTEXT = `你正在为「出海大数据平台」的用户提供帮助。平台核心能力包括：
 - 企业检索（按行业/国家/HS Code）、企业详情与人物（联系人）联系方式（邮箱、电话、WhatsApp、社媒）。
 - 提单数据：可看到提单方/收货方、国家、商品、HS Code、数量、最近成交时间等字段。
@@ -61,4 +69,58 @@ export const askAssistant = createServerFn({ method: "POST" })
       choices?: Array<{ message?: { content?: string } }>;
     };
     return { content: json.choices?.[0]?.message?.content ?? "" };
+  });
+
+function translateInstruction(target: "bi" | "zh" | "en") {
+  if (target === "zh") return "把下列条目翻译为简体中文，保留原本的语气与结构。";
+  if (target === "en") return "Translate the following items into natural English, keep tone and structure.";
+  return '将下列条目转换为"双语"格式：先中文，再换行输出"---"，再输出对应英文。';
+}
+
+export const translateMessages = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => TranslateSchema.parse(d))
+  .handler(async ({ data }) => {
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("LOVABLE_API_KEY 未配置");
+
+    const payload = data.items
+      .map((it) => `<<<ITEM ${it.id}>>>\n${it.text}\n<<<END ${it.id}>>>`)
+      .join("\n\n");
+
+    const sys = `你是翻译助手。${translateInstruction(data.target)}
+严格按如下格式输出，每条之间空一行，不要添加任何解释：
+<<<ITEM {id}>>>
+{translated}
+<<<END {id}>>>`;
+
+    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: payload },
+        ],
+      }),
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      if (resp.status === 429) throw new Error("AI 调用过于频繁，请稍后再试");
+      if (resp.status === 402) throw new Error("AI 额度不足，请联系管理员充值");
+      throw new Error(`翻译失败：${resp.status} ${text.slice(0, 200)}`);
+    }
+    const json = (await resp.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    const raw = json.choices?.[0]?.message?.content ?? "";
+    const result: Record<string, string> = {};
+    const re = /<<<ITEM\s+([^>]+?)>>>\s*([\s\S]*?)\s*<<<END\s+\1>>>/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(raw)) !== null) {
+      result[m[1].trim()] = m[2].trim();
+    }
+    // 回退：若解析失败，把原文作为结果，避免阻塞 UI
+    for (const it of data.items) if (!result[it.id]) result[it.id] = it.text;
+    return { translations: result };
   });
