@@ -132,6 +132,20 @@ function ReachPage() {
         target: string;
       }
   >(null);
+  const [viewing, setViewing] = useState<
+    | null
+    | {
+        id: string;
+        targetName: string;
+        channel?: ReachChannel;
+        subject?: string;
+        content?: string;
+        senderEmail?: string;
+        detail?: string;
+        aiGenerated?: boolean;
+        createdAt: string;
+      }
+  >(null);
 
   const reachRows = useMemo(() => {
     return ledger
