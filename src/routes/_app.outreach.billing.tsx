@@ -760,10 +760,18 @@ function KindBadge({ entry }: { entry: LedgerEntry }) {
       </span>
     );
   }
+  if (entry.kind === "ai_generate") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-amber-50 text-amber-700 border-amber-200">
+        <Sparkles className="h-3 w-3" />
+        触达-AI生成
+      </span>
+    );
+  }
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-violet-50 text-violet-700 border-violet-200">
       <Send className="h-3 w-3" />
-      触达消耗
+      触达-发送
     </span>
   );
 }
