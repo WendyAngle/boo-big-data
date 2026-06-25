@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-export type LedgerKind = "view" | "reach" | "refund" | "recharge";
+export type LedgerKind = "view" | "reach" | "refund" | "recharge" | "ai_generate";
 export type ViewField =
   | "email"
   | "phone"
@@ -14,6 +14,21 @@ export type TargetKind = "enterprise" | "contact";
 
 export const COST_VIEW = 5;
 export const COST_REACH = 10;
+
+/** 单条发送积分单价（按渠道） */
+export const COST_REACH_EMAIL = 1;
+export const COST_REACH_SMS = 2;
+export const COST_REACH_SOCIAL = 10;
+
+/** AI 文案生成积分单价 */
+export const COST_AI_EMAIL = 3;
+export const COST_AI_SMS = 2;
+
+export function costForChannel(channel: ReachChannel): number {
+  if (channel === "email") return COST_REACH_EMAIL;
+  if (channel === "phone") return COST_REACH_SMS;
+  return COST_REACH_SOCIAL;
+}
 
 export interface LedgerEntry {
   id: string;
@@ -32,6 +47,12 @@ export interface LedgerEntry {
   detail?: string; // masked or partial; e.g. email/phone/handle
   // reach-only: 发件邮箱（channel=email 时）
   senderEmail?: string;
+  // reach-only: 邮件主题（email）/ 短信无主题
+  subject?: string;
+  // reach-only: 渲染后的最终正文/短信内容
+  content?: string;
+  // reach-only: 是否使用 AI 生成
+  aiGenerated?: boolean;
   // demo / override: when set, getReachStatus returns this value directly
   forcedStatus?: ReachStatus;
   // reach-only: populated when status is failed
@@ -132,13 +153,43 @@ export function createReach(input: {
   platform?: string;
   detail: string;
   senderEmail?: string;
+  subject?: string;
+  content?: string;
+  aiGenerated?: boolean;
+  cost?: number;
 }): LedgerEntry {
+  const { cost, ...rest } = input;
   const entry: LedgerEntry = {
     id: makeId("r"),
     kind: "reach",
-    cost: COST_REACH,
+    cost: cost ?? costForChannel(input.channel),
     createdAt: new Date().toISOString(),
-    ...input,
+    ...rest,
+  };
+  ledger = [entry, ...ledger];
+  writeLedger(ledger);
+  emitLedger();
+  return entry;
+}
+
+/** AI 文案生成扣费 */
+export function chargeAiGeneration(input: {
+  channel: ReachChannel;
+  targetName: string;
+  targetKind?: TargetKind;
+  targetId?: string;
+}): LedgerEntry {
+  const cost = input.channel === "email" ? COST_AI_EMAIL : COST_AI_SMS;
+  const entry: LedgerEntry = {
+    id: makeId("ai"),
+    kind: "ai_generate",
+    cost,
+    createdAt: new Date().toISOString(),
+    targetKind: input.targetKind ?? "enterprise",
+    targetId: input.targetId ?? "—",
+    targetName: input.targetName,
+    channel: input.channel,
+    detail: input.channel === "email" ? "AI 生成邮件文案" : "AI 生成短信文案",
   };
   ledger = [entry, ...ledger];
   writeLedger(ledger);

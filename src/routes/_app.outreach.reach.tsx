@@ -21,10 +21,19 @@ import {
   RotateCcw,
   Play,
   Ban,
+  FileText,
+  Sparkles,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -121,6 +130,20 @@ function ReachPage() {
         kind: "trigger" | "cancel" | "retry";
         id: string;
         target: string;
+      }
+  >(null);
+  const [viewing, setViewing] = useState<
+    | null
+    | {
+        id: string;
+        targetName: string;
+        channel?: ReachChannel;
+        subject?: string;
+        content?: string;
+        senderEmail?: string;
+        detail?: string;
+        aiGenerated?: boolean;
+        createdAt: string;
       }
   >(null);
 
@@ -351,7 +374,19 @@ function ReachPage() {
                     <ChannelBadge channel={r.channel!} platform={r.platform} />
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground truncate max-w-[320px]">
-                    {r.detail}
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate">{r.detail}</span>
+                      {(r.subject || r.content) && (
+                        <button
+                          type="button"
+                          title="查看发送内容"
+                          onClick={() => setViewing(r)}
+                          className="shrink-0 inline-flex h-5 w-5 items-center justify-center rounded text-primary hover:bg-primary/10"
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col items-start gap-1">
@@ -466,6 +501,60 @@ function ReachPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              发送内容
+              {viewing?.aiGenerated && (
+                <Badge variant="secondary" className="gap-1 font-normal">
+                  <Sparkles className="h-3 w-3 text-primary" /> AI 生成
+                </Badge>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {viewing && (
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-[80px_1fr] gap-y-1.5 text-xs">
+                <span className="text-muted-foreground">对象</span>
+                <span className="font-medium">{viewing.targetName}</span>
+                <span className="text-muted-foreground">渠道</span>
+                <span>{viewing.channel === "email" ? "邮件" : viewing.channel === "phone" ? "短信" : "社媒"}</span>
+                {viewing.senderEmail && (
+                  <>
+                    <span className="text-muted-foreground">发件箱</span>
+                    <span className="font-mono">{viewing.senderEmail}</span>
+                  </>
+                )}
+                {viewing.detail && (
+                  <>
+                    <span className="text-muted-foreground">收件方</span>
+                    <span className="font-mono">{viewing.detail}</span>
+                  </>
+                )}
+                <span className="text-muted-foreground">时间</span>
+                <span className="font-mono">{fmtTime(viewing.createdAt)}</span>
+              </div>
+              {viewing.subject && (
+                <div className="rounded-md border bg-muted/40 p-3">
+                  <div className="text-[11px] text-muted-foreground mb-1">主题</div>
+                  <div className="font-medium">{viewing.subject}</div>
+                </div>
+              )}
+              <div className="rounded-md border bg-muted/40 p-3">
+                <div className="text-[11px] text-muted-foreground mb-1">
+                  {viewing.channel === "email" ? "正文" : "内容"}
+                </div>
+                <div className="whitespace-pre-wrap text-foreground/90">
+                  {viewing.content || "—"}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
     </TooltipProvider>
   );

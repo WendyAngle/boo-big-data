@@ -30,6 +30,11 @@ import {
   type TargetKind,
   COST_REACH,
 } from "@/lib/credits-ledger";
+import { ComposeSendDialog } from "@/components/ComposeSendDialog";
+import { findEnterprise } from "@/data/enterprises";
+import { useLeadProfile } from "@/lib/lead-profile";
+import { useCurrentUser } from "@/lib/current-user";
+import { myContext, type Recipient } from "@/lib/message-vars";
 
 interface Props {
   targetKind: TargetKind;
@@ -59,14 +64,14 @@ export function ReachButton({
   const ledger = useLedger();
   const [open, setOpen] = useState(false);
   const [noMailboxOpen, setNoMailboxOpen] = useState(false);
-  const [senderId, setSenderId] = useState<string>("");
+  const [composeOpen, setComposeOpen] = useState(false);
   const navigate = useNavigate();
   const mailboxes = useUsableMailboxes();
   const isEmail = channel === "email";
-  const sender = useMemo(
-    () => mailboxes.find((m) => m.id === senderId) ?? getDefaultUsableMailbox(mailboxes),
-    [mailboxes, senderId],
-  );
+  const isPhoneCh = channel === "phone";
+  const useCompose = isEmail || isPhoneCh;
+  const profile = useLeadProfile();
+  const user = useCurrentUser();
 
   // 找 (target, channel, platform) 最近一次未结束的触达
   const active = useMemo(() => {
@@ -88,7 +93,7 @@ export function ReachButton({
   const isPhone = channel === "phone";
 
   const confirm = () => {
-    if (isEmail && !sender) {
+    if (isEmail && !getDefaultUsableMailbox(mailboxes)) {
       toast.error("请先选择发件邮箱");
       return;
     }
@@ -100,7 +105,7 @@ export function ReachButton({
       channel,
       platform,
       detail,
-      senderEmail: isEmail ? sender?.email : undefined,
+      senderEmail: isEmail ? getDefaultUsableMailbox(mailboxes)?.email : undefined,
     });
     setOpen(false);
     toast.success(
@@ -111,13 +116,39 @@ export function ReachButton({
         : `已加入触达队列，扣除 ${COST_REACH} 积分`,
       {
         description: isEmail
-          ? `通过 ${sender?.email} 发送邮件至 ${targetName}，可在「触达」模块查看进度`
+          ? `通过 ${getDefaultUsableMailbox(mailboxes)?.email} 发送邮件至 ${targetName}，可在「触达」模块查看进度`
           : isPhone
           ? `通过短信触达 ${targetName}（${detail}），可在「触达」模块查看进度`
           : `通过${channelLabel}触达 ${targetName}，可在「触达」模块查看进度`,
       },
     );
   };
+
+  // 单条 → 撰写发送弹窗使用的 recipients
+  const composeRecipients = useMemo<Recipient[]>(() => {
+    const my = myContext(profile, user);
+    // 尝试取所属企业以补充行业/城市
+    const entId =
+      targetKind === "enterprise" ? targetId : (parentRef?.id ?? targetId.split(":")[0]);
+    const ent = entId ? findEnterprise(entId) : undefined;
+    return [
+      {
+        key: targetId,
+        address: detail,
+        name: targetName,
+        targetKind,
+        targetId,
+        parentRef,
+        ctx: {
+          企业名: targetKind === "enterprise" ? targetName : parentRef?.name ?? ent?.name,
+          联系人名: targetKind === "contact" ? targetName : ent?.contacts?.[0]?.name,
+          行业: ent?.industry,
+          城市: ent?.city,
+          ...my,
+        },
+      },
+    ];
+  }, [targetKind, targetId, targetName, parentRef, detail, profile, user]);
 
   const verb = isEmail ? "发送邮件" : isPhone ? "发送短信" : "触达";
   let label: React.ReactNode = (
@@ -172,10 +203,11 @@ export function ReachButton({
             setNoMailboxOpen(true);
             return;
           }
-          if (isEmail) {
-            setSenderId(getDefaultUsableMailbox(mailboxes)?.id ?? "");
+          if (useCompose) {
+            setComposeOpen(true);
+          } else {
+            setOpen(true);
           }
-          setOpen(true);
         }}
         className={cn(
           "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed",
@@ -187,7 +219,16 @@ export function ReachButton({
         {label}
       </button>
 
-      <AlertDialog open={open} onOpenChange={setOpen}>
+      {useCompose && (
+        <ComposeSendDialog
+          open={composeOpen}
+          onOpenChange={setComposeOpen}
+          channel={isEmail ? "email" : "phone"}
+          recipients={composeRecipients}
+        />
+      )}
+
+      <AlertDialog open={open && !useCompose} onOpenChange={setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
@@ -226,39 +267,7 @@ export function ReachButton({
                     <span className="font-mono text-foreground truncate max-w-[260px]">{detail}</span>
                   </div>
                 </div>
-                {isEmail && (
-                  <div className="rounded-md border border-primary/20 bg-primary/5 p-3 space-y-2">
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
-                      <MailboxIcon className="h-3.5 w-3.5" />
-                      发件邮箱
-                    </div>
-                    {mailboxes.length === 1 ? (
-                      <div className="text-xs">
-                        <span className="font-mono">{mailboxes[0].email}</span>
-                        <span className="text-muted-foreground ml-2">
-                          · {mailboxes[0].displayName}
-                        </span>
-                      </div>
-                    ) : (
-                      <Select value={sender?.id ?? ""} onValueChange={setSenderId}>
-                        <SelectTrigger className="h-9 bg-background">
-                          <SelectValue placeholder="选择发件邮箱" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {mailboxes.map((m) => (
-                            <SelectItem key={m.id} value={m.id}>
-                              <span className="font-mono">{m.email}</span>
-                              <span className="text-muted-foreground ml-2 text-xs">
-                                · {m.displayName}
-                                {m.isDefault ? " · 默认" : ""}
-                              </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-                )}
+                {/* email/phone 走 ComposeSendDialog，此分支仅用于 social */}
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -266,7 +275,6 @@ export function ReachButton({
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirm}
-              disabled={isEmail && !sender}
               className="bg-primary"
             >
               {isEmail || isPhone ? `确认发送（-${COST_REACH}）` : `确认触达（-${COST_REACH}）`}

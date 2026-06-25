@@ -75,9 +75,11 @@ import {
   getDefaultUsableMailbox,
 } from "@/lib/mailboxes";
 import { formatDateTime } from "@/lib/format-date";
-import { COST_REACH } from "@/lib/credits-ledger";
-import { createReach } from "@/lib/credits-ledger";
 import { toast } from "sonner";
+import { ComposeSendDialog } from "@/components/ComposeSendDialog";
+import { recipientsFromFavorites, myContext } from "@/lib/message-vars";
+import { useLeadProfile } from "@/lib/lead-profile";
+import { useCurrentUser } from "@/lib/current-user";
 
 export const Route = createFileRoute("/_app/outreach/favorites")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 收藏 | Boo数据平台" }] }),
@@ -148,31 +150,22 @@ function FavoritesPage() {
   const [batchSmsOpen, setBatchSmsOpen] = useState(false);
   const [batchSenderId, setBatchSenderId] = useState("");
   const [calOpen, setCalOpen] = useState(false);
+  const profile = useLeadProfile();
+  const user = useCurrentUser();
+  const myVars = myContext(profile, user);
 
   const selectedRecords = useMemo(
     () => all.filter((r) => selected.has(r.id)),
     [all, selected],
   );
-  const validEmailCount = useMemo(
-    () =>
-      selectedRecords.filter(
-        (r) =>
-          r.kind === "enterprise" ||
-          (r.kind === "contact" && !!r.meta?.email),
-      ).length,
-    [selectedRecords],
+  const emailRecipients = useMemo(
+    () => recipientsFromFavorites(selectedRecords, "email", myVars),
+    [selectedRecords, myVars],
   );
-  const validSmsCount = useMemo(
-    () =>
-      selectedRecords.filter(
-        (r) =>
-          r.kind === "enterprise" ||
-          (r.kind === "contact" && !!r.meta?.phone),
-      ).length,
-    [selectedRecords],
+  const smsRecipients = useMemo(
+    () => recipientsFromFavorites(selectedRecords, "phone", myVars),
+    [selectedRecords, myVars],
   );
-  const batchEmailCost = validEmailCount * COST_REACH;
-  const batchSmsCost = validSmsCount * COST_REACH;
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {
@@ -624,174 +617,19 @@ function FavoritesPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 批量发邮件确认 */}
-      <AlertDialog open={batchEmailOpen} onOpenChange={setBatchEmailOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <MailPlus className="h-5 w-5 text-primary" />
-              批量发邮件
-            </AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-2 text-sm">
-                <div className="text-muted-foreground">
-                  即将向已选 <span className="font-semibold text-foreground">{selected.size}</span> 条收藏对象发送邮件，无邮箱的对象将被跳过。
-                </div>
-                <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300">
-                  本次将消耗
-                  <span className="font-semibold mx-1">{batchEmailCost} 积分</span>
-                  （{COST_REACH} 积分/条 × 有效 {validEmailCount} 条）
-                </div>
-                <div className="rounded-md border border-primary/20 bg-primary/5 p-3 space-y-2">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
-                    <MailboxIcon className="h-3.5 w-3.5" />
-                    发件邮箱
-                  </div>
-                  {usableMailboxes.length === 1 ? (
-                    <div className="text-xs">
-                      <span className="font-mono">{usableMailboxes[0].email}</span>
-                      <span className="text-muted-foreground ml-2">
-                        · {usableMailboxes[0].displayName}
-                      </span>
-                    </div>
-                  ) : (
-                    <Select value={batchSenderId} onValueChange={setBatchSenderId}>
-                      <SelectTrigger className="h-9 bg-background">
-                        <SelectValue placeholder="选择发件邮箱" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {usableMailboxes.map((m) => (
-                          <SelectItem key={m.id} value={m.id}>
-                            <span className="font-mono">{m.email}</span>
-                            <span className="text-muted-foreground ml-2 text-xs">
-                              · {m.displayName}
-                              {m.isDefault ? " · 默认" : ""}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-primary"
-              disabled={
-                (!batchSenderId && usableMailboxes.length !== 1) ||
-                validEmailCount === 0
-              }
-              onClick={() => {
-                const sender =
-                  usableMailboxes.find((m) => m.id === batchSenderId) ??
-                  usableMailboxes[0];
-                setBatchEmailOpen(false);
-                for (const r of selectedRecords) {
-                  if (r.kind === "enterprise") {
-                    const e = findEnterprise(r.refId);
-                    if (!e?.email) continue;
-                    createReach({
-                      targetKind: "enterprise",
-                      targetId: r.refId,
-                      targetName: r.title,
-                      channel: "email",
-                      detail: e.email,
-                      senderEmail: sender?.email,
-                    });
-                  } else if (r.kind === "contact" && r.meta?.email) {
-                    const entId = r.parentRef?.id ?? r.refId.split(":")[0];
-                    const idx = r.refId.split(":")[1] ?? "0";
-                    createReach({
-                      targetKind: "contact",
-                      targetId: `${entId}:${idx}`,
-                      targetName: r.title,
-                      parentRef: r.parentRef
-                        ? { id: r.parentRef.id, name: r.parentRef.name }
-                        : undefined,
-                      channel: "email",
-                      detail: r.meta.email,
-                      senderEmail: sender?.email,
-                    });
-                  }
-                }
-                toast.success(`已加入发送队列：${validEmailCount} 封邮件`, {
-                  description: `发件邮箱 ${sender?.email}，扣除 ${batchEmailCost} 积分，可在「触达」模块查看进度`,
-                });
-              }}
-            >
-              确认发送（-{batchEmailCost}）
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* 批量发短信确认 */}
-      <AlertDialog open={batchSmsOpen} onOpenChange={setBatchSmsOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-primary" />
-              批量发短信
-            </AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-2 text-sm">
-                <div className="text-muted-foreground">
-                  即将向已选 <span className="font-semibold text-foreground">{selected.size}</span> 条收藏对象的联系电话发送短信，无电话的对象将被跳过。
-                </div>
-                <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300">
-                  本次将消耗
-                  <span className="font-semibold mx-1">{batchSmsCost} 积分</span>
-                  （{COST_REACH} 积分/条 × 有效 {validSmsCount} 条）
-                </div>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-primary"
-              disabled={validSmsCount === 0}
-              onClick={() => {
-                setBatchSmsOpen(false);
-                for (const r of selectedRecords) {
-                  if (r.kind === "enterprise") {
-                    const e = findEnterprise(r.refId);
-                    if (!e?.phone) continue;
-                    createReach({
-                      targetKind: "enterprise",
-                      targetId: r.refId,
-                      targetName: r.title,
-                      channel: "phone",
-                      detail: e.phone,
-                    });
-                  } else if (r.kind === "contact" && r.meta?.phone) {
-                    const entId = r.parentRef?.id ?? r.refId.split(":")[0];
-                    const idx = r.refId.split(":")[1] ?? "0";
-                    createReach({
-                      targetKind: "contact",
-                      targetId: `${entId}:${idx}`,
-                      targetName: r.title,
-                      parentRef: r.parentRef
-                        ? { id: r.parentRef.id, name: r.parentRef.name }
-                        : undefined,
-                      channel: "phone",
-                      detail: r.meta.phone,
-                    });
-                  }
-                }
-                toast.success(`已加入发送队列：${validSmsCount} 条短信`, {
-                  description: `扣除 ${batchSmsCost} 积分，可在「触达」模块查看进度`,
-                });
-              }}
-            >
-              确认发送（-{batchSmsCost}）
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ComposeSendDialog
+        open={batchEmailOpen}
+        onOpenChange={setBatchEmailOpen}
+        channel="email"
+        recipients={emailRecipients}
+        initialSenderId={batchSenderId}
+      />
+      <ComposeSendDialog
+        open={batchSmsOpen}
+        onOpenChange={setBatchSmsOpen}
+        channel="phone"
+        recipients={smsRecipients}
+      />
     </div>
   );
 }
