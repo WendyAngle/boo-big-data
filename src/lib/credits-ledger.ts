@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { ENTERPRISES } from "@/data/enterprises";
 
 export type LedgerKind = "view" | "reach" | "refund" | "recharge" | "ai_generate";
 export type ViewField =
@@ -67,7 +68,7 @@ export interface LedgerEntry {
 }
 
 const LEDGER_KEY = "boo:ledger:v1";
-const LEDGER_SEED_FLAG = "boo:ledger:v4:seeded";
+const LEDGER_SEED_FLAG = "boo:ledger:v5:seeded";
 const REVEAL_KEY = "boo:reveal:v1";
 
 /* -------------------- ledger store -------------------- */
@@ -579,295 +580,144 @@ export function seedDemoLedgerIfEmpty() {
   if (typeof window === "undefined") return;
   try {
     if (window.localStorage.getItem(LEDGER_SEED_FLAG)) return;
-    // dynamic import to avoid SSR issues
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // 所有 seed 数据均基于真实企业，避免出现"未找到该企业"
+    const E = ENTERPRISES;
+    const pickEnt = (i: number) => E[i % E.length];
+    const reachEnt = (
+      i: number,
+      channel: ReachChannel,
+      minAgo: number,
+      status: ReachStatus,
+      failReason?: string,
+      platform?: string,
+    ): LedgerEntry => {
+      const e = pickEnt(i);
+      const detail =
+        channel === "email"
+          ? e.email
+          : channel === "phone"
+            ? maskPhone(e.phone)
+            : `linkedin.com/company/${e.name.toLowerCase().replace(/[^a-z]/g, "")}`;
+      return {
+        id: makeId("r"),
+        kind: "reach",
+        cost: COST_REACH,
+        createdAt: isoMinutesAgo(minAgo),
+        targetKind: "enterprise",
+        targetId: e.id,
+        targetName: e.name,
+        channel,
+        platform: channel === "social" ? (platform ?? "LinkedIn") : undefined,
+        detail,
+        forcedStatus: status,
+        ...(failReason ? { failReason } : {}),
+      };
+    };
+    const reachContact = (
+      i: number,
+      k: number,
+      channel: ReachChannel,
+      minAgo: number,
+      status: ReachStatus,
+      failReason?: string,
+      platform?: string,
+    ): LedgerEntry => {
+      const e = pickEnt(i);
+      const idx = k % e.contacts.length;
+      const c = e.contacts[idx];
+      const detail =
+        channel === "email"
+          ? c.email
+          : channel === "phone"
+            ? maskPhone(c.phone ?? e.phone)
+            : `linkedin.com/in/${c.name.replace(/\s+/g, "-")}`;
+      return {
+        id: makeId("r"),
+        kind: "reach",
+        cost: COST_REACH,
+        createdAt: isoMinutesAgo(minAgo),
+        targetKind: "contact",
+        targetId: `${e.id}:${idx}`,
+        targetName: c.name,
+        parentRef: { id: e.id, name: e.name },
+        channel,
+        platform: channel === "social" ? (platform ?? "LinkedIn") : undefined,
+        detail,
+        forcedStatus: status,
+        ...(failReason ? { failReason } : {}),
+      };
+    };
+    const viewEnt = (
+      i: number,
+      field: ViewField,
+      minAgo: number,
+      detail: string,
+    ): LedgerEntry => {
+      const e = pickEnt(i);
+      return {
+        id: makeId("v"),
+        kind: "view",
+        cost: COST_VIEW,
+        createdAt: isoMinutesAgo(minAgo),
+        targetKind: "enterprise",
+        targetId: e.id,
+        targetName: e.name,
+        field,
+        detail,
+      };
+    };
+    const viewContact = (
+      i: number,
+      k: number,
+      field: ViewField,
+      minAgo: number,
+      detail: string,
+    ): LedgerEntry => {
+      const e = pickEnt(i);
+      const idx = k % e.contacts.length;
+      const c = e.contacts[idx];
+      return {
+        id: makeId("v"),
+        kind: "view",
+        cost: COST_VIEW,
+        createdAt: isoMinutesAgo(minAgo),
+        targetKind: "contact",
+        targetId: `${e.id}:${idx}`,
+        targetName: c.name,
+        parentRef: { id: e.id, name: e.name },
+        field,
+        detail,
+      };
+    };
     const seed: LedgerEntry[] = [
-      // ---- reach (5) ----
-      {
-        id: makeId("r"),
-        kind: "reach",
-        cost: COST_REACH,
-        createdAt: isoMinutesAgo(60), // 终态
-        targetKind: "enterprise",
-        targetId: "ENT-0001",
-        targetName: "Wenzhou Sunrise Textile Co Ltd",
-        channel: "email",
-        detail: "contact@sunrise-tex.com",
-        forcedStatus: "success",
-      },
-      {
-        id: makeId("r"),
-        kind: "reach",
-        cost: COST_REACH,
-        createdAt: isoMinutesAgo(20),
-        targetKind: "contact",
-        targetId: "ENT-0005:1",
-        targetName: "Maria Lopez",
-        parentRef: { id: "ENT-0005", name: "Fruticola Olmue S.A." },
-        channel: "phone",
-        detail: "+56 9 ****55",
-        forcedStatus: "success",
-      },
-      {
-        id: makeId("r"),
-        kind: "reach",
-        cost: COST_REACH,
-        createdAt: isoMinutesAgo(5), // 触达中
-        targetKind: "enterprise",
-        targetId: "ENT-0012",
-        targetName: "Lotus Gourmet Foods JSC",
-        channel: "social",
-        platform: "LinkedIn",
-        detail: "linkedin.com/company/lotusgourmet",
-        forcedStatus: "in_progress",
-      },
-      {
-        id: makeId("r"),
-        kind: "reach",
-        cost: COST_REACH,
-        createdAt: isoMinutesAgo(2), // 触达中
-        targetKind: "contact",
-        targetId: "ENT-0024:0",
-        targetName: "Daniel Chen",
-        parentRef: { id: "ENT-0024", name: "Ningbo Poly Hardware Trading" },
-        channel: "email",
-        detail: "daniel.chen@ningbopoly.com",
-        forcedStatus: "in_progress",
-      },
-      {
-        id: makeId("r"),
-        kind: "reach",
-        cost: COST_REACH,
-        createdAt: isoMinutesAgo(0.2), // 待触达
-        targetKind: "enterprise",
-        targetId: "ENT-0008",
-        targetName: "Guangzhou Fortune Metal Co",
-        channel: "phone",
-        detail: "+86 20 ****88",
-        forcedStatus: "pending",
-      },
-      // ---- 触达失败 (2) ----
-      {
-        id: makeId("r"),
-        kind: "reach",
-        cost: COST_REACH,
-        createdAt: isoMinutesAgo(180),
-        targetKind: "enterprise",
-        targetId: "ENT-0015",
-        targetName: "Shanghai Hema Electronics Ltd",
-        channel: "email",
-        detail: "biz@shhema.com",
-        forcedStatus: "failed",
-        failReason: "邮箱无效（地址不存在）",
-      },
-      {
-        id: makeId("r"),
-        kind: "reach",
-        cost: COST_REACH,
-        createdAt: isoMinutesAgo(95),
-        targetKind: "contact",
-        targetId: "ENT-0011:0",
-        targetName: "Jorge Ramirez",
-        parentRef: { id: "ENT-0011", name: "La Loma Del Valle Export" },
-        channel: "social",
-        platform: "LinkedIn",
-        detail: "linkedin.com/in/jorge-ramirez",
-        forcedStatus: "failed",
-        failReason: "私信发送后长期无响应",
-      },
-      // ---- 再加 1 个待触达 ----
-      {
-        id: makeId("r"),
-        kind: "reach",
-        cost: COST_REACH,
-        createdAt: isoMinutesAgo(0.1),
-        targetKind: "contact",
-        targetId: "ENT-0001:0",
-        targetName: "Alex Wang",
-        parentRef: { id: "ENT-0001", name: "Wenzhou Sunrise Textile Co Ltd" },
-        channel: "email",
-        detail: "alex.wang@sunrise-tex.com",
-        forcedStatus: "pending",
-      },
+      // ---- reach 终态 / 进行中 / 待触达 ----
+      reachEnt(0, "email", 60, "success"),
+      reachContact(4, 1, "phone", 20, "success"),
+      reachEnt(11, "social", 5, "in_progress"),
+      reachContact(23, 0, "email", 2, "in_progress"),
+      reachEnt(7, "phone", 0.2, "pending"),
+      // ---- 触达失败 ----
+      reachEnt(14, "email", 180, "failed", "邮箱无效（地址不存在）"),
+      reachContact(10, 0, "social", 95, "failed", "私信发送后长期无响应"),
       // ---- 更多待触达 ----
-      {
-        id: makeId("r"),
-        kind: "reach",
-        cost: COST_REACH,
-        createdAt: isoMinutesAgo(0.05),
-        targetKind: "enterprise",
-        targetId: "ENT-0019",
-        targetName: "Hanoi Bright Garment JSC",
-        channel: "email",
-        detail: "sales@hanoibright.vn",
-        forcedStatus: "pending",
-      },
-      {
-        id: makeId("r"),
-        kind: "reach",
-        cost: COST_REACH,
-        createdAt: isoMinutesAgo(0.08),
-        targetKind: "contact",
-        targetId: "ENT-0022:1",
-        targetName: "Priya Sharma",
-        parentRef: { id: "ENT-0022", name: "Mumbai Spice & Foods Pvt Ltd" },
-        channel: "phone",
-        detail: "+91 22 ****41",
-        forcedStatus: "pending",
-      },
-      {
-        id: makeId("r"),
-        kind: "reach",
-        cost: COST_REACH,
-        createdAt: isoMinutesAgo(0.15),
-        targetKind: "contact",
-        targetId: "ENT-0007:0",
-        targetName: "Sofia Rossi",
-        parentRef: { id: "ENT-0007", name: "Milano Pasta Artigianale S.r.l." },
-        channel: "social",
-        platform: "LinkedIn",
-        detail: "linkedin.com/in/sofia-rossi",
-        forcedStatus: "pending",
-      },
-      {
-        id: makeId("r"),
-        kind: "reach",
-        cost: COST_REACH,
-        createdAt: isoMinutesAgo(0.25),
-        targetKind: "enterprise",
-        targetId: "ENT-0031",
-        targetName: "Bangkok Fresh Seafood Co Ltd",
-        channel: "email",
-        detail: "purchasing@bkkfresh.co.th",
-        forcedStatus: "pending",
-      },
-      // ---- 更多触达失败（可重新触达）----
-      {
-        id: makeId("r"),
-        kind: "reach",
-        cost: COST_REACH,
-        createdAt: isoMinutesAgo(220),
-        targetKind: "contact",
-        targetId: "ENT-0008:0",
-        targetName: "Kevin Liu",
-        parentRef: { id: "ENT-0008", name: "Guangzhou Fortune Metal Co" },
-        channel: "phone",
-        detail: "+86 138 ****72",
-        forcedStatus: "failed",
-        failReason: "对方手机关机或无信号",
-      },
-      {
-        id: makeId("r"),
-        kind: "reach",
-        cost: COST_REACH,
-        createdAt: isoMinutesAgo(260),
-        targetKind: "enterprise",
-        targetId: "ENT-0014",
-        targetName: "Kuala Lumpur Rubber Trading Sdn",
-        channel: "email",
-        detail: "info@klrubber.com.my",
-        forcedStatus: "failed",
-        failReason: "对方邮件服务器退信",
-      },
-      {
-        id: makeId("r"),
-        kind: "reach",
-        cost: COST_REACH,
-        createdAt: isoMinutesAgo(310),
-        targetKind: "contact",
-        targetId: "ENT-0027:0",
-        targetName: "Ahmed Hassan",
-        parentRef: { id: "ENT-0027", name: "Cairo Cotton Mills SAE" },
-        channel: "phone",
-        detail: "+20 2 ****19",
-        forcedStatus: "failed",
-        failReason: "多次拨打无人接听",
-      },
-      // ---- 更多触达失败（不可重新触达）----
-      {
-        id: makeId("r"),
-        kind: "reach",
-        cost: COST_REACH,
-        createdAt: isoMinutesAgo(360),
-        targetKind: "contact",
-        targetId: "ENT-0033:0",
-        targetName: "Carlos Mendoza",
-        parentRef: { id: "ENT-0033", name: "Lima Andes Coffee Export SAC" },
-        channel: "social",
-        platform: "LinkedIn",
-        detail: "linkedin.com/in/carlos-mendoza",
-        forcedStatus: "failed",
-        failReason: "账号已失效或停用",
-      },
-      // ---- view (6) ----
-      {
-        id: makeId("v"),
-        kind: "view",
-        cost: COST_VIEW,
-        createdAt: isoMinutesAgo(120),
-        targetKind: "enterprise",
-        targetId: "ENT-0001",
-        targetName: "Wenzhou Sunrise Textile Co Ltd",
-        field: "email",
-        detail: "contact@sunrise-tex.com",
-      },
-      {
-        id: makeId("v"),
-        kind: "view",
-        cost: COST_VIEW,
-        createdAt: isoMinutesAgo(118),
-        targetKind: "enterprise",
-        targetId: "ENT-0001",
-        targetName: "Wenzhou Sunrise Textile Co Ltd",
-        field: "phone",
-        detail: "+86 577 ****99",
-      },
-      {
-        id: makeId("v"),
-        kind: "view",
-        cost: COST_VIEW,
-        createdAt: isoMinutesAgo(95),
-        targetKind: "contact",
-        targetId: "ENT-0005:1",
-        targetName: "Maria Lopez",
-        parentRef: { id: "ENT-0005", name: "Fruticola Olmue S.A." },
-        field: "email",
-        detail: "maria.lopez@olmue.cl",
-      },
-      {
-        id: makeId("v"),
-        kind: "view",
-        cost: COST_VIEW,
-        createdAt: isoMinutesAgo(48),
-        targetKind: "enterprise",
-        targetId: "ENT-0012",
-        targetName: "Lotus Gourmet Foods JSC",
-        field: "social",
-        detail: "LinkedIn @lotusgourmet",
-      },
-      {
-        id: makeId("v"),
-        kind: "view",
-        cost: COST_VIEW,
-        createdAt: isoMinutesAgo(30),
-        targetKind: "enterprise",
-        targetId: "ENT-0008",
-        targetName: "Guangzhou Fortune Metal Co",
-        field: "address",
-        detail: "No.88 Yuexiu Rd, Guangzhou",
-      },
-      {
-        id: makeId("v"),
-        kind: "view",
-        cost: COST_VIEW,
-        createdAt: isoMinutesAgo(15),
-        targetKind: "contact",
-        targetId: "ENT-0024:0",
-        targetName: "Daniel Chen",
-        parentRef: { id: "ENT-0024", name: "Ningbo Poly Hardware Trading" },
-        field: "phone",
-        detail: "+86 574 ****21",
-      },
+      reachContact(0, 0, "email", 0.1, "pending"),
+      reachEnt(18, "email", 0.05, "pending"),
+      reachContact(21, 1, "phone", 0.08, "pending"),
+      reachContact(6, 0, "social", 0.15, "pending"),
+      reachEnt(30, "email", 0.25, "pending"),
+      // ---- 更多失败（可重试）----
+      reachContact(7, 0, "phone", 220, "failed", "对方手机关机或无信号"),
+      reachEnt(13, "email", 260, "failed", "对方邮件服务器退信"),
+      reachContact(26, 0, "phone", 310, "failed", "多次拨打无人接听"),
+      // ---- 失败（不可重试）----
+      reachContact(32, 0, "social", 360, "failed", "账号已失效或停用"),
+      // ---- view ----
+      viewEnt(0, "email", 120, pickEnt(0).email),
+      viewEnt(0, "phone", 118, maskPhone(pickEnt(0).phone)),
+      viewContact(4, 1, "email", 95, pickEnt(4).contacts[1 % pickEnt(4).contacts.length].email),
+      viewEnt(11, "social", 48, "LinkedIn"),
+      viewEnt(7, "address", 30, pickEnt(7).address),
+      viewContact(23, 0, "phone", 15, maskPhone(pickEnt(23).contacts[0].phone ?? pickEnt(23).phone)),
       // ---- recharge (3) ----
       {
         id: makeId("rc"),
