@@ -75,9 +75,11 @@ import {
   getDefaultUsableMailbox,
 } from "@/lib/mailboxes";
 import { formatDateTime } from "@/lib/format-date";
-import { COST_REACH } from "@/lib/credits-ledger";
-import { createReach } from "@/lib/credits-ledger";
 import { toast } from "sonner";
+import { ComposeSendDialog } from "@/components/ComposeSendDialog";
+import { recipientsFromFavorites, myContext } from "@/lib/message-vars";
+import { useLeadProfile } from "@/lib/lead-profile";
+import { useCurrentUser } from "@/lib/current-user";
 
 export const Route = createFileRoute("/_app/outreach/favorites")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 收藏 | Boo数据平台" }] }),
@@ -148,31 +150,22 @@ function FavoritesPage() {
   const [batchSmsOpen, setBatchSmsOpen] = useState(false);
   const [batchSenderId, setBatchSenderId] = useState("");
   const [calOpen, setCalOpen] = useState(false);
+  const profile = useLeadProfile();
+  const user = useCurrentUser();
+  const myVars = myContext(profile, user);
 
   const selectedRecords = useMemo(
     () => all.filter((r) => selected.has(r.id)),
     [all, selected],
   );
-  const validEmailCount = useMemo(
-    () =>
-      selectedRecords.filter(
-        (r) =>
-          r.kind === "enterprise" ||
-          (r.kind === "contact" && !!r.meta?.email),
-      ).length,
-    [selectedRecords],
+  const emailRecipients = useMemo(
+    () => recipientsFromFavorites(selectedRecords, "email", myVars),
+    [selectedRecords, myVars],
   );
-  const validSmsCount = useMemo(
-    () =>
-      selectedRecords.filter(
-        (r) =>
-          r.kind === "enterprise" ||
-          (r.kind === "contact" && !!r.meta?.phone),
-      ).length,
-    [selectedRecords],
+  const smsRecipients = useMemo(
+    () => recipientsFromFavorites(selectedRecords, "phone", myVars),
+    [selectedRecords, myVars],
   );
-  const batchEmailCost = validEmailCount * COST_REACH;
-  const batchSmsCost = validSmsCount * COST_REACH;
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {
