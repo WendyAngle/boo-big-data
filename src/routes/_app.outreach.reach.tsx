@@ -501,6 +501,60 @@ function ReachPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              发送内容
+              {viewing?.aiGenerated && (
+                <Badge variant="secondary" className="gap-1 font-normal">
+                  <Sparkles className="h-3 w-3 text-primary" /> AI 生成
+                </Badge>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {viewing && (
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-[80px_1fr] gap-y-1.5 text-xs">
+                <span className="text-muted-foreground">对象</span>
+                <span className="font-medium">{viewing.targetName}</span>
+                <span className="text-muted-foreground">渠道</span>
+                <span>{viewing.channel === "email" ? "邮件" : viewing.channel === "phone" ? "短信" : "社媒"}</span>
+                {viewing.senderEmail && (
+                  <>
+                    <span className="text-muted-foreground">发件箱</span>
+                    <span className="font-mono">{viewing.senderEmail}</span>
+                  </>
+                )}
+                {viewing.detail && (
+                  <>
+                    <span className="text-muted-foreground">收件方</span>
+                    <span className="font-mono">{viewing.detail}</span>
+                  </>
+                )}
+                <span className="text-muted-foreground">时间</span>
+                <span className="font-mono">{fmtTime(viewing.createdAt)}</span>
+              </div>
+              {viewing.subject && (
+                <div className="rounded-md border bg-muted/40 p-3">
+                  <div className="text-[11px] text-muted-foreground mb-1">主题</div>
+                  <div className="font-medium">{viewing.subject}</div>
+                </div>
+              )}
+              <div className="rounded-md border bg-muted/40 p-3">
+                <div className="text-[11px] text-muted-foreground mb-1">
+                  {viewing.channel === "email" ? "正文" : "内容"}
+                </div>
+                <div className="whitespace-pre-wrap text-foreground/90">
+                  {viewing.content || "—"}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
     </TooltipProvider>
   );
