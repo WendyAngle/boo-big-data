@@ -357,7 +357,18 @@ export function ComposeSendDialog({
           {/* 撰写内容 */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">撰写内容</Label>
+              <Label className="text-sm font-medium flex items-center gap-2">
+                撰写内容
+                {aiUsed && (
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    AI 已生成 · 可手动调整
+                  </Badge>
+                )}
+              </Label>
               <Button
                 type="button"
                 size="sm"
@@ -366,7 +377,7 @@ export function ComposeSendDialog({
                 className="h-7 gap-1"
               >
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
-                AI 生成
+                {aiUsed ? "AI 重新生成" : "AI 生成"}
                 <span className="text-xs text-muted-foreground">
                   -{isEmail ? COST_AI_EMAIL : COST_AI_SMS} 积分/次
                 </span>
@@ -375,7 +386,9 @@ export function ComposeSendDialog({
 
             {/* 变量插入 */}
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">插入变量：</span>
+              <span className="text-xs text-muted-foreground">
+                插入变量（光标处插入到{focusField === "subject" ? "主题" : "正文"}）：
+              </span>
               {MESSAGE_VARIABLES.map((v) => (
                 <button
                   key={v}
@@ -444,6 +457,10 @@ export function ComposeSendDialog({
                 <Label className="text-xs font-medium flex items-center gap-1">
                   <Eye className="h-3.5 w-3.5" />
                   预览（变量已替换）
+                  <span className="ml-1 inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-normal text-muted-foreground">
+                    实时同步
+                  </span>
                 </Label>
                 {recipients.length > 1 && (
                   <Select
