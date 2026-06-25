@@ -368,7 +368,7 @@ export function ComposeSendDialog({
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
                 AI 生成
                 <span className="text-xs text-muted-foreground">
-                  -{isEmail ? COST_AI_EMAIL : COST_AI_SMS}/次
+                  -{isEmail ? COST_AI_EMAIL : COST_AI_SMS} 积分/次
                 </span>
               </Button>
             </div>
