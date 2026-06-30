@@ -176,20 +176,21 @@ function PointsHome() {
           <div className="h-64 mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={TREND_7D}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="d" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `${v / 1000}k`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="d" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} stroke="var(--border)" />
+                <YAxis tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} stroke="var(--border)" tickFormatter={(v) => `${v / 1000}k`} />
                 <Tooltip
+                  cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
                   contentStyle={{
-                    background: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
+                    background: "var(--card)",
+                    border: "1px solid var(--border)",
                     borderRadius: 8,
                     fontSize: 12,
                   }}
                   formatter={(v: number) => fmt(v)}
                 />
-                <Line type="monotone" dataKey="issued" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="consumed" stroke="#f97316" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="issued" stroke="var(--primary)" strokeWidth={2.5} dot={{ r: 3, fill: "var(--primary)" }} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="consumed" stroke="#f97316" strokeWidth={2.5} dot={{ r: 3, fill: "#f97316" }} activeDot={{ r: 5 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -262,28 +263,37 @@ function PointsHome() {
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={PRODUCT_RANKING} layout="vertical" margin={{ left: 12, right: 16 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                <defs>
+                  <linearGradient id="barFill" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.55} />
+                    <stop offset="100%" stopColor="var(--primary)" stopOpacity={1} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
                 <XAxis
                   type="number"
-                  tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                  tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+                  stroke="var(--border)"
                   tickFormatter={(v) => `${(v / 10000).toFixed(0)}w`}
                 />
                 <YAxis
                   type="category"
                   dataKey="name"
                   width={92}
-                  tick={{ fontSize: 12, fill: "hsl(var(--foreground))" }}
+                  tick={{ fontSize: 12, fill: "var(--foreground)" }}
+                  stroke="var(--border)"
                 />
                 <Tooltip
+                  cursor={{ fill: "var(--accent)", opacity: 0.4 }}
                   contentStyle={{
-                    background: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
+                    background: "var(--card)",
+                    border: "1px solid var(--border)",
                     borderRadius: 8,
                     fontSize: 12,
                   }}
                   formatter={(v: number) => fmt(v)}
                 />
-                <Bar dataKey="consumed" fill="hsl(var(--primary))" radius={[0, 6, 6, 0]} />
+                <Bar dataKey="consumed" fill="url(#barFill)" radius={[0, 6, 6, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
           </div>
