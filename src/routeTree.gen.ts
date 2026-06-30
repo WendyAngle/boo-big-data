@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as AppPointsIndexRouteImport } from './routes/_app.points.index'
 import { Route as AppOutreachIndexRouteImport } from './routes/_app.outreach.index'
 import { Route as AppPointsTenantsRouteImport } from './routes/_app.points.tenants'
 import { Route as AppPointsAppsRouteImport } from './routes/_app.points.apps'
@@ -48,6 +49,11 @@ const AppRoute = AppRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPointsIndexRoute = AppPointsIndexRouteImport.update({
+  id: '/points/',
+  path: '/points/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppOutreachIndexRoute = AppOutreachIndexRouteImport.update({
@@ -226,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/points/apps': typeof AppPointsAppsRoute
   '/points/tenants': typeof AppPointsTenantsRoute
   '/outreach/': typeof AppOutreachIndexRoute
+  '/points/': typeof AppPointsIndexRoute
   '/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdRouteWithChildren
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
   '/points/products/basic': typeof AppPointsProductsBasicRoute
@@ -257,6 +264,7 @@ export interface FileRoutesByTo {
   '/points/apps': typeof AppPointsAppsRoute
   '/points/tenants': typeof AppPointsTenantsRoute
   '/outreach': typeof AppOutreachIndexRoute
+  '/points': typeof AppPointsIndexRoute
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
   '/points/products/basic': typeof AppPointsProductsBasicRoute
   '/points/products/bundles': typeof AppPointsProductsBundlesRoute
@@ -290,6 +298,7 @@ export interface FileRoutesById {
   '/_app/points/apps': typeof AppPointsAppsRoute
   '/_app/points/tenants': typeof AppPointsTenantsRoute
   '/_app/outreach/': typeof AppOutreachIndexRoute
+  '/_app/points/': typeof AppPointsIndexRoute
   '/_app/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdRouteWithChildren
   '/_app/outreach/products/$hs': typeof AppOutreachProductsHsRoute
   '/_app/points/products/basic': typeof AppPointsProductsBasicRoute
@@ -324,6 +333,7 @@ export interface FileRouteTypes {
     | '/points/apps'
     | '/points/tenants'
     | '/outreach/'
+    | '/points/'
     | '/outreach/enterprise/$id'
     | '/outreach/products/$hs'
     | '/points/products/basic'
@@ -355,6 +365,7 @@ export interface FileRouteTypes {
     | '/points/apps'
     | '/points/tenants'
     | '/outreach'
+    | '/points'
     | '/outreach/products/$hs'
     | '/points/products/basic'
     | '/points/products/bundles'
@@ -387,6 +398,7 @@ export interface FileRouteTypes {
     | '/_app/points/apps'
     | '/_app/points/tenants'
     | '/_app/outreach/'
+    | '/_app/points/'
     | '/_app/outreach/enterprise/$id'
     | '/_app/outreach/products/$hs'
     | '/_app/points/products/basic'
@@ -417,6 +429,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/points/': {
+      id: '/_app/points/'
+      path: '/points'
+      fullPath: '/points/'
+      preLoaderRoute: typeof AppPointsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/outreach/': {
@@ -678,6 +697,7 @@ interface AppRouteChildren {
   AppPointsAppsRoute: typeof AppPointsAppsRoute
   AppPointsTenantsRoute: typeof AppPointsTenantsRoute
   AppOutreachIndexRoute: typeof AppOutreachIndexRoute
+  AppPointsIndexRoute: typeof AppPointsIndexRoute
   AppOutreachProductsHsRoute: typeof AppOutreachProductsHsRoute
   AppPointsProductsBasicRoute: typeof AppPointsProductsBasicRoute
   AppPointsProductsBundlesRoute: typeof AppPointsProductsBundlesRoute
@@ -707,6 +727,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPointsAppsRoute: AppPointsAppsRoute,
   AppPointsTenantsRoute: AppPointsTenantsRoute,
   AppOutreachIndexRoute: AppOutreachIndexRoute,
+  AppPointsIndexRoute: AppPointsIndexRoute,
   AppOutreachProductsHsRoute: AppOutreachProductsHsRoute,
   AppPointsProductsBasicRoute: AppPointsProductsBasicRoute,
   AppPointsProductsBundlesRoute: AppPointsProductsBundlesRoute,
