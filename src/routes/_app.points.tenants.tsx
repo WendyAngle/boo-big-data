@@ -398,14 +398,6 @@ function PointsTenantsPage() {
                         <TooltipProvider delayDuration={150}>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button size="sm" variant="ghost" onClick={() => setViewing(t)}>
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>查看详情</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
                               <Button size="sm" variant="ghost" onClick={() => setAdjustTarget(t)}>
                                 <Settings2 className="h-4 w-4" />
                               </Button>
@@ -419,14 +411,6 @@ function PointsTenantsPage() {
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>编辑</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDelTarget(t)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>删除</TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       </div>
