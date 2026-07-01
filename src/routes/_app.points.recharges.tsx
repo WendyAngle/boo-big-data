@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -54,6 +55,7 @@ interface RefundInfo {
   amount: number;
   refundedAt: string;
   operator: string;
+  remark?: string;
 }
 interface RechargeRecord {
   id: string;
@@ -149,6 +151,7 @@ function RechargesPage() {
   const [detail, setDetail] = useState<RechargeRecord | null>(null);
   const [refundTarget, setRefundTarget] = useState<RechargeRecord | null>(null);
   const [refundAmount, setRefundAmount] = useState("");
+  const [refundRemark, setRefundRemark] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [refundDetail, setRefundDetail] = useState<RechargeRecord | null>(null);
 
@@ -164,6 +167,7 @@ function RechargesPage() {
   function openRefund(r: RechargeRecord) {
     setRefundTarget(r);
     setRefundAmount(r.amount.toFixed(2));
+    setRefundRemark("");
   }
   function submitRefund() {
     if (!refundTarget) return;
@@ -184,7 +188,7 @@ function RechargesPage() {
     setRecords((prev) =>
       prev.map((r) =>
         r.id === refundTarget.id
-          ? { ...r, refund: { amount: n, refundedAt: nowStr(), operator: "admin" } }
+          ? { ...r, refund: { amount: n, refundedAt: nowStr(), operator: "admin", remark: refundRemark.trim() || undefined } }
           : r,
       ),
     );
@@ -343,6 +347,18 @@ function RechargesPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">最多可退 ¥{refundTarget.amount.toFixed(2)}</p>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="refund-remark">备注</Label>
+                <Textarea
+                  id="refund-remark"
+                  value={refundRemark}
+                  onChange={(e) => setRefundRemark(e.target.value.slice(0, 500))}
+                  maxLength={500}
+                  rows={4}
+                  placeholder="请输入备注（选填）"
+                />
+                <p className="text-xs text-muted-foreground text-right">{refundRemark.length}/500</p>
+              </div>
             </div>
           )}
           <DialogFooter>
@@ -382,6 +398,10 @@ function RechargesPage() {
                   <Row label1="订单编号" value1={<span className="font-mono text-xs break-all">{refundDetail.id}</span>} label2="客户名称" value2={refundDetail.customer} />
                   <Row label1="充值金额" value1={<span className="text-rose-600 tabular-nums">¥{refundDetail.amount.toFixed(2)}</span>} label2="退款金额" value2={<span className="text-amber-600 tabular-nums font-medium">¥{refundDetail.refund.amount.toFixed(2)}</span>} />
                   <Row label1="退款时间" value1={<span className="text-muted-foreground">{refundDetail.refund.refundedAt}</span>} label2="操作人" value2={refundDetail.refund.operator} />
+                  <tr className="border-b last:border-b-0">
+                    <td className="bg-muted/40 px-4 py-2.5 w-[110px] text-muted-foreground align-top">备注</td>
+                    <td colSpan={3} className="px-4 py-2.5 align-top whitespace-pre-wrap break-words">{refundDetail.refund.remark || <span className="text-muted-foreground">—</span>}</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
