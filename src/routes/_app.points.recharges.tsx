@@ -152,7 +152,7 @@ function RechargesPage() {
   const [type, setType] = useState<string>("all");
   const [applied, setApplied] = useState({ customer: "", type: "all" });
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const pageSize = 10;
   const [detail, setDetail] = useState<RechargeRecord | null>(null);
 
   const filtered = useMemo(() => {
