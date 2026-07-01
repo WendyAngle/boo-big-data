@@ -36,6 +36,11 @@ const menu: Root[] = [
         to: "/points/tenants",
         children: [],
       },
+      {
+        label: "充值管理",
+        to: "/points/recharges",
+        children: [],
+      },
     ],
   },
   {
