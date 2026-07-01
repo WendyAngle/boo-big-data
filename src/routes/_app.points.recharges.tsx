@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,17 +9,18 @@ export const Route = createFileRoute("/_app/points/recharges")({
 });
 
 function RechargesPage() {
-  const navigate = useNavigate();
   return (
     <div className="p-6">
       <Card className="p-4">
         <Button
+          asChild
           variant="outline"
           className="h-9 gap-1.5 border-primary/30 text-primary hover:bg-primary/5 hover:text-primary"
-          onClick={() => navigate({ to: "/outreach/recharge" })}
         >
-          <Plus className="h-4 w-4" />
-          新增充值
+          <Link to="/outreach/recharge" search={{ from: "home" }}>
+            <Plus className="h-4 w-4" />
+            新增充值
+          </Link>
         </Button>
       </Card>
     </div>
