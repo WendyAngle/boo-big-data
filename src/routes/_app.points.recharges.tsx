@@ -105,6 +105,12 @@ const INITIAL: RechargeRecord[] = Array.from({ length: 26 }).map((_, i) => {
   const day = ((i * 3) % 27) + 1;
   const h = (i * 7) % 24;
   const m = (i * 11) % 60;
+  const refund =
+    i === 0
+      ? { amount, refundedAt: "2026-06-28 10:22:15", operator: "admin" }
+      : i === 1
+        ? { amount: Math.round(amount * 0.5 * 100) / 100, refundedAt: "2026-06-29 16:08:42", operator: "admin" }
+        : undefined;
   return {
     id: hex(i + 1, 32),
     customer: CUSTOMERS[i % CUSTOMERS.length],
@@ -117,6 +123,7 @@ const INITIAL: RechargeRecord[] = Array.from({ length: 26 }).map((_, i) => {
     expireAt: `2027-${pad(((i * 2) % 12) + 1)}-${pad(day)}`,
     createdAt: `2026-06-${pad(day)} ${pad(h)}:${pad(m)}:${pad((i * 13) % 60)}`,
     operator: i % 5 === 0 ? "system" : "admin",
+    refund,
   };
 });
 
