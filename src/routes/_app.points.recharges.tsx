@@ -88,6 +88,7 @@ const APP_POOL: AppRef[] = [
 ];
 const PRODUCTS = ["test-1", "出海大数据基础套餐", "AI视频尊享包", "Tiktok获客月度包", "全球线索季度包"];
 const TYPES: RechargeType[] = ["套餐购买", "充值购买", "赠送"];
+const DATA_TYPES: RechargeType[] = ["套餐购买", "充值购买"];
 
 function hex(i: number, len: number) {
   const s = (i * 2654435761).toString(16).padStart(8, "0");
@@ -96,7 +97,7 @@ function hex(i: number, len: number) {
 const pad = (n: number) => String(n).padStart(2, "0");
 
 const INITIAL: RechargeRecord[] = Array.from({ length: 26 }).map((_, i) => {
-  const type = TYPES[i % TYPES.length];
+  const type = DATA_TYPES[i % DATA_TYPES.length];
   const appCount = 1 + (i % 2);
   const apps = Array.from({ length: appCount }).map((_, k) => APP_POOL[(i + k) % APP_POOL.length]);
   const base = [2000, 10000, 5000, 20000, 500][i % 5];
