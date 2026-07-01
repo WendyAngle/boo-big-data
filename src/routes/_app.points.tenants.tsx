@@ -327,14 +327,7 @@ function PointsTenantsPage() {
           <div className="text-sm text-muted-foreground">
             共 <span className="font-semibold text-foreground">{total}</span> 条企业
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
-              <Plus className="h-4 w-4" /> 新增企业
-            </Button>
-            <Button variant="outline" onClick={exportData}>
-              <Download className="h-4 w-4" /> 导出
-            </Button>
-          </div>
+          <div className="flex flex-wrap gap-2" />
         </div>
 
         <div className="rounded-lg border overflow-x-auto">
