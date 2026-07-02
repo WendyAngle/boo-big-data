@@ -173,8 +173,6 @@ function BillingPage() {
           if (e.kind !== "view" || e.field !== op.slice(5)) return false;
         } else if (op.startsWith("reach_")) {
           if (e.kind !== "reach" || e.channel !== op.slice(6)) return false;
-        } else if (op === "ai_generate") {
-          if (e.kind !== "ai_generate") return false;
         } else if (op.startsWith("pay_")) {
           const pm = op.slice(4);
           if (e.kind !== "recharge" || e.paymentMethod !== pm) return false;
