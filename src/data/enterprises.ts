@@ -22,6 +22,7 @@ export interface EnterpriseBill {
 export interface Enterprise {
   id: string;
   name: string;
+  alias: string;
   industry: string;
   country: string;
   countryCode: string;
