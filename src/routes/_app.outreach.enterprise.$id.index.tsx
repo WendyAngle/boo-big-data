@@ -128,7 +128,12 @@ function EnterpriseDetailPage() {
         {/* 组2：员工规模 / 成立年份 —— 企业体量 */}
         <div className="mt-5 pt-5 border-t grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
           <Field label="员工规模">{e.employees}</Field>
-          <Field label="成立年份">{e.est}</Field>
+          <Field label="成立年份">
+            <span className="inline-flex items-center gap-1">
+              <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+              {e.est}
+            </span>
+          </Field>
         </div>
         {/* 组3：所属行业 —— 业务定位 */}
         <div className="mt-5 pt-5 border-t">
