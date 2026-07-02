@@ -355,18 +355,6 @@ function BillingPage() {
                 有效期至 {formatExpiry(balance.expiresAt)}
               </div>
             </div>
-            <div className="text-right text-white/90 px-2">
-              <div className="text-xs opacity-80">净消耗（消耗 - 退还）</div>
-              <div className="text-2xl font-bold tabular-nums">
-                -{stats.total}
-                <span className="text-sm font-normal ml-1">积分</span>
-              </div>
-              {stats.refund > 0 && (
-                <div className="text-[11px] text-white/75 mt-0.5 tabular-nums">
-                  含失败退还 +{stats.refund}
-                </div>
-              )}
-            </div>
           </div>
         </div>
         <div className="relative mt-4 flex flex-wrap items-center gap-2">
