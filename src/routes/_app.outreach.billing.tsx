@@ -90,7 +90,15 @@ export const Route = createFileRoute("/_app/outreach/billing")({
     z
       .object({
         tab: z
-          .enum(["all", "view", "reach", "ai_generate", "refund", "recharge"])
+          .enum([
+            "all",
+            "consume",
+            "refund",
+            "recharge",
+            "expire",
+            "package_recharge",
+            "recharge_refund",
+          ])
           .optional(),
       })
       .parse(s),
@@ -116,7 +124,15 @@ function BillingPage() {
   const lowBalance = isBalanceLow(balance);
   const expiringSoon = isExpiringSoon(balance);
 
-  const [tab, setTab] = useState<"all" | LedgerKind>(tabFromUrl ?? "all");
+  type TabKey =
+    | "all"
+    | "consume"
+    | "refund"
+    | "recharge"
+    | "expire"
+    | "package_recharge"
+    | "recharge_refund";
+  const [tab, setTab] = useState<TabKey>(tabFromUrl ?? "all");
   const [kw, setKw] = useState("");
   const [datePreset, setDatePreset] = useState<PresetId>("all");
   const [customRange, setCustomRange] = useState<DateRangeValue>(undefined);
@@ -130,7 +146,14 @@ function BillingPage() {
     const fromMs = range?.from ? range.from.getTime() : undefined;
     const toMs = range?.to ? range.to.getTime() : range?.from ? range.from.getTime() + 86399999 : undefined;
     return ledger.filter((e) => {
-      if (tab !== "all" && e.kind !== tab) return false;
+      if (tab !== "all") {
+        const consumeKinds: LedgerKind[] = ["view", "reach", "ai_generate"];
+        if (tab === "consume" && !consumeKinds.includes(e.kind)) return false;
+        else if (tab === "refund" && e.kind !== "refund") return false;
+        else if (tab === "recharge" && e.kind !== "recharge") return false;
+        else if (tab === "expire" || tab === "package_recharge" || tab === "recharge_refund")
+          return false;
+      }
       if (fromMs !== undefined) {
         const t = new Date(e.createdAt).getTime();
         if (t < fromMs) return false;
