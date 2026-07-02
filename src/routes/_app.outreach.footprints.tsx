@@ -20,6 +20,9 @@ import {
   CheckCheck,
   TrendingUp,
   Trophy,
+  UserRound,
+  Mail,
+  Briefcase,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,7 +75,7 @@ export const Route = createFileRoute("/_app/outreach/footprints")({
   component: FootprintsPage,
 });
 
-type FootprintModule = "enterprise" | "product" | "bill";
+type FootprintModule = "enterprise" | "contact" | "product" | "bill";
 
 interface FootprintItem {
   id: string;
@@ -83,6 +86,11 @@ interface FootprintItem {
   enterpriseCountry?: string;
   enterpriseIndustry?: string;
   enterpriseRole?: string;
+  contactIdx?: number;
+  contactName?: string;
+  contactTitle?: string;
+  contactEmail?: string;
+  contactCity?: string;
   hs?: string;
   productName?: string;
   productEn?: string;
@@ -148,9 +156,15 @@ function genFootprints(): FootprintItem[] {
     const count = 2 + (seed % 4);
     for (let i = 0; i < count; i++) {
       const s = h(`${dateStr}-${i}`);
-      const moduleIdx = s % 3;
+      const moduleIdx = s % 4;
       const moduleKey: FootprintModule =
-        moduleIdx === 0 ? "enterprise" : moduleIdx === 1 ? "product" : "bill";
+        moduleIdx === 0
+          ? "enterprise"
+          : moduleIdx === 1
+            ? "contact"
+            : moduleIdx === 2
+              ? "product"
+              : "bill";
       const hh = String(8 + ((s >> 3) % 12)).padStart(2, "0");
       const mm = String((s >> 5) % 60).padStart(2, "0");
       const ss = String((s >> 7) % 60).padStart(2, "0");
@@ -166,6 +180,26 @@ function genFootprints(): FootprintItem[] {
           enterpriseCountry: ent.country,
           enterpriseIndustry: ent.industry,
           enterpriseRole: ent.tradeRole,
+        });
+      } else if (moduleKey === "contact") {
+        const ent = ENTERPRISES[s % ENTERPRISES.length];
+        const cIdx = ent.contacts.length ? s % ent.contacts.length : 0;
+        const c = ent.contacts[cIdx];
+        if (!c) continue;
+        items.push({
+          id: `f-${dateStr}-${i}`,
+          module: moduleKey,
+          viewedAt,
+          enterpriseId: ent.id,
+          enterpriseName: ent.name,
+          enterpriseCountry: ent.country,
+          enterpriseIndustry: ent.industry,
+          enterpriseRole: ent.tradeRole,
+          contactIdx: cIdx,
+          contactName: c.name,
+          contactTitle: c.title,
+          contactEmail: c.email,
+          contactCity: ent.city,
         });
       } else if (moduleKey === "product") {
         const hs = HS_POOL[s % HS_POOL.length];
@@ -265,7 +299,13 @@ function FootprintsPage() {
   }, [filtered]);
 
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: 0, enterprise: 0, product: 0, bill: 0 };
+    const c: Record<string, number> = {
+      all: 0,
+      enterprise: 0,
+      contact: 0,
+      product: 0,
+      bill: 0,
+    };
     for (const it of visible) {
       if (date && !it.viewedAt.startsWith(formatDateKey(date))) continue;
       c.all++;
@@ -293,9 +333,9 @@ function FootprintsPage() {
   }, [visible]);
 
   const modDist = useMemo(() => {
-    const c = { enterprise: 0, product: 0, bill: 0 };
+    const c = { enterprise: 0, contact: 0, product: 0, bill: 0 };
     for (const it of visible) c[it.module]++;
-    const total = c.enterprise + c.product + c.bill || 1;
+    const total = c.enterprise + c.contact + c.product + c.bill || 1;
     return { ...c, total };
   }, [visible]);
 
@@ -365,6 +405,7 @@ function FootprintsPage() {
   const moduleOptions: { key: ModuleFilter; label: string; icon: typeof Building2 }[] = [
     { key: "all", label: "全部", icon: Footprints },
     { key: "enterprise", label: "企业", icon: Building2 },
+    { key: "contact", label: "人物", icon: UserRound },
     { key: "product", label: "商品", icon: Package },
     { key: "bill", label: "提单", icon: FileText },
   ];
@@ -775,6 +816,28 @@ function buildFavorite(
       },
     };
   }
+  if (
+    item.module === "contact" &&
+    item.enterpriseId &&
+    item.contactIdx !== undefined
+  ) {
+    return {
+      kind: "contact",
+      refId: `${item.enterpriseId}:${item.contactIdx}`,
+      payload: {
+        title: item.contactName ?? "—",
+        subtitle: item.contactTitle,
+        meta: {
+          ...(item.contactEmail ? { email: item.contactEmail } : {}),
+        },
+        parentRef: {
+          kind: "enterprise",
+          id: item.enterpriseId,
+          name: item.enterpriseName ?? "—",
+        },
+      },
+    };
+  }
   if (item.module === "product" && item.hs) {
     return {
       kind: "product",
@@ -925,6 +988,17 @@ function FootprintCard({
         >
           {inner}
         </Link>
+      ) : item.module === "contact" ? (
+        <Link
+          to="/outreach/enterprise/$id/contact/$idx"
+          params={{
+            id: item.enterpriseId!,
+            idx: String(item.contactIdx ?? 0),
+          }}
+          className="block"
+        >
+          {inner}
+        </Link>
       ) : item.module === "product" ? (
         <Link
           to="/outreach/products/$hs"
@@ -982,6 +1056,49 @@ function renderCardInner(item: FootprintItem) {
                 查看详情 <ExternalLink className="h-3 w-3" />
               </span>
             </div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  if (item.module === "contact") {
+    return (
+      <Card className="p-4 h-full hover:shadow-md hover:border-primary/40 transition-all">
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-lg bg-violet-500/10 text-violet-600 flex items-center justify-center shrink-0">
+            <UserRound className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1.5 py-0 h-4 text-violet-600 border-violet-300"
+              >
+                人物
+              </Badge>
+              <span className="ml-auto text-[11px] text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {formatTime(item.viewedAt)}
+              </span>
+            </div>
+            <div className="font-medium text-sm truncate capitalize group-hover:text-primary">
+              {item.contactName}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1 truncate flex items-center gap-1">
+              <Briefcase className="h-3 w-3" />
+              <span className="truncate">{item.contactTitle}</span>
+            </div>
+            <div className="text-xs text-muted-foreground mt-1 truncate flex items-center gap-1">
+              <Building2 className="h-3 w-3" />
+              <span className="truncate">{item.enterpriseName}</span>
+            </div>
+            {item.contactEmail && (
+              <div className="text-[11px] text-muted-foreground mt-1 truncate flex items-center gap-1 font-mono">
+                <Mail className="h-3 w-3" />
+                {item.contactEmail}
+              </div>
+            )}
           </div>
         </div>
       </Card>
@@ -1074,7 +1191,13 @@ function renderCardInner(item: FootprintItem) {
 
 interface InsightsProps {
   trend: { key: string; count: number }[];
-  modDist: { enterprise: number; product: number; bill: number; total: number };
+  modDist: {
+    enterprise: number;
+    contact: number;
+    product: number;
+    bill: number;
+    total: number;
+  };
   topEnterprises: { id: string; name: string; country?: string; count: number }[];
 }
 
@@ -1106,6 +1229,7 @@ function InsightsStrip({ trend, modDist, topEnterprises }: InsightsProps) {
 
   const segs: { key: keyof typeof modDist; label: string; cls: string }[] = [
     { key: "enterprise", label: "企业", cls: "bg-primary" },
+    { key: "contact", label: "人物", cls: "bg-violet-500" },
     { key: "product", label: "商品", cls: "bg-amber-500" },
     { key: "bill", label: "提单", cls: "bg-emerald-500" },
   ];
