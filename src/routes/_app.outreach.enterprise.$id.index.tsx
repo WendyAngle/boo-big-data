@@ -483,10 +483,12 @@ function Hero({ e }: { e: Enterprise }) {
               <UserRound className="h-3 w-3" />
               {e.id}
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-white/90 text-sm">
-              <Calendar className="h-3.5 w-3.5" />
-              est. {e.est}
-            </span>
+            {e.est && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-white/90 text-sm">
+                <Calendar className="h-3.5 w-3.5" />
+                est. {e.est}
+              </span>
+            )}
           </div>
         </div>
       </div>
