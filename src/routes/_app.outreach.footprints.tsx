@@ -816,6 +816,28 @@ function buildFavorite(
       },
     };
   }
+  if (
+    item.module === "contact" &&
+    item.enterpriseId &&
+    item.contactIdx !== undefined
+  ) {
+    return {
+      kind: "contact",
+      refId: `${item.enterpriseId}:${item.contactIdx}`,
+      payload: {
+        title: item.contactName ?? "—",
+        subtitle: item.contactTitle,
+        meta: {
+          ...(item.contactEmail ? { email: item.contactEmail } : {}),
+        },
+        parentRef: {
+          kind: "enterprise",
+          id: item.enterpriseId,
+          name: item.enterpriseName ?? "—",
+        },
+      },
+    };
+  }
   if (item.module === "product" && item.hs) {
     return {
       kind: "product",
