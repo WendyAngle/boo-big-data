@@ -864,12 +864,6 @@ function _renderMeta(record: FavoriteRecord) {
             <SocialMiniBadge active={socials.facebook} kind="facebook" />
             <SocialMiniBadge active={socials.twitter} kind="twitter" />
             <SocialMiniBadge active={socials.whatsapp} kind="whatsapp" />
-            <span
-              className="ml-auto text-[11px] text-muted-foreground font-mono tabular-nums truncate"
-              title={formatDateTime(record.createdAt)}
-            >
-              {formatDateTime(record.createdAt)}
-            </span>
           </div>
         )}
       </div>
