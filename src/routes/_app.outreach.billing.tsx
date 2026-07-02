@@ -845,9 +845,6 @@ function FieldCell({ entry }: { entry: LedgerEntry }) {
       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
         <I className="h-3.5 w-3.5" />
         <span className="text-foreground">{VIEW_ACTION_LABEL[entry.field!]}</span>
-        {entry.field === "social" && (entry.platform || entry.detail) && (
-          <span>· {entry.platform ?? entry.detail}</span>
-        )}
       </span>
     );
   }
