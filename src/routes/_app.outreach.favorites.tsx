@@ -755,6 +755,15 @@ function FavoriteCard({
 
 function FavoriteSubtitle({ record }: { record: FavoriteRecord }) {
   if (!record.subtitle) return null;
+  if (record.kind === "enterprise") {
+    const e = findEnterprise(record.refId);
+    if (!e?.industry) return null;
+    return (
+      <div className="text-xs text-muted-foreground truncate mt-0.5">
+        {e.industry}
+      </div>
+    );
+  }
   if (record.kind === "contact") {
     const entId = record.parentRef?.id ?? record.refId.split(":")[0];
     const idx = record.refId.split(":")[1] ?? "0";
