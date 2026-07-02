@@ -374,57 +374,38 @@ function BillingPage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
           icon={<Wallet className="h-5 w-5" />}
-          label="净消耗"
-          value={stats.total}
+          label="可用余额"
+          value={balance.balance}
           unit="积分"
           tone="primary"
-        />
-        <StatCard
-          icon={<Eye className="h-5 w-5" />}
-          label="信息查看"
-          value={stats.view}
-          unit="积分"
-          tone="sky"
-        />
-        <StatCard
-          icon={<Send className="h-5 w-5" />}
-          label="触达-发送内容消耗"
-          value={stats.reach}
-          unit="积分"
-          tone="violet"
-        />
-        <StatCard
-          icon={<Sparkles className="h-5 w-5" />}
-          label="触达-AI生成内容消耗"
-          value={stats.ai}
-          unit="积分"
-          tone="amber"
-        />
-        <StatCard
-          icon={<Undo2 className="h-5 w-5" />}
-          label="失败退还"
-          value={stats.refund}
-          unit="积分"
-          tone="emerald"
-          positive
-        />
-        <StatCard
-          icon={<Wallet className="h-5 w-5" />}
-          label="累计充值"
-          value={stats.recharge}
-          unit="积分"
-          tone="emerald"
-          positive
+          hint={`有效期至 ${formatExpiry(balance.expiresAt)}`}
         />
         <StatCard
           icon={<TrendingDown className="h-5 w-5" />}
-          label="账单条数"
-          value={stats.count}
-          unit="条"
+          label="已消费积分"
+          value={stats.consumed}
+          unit="积分"
+          tone="sky"
+          hint="信息查看 + 触达发送 + AI生成 - 失败退还"
+        />
+        <StatCard
+          icon={<Wallet className="h-5 w-5" />}
+          label="累计发放积分"
+          value={stats.granted}
+          unit="积分"
+          tone="emerald"
+          hint="历史累计充值/发放到账"
+        />
+        <StatCard
+          icon={<AlertTriangle className="h-5 w-5" />}
+          label="已失效积分"
+          value={stats.expired}
+          unit="积分"
           tone="slate"
+          hint="已过有效期未使用的积分"
         />
       </div>
 
