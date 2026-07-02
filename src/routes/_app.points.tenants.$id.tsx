@@ -82,17 +82,20 @@ interface CustomerDetail {
   partner: string;
   enabled: boolean;
   apps: Array<{ code: string; label: string; extId: string; phone: string }>;
-  summary: {
-    available: number;
-    recharged: number;
-    consumed: number;
-    expired: number;
+  /** 资金台账 (元) */
+  money: {
+    gross: number;      // 累计充值金额
+    refunded: number;   // 累计退费金额
+    net: number;        // 净充值金额
+    refundOrders: number;
   };
-  productPoints: {
-    available: number;
-    consumed: number;
-    expired: number;
+  /** 积分流转 (积分)   累计发放 = 已消费 + 已退回 + 已过期 + 剩余可用 */
+  points: {
     granted: number;
+    consumed: number;
+    refunded: number;
+    expired: number;
+    available: number;
   };
   recharges: Array<{
     orderId: string;
@@ -103,6 +106,7 @@ interface CustomerDetail {
     bonus: number;
     total: number;
     remaining: number;
+    refundedPoints?: number;
     expireAt: string;
     rechargedAt: string;
     operator: string;
@@ -153,10 +157,15 @@ function buildTenant(id: string): CustomerDetail | null {
     const base = amount * 10 + k * 500;
     const bonus = Math.floor(base * 0.25);
     const total = base + bonus;
-    const remaining = Math.max(0, total - Math.floor(consumed / rechargeCount));
     const day = ((i + k) % 27) + 1;
     const month = ((i + k) % 6) + 1;
     const hasRefund = (i + k) % 5 === 0;
+    const refundAmount = hasRefund ? Math.round(amount * 0.5 * 100) / 100 : 0;
+    const refundedPoints = hasRefund
+      ? Math.round((total * refundAmount) / Math.max(amount, 1))
+      : 0;
+    const consumedPortion = Math.floor(consumed / rechargeCount);
+    const remaining = Math.max(0, total - refundedPoints - consumedPortion);
     return {
       orderId: `${String(i * 17 + k).padStart(2, "0")}b0c082fe244f14be0f6142d0${pad(k)}`,
       type: "套餐购买",
@@ -166,12 +175,13 @@ function buildTenant(id: string): CustomerDetail | null {
       bonus,
       total,
       remaining,
+      refundedPoints: refundedPoints || undefined,
       expireAt: `2027-${pad(month)}-${pad(day)}`,
       rechargedAt: `2026-${pad(month)}-${pad(day)} ${pad((i * 3) % 24)}:${pad((i * 11) % 60)}:${pad((i * 7) % 60)}`,
       operator: i % 5 === 0 ? "system" : "admin",
       refund: hasRefund
         ? {
-            amount: Math.round(amount * 0.5 * 100) / 100,
+            amount: refundAmount,
             refundedAt: `2026-${pad(month)}-${pad(Math.min(28, day + 2))} 10:22:15`,
             operator: "admin",
             remark: "客户申请部分退款",
@@ -179,6 +189,24 @@ function buildTenant(id: string): CustomerDetail | null {
         : undefined,
     };
   });
+
+  // 资金台账
+  const grossMoney = recharges.reduce((s, r) => s + r.amount, 0);
+  const refundedMoney = recharges.reduce(
+    (s, r) => s + (r.refund?.amount ?? 0),
+    0,
+  );
+  const refundOrders = recharges.filter((r) => r.refund).length;
+
+  // 积分流转
+  const grantedPts = recharges.reduce((s, r) => s + r.total, 0);
+  const refundedPts = recharges.reduce(
+    (s, r) => s + (r.refundedPoints ?? 0),
+    0,
+  );
+  // 保证恒等式：consumed 上限为 granted - refunded - expired
+  const consumedPts = Math.min(consumed, Math.max(0, grantedPts - refundedPts - expired));
+  const availablePts = Math.max(0, grantedPts - consumedPts - refundedPts - expired);
 
   return {
     id,
@@ -191,12 +219,18 @@ function buildTenant(id: string): CustomerDetail | null {
     partner: "Boo总部",
     enabled,
     apps,
-    summary: { available, recharged, consumed, expired },
-    productPoints: {
-      available,
-      consumed,
+    money: {
+      gross: grossMoney,
+      refunded: refundedMoney,
+      net: grossMoney - refundedMoney,
+      refundOrders,
+    },
+    points: {
+      granted: grantedPts,
+      consumed: consumedPts,
+      refunded: refundedPts,
       expired,
-      granted: available + consumed + expired,
+      available: availablePts,
     },
     recharges,
   };
