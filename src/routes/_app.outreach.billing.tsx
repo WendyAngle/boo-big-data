@@ -674,6 +674,7 @@ function StatCard({
   unit,
   tone,
   positive,
+  hint,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -681,6 +682,7 @@ function StatCard({
   unit: string;
   tone: "primary" | "sky" | "violet" | "slate" | "emerald" | "amber";
   positive?: boolean;
+  hint?: string;
 }) {
   const toneMap = {
     primary: "bg-primary/10 text-primary ring-primary/20",
@@ -696,7 +698,25 @@ function StatCard({
         {icon}
       </div>
       <div className="min-w-0">
-        <div className="text-xs text-muted-foreground">{label}</div>
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          {label}
+          {hint && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="text-muted-foreground/70 hover:text-foreground"
+                  aria-label={`${label}说明`}
+                >
+                  <HelpCircle className="h-3 w-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">
+                {hint}
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
         <div className="mt-1 flex items-baseline gap-1.5">
           <span
             className={cn(
@@ -705,7 +725,7 @@ function StatCard({
             )}
           >
             {positive && value > 0 ? "+" : ""}
-            {value}
+            {value.toLocaleString()}
           </span>
           <span className="text-xs text-muted-foreground">{unit}</span>
         </div>
