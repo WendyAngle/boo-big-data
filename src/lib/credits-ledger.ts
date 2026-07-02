@@ -67,8 +67,8 @@ export interface LedgerEntry {
   price?: number;
 }
 
-const LEDGER_KEY = "boo:ledger:v1";
-const LEDGER_SEED_FLAG = "boo:ledger:v6:seeded";
+const LEDGER_KEY = "boo:ledger:v2";
+const LEDGER_SEED_FLAG = "boo:ledger:v7:seeded";
 const REVEAL_KEY = "boo:reveal:v1";
 
 /* -------------------- ledger store -------------------- */
@@ -845,7 +845,21 @@ export function seedDemoLedgerIfEmpty() {
       viewEnt(0, "email", 120, pickEnt(0).email),
       viewEnt(0, "phone", 118, maskPhone(pickEnt(0).phone)),
       viewContact(4, 1, "email", 95, pickEnt(4).contacts[1 % pickEnt(4).contacts.length].email),
-      viewEnt(11, "social", 48, "LinkedIn"),
+      (() => {
+        const e = pickEnt(11);
+        return {
+          id: makeId("v"),
+          kind: "view" as LedgerKind,
+          cost: COST_VIEW,
+          createdAt: isoMinutesAgo(48),
+          targetKind: "enterprise" as TargetKind,
+          targetId: e.id,
+          targetName: e.name,
+          field: "social" as ViewField,
+          platform: "LinkedIn",
+          detail: `linkedin.com/company/${e.name.toLowerCase().replace(/[^a-z]/g, "")}`,
+        };
+      })(),
       viewEnt(7, "address", 30, pickEnt(7).address),
       viewContact(23, 0, "phone", 15, maskPhone(pickEnt(23).contacts[0].phone ?? pickEnt(23).phone)),
       // ---- recharge (3) ----
