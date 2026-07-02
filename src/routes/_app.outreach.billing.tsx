@@ -83,6 +83,9 @@ import {
   type DateRangeValue,
   type PresetId,
 } from "@/components/billing/DateRangePicker";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
 
 export const Route = createFileRoute("/_app/outreach/billing")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 账单 | Boo数据平台" }] }),
@@ -134,17 +137,29 @@ function BillingPage() {
     | "recharge_refund";
   const [tab, setTab] = useState<TabKey>(tabFromUrl ?? "all");
   const [kw, setKw] = useState("");
-  const [datePreset, setDatePreset] = useState<PresetId>("all");
-  const [customRange, setCustomRange] = useState<DateRangeValue>(undefined);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  type OpKey =
+    | "all"
+    | "view_email" | "view_phone" | "view_social" | "view_address" | "view_title" | "view_seniority"
+    | "reach_email" | "reach_phone" | "reach_social"
+    | "ai_generate"
+    | "pay_alipay" | "pay_wechat" | "pay_corp";
+  const [op, setOp] = useState<OpKey>("all");
   const [rulesOpen, setRulesOpen] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
   const filtered = useMemo(() => {
     const k = kw.trim().toLowerCase();
-    const range = resolvePreset(datePreset, customRange);
-    const fromMs = range?.from ? range.from.getTime() : undefined;
-    const toMs = range?.to ? range.to.getTime() : range?.from ? range.from.getTime() + 86399999 : undefined;
+    const fromMs = dateFrom
+      ? new Date(new Date(dateFrom).setHours(0, 0, 0, 0)).getTime()
+      : undefined;
+    const toMs = dateTo
+      ? new Date(new Date(dateTo).setHours(23, 59, 59, 999)).getTime()
+      : dateFrom
+        ? new Date(new Date(dateFrom).setHours(23, 59, 59, 999)).getTime()
+        : undefined;
     return ledger.filter((e) => {
       if (tab !== "all") {
         const consumeKinds: LedgerKind[] = ["view", "reach", "ai_generate"];
@@ -153,6 +168,18 @@ function BillingPage() {
         else if (tab === "recharge" && e.kind !== "recharge") return false;
         else if (tab === "expire" || tab === "package_recharge" || tab === "recharge_refund")
           return false;
+      }
+      if (op !== "all") {
+        if (op.startsWith("view_")) {
+          if (e.kind !== "view" || e.field !== op.slice(5)) return false;
+        } else if (op.startsWith("reach_")) {
+          if (e.kind !== "reach" || e.channel !== op.slice(6)) return false;
+        } else if (op === "ai_generate") {
+          if (e.kind !== "ai_generate") return false;
+        } else if (op.startsWith("pay_")) {
+          const pm = op.slice(4);
+          if (e.kind !== "recharge" || e.paymentMethod !== pm) return false;
+        }
       }
       if (fromMs !== undefined) {
         const t = new Date(e.createdAt).getTime();
@@ -167,11 +194,11 @@ function BillingPage() {
         (e.platform ?? "").toLowerCase().includes(k)
       );
     });
-  }, [ledger, tab, datePreset, customRange, kw]);
+  }, [ledger, tab, op, dateFrom, dateTo, kw]);
 
   useEffect(() => {
     setPage(1);
-  }, [tab, kw, datePreset, customRange]);
+  }, [tab, kw, op, dateFrom, dateTo]);
 
   const pageData = useMemo(
     () => filtered.slice((page - 1) * pageSize, page * pageSize),
@@ -472,14 +499,8 @@ function BillingPage() {
           </Tab>
         </div>
         <div className="px-5 py-3 flex items-center gap-3 flex-wrap border-b border-border bg-muted/20">
-          <DateRangePicker
-            preset={datePreset}
-            custom={customRange}
-            onChange={(p, c) => {
-              setDatePreset(p);
-              if (c !== undefined) setCustomRange(c);
-            }}
-          />
+          <DateField label="开始日期" value={dateFrom} onChange={setDateFrom} />
+          <DateField label="结束日期" value={dateTo} onChange={setDateTo} min={dateFrom} />
           <Select value={tab} onValueChange={(v) => setTab(v as TabKey)}>
             <SelectTrigger className="h-9 w-[148px] bg-background">
               <SelectValue placeholder="变动类型" />
@@ -524,6 +545,27 @@ function BillingPage() {
               </SelectItem>
             </SelectContent>
           </Select>
+          <Select value={op} onValueChange={(v) => setOp(v as OpKey)}>
+            <SelectTrigger className="h-9 w-[160px] bg-background">
+              <SelectValue placeholder="操作" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部操作</SelectItem>
+              <SelectItem value="view_email">信息查看 · 邮箱</SelectItem>
+              <SelectItem value="view_phone">信息查看 · 电话</SelectItem>
+              <SelectItem value="view_social">信息查看 · 社媒</SelectItem>
+              <SelectItem value="view_address">信息查看 · 地址</SelectItem>
+              <SelectItem value="view_title">信息查看 · 职位</SelectItem>
+              <SelectItem value="view_seniority">信息查看 · 职级</SelectItem>
+              <SelectItem value="reach_email">触达 · 邮件</SelectItem>
+              <SelectItem value="reach_phone">触达 · 电话</SelectItem>
+              <SelectItem value="reach_social">触达 · 社媒</SelectItem>
+              <SelectItem value="ai_generate">AI生成内容</SelectItem>
+              <SelectItem value="pay_alipay">充值 · 支付宝</SelectItem>
+              <SelectItem value="pay_wechat">充值 · 微信</SelectItem>
+              <SelectItem value="pay_corp">充值 · 对公转账</SelectItem>
+            </SelectContent>
+          </Select>
           <div className="relative flex-1 min-w-[220px]">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -533,15 +575,16 @@ function BillingPage() {
               className="pl-9 h-9 bg-background"
             />
           </div>
-          {(kw || datePreset !== "all" || tab !== "all") && (
+          {(kw || dateFrom || dateTo || tab !== "all" || op !== "all") && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
                 setKw("");
-                setDatePreset("all");
-                setCustomRange(undefined);
+                setDateFrom(undefined);
+                setDateTo(undefined);
                 setTab("all");
+                setOp("all");
               }}
               className="gap-1"
             >
@@ -780,6 +823,61 @@ function Tab({
     >
       {children}
     </button>
+  );
+}
+
+function DateField({
+  label,
+  value,
+  onChange,
+  min,
+}: {
+  label: string;
+  value: Date | undefined;
+  onChange: (d: Date | undefined) => void;
+  min?: Date;
+}) {
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "h-9 justify-start gap-2 bg-background font-normal min-w-[170px]",
+            !value && "text-muted-foreground",
+          )}
+        >
+          <CalendarIcon className="h-3.5 w-3.5 opacity-70" />
+          <span className="text-xs text-muted-foreground">{label}</span>
+          <span className="ml-auto tabular-nums text-foreground">
+            {value ? fmt(value) : "年/月/日"}
+          </span>
+          {value && (
+            <X
+              className="h-3.5 w-3.5 opacity-60 hover:opacity-100"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onChange(undefined);
+              }}
+            />
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={value}
+          onSelect={onChange}
+          disabled={min ? (d) => d < new Date(new Date(min).setHours(0, 0, 0, 0)) : undefined}
+          initialFocus
+          className={cn("p-3 pointer-events-auto")}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }
 
