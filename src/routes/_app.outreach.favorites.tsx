@@ -829,33 +829,23 @@ function _renderMeta(record: FavoriteRecord) {
   if (record.kind === "enterprise") {
     const m = record.meta || {};
     const e = findEnterprise(record.refId);
-    const industry = e?.industry || "";
-    const country = e?.country || m.country || "";
     const est = e?.est || m.est || "";
     const role = e?.tradeRole || m.role || "";
     const socials = e?.socials;
     return (
       <div className="mt-1.5 space-y-2">
-        {(industry || role) && (
+        {role && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            {industry && <Briefcase className="h-3 w-3 shrink-0" />}
-            {industry && <span className="truncate">{industry}</span>}
-            {role && (
-              <Badge variant="secondary" className="text-[10px] h-4 px-1.5 ml-auto shrink-0">
-                {role}
-              </Badge>
-            )}
+            <Badge variant="secondary" className="text-[10px] h-4 px-1.5 ml-auto shrink-0">
+              {role}
+            </Badge>
           </div>
         )}
-        {(country || est) && (
+        {est && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            {country && <MapPin className="h-3 w-3 shrink-0" />}
-            {country && <span className="flex-1 truncate">{country}</span>}
-            {est && (
-              <span className="font-mono tabular-nums text-foreground/80 shrink-0 ml-auto">
-                est. {est}
-              </span>
-            )}
+            <span className="font-mono tabular-nums text-foreground/80 shrink-0 ml-auto">
+              est. {est}
+            </span>
           </div>
         )}
         {socials && (
