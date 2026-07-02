@@ -110,14 +110,10 @@ function EnterpriseDetailPage() {
 
       {/* 基本信息 */}
       <Section icon={<Info className="h-4 w-4" />} title="基本信息">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-8 gap-y-5">
+        {/* 组1：企业名称 / 企业别名 / 企业官网 —— 身份标识 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-5">
           <Field label="企业名称">{e.name}</Field>
           <Field label="企业别名">{e.alias || <Muted>未提供</Muted>}</Field>
-          <Field label="所属行业">
-            {e.industry || <Muted>未提供</Muted>}
-          </Field>
-          <Field label="员工规模">{e.employees}</Field>
-          <Field label="成立年份">{e.est}</Field>
           <Field label="企业官网">
             <a
               href={`https://${e.website}`}
@@ -131,6 +127,23 @@ function EnterpriseDetailPage() {
             </a>
           </Field>
         </div>
+        {/* 组2：所属行业 —— 业务定位 */}
+        <div className="mt-5 pt-5 border-t">
+          <Field label="所属行业">
+            {e.industry || <Muted>未提供</Muted>}
+          </Field>
+        </div>
+        {/* 组3：员工规模 / 成立年份 —— 企业体量 */}
+        <div className="mt-5 pt-5 border-t grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+          <Field label="员工规模">{e.employees}</Field>
+          <Field label="成立年份">{e.est}</Field>
+        </div>
+        {/* 组4：企业简介 —— 描述信息 */}
+        <div className="mt-5 pt-5 border-t">
+          <div className="text-xs text-muted-foreground mb-2">企业简介</div>
+          <p className="text-sm text-foreground/80 leading-relaxed">{e.desc}</p>
+        </div>
+        {/* 联系方式与创建时间 */}
         <div className="mt-5 pt-5 border-t grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-5">
           <Field label="联系邮箱">
             <div className="flex items-center gap-2 flex-wrap">
@@ -179,10 +192,6 @@ function EnterpriseDetailPage() {
           <Field label="创建时间">
             <span className="font-mono tabular-nums">{formatDateTime(e.createdAt)}</span>
           </Field>
-        </div>
-        <div className="mt-5 pt-5 border-t">
-          <div className="text-xs text-muted-foreground mb-2">企业简介</div>
-          <p className="text-sm text-foreground/80 leading-relaxed">{e.desc}</p>
         </div>
       </Section>
 
