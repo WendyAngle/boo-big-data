@@ -63,7 +63,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ListPagination } from "@/components/ListPagination";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_app/points/tenants")({
+export const Route = createFileRoute("/_app/points/tenants/")({
   head: () => ({ meta: [{ title: "积分管理系统 · 企业管理 | Boo数据平台" }] }),
   component: PointsTenantsPage,
 });
