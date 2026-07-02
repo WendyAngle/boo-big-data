@@ -466,18 +466,6 @@ function BillingPage() {
               {ledger.filter((e) => e.kind === "recharge").length}
             </span>
           </Tab>
-          <Tab active={tab === "expire"} onClick={() => setTab("expire")}>
-            <AlertTriangle className="h-3.5 w-3.5 mr-1 inline" />
-            失效 <span className="ml-1 text-muted-foreground">0</span>
-          </Tab>
-          <Tab active={tab === "package_recharge"} onClick={() => setTab("package_recharge")}>
-            <Wallet className="h-3.5 w-3.5 mr-1 inline" />
-            套餐充值 <span className="ml-1 text-muted-foreground">0</span>
-          </Tab>
-          <Tab active={tab === "recharge_refund"} onClick={() => setTab("recharge_refund")}>
-            <Undo2 className="h-3.5 w-3.5 mr-1 inline" />
-            充值退款 <span className="ml-1 text-muted-foreground">0</span>
-          </Tab>
         </div>
         <div className="px-5 py-3 flex items-center gap-3 flex-wrap border-b border-border bg-muted/20">
           <DateField label="开始日期" value={dateFrom} onChange={setDateFrom} />
