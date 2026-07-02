@@ -1154,7 +1154,7 @@ function renderCardInner(item: FootprintItem) {
           <FileText className="h-5 w-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap pr-16">
             <Badge
               variant="outline"
               className="text-[10px] px-1.5 py-0 h-4 text-emerald-600 border-emerald-300"
@@ -1162,7 +1162,7 @@ function renderCardInner(item: FootprintItem) {
               提单
             </Badge>
             <span className="text-[11px] text-muted-foreground font-mono">{item.billNo}</span>
-            <span className="ml-auto text-[11px] text-muted-foreground flex items-center gap-1">
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {formatTime(item.viewedAt)}
             </span>
