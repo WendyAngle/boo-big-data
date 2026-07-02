@@ -499,14 +499,8 @@ function BillingPage() {
           </Tab>
         </div>
         <div className="px-5 py-3 flex items-center gap-3 flex-wrap border-b border-border bg-muted/20">
-          <DateRangePicker
-            preset={datePreset}
-            custom={customRange}
-            onChange={(p, c) => {
-              setDatePreset(p);
-              if (c !== undefined) setCustomRange(c);
-            }}
-          />
+          <DateField label="开始日期" value={dateFrom} onChange={setDateFrom} />
+          <DateField label="结束日期" value={dateTo} onChange={setDateTo} min={dateFrom} />
           <Select value={tab} onValueChange={(v) => setTab(v as TabKey)}>
             <SelectTrigger className="h-9 w-[148px] bg-background">
               <SelectValue placeholder="变动类型" />
@@ -551,6 +545,27 @@ function BillingPage() {
               </SelectItem>
             </SelectContent>
           </Select>
+          <Select value={op} onValueChange={(v) => setOp(v as OpKey)}>
+            <SelectTrigger className="h-9 w-[160px] bg-background">
+              <SelectValue placeholder="操作" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部操作</SelectItem>
+              <SelectItem value="view_email">信息查看 · 邮箱</SelectItem>
+              <SelectItem value="view_phone">信息查看 · 电话</SelectItem>
+              <SelectItem value="view_social">信息查看 · 社媒</SelectItem>
+              <SelectItem value="view_address">信息查看 · 地址</SelectItem>
+              <SelectItem value="view_title">信息查看 · 职位</SelectItem>
+              <SelectItem value="view_seniority">信息查看 · 职级</SelectItem>
+              <SelectItem value="reach_email">触达 · 邮件</SelectItem>
+              <SelectItem value="reach_phone">触达 · 电话</SelectItem>
+              <SelectItem value="reach_social">触达 · 社媒</SelectItem>
+              <SelectItem value="ai_generate">AI生成内容</SelectItem>
+              <SelectItem value="pay_alipay">充值 · 支付宝</SelectItem>
+              <SelectItem value="pay_wechat">充值 · 微信</SelectItem>
+              <SelectItem value="pay_corp">充值 · 对公转账</SelectItem>
+            </SelectContent>
+          </Select>
           <div className="relative flex-1 min-w-[220px]">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -560,15 +575,16 @@ function BillingPage() {
               className="pl-9 h-9 bg-background"
             />
           </div>
-          {(kw || datePreset !== "all" || tab !== "all") && (
+          {(kw || dateFrom || dateTo || tab !== "all" || op !== "all") && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
                 setKw("");
-                setDatePreset("all");
-                setCustomRange(undefined);
+                setDateFrom(undefined);
+                setDateTo(undefined);
                 setTab("all");
+                setOp("all");
               }}
               className="gap-1"
             >
