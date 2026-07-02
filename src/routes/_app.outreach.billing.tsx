@@ -407,20 +407,20 @@ function BillingPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
-          icon={<TrendingDown className="h-5 w-5" />}
-          label="已消费积分"
-          value={stats.consumed}
-          unit="积分"
-          tone="rose"
-          hint="信息查看 + 触达发送 + AI生成 - 失败退还"
-        />
-        <StatCard
           icon={<Wallet className="h-5 w-5" />}
           label="累计发放积分"
           value={stats.granted}
           unit="积分"
           tone="emerald"
           hint="历史累计充值/发放到账"
+        />
+        <StatCard
+          icon={<TrendingDown className="h-5 w-5" />}
+          label="已消费积分"
+          value={stats.consumed}
+          unit="积分"
+          tone="rose"
+          hint="信息查看 + 触达发送 + AI生成 - 失败退还"
         />
         <StatCard
           icon={<AlertTriangle className="h-5 w-5" />}
