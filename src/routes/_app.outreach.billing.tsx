@@ -408,21 +408,13 @@ function BillingPage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard
-          icon={<Wallet className="h-5 w-5" />}
-          label="可用余额"
-          value={balance.balance}
-          unit="积分"
-          tone="primary"
-          hint={`有效期至 ${formatExpiry(balance.expiresAt)}`}
-        />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
           icon={<TrendingDown className="h-5 w-5" />}
           label="已消费积分"
           value={stats.consumed}
           unit="积分"
-          tone="sky"
+          tone="rose"
           hint="信息查看 + 触达发送 + AI生成 - 失败退还"
         />
         <StatCard
@@ -434,12 +426,13 @@ function BillingPage() {
           hint="历史累计充值/发放到账"
         />
         <StatCard
-          icon={<AlertTriangle className="h-5 w-5" />}
-          label="已失效积分"
-          value={stats.expired}
+          icon={<TrendingDown className="h-5 w-5" />}
+          label="本期净变动"
+          value={stats.granted - stats.consumed}
           unit="积分"
-          tone="slate"
-          hint="已过有效期未使用的积分"
+          tone={stats.granted - stats.consumed >= 0 ? "emerald" : "rose"}
+          signed
+          hint="累计发放 − 已消费；反映积分净流入/流出"
         />
       </div>
 
