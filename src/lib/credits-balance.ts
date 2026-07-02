@@ -6,9 +6,9 @@ export interface CreditBalance {
   updatedAt: string;
 }
 
-const KEY = "boo:credits:v1";
+const KEY = "boo:credits:v2";
 const DEFAULT: CreditBalance = {
-  balance: 1280,
+  balance: 7840,
   expiresAt: "2026-12-31T23:59:59",
   updatedAt: new Date().toISOString(),
 };

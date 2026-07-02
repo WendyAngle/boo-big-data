@@ -257,12 +257,7 @@ function BillingPage() {
       corp: "对公转账",
     };
     const opLabel = (e: LedgerEntry) => {
-      if (e.kind === "view") {
-        const base = VIEW_ACTION[e.field!] ?? "";
-        return e.field === "social" && (e.platform || e.detail)
-          ? `${base} · ${e.platform ?? e.detail}`
-          : base;
-      }
+      if (e.kind === "view") return VIEW_ACTION[e.field!] ?? "";
       if (e.kind === "reach" || e.kind === "refund")
         return e.channel ? REACH_ACTION[e.channel] ?? "" : "";
       if (e.kind === "recharge") return PAY_LABEL[e.paymentMethod ?? ""] ?? "";
@@ -845,9 +840,6 @@ function FieldCell({ entry }: { entry: LedgerEntry }) {
       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
         <I className="h-3.5 w-3.5" />
         <span className="text-foreground">{VIEW_ACTION_LABEL[entry.field!]}</span>
-        {entry.field === "social" && (entry.platform || entry.detail) && (
-          <span>· {entry.platform ?? entry.detail}</span>
-        )}
       </span>
     );
   }
