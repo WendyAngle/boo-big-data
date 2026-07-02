@@ -356,21 +356,25 @@ function OutreachEnterprisePage() {
                   <div className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                     {e.name}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Briefcase className="h-4 w-4 shrink-0" />
-                    <span className={`truncate ${!e.industry ? "italic" : ""}`}>
-                      {e.industry || "未提供行业"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4 shrink-0" />
-                    <span className={`flex-1 truncate ${!e.country ? "italic" : ""}`}>
-                      {e.country || "未提供国家"}
-                    </span>
-                    <span className="font-medium text-foreground/80 tabular-nums whitespace-nowrap">
-                      est. {e.est}
-                    </span>
-                  </div>
+                  {e.industry && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Briefcase className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{e.industry}</span>
+                    </div>
+                  )}
+                  {(e.country || e.est) && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      {e.country && <MapPin className="h-4 w-4 shrink-0" />}
+                      {e.country && (
+                        <span className="flex-1 truncate">{e.country}</span>
+                      )}
+                      {e.est && (
+                        <span className="font-medium text-foreground/80 tabular-nums whitespace-nowrap ml-auto">
+                          est. {e.est}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="mt-4 pt-3 border-t flex items-center gap-2 text-xs text-muted-foreground">
                   <SocialBadge active={e.socials.linkedin} kind="linkedin" />
