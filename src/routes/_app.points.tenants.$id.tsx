@@ -8,6 +8,10 @@ import {
   TimerReset,
   Building2,
   Smartphone,
+  Undo2,
+  Gift,
+  Coins,
+  Banknote,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -78,17 +82,20 @@ interface CustomerDetail {
   partner: string;
   enabled: boolean;
   apps: Array<{ code: string; label: string; extId: string; phone: string }>;
-  summary: {
-    available: number;
-    recharged: number;
-    consumed: number;
-    expired: number;
+  /** 资金台账 (元) */
+  money: {
+    gross: number;      // 累计充值金额
+    refunded: number;   // 累计退费金额
+    net: number;        // 净充值金额
+    refundOrders: number;
   };
-  productPoints: {
-    available: number;
-    consumed: number;
-    expired: number;
+  /** 积分流转 (积分)   累计发放 = 已消费 + 已退回 + 已过期 + 剩余可用 */
+  points: {
     granted: number;
+    consumed: number;
+    refunded: number;
+    expired: number;
+    available: number;
   };
   recharges: Array<{
     orderId: string;
@@ -99,6 +106,7 @@ interface CustomerDetail {
     bonus: number;
     total: number;
     remaining: number;
+    refundedPoints?: number;
     expireAt: string;
     rechargedAt: string;
     operator: string;
@@ -149,10 +157,15 @@ function buildTenant(id: string): CustomerDetail | null {
     const base = amount * 10 + k * 500;
     const bonus = Math.floor(base * 0.25);
     const total = base + bonus;
-    const remaining = Math.max(0, total - Math.floor(consumed / rechargeCount));
     const day = ((i + k) % 27) + 1;
     const month = ((i + k) % 6) + 1;
     const hasRefund = (i + k) % 5 === 0;
+    const refundAmount = hasRefund ? Math.round(amount * 0.5 * 100) / 100 : 0;
+    const refundedPoints = hasRefund
+      ? Math.round((total * refundAmount) / Math.max(amount, 1))
+      : 0;
+    const consumedPortion = Math.floor(consumed / rechargeCount);
+    const remaining = Math.max(0, total - refundedPoints - consumedPortion);
     return {
       orderId: `${String(i * 17 + k).padStart(2, "0")}b0c082fe244f14be0f6142d0${pad(k)}`,
       type: "套餐购买",
@@ -162,12 +175,13 @@ function buildTenant(id: string): CustomerDetail | null {
       bonus,
       total,
       remaining,
+      refundedPoints: refundedPoints || undefined,
       expireAt: `2027-${pad(month)}-${pad(day)}`,
       rechargedAt: `2026-${pad(month)}-${pad(day)} ${pad((i * 3) % 24)}:${pad((i * 11) % 60)}:${pad((i * 7) % 60)}`,
       operator: i % 5 === 0 ? "system" : "admin",
       refund: hasRefund
         ? {
-            amount: Math.round(amount * 0.5 * 100) / 100,
+            amount: refundAmount,
             refundedAt: `2026-${pad(month)}-${pad(Math.min(28, day + 2))} 10:22:15`,
             operator: "admin",
             remark: "客户申请部分退款",
@@ -175,6 +189,24 @@ function buildTenant(id: string): CustomerDetail | null {
         : undefined,
     };
   });
+
+  // 资金台账
+  const grossMoney = recharges.reduce((s, r) => s + r.amount, 0);
+  const refundedMoney = recharges.reduce(
+    (s, r) => s + (r.refund?.amount ?? 0),
+    0,
+  );
+  const refundOrders = recharges.filter((r) => r.refund).length;
+
+  // 积分流转
+  const grantedPts = recharges.reduce((s, r) => s + r.total, 0);
+  const refundedPts = recharges.reduce(
+    (s, r) => s + (r.refundedPoints ?? 0),
+    0,
+  );
+  // 保证恒等式：consumed 上限为 granted - refunded - expired
+  const consumedPts = Math.min(consumed, Math.max(0, grantedPts - refundedPts - expired));
+  const availablePts = Math.max(0, grantedPts - consumedPts - refundedPts - expired);
 
   return {
     id,
@@ -187,12 +219,18 @@ function buildTenant(id: string): CustomerDetail | null {
     partner: "Boo总部",
     enabled,
     apps,
-    summary: { available, recharged, consumed, expired },
-    productPoints: {
-      available,
-      consumed,
+    money: {
+      gross: grossMoney,
+      refunded: refundedMoney,
+      net: grossMoney - refundedMoney,
+      refundOrders,
+    },
+    points: {
+      granted: grantedPts,
+      consumed: consumedPts,
+      refunded: refundedPts,
       expired,
-      granted: available + consumed + expired,
+      available: availablePts,
     },
     recharges,
   };
@@ -249,11 +287,10 @@ function CustomerDetailPage() {
         </SectionCard>
       </div>
 
-      {/* 关联应用账号 / 积分汇总 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="p-5">
+      {/* 关联应用账号 */}
+      <Card className="p-5">
           <div className="text-base font-semibold mb-4">关联应用账号</div>
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {t.apps.map((a) => (
               <div
                 key={a.code + a.extId}
@@ -281,38 +318,95 @@ function CustomerDetailPage() {
               </div>
             ))}
           </div>
-        </Card>
+      </Card>
 
-        <Card className="p-5">
-          <div className="text-base font-semibold mb-4">积分汇总</div>
-          <div className="grid grid-cols-2 gap-3">
-            <SummaryTile
-              value={t.summary.available}
-              label="剩余可用"
-              icon={<Wallet className="h-8 w-8" />}
-              gradient="from-sky-500 to-blue-500"
-            />
-            <SummaryTile
-              value={t.summary.recharged}
-              label="累计充值"
+      {/* 积分汇总 (分层：资金台账 + 积分流转) */}
+      <Card className="p-5 space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="text-base font-semibold">积分汇总</div>
+          <div className="text-xs text-muted-foreground">
+            账目恒等式：累计发放 = 已消费 + 已退回 + 已过期 + 剩余可用
+          </div>
+        </div>
+
+        {/* 第 1 层：资金台账 (元) */}
+        <div>
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-3">
+            <Banknote className="h-4 w-4" /> 资金台账（元）
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <MoneyTile
+              label="累计充值金额"
+              value={t.money.gross}
+              tone="from-emerald-500 to-green-500"
               icon={<TrendingUp className="h-8 w-8" />}
-              gradient="from-emerald-500 to-green-500"
             />
-            <SummaryTile
-              value={t.summary.consumed}
-              label="已消费"
-              icon={<ShoppingCart className="h-8 w-8" />}
-              gradient="from-amber-500 to-orange-500"
+            <MoneyTile
+              label="累计退费金额"
+              value={t.money.refunded}
+              tone="from-amber-500 to-orange-500"
+              icon={<Undo2 className="h-8 w-8" />}
+              badge={
+                t.money.refundOrders > 0
+                  ? `退费 ${t.money.refundOrders} 笔`
+                  : undefined
+              }
             />
-            <SummaryTile
-              value={t.summary.expired}
-              label="已失效"
-              icon={<TimerReset className="h-8 w-8" />}
-              gradient="from-rose-500 to-red-500"
+            <MoneyTile
+              label="净充值金额"
+              value={t.money.net}
+              tone="from-primary to-primary/70"
+              icon={<Wallet className="h-8 w-8" />}
+              emphasize
             />
           </div>
-        </Card>
-      </div>
+        </div>
+
+        {/* 第 2 层：积分流转 (积分) */}
+        <div>
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-3">
+            <Coins className="h-4 w-4" /> 积分流转（积分）
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <PointsTile
+              label="剩余可用"
+              value={t.points.available}
+              tone="bg-sky-50 border-sky-200 text-sky-700"
+              accent="text-sky-700"
+              icon={<Wallet className="h-4 w-4" />}
+              emphasize
+            />
+            <PointsTile
+              label="累计发放"
+              value={t.points.granted}
+              tone="bg-slate-50 border-slate-200 text-slate-600"
+              accent="text-slate-800"
+              icon={<Gift className="h-4 w-4" />}
+            />
+            <PointsTile
+              label="已消费"
+              value={t.points.consumed}
+              tone="bg-amber-50 border-amber-200 text-amber-700"
+              accent="text-amber-700"
+              icon={<ShoppingCart className="h-4 w-4" />}
+            />
+            <PointsTile
+              label="已退回"
+              value={t.points.refunded}
+              tone="bg-violet-50 border-violet-200 text-violet-700"
+              accent="text-violet-700"
+              icon={<Undo2 className="h-4 w-4" />}
+            />
+            <PointsTile
+              label="已过期"
+              value={t.points.expired}
+              tone="bg-rose-50 border-rose-200 text-rose-700"
+              accent="text-rose-700"
+              icon={<TimerReset className="h-4 w-4" />}
+            />
+          </div>
+        </div>
+      </Card>
 
       {/* 积分余额详情 */}
       <Card className="p-5">
@@ -323,32 +417,38 @@ function CustomerDetailPage() {
             <div className="text-xs text-muted-foreground">
               剩余可用:{" "}
               <span className="text-sky-600 font-semibold tabular-nums">
-                {nf.format(t.productPoints.available)}
+                {nf.format(t.points.available)}
               </span>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
             <MetricLine
               label="可用余额"
-              value={t.productPoints.available}
+              value={t.points.available}
               tone="text-sky-600"
               formatter={nf}
             />
             <MetricLine
               label="已消费"
-              value={t.productPoints.consumed}
+              value={t.points.consumed}
               tone="text-amber-600"
               formatter={nf}
             />
             <MetricLine
-              label="已失效"
-              value={t.productPoints.expired}
+              label="已退回"
+              value={t.points.refunded}
+              tone="text-violet-600"
+              formatter={nf}
+            />
+            <MetricLine
+              label="已过期"
+              value={t.points.expired}
               tone="text-rose-600"
               formatter={nf}
             />
             <MetricLine
               label="累计发放"
-              value={t.productPoints.granted}
+              value={t.points.granted}
               tone="text-foreground"
               formatter={nf}
             />
@@ -664,26 +764,79 @@ function KV({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function SummaryTile({
+function MoneyTile({
   value,
   label,
+  tone,
   icon,
-  gradient,
+  emphasize,
+  badge,
 }: {
   value: number;
   label: string;
+  tone: string;
   icon: React.ReactNode;
-  gradient: string;
+  emphasize?: boolean;
+  badge?: string;
 }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-xl p-4 text-white bg-gradient-to-br ${gradient}`}
+      className={`relative overflow-hidden rounded-xl p-4 text-white bg-gradient-to-br ${tone} ${
+        emphasize ? "ring-2 ring-primary/40 shadow-lg" : ""
+      }`}
     >
-      <div className="text-3xl font-bold tabular-nums leading-tight">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-white/90">{label}</div>
+        {badge && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/20 text-white">
+            {badge}
+          </span>
+        )}
+      </div>
+      <div
+        className={`mt-2 font-bold tabular-nums leading-tight ${
+          emphasize ? "text-3xl" : "text-2xl"
+        }`}
+      >
+        ¥{value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+      </div>
+      <div className="absolute right-3 bottom-3 text-white/30">{icon}</div>
+    </div>
+  );
+}
+
+function PointsTile({
+  value,
+  label,
+  tone,
+  accent,
+  icon,
+  emphasize,
+}: {
+  value: number;
+  label: string;
+  tone: string;
+  accent: string;
+  icon: React.ReactNode;
+  emphasize?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-xl border p-3 ${tone} ${
+        emphasize ? "ring-2 ring-sky-400/50 shadow-md" : ""
+      }`}
+    >
+      <div className="flex items-center gap-1.5 text-xs">
+        {icon}
+        <span>{label}</span>
+      </div>
+      <div
+        className={`mt-1 font-bold tabular-nums leading-tight ${accent} ${
+          emphasize ? "text-2xl" : "text-xl"
+        }`}
+      >
         {value.toLocaleString()}
       </div>
-      <div className="text-sm text-white/85 mt-1">{label}</div>
-      <div className="absolute right-3 bottom-3 text-white/40">{icon}</div>
     </div>
   );
 }
