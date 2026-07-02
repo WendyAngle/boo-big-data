@@ -22,6 +22,7 @@ export interface EnterpriseBill {
 export interface Enterprise {
   id: string;
   name: string;
+  alias: string;
   industry: string;
   country: string;
   countryCode: string;
@@ -89,6 +90,21 @@ const NAMES = [
   "Atlas Engineering",
   "Lighthouse Ventures",
 ];
+const ALIAS_SUFFIXES = [
+  "国际",
+  "集团",
+  "(中国)",
+  "海外事业部",
+  "贸易",
+  "控股",
+  "科技",
+  "供应链",
+];
+function makeAlias(baseName: string, i: number): string {
+  const short = baseName.split(" ")[0];
+  const suffix = ALIAS_SUFFIXES[i % ALIAS_SUFFIXES.length];
+  return `${short}${suffix}`;
+}
 const CONTACT_NAMES = [
   "olga bookas",
   "michael chen",
@@ -195,6 +211,7 @@ export const ENTERPRISES: Enterprise[] = Array.from({ length: 60 }).map((_, i) =
   return {
     id: `E${String(2026000 + i + 1).padStart(7, "0")}`,
     name: baseName,
+    alias: makeAlias(baseName, i),
     industry: missingIndustry ? "" : INDUSTRIES[i % INDUSTRIES.length],
     country: missingCountry ? "" : cp.name,
     countryCode: missingCountry ? "" : cp.code,

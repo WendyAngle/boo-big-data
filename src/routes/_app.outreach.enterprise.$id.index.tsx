@@ -112,6 +112,7 @@ function EnterpriseDetailPage() {
       <Section icon={<Info className="h-4 w-4" />} title="基本信息">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-8 gap-y-5">
           <Field label="企业名称">{e.name}</Field>
+          <Field label="企业别名">{e.alias || <Muted>未提供</Muted>}</Field>
           <Field label="所属行业">
             {e.industry || <Muted>未提供</Muted>}
           </Field>
