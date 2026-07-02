@@ -211,6 +211,7 @@ export const ENTERPRISES: Enterprise[] = Array.from({ length: 60 }).map((_, i) =
   return {
     id: `E${String(2026000 + i + 1).padStart(7, "0")}`,
     name: baseName,
+    alias: makeAlias(baseName, i),
     industry: missingIndustry ? "" : INDUSTRIES[i % INDUSTRIES.length],
     country: missingCountry ? "" : cp.name,
     countryCode: missingCountry ? "" : cp.code,
