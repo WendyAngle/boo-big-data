@@ -8,6 +8,10 @@ import {
   TimerReset,
   Building2,
   Smartphone,
+  Undo2,
+  Gift,
+  Coins,
+  Banknote,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
