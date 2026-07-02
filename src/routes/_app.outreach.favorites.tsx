@@ -836,28 +836,28 @@ function _renderMeta(record: FavoriteRecord) {
     const socials = e?.socials;
     return (
       <div className="mt-1.5 space-y-2">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Briefcase className="h-3 w-3 shrink-0" />
-          <span className={cn("truncate", !industry && "italic")}>
-            {industry || "未提供行业"}
-          </span>
-          {role && (
-            <Badge variant="secondary" className="text-[10px] h-4 px-1.5 ml-auto shrink-0">
-              {role}
-            </Badge>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <MapPin className="h-3 w-3 shrink-0" />
-          <span className={cn("flex-1 truncate", !country && "italic")}>
-            {country || "未提供国家"}
-          </span>
-          {est && (
-            <span className="font-mono tabular-nums text-foreground/80 shrink-0">
-              est. {est}
-            </span>
-          )}
-        </div>
+        {(industry || role) && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            {industry && <Briefcase className="h-3 w-3 shrink-0" />}
+            {industry && <span className="truncate">{industry}</span>}
+            {role && (
+              <Badge variant="secondary" className="text-[10px] h-4 px-1.5 ml-auto shrink-0">
+                {role}
+              </Badge>
+            )}
+          </div>
+        )}
+        {(country || est) && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            {country && <MapPin className="h-3 w-3 shrink-0" />}
+            {country && <span className="flex-1 truncate">{country}</span>}
+            {est && (
+              <span className="font-mono tabular-nums text-foreground/80 shrink-0 ml-auto">
+                est. {est}
+              </span>
+            )}
+          </div>
+        )}
         {socials && (
           <div className="pt-2 border-t flex items-center gap-1.5">
             <SocialMiniBadge active={socials.linkedin} kind="linkedin" />

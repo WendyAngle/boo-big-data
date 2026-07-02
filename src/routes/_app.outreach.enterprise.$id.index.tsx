@@ -464,15 +464,19 @@ function Hero({ e }: { e: Enterprise }) {
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold tracking-wide truncate">{e.name}</h1>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm">
-              <Briefcase className="h-3.5 w-3.5" />
-              {e.industry || "未提供行业"}
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm">
-              <MapPin className="h-3.5 w-3.5" />
-              {e.province}
-              {e.country ? ` - ${e.country}` : ""}
-            </span>
+            {e.industry && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm">
+                <Briefcase className="h-3.5 w-3.5" />
+                {e.industry}
+              </span>
+            )}
+            {e.country && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm">
+                <MapPin className="h-3.5 w-3.5" />
+                {e.province}
+                {` - ${e.country}`}
+              </span>
+            )}
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/95 text-emerald-700 text-sm font-medium">
               {e.tradeRole}
             </span>
