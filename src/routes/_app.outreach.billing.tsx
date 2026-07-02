@@ -589,10 +589,9 @@ function BillingPage() {
             <TableHeader>
               <TableRow className="bg-primary/5 hover:bg-primary/5">
                 <TableHead className="w-[170px]">时间</TableHead>
-                <TableHead className="w-[120px]">类型</TableHead>
-                <TableHead className="w-[280px]">对象</TableHead>
-                <TableHead className="w-[140px]">字段 / 渠道</TableHead>
-                <TableHead>明细</TableHead>
+                <TableHead className="w-[140px]">变动类型</TableHead>
+                <TableHead className="w-[160px]">消费积分类型</TableHead>
+                <TableHead>明细说明</TableHead>
                 <TableHead className="w-[110px] text-right">
                   <span className="inline-flex items-center gap-1">
                     积分变动
@@ -612,6 +611,7 @@ function BillingPage() {
                     </Tooltip>
                   </span>
                 </TableHead>
+                <TableHead className="w-[130px] text-right">变动后余额</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -624,15 +624,10 @@ function BillingPage() {
                     <KindBadge entry={e} />
                   </TableCell>
                   <TableCell>
-                    <TargetCell entry={e} />
-                  </TableCell>
-                  <TableCell>
                     <FieldCell entry={e} />
                   </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground truncate max-w-[320px]">
-                    {e.kind === "refund"
-                      ? `触达失败退还 · ${e.detail ?? "—"}`
-                      : (e.detail ?? "—")}
+                  <TableCell className="text-xs max-w-[380px]">
+                    <DetailCell entry={e} />
                   </TableCell>
                   <TableCell
                     className={cn(
@@ -643,7 +638,10 @@ function BillingPage() {
                     )}
                   >
                     {e.kind === "refund" || e.kind === "recharge" ? "+" : "-"}
-                    {e.cost}
+                    {e.cost.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right font-mono tabular-nums text-sm">
+                    {(balanceMap.get(e.id) ?? 0).toLocaleString()}
                   </TableCell>
                 </TableRow>
               ))}
