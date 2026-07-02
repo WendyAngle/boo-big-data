@@ -110,7 +110,7 @@ function EnterpriseDetailPage() {
       {/* 基本信息 */}
       <Section icon={<Info className="h-4 w-4" />} title="基本信息">
         {/* 组1：企业名称 / 企业官网 —— 身份标识 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
           <Field label="企业名称">{e.name}</Field>
           <Field label="企业官网">
             <a
