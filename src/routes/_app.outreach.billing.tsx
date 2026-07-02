@@ -90,7 +90,15 @@ export const Route = createFileRoute("/_app/outreach/billing")({
     z
       .object({
         tab: z
-          .enum(["all", "view", "reach", "ai_generate", "refund", "recharge"])
+          .enum([
+            "all",
+            "consume",
+            "refund",
+            "recharge",
+            "expire",
+            "package_recharge",
+            "recharge_refund",
+          ])
           .optional(),
       })
       .parse(s),
@@ -116,7 +124,15 @@ function BillingPage() {
   const lowBalance = isBalanceLow(balance);
   const expiringSoon = isExpiringSoon(balance);
 
-  const [tab, setTab] = useState<"all" | LedgerKind>(tabFromUrl ?? "all");
+  type TabKey =
+    | "all"
+    | "consume"
+    | "refund"
+    | "recharge"
+    | "expire"
+    | "package_recharge"
+    | "recharge_refund";
+  const [tab, setTab] = useState<TabKey>(tabFromUrl ?? "all");
   const [kw, setKw] = useState("");
   const [datePreset, setDatePreset] = useState<PresetId>("all");
   const [customRange, setCustomRange] = useState<DateRangeValue>(undefined);
@@ -130,7 +146,14 @@ function BillingPage() {
     const fromMs = range?.from ? range.from.getTime() : undefined;
     const toMs = range?.to ? range.to.getTime() : range?.from ? range.from.getTime() + 86399999 : undefined;
     return ledger.filter((e) => {
-      if (tab !== "all" && e.kind !== tab) return false;
+      if (tab !== "all") {
+        const consumeKinds: LedgerKind[] = ["view", "reach", "ai_generate"];
+        if (tab === "consume" && !consumeKinds.includes(e.kind)) return false;
+        else if (tab === "refund" && e.kind !== "refund") return false;
+        else if (tab === "recharge" && e.kind !== "recharge") return false;
+        else if (tab === "expire" || tab === "package_recharge" || tab === "recharge_refund")
+          return false;
+      }
       if (fromMs !== undefined) {
         const t = new Date(e.createdAt).getTime();
         if (t < fromMs) return false;
@@ -211,15 +234,11 @@ function BillingPage() {
       ["时间", "类型", "对象类型", "对象", "所属企业", "字段/渠道", "平台", "明细", "消耗"],
       ...filtered.map((e) => [
         fmtTime(e.createdAt),
-        e.kind === "view"
-          ? "信息查看"
-          : e.kind === "reach"
-            ? "触达-发送内容消耗"
-            : e.kind === "ai_generate"
-              ? "触达-AI生成内容消耗"
-              : e.kind === "refund"
-                ? "失败退还"
-                : "充值",
+        e.kind === "refund"
+          ? "服务失败退款"
+          : e.kind === "recharge"
+            ? "充值"
+            : "消费积分",
         e.targetKind === "enterprise" ? "企业" : "人物",
         e.targetName,
         e.parentRef?.name ?? "",
@@ -414,30 +433,20 @@ function BillingPage() {
           <Tab active={tab === "all"} onClick={() => setTab("all")}>
             全部 <span className="ml-1 text-muted-foreground">{ledger.length}</span>
           </Tab>
-          <Tab active={tab === "view"} onClick={() => setTab("view")}>
-            <Eye className="h-3.5 w-3.5 mr-1 inline" />
-            信息查看{" "}
+          <Tab active={tab === "consume"} onClick={() => setTab("consume")}>
+            <TrendingDown className="h-3.5 w-3.5 mr-1 inline" />
+            消费积分{" "}
             <span className="ml-1 text-muted-foreground">
-              {ledger.filter((e) => e.kind === "view").length}
-            </span>
-          </Tab>
-          <Tab active={tab === "reach"} onClick={() => setTab("reach")}>
-            <Send className="h-3.5 w-3.5 mr-1 inline" />
-            触达-发送{" "}
-            <span className="ml-1 text-muted-foreground">
-              {ledger.filter((e) => e.kind === "reach").length}
-            </span>
-          </Tab>
-          <Tab active={tab === "ai_generate"} onClick={() => setTab("ai_generate")}>
-            <Sparkles className="h-3.5 w-3.5 mr-1 inline" />
-            触达-AI生成{" "}
-            <span className="ml-1 text-muted-foreground">
-              {ledger.filter((e) => e.kind === "ai_generate").length}
+              {
+                ledger.filter(
+                  (e) => e.kind === "view" || e.kind === "reach" || e.kind === "ai_generate",
+                ).length
+              }
             </span>
           </Tab>
           <Tab active={tab === "refund"} onClick={() => setTab("refund")}>
             <Undo2 className="h-3.5 w-3.5 mr-1 inline" />
-            失败退还{" "}
+            服务失败退款{" "}
             <span className="ml-1 text-muted-foreground">
               {ledger.filter((e) => e.kind === "refund").length}
             </span>
@@ -449,6 +458,18 @@ function BillingPage() {
               {ledger.filter((e) => e.kind === "recharge").length}
             </span>
           </Tab>
+          <Tab active={tab === "expire"} onClick={() => setTab("expire")}>
+            <AlertTriangle className="h-3.5 w-3.5 mr-1 inline" />
+            失效 <span className="ml-1 text-muted-foreground">0</span>
+          </Tab>
+          <Tab active={tab === "package_recharge"} onClick={() => setTab("package_recharge")}>
+            <Wallet className="h-3.5 w-3.5 mr-1 inline" />
+            套餐充值 <span className="ml-1 text-muted-foreground">0</span>
+          </Tab>
+          <Tab active={tab === "recharge_refund"} onClick={() => setTab("recharge_refund")}>
+            <Undo2 className="h-3.5 w-3.5 mr-1 inline" />
+            充值退款 <span className="ml-1 text-muted-foreground">0</span>
+          </Tab>
         </div>
         <div className="px-5 py-3 flex items-center gap-3 flex-wrap border-b border-border bg-muted/20">
           <DateRangePicker
@@ -459,40 +480,46 @@ function BillingPage() {
               if (c !== undefined) setCustomRange(c);
             }}
           />
-          <Select value={tab} onValueChange={(v) => setTab(v as "all" | LedgerKind)}>
+          <Select value={tab} onValueChange={(v) => setTab(v as TabKey)}>
             <SelectTrigger className="h-9 w-[148px] bg-background">
-              <SelectValue placeholder="类型" />
+              <SelectValue placeholder="变动类型" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">全部类型</SelectItem>
-              <SelectItem value="view">
+              <SelectItem value="all">全部变动</SelectItem>
+              <SelectItem value="consume">
                 <span className="inline-flex items-center gap-1.5">
-                  <Eye className="h-3.5 w-3.5 text-sky-600" />
-                  信息查看
-                </span>
-              </SelectItem>
-              <SelectItem value="reach">
-                <span className="inline-flex items-center gap-1.5">
-                  <Send className="h-3.5 w-3.5 text-violet-600" />
-                  触达-发送内容消耗
-                </span>
-              </SelectItem>
-              <SelectItem value="ai_generate">
-                <span className="inline-flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-                  触达-AI生成内容消耗
+                  <TrendingDown className="h-3.5 w-3.5 text-rose-600" />
+                  消费积分
                 </span>
               </SelectItem>
               <SelectItem value="refund">
                 <span className="inline-flex items-center gap-1.5">
                   <Undo2 className="h-3.5 w-3.5 text-emerald-600" />
-                  失败退还
+                  服务失败退款
                 </span>
               </SelectItem>
               <SelectItem value="recharge">
                 <span className="inline-flex items-center gap-1.5">
                   <Wallet className="h-3.5 w-3.5 text-emerald-600" />
                   充值
+                </span>
+              </SelectItem>
+              <SelectItem value="expire">
+                <span className="inline-flex items-center gap-1.5">
+                  <AlertTriangle className="h-3.5 w-3.5 text-slate-500" />
+                  失效
+                </span>
+              </SelectItem>
+              <SelectItem value="package_recharge">
+                <span className="inline-flex items-center gap-1.5">
+                  <Wallet className="h-3.5 w-3.5 text-primary" />
+                  套餐充值
+                </span>
+              </SelectItem>
+              <SelectItem value="recharge_refund">
+                <span className="inline-flex items-center gap-1.5">
+                  <Undo2 className="h-3.5 w-3.5 text-amber-600" />
+                  充值退款
                 </span>
               </SelectItem>
             </SelectContent>
@@ -590,7 +617,7 @@ function BillingPage() {
               <TableRow className="bg-primary/5 hover:bg-primary/5">
                 <TableHead className="w-[170px]">时间</TableHead>
                 <TableHead className="w-[140px]">变动类型</TableHead>
-                <TableHead className="w-[160px]">消费积分类型</TableHead>
+                <TableHead className="w-[160px]">操作</TableHead>
                 <TableHead>明细说明</TableHead>
                 <TableHead className="w-[110px] text-right">
                   <span className="inline-flex items-center gap-1">
@@ -757,19 +784,11 @@ function Tab({
 }
 
 function KindBadge({ entry }: { entry: LedgerEntry }) {
-  if (entry.kind === "view") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-sky-50 text-sky-700 border-sky-200">
-        <Eye className="h-3 w-3" />
-        信息查看
-      </span>
-    );
-  }
   if (entry.kind === "refund") {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-emerald-50 text-emerald-700 border-emerald-200">
         <Undo2 className="h-3 w-3" />
-        失败退还
+        服务失败退款
       </span>
     );
   }
@@ -781,18 +800,11 @@ function KindBadge({ entry }: { entry: LedgerEntry }) {
       </span>
     );
   }
-  if (entry.kind === "ai_generate") {
-    return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-amber-50 text-amber-700 border-amber-200">
-        <Sparkles className="h-3 w-3" />
-        触达-AI生成
-      </span>
-    );
-  }
+  // view / reach / ai_generate → 消费积分
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-violet-50 text-violet-700 border-violet-200">
-      <Send className="h-3 w-3" />
-      触达-发送
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-rose-50 text-rose-700 border-rose-200">
+      <TrendingDown className="h-3 w-3" />
+      消费积分
     </span>
   );
 }
