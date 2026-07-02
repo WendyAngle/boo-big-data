@@ -127,16 +127,16 @@ function EnterpriseDetailPage() {
             </a>
           </Field>
         </div>
-        {/* 组2：所属行业 —— 业务定位 */}
+        {/* 组2：员工规模 / 成立年份 —— 企业体量 */}
+        <div className="mt-5 pt-5 border-t grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+          <Field label="员工规模">{e.employees}</Field>
+          <Field label="成立年份">{e.est}</Field>
+        </div>
+        {/* 组3：所属行业 —— 业务定位 */}
         <div className="mt-5 pt-5 border-t">
           <Field label="所属行业">
             {e.industry || <Muted>未提供</Muted>}
           </Field>
-        </div>
-        {/* 组3：员工规模 / 成立年份 —— 企业体量 */}
-        <div className="mt-5 pt-5 border-t grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-          <Field label="员工规模">{e.employees}</Field>
-          <Field label="成立年份">{e.est}</Field>
         </div>
         {/* 组4：企业简介 —— 描述信息 */}
         <div className="mt-5 pt-5 border-t">
