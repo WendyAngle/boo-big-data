@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Users,
   Wallet,
@@ -356,7 +356,15 @@ function PointsTenantsPage() {
                 pageData.map((t) => (
                   <TableRow key={t.id} className="hover:bg-accent/30">
                     <TableCell className="font-mono text-xs whitespace-nowrap">{t.id}</TableCell>
-                    <TableCell className="font-medium whitespace-nowrap">{t.name}</TableCell>
+                    <TableCell className="font-medium whitespace-nowrap">
+                      <Link
+                        to="/points/tenants/$id"
+                        params={{ id: t.id }}
+                        className="text-primary hover:underline"
+                      >
+                        {t.name}
+                      </Link>
+                    </TableCell>
                     <TableCell>{t.industry}</TableCell>
                     <TableCell className="whitespace-nowrap">
                       <div className="text-sm">{t.contact}</div>
