@@ -522,13 +522,13 @@ function BillingPage() {
               <SelectItem value="all">全部操作</SelectItem>
               <SelectItem value="view_email">查看邮箱</SelectItem>
               <SelectItem value="view_phone">查看电话</SelectItem>
-              <SelectItem value="view_social">查看社媒</SelectItem>
+              <SelectItem value="view_social">查看社媒账号</SelectItem>
               <SelectItem value="view_address">查看地址</SelectItem>
               <SelectItem value="view_title">查看职位</SelectItem>
               <SelectItem value="view_seniority">查看职级</SelectItem>
               <SelectItem value="reach_email">发送邮件</SelectItem>
               <SelectItem value="reach_phone">发送短信</SelectItem>
-              <SelectItem value="reach_social">发送社媒消息</SelectItem>
+              <SelectItem value="reach_social">触达社媒账号</SelectItem>
               <SelectItem value="ai_generate">AI生成内容</SelectItem>
               <SelectItem value="pay_alipay">充值 · 支付宝</SelectItem>
               <SelectItem value="pay_wechat">充值 · 微信</SelectItem>
@@ -885,7 +885,7 @@ function FieldCell({ entry }: { entry: LedgerEntry }) {
     const VIEW_ACTION_LABEL: Record<ViewField, string> = {
       email: "查看邮箱",
       phone: "查看电话",
-      social: "查看社媒",
+      social: "查看社媒账号",
       address: "查看地址",
       title: "查看职位",
       seniority: "查看职级",
@@ -908,7 +908,7 @@ function FieldCell({ entry }: { entry: LedgerEntry }) {
   const REACH_ACTION_LABEL: Record<ReachChannel, string> = {
     email: "发送邮件",
     phone: "发送短信",
-    social: "发送社媒消息",
+    social: "触达社媒账号",
   };
   return (
     <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
