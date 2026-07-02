@@ -222,6 +222,21 @@ function EnterpriseDetailPage() {
               id={`contact-${idx}`}
               to="/outreach/enterprise/$id/contact/$idx"
               params={{ id: e.id, idx: String(idx) }}
+              onClick={() =>
+                recordFootprint({
+                  module: "contact",
+                  enterpriseId: e.id,
+                  enterpriseName: e.name,
+                  enterpriseCountry: e.country,
+                  enterpriseIndustry: e.industry,
+                  enterpriseRole: e.tradeRole,
+                  contactIdx: idx,
+                  contactName: c.name,
+                  contactTitle: c.title,
+                  contactEmail: c.email,
+                  contactCity: e.city,
+                })
+              }
               className="group rounded-lg border border-border bg-card hover:ring-1 hover:ring-primary/30 hover:border-primary/40 transition-shadow block"
             >
               <div className="flex items-center gap-3 px-4 py-3 border-b border-border/70">
