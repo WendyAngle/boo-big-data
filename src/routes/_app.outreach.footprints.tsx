@@ -988,6 +988,17 @@ function FootprintCard({
         >
           {inner}
         </Link>
+      ) : item.module === "contact" ? (
+        <Link
+          to="/outreach/enterprise/$id/contact/$idx"
+          params={{
+            id: item.enterpriseId!,
+            idx: String(item.contactIdx ?? 0),
+          }}
+          className="block"
+        >
+          {inner}
+        </Link>
       ) : item.module === "product" ? (
         <Link
           to="/outreach/products/$hs"
