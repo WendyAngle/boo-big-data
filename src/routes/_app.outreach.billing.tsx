@@ -729,8 +729,9 @@ function StatCard({
   label: string;
   value: number;
   unit: string;
-  tone: "primary" | "sky" | "violet" | "slate" | "emerald" | "amber";
+  tone: "primary" | "sky" | "violet" | "slate" | "emerald" | "amber" | "rose";
   positive?: boolean;
+  signed?: boolean;
   hint?: string;
 }) {
   const toneMap = {
@@ -740,6 +741,7 @@ function StatCard({
     slate: "bg-slate-50 text-slate-600 ring-slate-200",
     emerald: "bg-emerald-50 text-emerald-600 ring-emerald-200",
     amber: "bg-amber-50 text-amber-600 ring-amber-200",
+    rose: "bg-rose-50 text-rose-600 ring-rose-200",
   } as const;
   return (
     <div className="rounded-xl ring-1 ring-border bg-card p-5 flex items-center gap-4">
