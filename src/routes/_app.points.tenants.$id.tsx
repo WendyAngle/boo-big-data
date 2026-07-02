@@ -280,7 +280,7 @@ function CustomerDetailPage() {
                     : "bg-muted text-muted-foreground"
                 }
               >
-                {t.enabled ? "合作中" : "已停用"}
+                {t.enabled ? "合作中" : "终止合作"}
               </Badge>
             }
           />
