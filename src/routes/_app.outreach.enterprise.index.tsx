@@ -34,7 +34,6 @@ import { ListPagination } from "@/components/ListPagination";
 import heroBg from "@/assets/enterprise-hero.jpg";
 import { ENTERPRISES } from "@/data/enterprises";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
-import { formatDateTime } from "@/lib/format-date";
 
 export const Route = createFileRoute("/_app/outreach/enterprise/")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 企业 | Boo数据平台" }] }),
@@ -378,12 +377,6 @@ function OutreachEnterprisePage() {
                   <SocialBadge active={e.socials.facebook} kind="facebook" />
                   <SocialBadge active={e.socials.twitter} kind="twitter" />
                   <SocialBadge active={e.socials.whatsapp} kind="whatsapp" />
-                  <span
-                    className="ml-1 font-mono tabular-nums truncate"
-                    title={formatDateTime(e.createdAt)}
-                  >
-                    {formatDateTime(e.createdAt)}
-                  </span>
                 </div>
               </Card>
             </Link>
