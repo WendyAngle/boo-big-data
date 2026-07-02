@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import {
   ChevronLeft,
@@ -11,6 +11,15 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -92,6 +101,13 @@ interface CustomerDetail {
     remaining: number;
     expireAt: string;
     rechargedAt: string;
+    operator: string;
+    refund?: {
+      amount: number;
+      refundedAt: string;
+      operator: string;
+      remark?: string;
+    };
   }>;
 }
 
@@ -136,6 +152,7 @@ function buildTenant(id: string): CustomerDetail | null {
     const remaining = Math.max(0, total - Math.floor(consumed / rechargeCount));
     const day = ((i + k) % 27) + 1;
     const month = ((i + k) % 6) + 1;
+    const hasRefund = (i + k) % 5 === 0;
     return {
       orderId: `${String(i * 17 + k).padStart(2, "0")}b0c082fe244f14be0f6142d0${pad(k)}`,
       type: "套餐购买",
@@ -145,8 +162,17 @@ function buildTenant(id: string): CustomerDetail | null {
       bonus,
       total,
       remaining,
-      expireAt: "",
+      expireAt: `2027-${pad(month)}-${pad(day)}`,
       rechargedAt: `2026-${pad(month)}-${pad(day)} ${pad((i * 3) % 24)}:${pad((i * 11) % 60)}:${pad((i * 7) % 60)}`,
+      operator: i % 5 === 0 ? "system" : "admin",
+      refund: hasRefund
+        ? {
+            amount: Math.round(amount * 0.5 * 100) / 100,
+            refundedAt: `2026-${pad(month)}-${pad(Math.min(28, day + 2))} 10:22:15`,
+            operator: "admin",
+            remark: "客户申请部分退款",
+          }
+        : undefined,
     };
   });
 
@@ -177,6 +203,9 @@ function buildTenant(id: string): CustomerDetail | null {
 function CustomerDetailPage() {
   const t = Route.useLoaderData() as CustomerDetail;
   const nf = useMemo(() => new Intl.NumberFormat("en-US"), []);
+  type Recharge = CustomerDetail["recharges"][number];
+  const [detail, setDetail] = useState<Recharge | null>(null);
+  const [refundDetail, setRefundDetail] = useState<Recharge | null>(null);
 
   return (
     <div className="p-8 space-y-6">
@@ -186,14 +215,14 @@ function CustomerDetailPage() {
           className="inline-flex items-center gap-1 rounded-md bg-primary/10 text-primary px-3 py-1.5 text-sm font-medium hover:bg-primary/15 transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />
-          返回客户列表
+          返回企业列表
         </Link>
       </div>
 
       {/* 基础信息 / 联系信息 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <SectionCard title="基础信息">
-          <KV label="客户名称" value={<span className="font-medium">{t.name}</span>} />
+          <KV label="企业名称" value={<span className="font-medium">{t.name}</span>} />
           <KV label="客户编号" value={<span className="font-mono">{t.cid}</span>} />
           <KV
             label="状态"
@@ -217,7 +246,6 @@ function CustomerDetailPage() {
             label="联系电话"
             value={<span className="font-mono">{t.contactPhone}</span>}
           />
-          <KV label="所属合作伙伴" value={t.partner} />
         </SectionCard>
       </div>
 
@@ -345,13 +373,14 @@ function CustomerDetailPage() {
                 <TableHead className="text-right whitespace-nowrap">剩余积分</TableHead>
                 <TableHead className="whitespace-nowrap">过期时间</TableHead>
                 <TableHead className="whitespace-nowrap">充值时间</TableHead>
+                <TableHead className="text-center whitespace-nowrap">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {t.recharges.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={10}
+                    colSpan={11}
                     className="text-center py-10 text-muted-foreground"
                   >
                     暂无充值记录
@@ -390,6 +419,24 @@ function CustomerDetailPage() {
                     <TableCell className="font-mono text-xs text-muted-foreground whitespace-nowrap">
                       {r.rechargedAt}
                     </TableCell>
+                    <TableCell className="text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-3 text-sm">
+                        <button
+                          className="text-primary hover:underline"
+                          onClick={() => setDetail(r)}
+                        >
+                          查看详情
+                        </button>
+                        {r.refund && (
+                          <button
+                            className="text-amber-600 hover:underline"
+                            onClick={() => setRefundDetail(r)}
+                          >
+                            查看退费详情
+                          </button>
+                        )}
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -397,7 +444,199 @@ function CustomerDetailPage() {
           </Table>
         </div>
       </Card>
+
+      {/* 充值详情 */}
+      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>充值详情</DialogTitle>
+          </DialogHeader>
+          {detail && (
+            <div className="rounded-lg border overflow-hidden">
+              <table className="w-full text-sm">
+                <tbody>
+                  <Row
+                    label1="订单编号"
+                    value1={
+                      <span className="font-mono text-xs break-all">
+                        {detail.orderId}
+                      </span>
+                    }
+                    label2="企业名称"
+                    value2={t.name}
+                  />
+                  <Row
+                    label1="套餐名称"
+                    value1={detail.plan}
+                    label2="充值类型"
+                    value2={
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "font-normal bg-sky-50 text-sky-700 border-sky-200",
+                        )}
+                      >
+                        {detail.type}
+                      </Badge>
+                    }
+                  />
+                  <Row
+                    label1="充值金额"
+                    value1={
+                      <span className="text-rose-600 tabular-nums">
+                        ¥{nf.format(detail.amount)}
+                      </span>
+                    }
+                    label2="积分到期日"
+                    value2={detail.expireAt || "-"}
+                  />
+                  <Row
+                    label1="基础积分"
+                    value1={
+                      <span className="tabular-nums text-sky-600">
+                        {nf.format(detail.base)}
+                      </span>
+                    }
+                    label2="赠送积分"
+                    value2={
+                      <span className="tabular-nums text-emerald-600">
+                        +{nf.format(detail.bonus)}
+                      </span>
+                    }
+                  />
+                  <Row
+                    label1="总积分"
+                    value1={
+                      <span className="tabular-nums text-amber-600 font-medium">
+                        {nf.format(detail.total)}
+                      </span>
+                    }
+                    label2="剩余积分"
+                    value2={
+                      <span className="tabular-nums">
+                        {nf.format(detail.remaining)}
+                      </span>
+                    }
+                  />
+                  <Row
+                    label1="充值时间"
+                    value1={
+                      <span className="text-muted-foreground">
+                        {detail.rechargedAt}
+                      </span>
+                    }
+                    label2="操作人"
+                    value2={detail.operator}
+                  />
+                </tbody>
+              </table>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDetail(null)}>
+              关闭
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 退费详情 */}
+      <Dialog
+        open={!!refundDetail}
+        onOpenChange={(o) => !o && setRefundDetail(null)}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>退费详情</DialogTitle>
+          </DialogHeader>
+          {refundDetail?.refund && (
+            <div className="rounded-lg border overflow-hidden">
+              <table className="w-full text-sm">
+                <tbody>
+                  <Row
+                    label1="订单编号"
+                    value1={
+                      <span className="font-mono text-xs break-all">
+                        {refundDetail.orderId}
+                      </span>
+                    }
+                    label2="企业名称"
+                    value2={t.name}
+                  />
+                  <Row
+                    label1="充值金额"
+                    value1={
+                      <span className="text-rose-600 tabular-nums">
+                        ¥{nf.format(refundDetail.amount)}
+                      </span>
+                    }
+                    label2="退款金额"
+                    value2={
+                      <span className="text-amber-600 tabular-nums font-medium">
+                        ¥{refundDetail.refund.amount.toFixed(2)}
+                      </span>
+                    }
+                  />
+                  <Row
+                    label1="退款时间"
+                    value1={
+                      <span className="text-muted-foreground">
+                        {refundDetail.refund.refundedAt}
+                      </span>
+                    }
+                    label2="操作人"
+                    value2={refundDetail.refund.operator}
+                  />
+                  <tr className="border-b last:border-b-0">
+                    <td className="bg-muted/40 px-4 py-2.5 w-[110px] text-muted-foreground align-top">
+                      备注
+                    </td>
+                    <td
+                      colSpan={3}
+                      className="px-4 py-2.5 align-top whitespace-pre-wrap break-words"
+                    >
+                      {refundDetail.refund.remark || (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRefundDetail(null)}>
+              关闭
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+function Row({
+  label1,
+  value1,
+  label2,
+  value2,
+}: {
+  label1: string;
+  value1: React.ReactNode;
+  label2: string;
+  value2: React.ReactNode;
+}) {
+  return (
+    <tr className="border-b last:border-b-0">
+      <td className="bg-muted/40 px-4 py-2.5 w-[110px] text-muted-foreground align-middle">
+        {label1}
+      </td>
+      <td className="px-4 py-2.5 align-middle">{value1}</td>
+      <td className="bg-muted/40 px-4 py-2.5 w-[110px] text-muted-foreground align-middle border-l">
+        {label2}
+      </td>
+      <td className="px-4 py-2.5 align-middle">{value2}</td>
+    </tr>
   );
 }
 
