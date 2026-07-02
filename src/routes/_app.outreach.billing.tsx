@@ -423,13 +423,12 @@ function BillingPage() {
           hint="历史累计充值/发放到账"
         />
         <StatCard
-          icon={<TrendingDown className="h-5 w-5" />}
-          label="本期净变动"
-          value={stats.granted - stats.consumed}
+          icon={<AlertTriangle className="h-5 w-5" />}
+          label="已失效积分"
+          value={0}
           unit="积分"
-          tone={stats.granted - stats.consumed >= 0 ? "emerald" : "rose"}
-          signed
-          hint="累计发放 − 已消费；反映积分净流入/流出"
+          tone="slate"
+          hint="已过有效期未使用的积分"
         />
       </div>
 
