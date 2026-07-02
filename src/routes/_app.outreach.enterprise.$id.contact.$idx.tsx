@@ -474,15 +474,19 @@ function ContactDetailPage() {
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-foreground truncate">{e.name}</div>
               <div className="mt-1 text-xs text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1">
-                <span className="inline-flex items-center gap-1">
-                  <Briefcase className="h-3 w-3" />
-                  {e.industry || "未提供行业"}
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {e.province}
-                  {e.country ? ` · ${e.country}` : ""}
-                </span>
+                {e.industry && (
+                  <span className="inline-flex items-center gap-1">
+                    <Briefcase className="h-3 w-3" />
+                    {e.industry}
+                  </span>
+                )}
+                {e.country && (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {e.province}
+                    {` · ${e.country}`}
+                  </span>
+                )}
                 <span className="inline-flex items-center gap-1">
                   <Globe className="h-3 w-3" />
                   {e.website}
