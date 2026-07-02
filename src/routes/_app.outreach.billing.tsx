@@ -355,18 +355,6 @@ function BillingPage() {
                 有效期至 {formatExpiry(balance.expiresAt)}
               </div>
             </div>
-            <div className="text-right text-white/90 px-2">
-              <div className="text-xs opacity-80">净消耗（消耗 - 退还）</div>
-              <div className="text-2xl font-bold tabular-nums">
-                -{stats.total}
-                <span className="text-sm font-normal ml-1">积分</span>
-              </div>
-              {stats.refund > 0 && (
-                <div className="text-[11px] text-white/75 mt-0.5 tabular-nums">
-                  含失败退还 +{stats.refund}
-                </div>
-              )}
-            </div>
           </div>
         </div>
         <div className="relative mt-4 flex flex-wrap items-center gap-2">
@@ -420,21 +408,13 @@ function BillingPage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard
-          icon={<Wallet className="h-5 w-5" />}
-          label="可用余额"
-          value={balance.balance}
-          unit="积分"
-          tone="primary"
-          hint={`有效期至 ${formatExpiry(balance.expiresAt)}`}
-        />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
           icon={<TrendingDown className="h-5 w-5" />}
           label="已消费积分"
           value={stats.consumed}
           unit="积分"
-          tone="sky"
+          tone="rose"
           hint="信息查看 + 触达发送 + AI生成 - 失败退还"
         />
         <StatCard
@@ -446,12 +426,13 @@ function BillingPage() {
           hint="历史累计充值/发放到账"
         />
         <StatCard
-          icon={<AlertTriangle className="h-5 w-5" />}
-          label="已失效积分"
-          value={stats.expired}
+          icon={<TrendingDown className="h-5 w-5" />}
+          label="本期净变动"
+          value={stats.granted - stats.consumed}
           unit="积分"
-          tone="slate"
-          hint="已过有效期未使用的积分"
+          tone={stats.granted - stats.consumed >= 0 ? "emerald" : "rose"}
+          signed
+          hint="累计发放 − 已消费；反映积分净流入/流出"
         />
       </div>
 
@@ -484,18 +465,6 @@ function BillingPage() {
             <span className="ml-1 text-muted-foreground">
               {ledger.filter((e) => e.kind === "recharge").length}
             </span>
-          </Tab>
-          <Tab active={tab === "expire"} onClick={() => setTab("expire")}>
-            <AlertTriangle className="h-3.5 w-3.5 mr-1 inline" />
-            失效 <span className="ml-1 text-muted-foreground">0</span>
-          </Tab>
-          <Tab active={tab === "package_recharge"} onClick={() => setTab("package_recharge")}>
-            <Wallet className="h-3.5 w-3.5 mr-1 inline" />
-            套餐充值 <span className="ml-1 text-muted-foreground">0</span>
-          </Tab>
-          <Tab active={tab === "recharge_refund"} onClick={() => setTab("recharge_refund")}>
-            <Undo2 className="h-3.5 w-3.5 mr-1 inline" />
-            充值退款 <span className="ml-1 text-muted-foreground">0</span>
           </Tab>
         </div>
         <div className="px-5 py-3 flex items-center gap-3 flex-wrap border-b border-border bg-muted/20">
@@ -610,30 +579,6 @@ function BillingPage() {
             <span>
               共 <span className="text-foreground font-semibold">{filtered.length}</span> 条
             </span>
-            {filteredConsume > 0 && (
-              <span>
-                消耗{" "}
-                <span className="font-semibold text-rose-600 tabular-nums">
-                  -{filteredConsume}
-                </span>
-              </span>
-            )}
-            {filteredRefund > 0 && (
-              <span>
-                退还{" "}
-                <span className="font-semibold text-emerald-600 tabular-nums">
-                  +{filteredRefund}
-                </span>
-              </span>
-            )}
-            {filteredRecharge > 0 && (
-              <span>
-                充值{" "}
-                <span className="font-semibold text-emerald-600 tabular-nums">
-                  +{filteredRecharge}
-                </span>
-              </span>
-            )}
           </div>
         </div>
 
@@ -742,14 +687,16 @@ function StatCard({
   unit,
   tone,
   positive,
+  signed,
   hint,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
   unit: string;
-  tone: "primary" | "sky" | "violet" | "slate" | "emerald" | "amber";
+  tone: "primary" | "sky" | "violet" | "slate" | "emerald" | "amber" | "rose";
   positive?: boolean;
+  signed?: boolean;
   hint?: string;
 }) {
   const toneMap = {
@@ -759,6 +706,7 @@ function StatCard({
     slate: "bg-slate-50 text-slate-600 ring-slate-200",
     emerald: "bg-emerald-50 text-emerald-600 ring-emerald-200",
     amber: "bg-amber-50 text-amber-600 ring-amber-200",
+    rose: "bg-rose-50 text-rose-600 ring-rose-200",
   } as const;
   return (
     <div className="rounded-xl ring-1 ring-border bg-card p-5 flex items-center gap-4">
@@ -790,10 +738,12 @@ function StatCard({
             className={cn(
               "text-2xl font-bold tabular-nums",
               positive && value > 0 && "text-emerald-600",
+              signed && value > 0 && "text-emerald-600",
+              signed && value < 0 && "text-rose-600",
             )}
           >
-            {positive && value > 0 ? "+" : ""}
-            {value.toLocaleString()}
+            {signed ? (value > 0 ? "+" : value < 0 ? "−" : "") : positive && value > 0 ? "+" : ""}
+            {Math.abs(value).toLocaleString()}
           </span>
           <span className="text-xs text-muted-foreground">{unit}</span>
         </div>
