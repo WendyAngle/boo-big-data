@@ -434,36 +434,6 @@ function BillingPage() {
       </div>
 
       <Card className="p-0 overflow-hidden">
-        <div className="flex items-center gap-1 border-b border-border px-5 pt-3">
-          <Tab active={tab === "all"} onClick={() => setTab("all")}>
-            全部 <span className="ml-1 text-muted-foreground">{ledger.length}</span>
-          </Tab>
-          <Tab active={tab === "consume"} onClick={() => setTab("consume")}>
-            <TrendingDown className="h-3.5 w-3.5 mr-1 inline" />
-            消费积分{" "}
-            <span className="ml-1 text-muted-foreground">
-              {
-                ledger.filter(
-                  (e) => e.kind === "view" || e.kind === "reach" || e.kind === "ai_generate",
-                ).length
-              }
-            </span>
-          </Tab>
-          <Tab active={tab === "refund"} onClick={() => setTab("refund")}>
-            <Undo2 className="h-3.5 w-3.5 mr-1 inline" />
-            服务失败退款{" "}
-            <span className="ml-1 text-muted-foreground">
-              {ledger.filter((e) => e.kind === "refund").length}
-            </span>
-          </Tab>
-          <Tab active={tab === "recharge"} onClick={() => setTab("recharge")}>
-            <Wallet className="h-3.5 w-3.5 mr-1 inline" />
-            充值{" "}
-            <span className="ml-1 text-muted-foreground">
-              {ledger.filter((e) => e.kind === "recharge").length}
-            </span>
-          </Tab>
-        </div>
         <div className="px-5 py-3 flex items-center gap-3 flex-wrap border-b border-border bg-muted/20">
           <DateField label="开始日期" value={dateFrom} onChange={setDateFrom} />
           <DateField label="结束日期" value={dateTo} onChange={setDateTo} min={dateFrom} />
@@ -528,21 +498,11 @@ function BillingPage() {
               <SelectItem value="pay_corp">充值 · 对公转账</SelectItem>
             </SelectContent>
           </Select>
-          <div className="relative flex-1 min-w-[220px]">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={kw}
-              onChange={(e) => setKw(e.target.value)}
-              placeholder="输入企业 / 人物 / 明细"
-              className="pl-9 h-9 bg-background"
-            />
-          </div>
-          {(kw || dateFrom || dateTo || tab !== "all" || op !== "all") && (
+          {(dateFrom || dateTo || tab !== "all" || op !== "all") && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => {
-                setKw("");
                 setDateFrom(undefined);
                 setDateTo(undefined);
                 setTab("all");
@@ -568,11 +528,7 @@ function BillingPage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <div className="text-sm text-muted-foreground ml-auto flex items-center gap-3">
-            <span>
-              共 <span className="text-foreground font-semibold">{filtered.length}</span> 条
-            </span>
-          </div>
+          <div className="ml-auto" />
         </div>
 
         {filtered.length === 0 ? (
