@@ -12,10 +12,17 @@ import {
   Gift,
   Coins,
   Banknote,
+  HelpCircle,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -340,6 +347,7 @@ function CustomerDetailPage() {
               value={t.money.gross}
               tone="from-emerald-500 to-green-500"
               icon={<TrendingUp className="h-8 w-8" />}
+              hint="客户历史所有成功充值订单的金额总和（未扣除退费）。"
             />
             <MoneyTile
               label="累计退费金额"
@@ -351,6 +359,7 @@ function CustomerDetailPage() {
                   ? `退费 ${t.money.refundOrders} 笔`
                   : undefined
               }
+              hint="已成功退回到客户的充值金额总和，仅统计已完成的退费单。"
             />
             <MoneyTile
               label="净充值金额"
@@ -358,6 +367,7 @@ function CustomerDetailPage() {
               tone="from-primary to-primary/70"
               icon={<Wallet className="h-8 w-8" />}
               emphasize
+              hint="净充值 = 累计充值金额 − 累计退费金额，用作对账主指标。"
             />
           </div>
         </div>
@@ -375,6 +385,7 @@ function CustomerDetailPage() {
               accent="text-sky-700"
               icon={<Wallet className="h-4 w-4" />}
               emphasize
+              hint="当前账户中仍可使用的积分余额（已扣除消费、退回和过期部分）。"
             />
             <PointsTile
               label="累计发放"
@@ -382,6 +393,7 @@ function CustomerDetailPage() {
               tone="bg-slate-50 border-slate-200 text-slate-600"
               accent="text-slate-800"
               icon={<Gift className="h-4 w-4" />}
+              hint="历史所有充值订单为客户发放的积分总和（含赠送积分，未扣除后续消费/退回/过期）。"
             />
             <PointsTile
               label="已消费"
@@ -389,6 +401,7 @@ function CustomerDetailPage() {
               tone="bg-amber-50 border-amber-200 text-amber-700"
               accent="text-amber-700"
               icon={<ShoppingCart className="h-4 w-4" />}
+              hint="客户在平台内已实际使用掉的积分总和。"
             />
             <PointsTile
               label="已退回"
@@ -396,6 +409,7 @@ function CustomerDetailPage() {
               tone="bg-violet-50 border-violet-200 text-violet-700"
               accent="text-violet-700"
               icon={<Undo2 className="h-4 w-4" />}
+              hint="因订单退费而从账户回收的积分总和,不再计入可用余额。"
             />
             <PointsTile
               label="已过期"
@@ -403,6 +417,7 @@ function CustomerDetailPage() {
               tone="bg-rose-50 border-rose-200 text-rose-700"
               accent="text-rose-700"
               icon={<TimerReset className="h-4 w-4" />}
+              hint="到达有效期后自动作废、不可再使用的积分总和。"
             />
           </div>
         </div>
@@ -771,6 +786,7 @@ function MoneyTile({
   icon,
   emphasize,
   badge,
+  hint,
 }: {
   value: number;
   label: string;
@@ -778,6 +794,7 @@ function MoneyTile({
   icon: React.ReactNode;
   emphasize?: boolean;
   badge?: string;
+  hint?: string;
 }) {
   return (
     <div
@@ -786,7 +803,10 @@ function MoneyTile({
       }`}
     >
       <div className="flex items-center justify-between">
-        <div className="text-sm text-white/90">{label}</div>
+        <div className="flex items-center gap-1 text-sm text-white/90">
+          <span>{label}</span>
+          {hint && <HintIcon text={hint} className="text-white/80 hover:text-white" />}
+        </div>
         {badge && (
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/20 text-white">
             {badge}
@@ -812,6 +832,7 @@ function PointsTile({
   accent,
   icon,
   emphasize,
+  hint,
 }: {
   value: number;
   label: string;
@@ -819,6 +840,7 @@ function PointsTile({
   accent: string;
   icon: React.ReactNode;
   emphasize?: boolean;
+  hint?: string;
 }) {
   return (
     <div
@@ -829,6 +851,7 @@ function PointsTile({
       <div className="flex items-center gap-1.5 text-xs">
         {icon}
         <span>{label}</span>
+        {hint && <HintIcon text={hint} className="ml-auto opacity-70 hover:opacity-100" />}
       </div>
       <div
         className={`mt-1 font-bold tabular-nums leading-tight ${accent} ${
@@ -838,6 +861,27 @@ function PointsTile({
         {value.toLocaleString()}
       </div>
     </div>
+  );
+}
+
+function HintIcon({ text, className }: { text: string; className?: string }) {
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label="说明"
+            className={cn("inline-flex items-center justify-center", className)}
+          >
+            <HelpCircle className="h-3.5 w-3.5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-xs bg-popover text-popover-foreground border shadow-md">
+          {text}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
