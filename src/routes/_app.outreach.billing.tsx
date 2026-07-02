@@ -550,7 +550,7 @@ function BillingPage() {
             <TableHeader>
               <TableRow className="bg-primary/5 hover:bg-primary/5">
                 <TableHead className="w-[170px]">时间</TableHead>
-                <TableHead className="w-[140px]">变动类型</TableHead>
+                <TableHead className="w-[160px] whitespace-nowrap">变动类型</TableHead>
                 <TableHead className="w-[160px]">操作</TableHead>
                 <TableHead>明细说明</TableHead>
                 <TableHead className="w-[110px] text-right">
@@ -581,7 +581,7 @@ function BillingPage() {
                   <TableCell className="font-mono tabular-nums text-xs text-muted-foreground">
                     {fmtTime(e.createdAt)}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="whitespace-nowrap">
                     <KindBadge entry={e} />
                   </TableCell>
                   <TableCell>
