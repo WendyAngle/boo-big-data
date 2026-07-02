@@ -242,6 +242,19 @@ function genFootprints(): FootprintItem[] {
 
 const ALL_FOOTPRINTS = genFootprints();
 
+function runtimeDedupeKey(f: FootprintItem | RuntimeFootprint): string {
+  switch (f.module) {
+    case "enterprise":
+      return `E:${f.enterpriseId}`;
+    case "contact":
+      return `C:${f.enterpriseId}:${f.contactIdx}`;
+    case "product":
+      return `P:${f.hs}`;
+    case "bill":
+      return `B:${f.billNo}`;
+  }
+}
+
 type ModuleFilter = "all" | FootprintModule;
 
 function formatDateKey(d: Date) {
