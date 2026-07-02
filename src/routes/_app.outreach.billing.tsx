@@ -866,7 +866,6 @@ function FieldCell({ entry }: { entry: LedgerEntry }) {
     <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
       <I className="h-3.5 w-3.5" />
       <span className="text-foreground">{REACH_ACTION_LABEL[entry.channel]}</span>
-      {entry.platform && <span>· {entry.platform}</span>}
     </span>
   );
 }
