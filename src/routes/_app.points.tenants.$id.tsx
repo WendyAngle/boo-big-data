@@ -764,26 +764,79 @@ function KV({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function SummaryTile({
+function MoneyTile({
   value,
   label,
+  tone,
   icon,
-  gradient,
+  emphasize,
+  badge,
 }: {
   value: number;
   label: string;
+  tone: string;
   icon: React.ReactNode;
-  gradient: string;
+  emphasize?: boolean;
+  badge?: string;
 }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-xl p-4 text-white bg-gradient-to-br ${gradient}`}
+      className={`relative overflow-hidden rounded-xl p-4 text-white bg-gradient-to-br ${tone} ${
+        emphasize ? "ring-2 ring-primary/40 shadow-lg" : ""
+      }`}
     >
-      <div className="text-3xl font-bold tabular-nums leading-tight">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-white/90">{label}</div>
+        {badge && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/20 text-white">
+            {badge}
+          </span>
+        )}
+      </div>
+      <div
+        className={`mt-2 font-bold tabular-nums leading-tight ${
+          emphasize ? "text-3xl" : "text-2xl"
+        }`}
+      >
+        ¥{value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+      </div>
+      <div className="absolute right-3 bottom-3 text-white/30">{icon}</div>
+    </div>
+  );
+}
+
+function PointsTile({
+  value,
+  label,
+  tone,
+  accent,
+  icon,
+  emphasize,
+}: {
+  value: number;
+  label: string;
+  tone: string;
+  accent: string;
+  icon: React.ReactNode;
+  emphasize?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-xl border p-3 ${tone} ${
+        emphasize ? "ring-2 ring-sky-400/50 shadow-md" : ""
+      }`}
+    >
+      <div className="flex items-center gap-1.5 text-xs">
+        {icon}
+        <span>{label}</span>
+      </div>
+      <div
+        className={`mt-1 font-bold tabular-nums leading-tight ${accent} ${
+          emphasize ? "text-2xl" : "text-xl"
+        }`}
+      >
         {value.toLocaleString()}
       </div>
-      <div className="text-sm text-white/85 mt-1">{label}</div>
-      <div className="absolute right-3 bottom-3 text-white/40">{icon}</div>
     </div>
   );
 }
