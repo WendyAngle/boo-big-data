@@ -1191,7 +1191,13 @@ function renderCardInner(item: FootprintItem) {
 
 interface InsightsProps {
   trend: { key: string; count: number }[];
-  modDist: { enterprise: number; product: number; bill: number; total: number };
+  modDist: {
+    enterprise: number;
+    contact: number;
+    product: number;
+    bill: number;
+    total: number;
+  };
   topEnterprises: { id: string; name: string; country?: string; count: number }[];
 }
 
@@ -1223,6 +1229,7 @@ function InsightsStrip({ trend, modDist, topEnterprises }: InsightsProps) {
 
   const segs: { key: keyof typeof modDist; label: string; cls: string }[] = [
     { key: "enterprise", label: "企业", cls: "bg-primary" },
+    { key: "contact", label: "人物", cls: "bg-violet-500" },
     { key: "product", label: "商品", cls: "bg-amber-500" },
     { key: "bill", label: "提单", cls: "bg-emerald-500" },
   ];
