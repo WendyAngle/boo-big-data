@@ -287,11 +287,10 @@ function CustomerDetailPage() {
         </SectionCard>
       </div>
 
-      {/* 关联应用账号 / 积分汇总 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="p-5">
+      {/* 关联应用账号 */}
+      <Card className="p-5">
           <div className="text-base font-semibold mb-4">关联应用账号</div>
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {t.apps.map((a) => (
               <div
                 key={a.code + a.extId}
@@ -319,38 +318,95 @@ function CustomerDetailPage() {
               </div>
             ))}
           </div>
-        </Card>
+      </Card>
 
-        <Card className="p-5">
-          <div className="text-base font-semibold mb-4">积分汇总</div>
-          <div className="grid grid-cols-2 gap-3">
-            <SummaryTile
-              value={t.summary.available}
-              label="剩余可用"
-              icon={<Wallet className="h-8 w-8" />}
-              gradient="from-sky-500 to-blue-500"
-            />
-            <SummaryTile
-              value={t.summary.recharged}
-              label="累计充值"
+      {/* 积分汇总 (分层：资金台账 + 积分流转) */}
+      <Card className="p-5 space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="text-base font-semibold">积分汇总</div>
+          <div className="text-xs text-muted-foreground">
+            账目恒等式：累计发放 = 已消费 + 已退回 + 已过期 + 剩余可用
+          </div>
+        </div>
+
+        {/* 第 1 层：资金台账 (元) */}
+        <div>
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-3">
+            <Banknote className="h-4 w-4" /> 资金台账（元）
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <MoneyTile
+              label="累计充值金额"
+              value={t.money.gross}
+              tone="from-emerald-500 to-green-500"
               icon={<TrendingUp className="h-8 w-8" />}
-              gradient="from-emerald-500 to-green-500"
             />
-            <SummaryTile
-              value={t.summary.consumed}
-              label="已消费"
-              icon={<ShoppingCart className="h-8 w-8" />}
-              gradient="from-amber-500 to-orange-500"
+            <MoneyTile
+              label="累计退费金额"
+              value={t.money.refunded}
+              tone="from-amber-500 to-orange-500"
+              icon={<Undo2 className="h-8 w-8" />}
+              badge={
+                t.money.refundOrders > 0
+                  ? `退费 ${t.money.refundOrders} 笔`
+                  : undefined
+              }
             />
-            <SummaryTile
-              value={t.summary.expired}
-              label="已失效"
-              icon={<TimerReset className="h-8 w-8" />}
-              gradient="from-rose-500 to-red-500"
+            <MoneyTile
+              label="净充值金额"
+              value={t.money.net}
+              tone="from-primary to-primary/70"
+              icon={<Wallet className="h-8 w-8" />}
+              emphasize
             />
           </div>
-        </Card>
-      </div>
+        </div>
+
+        {/* 第 2 层：积分流转 (积分) */}
+        <div>
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-3">
+            <Coins className="h-4 w-4" /> 积分流转（积分）
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <PointsTile
+              label="剩余可用"
+              value={t.points.available}
+              tone="bg-sky-50 border-sky-200 text-sky-700"
+              accent="text-sky-700"
+              icon={<Wallet className="h-4 w-4" />}
+              emphasize
+            />
+            <PointsTile
+              label="累计发放"
+              value={t.points.granted}
+              tone="bg-slate-50 border-slate-200 text-slate-600"
+              accent="text-slate-800"
+              icon={<Gift className="h-4 w-4" />}
+            />
+            <PointsTile
+              label="已消费"
+              value={t.points.consumed}
+              tone="bg-amber-50 border-amber-200 text-amber-700"
+              accent="text-amber-700"
+              icon={<ShoppingCart className="h-4 w-4" />}
+            />
+            <PointsTile
+              label="已退回"
+              value={t.points.refunded}
+              tone="bg-violet-50 border-violet-200 text-violet-700"
+              accent="text-violet-700"
+              icon={<Undo2 className="h-4 w-4" />}
+            />
+            <PointsTile
+              label="已过期"
+              value={t.points.expired}
+              tone="bg-rose-50 border-rose-200 text-rose-700"
+              accent="text-rose-700"
+              icon={<TimerReset className="h-4 w-4" />}
+            />
+          </div>
+        </div>
+      </Card>
 
       {/* 积分余额详情 */}
       <Card className="p-5">
@@ -361,32 +417,38 @@ function CustomerDetailPage() {
             <div className="text-xs text-muted-foreground">
               剩余可用:{" "}
               <span className="text-sky-600 font-semibold tabular-nums">
-                {nf.format(t.productPoints.available)}
+                {nf.format(t.points.available)}
               </span>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
             <MetricLine
               label="可用余额"
-              value={t.productPoints.available}
+              value={t.points.available}
               tone="text-sky-600"
               formatter={nf}
             />
             <MetricLine
               label="已消费"
-              value={t.productPoints.consumed}
+              value={t.points.consumed}
               tone="text-amber-600"
               formatter={nf}
             />
             <MetricLine
-              label="已失效"
-              value={t.productPoints.expired}
+              label="已退回"
+              value={t.points.refunded}
+              tone="text-violet-600"
+              formatter={nf}
+            />
+            <MetricLine
+              label="已过期"
+              value={t.points.expired}
               tone="text-rose-600"
               formatter={nf}
             />
             <MetricLine
               label="累计发放"
-              value={t.productPoints.granted}
+              value={t.points.granted}
               tone="text-foreground"
               formatter={nf}
             />
