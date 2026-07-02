@@ -294,33 +294,27 @@ function CustomerDetailPage() {
         </SectionCard>
       </div>
 
-      {/* 关联应用账号 */}
+      {/* 关联应用 */}
       <Card className="p-5">
-          <div className="text-base font-semibold mb-4">关联应用账号</div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          <div className="text-base font-semibold mb-4">关联应用</div>
+          <div className="flex flex-col gap-3">
             {t.apps.map((a) => (
               <div
                 key={a.code + a.extId}
-                className="rounded-lg border bg-muted/20 p-3 space-y-2"
+                className="rounded-lg border bg-muted/20 px-4 py-3 flex flex-wrap items-center gap-x-8 gap-y-3"
               >
-                <div className="flex items-center gap-2 font-medium">
+                <div className="flex items-center gap-2 font-medium min-w-[10rem]">
                   <Building2 className="h-4 w-4 text-primary" />
                   {a.label}
                 </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                  <div>
-                    <div className="text-muted-foreground">外部客户ID</div>
-                    <div className="font-mono mt-0.5">{a.extId || "-"}</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground flex items-center gap-1">
-                      <Smartphone className="h-3 w-3" />
-                      手机号码
-                    </div>
-                    <div className="font-mono mt-0.5 text-right">
-                      {a.phone || "-"}
-                    </div>
-                  </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-muted-foreground">外部客户ID</span>
+                  <span className="font-mono">{a.extId || "-"}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <Smartphone className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-muted-foreground">手机号码</span>
+                  <span className="font-mono">{a.phone || "-"}</span>
                 </div>
               </div>
             ))}
