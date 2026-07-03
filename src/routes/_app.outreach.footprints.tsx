@@ -781,7 +781,13 @@ function FootprintsPage() {
                     selectMode={selectMode}
                     selected={selectedIds.has(it.id)}
                     onToggleSelect={() => toggleOne(it.id)}
-                    onDelete={() => applyDelete([it.id])}
+                    onDelete={() =>
+                      setConfirm({
+                        title: "删除该条足迹？",
+                        desc: "此浏览记录将被清除，操作不可撤销。",
+                        ids: [it.id],
+                      })
+                    }
                   />
                 ))}
               </div>
