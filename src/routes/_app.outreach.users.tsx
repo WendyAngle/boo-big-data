@@ -11,7 +11,6 @@ import {
   Download,
   Eye,
   Pencil,
-  Trash2,
   RotateCcw,
   ChevronRight,
   ShieldCheck,
@@ -129,7 +128,6 @@ function UserSideUsersPage() {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
   const [data, setData] = useState<AppUser[]>(MOCK);
-  const [delTarget, setDelTarget] = useState<AppUser | null>(null);
   const [toggleTarget, setToggleTarget] = useState<AppUser | null>(null);
   const [resetTarget, setResetTarget] = useState<AppUser | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -495,19 +493,6 @@ function UserSideUsersPage() {
                             </TooltipTrigger>
                             <TooltipContent>重置密码</TooltipContent>
                           </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-destructive hover:text-destructive"
-                                onClick={() => setDelTarget(u)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>删除员工</TooltipContent>
-                          </Tooltip>
                         </TooltipProvider>
                       </div>
                     </TableCell>
@@ -525,33 +510,6 @@ function UserSideUsersPage() {
           onPageChange={setPage}
         />
       </Card>
-
-      {/* Delete confirm */}
-      <AlertDialog open={!!delTarget} onOpenChange={(o) => !o && setDelTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>确认删除该员工？</AlertDialogTitle>
-            <AlertDialogDescription>
-              即将删除 <span className="font-medium text-foreground">{delTarget?.name}</span>
-              （{delTarget?.id}），此操作不可撤销。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (delTarget) {
-                  setData((d) => d.filter((x) => x.id !== delTarget.id));
-                  toast.success(`已删除 ${delTarget.name}`);
-                }
-                setDelTarget(null);
-              }}
-            >
-              确认删除
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Toggle status confirm */}
       <AlertDialog open={!!toggleTarget} onOpenChange={(o) => !o && setToggleTarget(null)}>
