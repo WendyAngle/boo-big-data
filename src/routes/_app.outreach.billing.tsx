@@ -551,6 +551,7 @@ function BillingPage() {
               <TableRow className="bg-primary/5 hover:bg-primary/5">
                 <TableHead className="w-[170px]">时间</TableHead>
                 <TableHead className="w-[160px] whitespace-nowrap">变动类型</TableHead>
+                <TableHead className="w-[160px]">操作</TableHead>
                 <TableHead className="w-[110px] text-right">
                   <span className="inline-flex items-center gap-1">
                     积分变动
@@ -571,7 +572,6 @@ function BillingPage() {
                   </span>
                 </TableHead>
                 <TableHead className="w-[130px] text-right">变动后余额</TableHead>
-                <TableHead className="w-[160px]">操作</TableHead>
                 <TableHead>明细说明</TableHead>
               </TableRow>
             </TableHeader>
@@ -583,6 +583,9 @@ function BillingPage() {
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
                     <KindBadge entry={e} />
+                  </TableCell>
+                  <TableCell>
+                    <FieldCell entry={e} />
                   </TableCell>
                   <TableCell
                     className={cn(
@@ -597,9 +600,6 @@ function BillingPage() {
                   </TableCell>
                   <TableCell className="text-right font-mono tabular-nums text-sm">
                     {(balanceMap.get(e.id) ?? 0).toLocaleString()}
-                  </TableCell>
-                  <TableCell>
-                    <FieldCell entry={e} />
                   </TableCell>
                   <TableCell className="text-xs max-w-[380px]">
                     <DetailCell entry={e} />
