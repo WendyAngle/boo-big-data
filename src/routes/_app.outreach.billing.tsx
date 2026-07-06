@@ -552,7 +552,7 @@ function BillingPage() {
                 <TableHead className="w-[170px]">时间</TableHead>
                 <TableHead className="w-[160px] whitespace-nowrap">变动类型</TableHead>
                 <TableHead className="w-[160px]">操作</TableHead>
-                <TableHead className="w-[110px] text-right">
+                <TableHead className="w-[110px]">
                   <span className="inline-flex items-center gap-1">
                     积分变动
                     <Tooltip>
@@ -571,7 +571,7 @@ function BillingPage() {
                     </Tooltip>
                   </span>
                 </TableHead>
-                <TableHead className="w-[130px] text-right">变动后余额</TableHead>
+                <TableHead className="w-[130px]">变动后余额</TableHead>
                 <TableHead>明细说明</TableHead>
               </TableRow>
             </TableHeader>
@@ -589,7 +589,7 @@ function BillingPage() {
                   </TableCell>
                   <TableCell
                     className={cn(
-                      "text-right font-semibold tabular-nums",
+                      "font-semibold tabular-nums",
                       e.kind === "refund" || e.kind === "recharge"
                         ? "text-emerald-600"
                         : "text-rose-600",
@@ -598,7 +598,7 @@ function BillingPage() {
                     {e.kind === "refund" || e.kind === "recharge" ? "+" : "-"}
                     {e.cost.toLocaleString()}
                   </TableCell>
-                  <TableCell className="text-right font-mono tabular-nums text-sm">
+                  <TableCell className="font-mono tabular-nums text-sm">
                     {(balanceMap.get(e.id) ?? 0).toLocaleString()}
                   </TableCell>
                   <TableCell className="text-xs max-w-[380px]">
