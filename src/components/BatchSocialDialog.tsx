@@ -322,13 +322,17 @@ export function BatchSocialDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-emerald-600" />
-            批量 {platform} 触达
+            {totalCount <= 1
+              ? `${platform} 系统自动触达`
+              : `批量 ${platform} 触达`}
             <Badge variant="secondary" className="ml-1 font-normal">
-              选中 {totalCount} · 有效 {validCount}
+              {totalCount <= 1
+                ? `${validCount > 0 ? "可发送" : "校验中"}`
+                : `选中 ${totalCount} · 有效 ${validCount}`}
             </Badge>
           </DialogTitle>
           <DialogDescription className="sr-only">
-            批量 {platform} 私信触达
+            {platform} 私信触达
           </DialogDescription>
         </DialogHeader>
 
