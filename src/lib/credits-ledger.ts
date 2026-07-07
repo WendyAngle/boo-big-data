@@ -615,11 +615,16 @@ export function seedDemoLedgerIfEmpty() {
           ? e.email
           : channel === "phone"
             ? maskPhone(e.phone)
-            : `linkedin.com/company/${e.name.toLowerCase().replace(/[^a-z]/g, "")}`;
+            : platform === "WhatsApp"
+              ? maskPhone(e.phone)
+              : `linkedin.com/company/${e.name.toLowerCase().replace(/[^a-z]/g, "")}`;
       return {
         id: makeId("r"),
         kind: "reach",
-        cost: COST_REACH,
+        cost:
+          channel === "social"
+            ? costForSocialPlatform(platform)
+            : COST_REACH,
         createdAt: isoMinutesAgo(minAgo),
         targetKind: "enterprise",
         targetId: e.id,
@@ -648,11 +653,16 @@ export function seedDemoLedgerIfEmpty() {
           ? c.email
           : channel === "phone"
             ? maskPhone(c.phone ?? e.phone)
-            : `linkedin.com/in/${c.name.replace(/\s+/g, "-")}`;
+            : platform === "WhatsApp"
+              ? maskPhone(c.phone ?? e.phone)
+              : `linkedin.com/in/${c.name.replace(/\s+/g, "-")}`;
       return {
         id: makeId("r"),
         kind: "reach",
-        cost: COST_REACH,
+        cost:
+          channel === "social"
+            ? costForSocialPlatform(platform)
+            : COST_REACH,
         createdAt: isoMinutesAgo(minAgo),
         targetKind: "contact",
         targetId: `${e.id}:${idx}`,
