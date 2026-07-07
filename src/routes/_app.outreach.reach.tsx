@@ -360,22 +360,30 @@ function ReachPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-primary/5 hover:bg-primary/5">
-                <TableHead className="w-[140px]">渠道</TableHead>
-                <TableHead>明细说明</TableHead>
-                <TableHead className="w-[220px]">状态 / 原因</TableHead>
                 <TableHead className="w-[170px]">时间</TableHead>
+                <TableHead className="w-[140px]">渠道</TableHead>
                 <TableHead className="w-[90px] text-right">消耗积分</TableHead>
+                <TableHead className="w-[220px]">状态 / 原因</TableHead>
+                <TableHead>明细说明</TableHead>
                 <TableHead className="w-[160px] text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((r) => (
                 <TableRow key={r.id} className="hover:bg-muted/30">
+                  <TableCell className="font-mono tabular-nums text-xs text-muted-foreground">
+                    {fmtTime(r.createdAt)}
+                  </TableCell>
                   <TableCell>
                     <ChannelBadge channel={r.channel!} platform={r.platform} />
                   </TableCell>
-                  <TableCell className="text-xs max-w-[420px]">
-                    <DetailCell row={r} onViewContent={() => setViewing(r)} />
+                  <TableCell className="text-right tabular-nums">
+                    <div className="font-semibold text-rose-600">-{r.cost}</div>
+                    {r.status === "failed" && isReachRefunded(r.id) && (
+                      <div className="text-[11px] font-medium text-emerald-600 mt-0.5">
+                        已退还 +{r.cost}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col items-start gap-1">
@@ -409,16 +417,8 @@ function ReachPage() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="font-mono tabular-nums text-xs text-muted-foreground">
-                    {fmtTime(r.createdAt)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    <div className="font-semibold text-rose-600">-{r.cost}</div>
-                    {r.status === "failed" && isReachRefunded(r.id) && (
-                      <div className="text-[11px] font-medium text-emerald-600 mt-0.5">
-                        已退还 +{r.cost}
-                      </div>
-                    )}
+                  <TableCell className="text-xs max-w-[420px]">
+                    <DetailCell row={r} onViewContent={() => setViewing(r)} />
                   </TableCell>
                   <TableCell className="text-right">
                     <ActionCell
