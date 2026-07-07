@@ -452,7 +452,7 @@ export function retryFailedReach(reachId: string): LedgerEntry | null {
   const fresh: LedgerEntry = {
     id: makeId("r"),
     kind: "reach",
-    cost: costForChannel(r.channel, r.platform),
+    cost: r.channel ? costForChannel(r.channel, r.platform) : r.cost,
     createdAt: new Date().toISOString(),
     targetKind: r.targetKind,
     targetId: r.targetId,
