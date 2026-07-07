@@ -612,12 +612,14 @@ function AiComposeDialog({
   onOpenChange,
   channel,
   loading,
+  defaultLanguage = "zh",
   onGenerate,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   channel: ComposeChannel;
   loading: boolean;
+  defaultLanguage?: "zh" | "en";
   onGenerate: (p: {
     scene: string;
     tone: "formal" | "friendly" | "concise";
@@ -628,8 +630,11 @@ function AiComposeDialog({
   const isEmail = channel === "email";
   const [scene, setScene] = useState("开发信");
   const [tone, setTone] = useState<"formal" | "friendly" | "concise">("friendly");
-  const [language, setLanguage] = useState<"zh" | "en">("zh");
+  const [language, setLanguage] = useState<"zh" | "en">(defaultLanguage);
   const [extra, setExtra] = useState("");
+  useEffect(() => {
+    if (open) setLanguage(defaultLanguage);
+  }, [open, defaultLanguage]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
