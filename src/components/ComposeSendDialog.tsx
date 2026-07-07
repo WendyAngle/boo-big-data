@@ -45,6 +45,7 @@ import {
 import {
   useUsableMailboxes,
   getDefaultUsableMailbox,
+  updateMailbox,
   type Mailbox,
 } from "@/lib/mailboxes";
 import {
@@ -178,11 +179,17 @@ export function ComposeSendDialog({
   const aiCost = aiCount * (isEmail ? COST_AI_EMAIL : COST_AI_SMS);
   const grandTotal = sendTotal + aiCost;
 
+  // 发件邮箱日发上限剩余额度（仅邮件）
+  const remainingQuota =
+    isEmail && sender ? Math.max(0, sender.dailyLimit - sender.sentToday) : Infinity;
+  const overLimit = isEmail && !!sender && recipients.length > remainingQuota;
+
   const canSend =
     recipients.length > 0 &&
     (!isEmail || !!sender) &&
     (!isEmail || subject.trim().length > 0) &&
-    content.trim().length > 0;
+    content.trim().length > 0 &&
+    !overLimit;
 
   function handleSend() {
     if (!canSend) return;
@@ -203,6 +210,10 @@ export function ComposeSendDialog({
         aiGenerated: aiUsed,
       });
       n++;
+    }
+    // 累加发件邮箱当日已发送数
+    if (isEmail && sender && n > 0) {
+      updateMailbox(sender.id, { sentToday: sender.sentToday + n });
     }
     onOpenChange(false);
     onSent?.(n);
@@ -345,11 +356,44 @@ export function ComposeSendDialog({
                         <span className="text-muted-foreground ml-2 text-xs">
                           · {m.displayName}
                           {m.isDefault ? " · 默认" : ""}
+                          {" · 今日剩余 "}
+                          {Math.max(0, m.dailyLimit - m.sentToday)}/{m.dailyLimit}
                         </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+              )}
+              {sender && (
+                <div
+                  className={cn(
+                    "rounded-md border p-2 text-xs flex items-center justify-between gap-2",
+                    overLimit
+                      ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"
+                      : "border-muted bg-muted/40 text-muted-foreground",
+                  )}
+                >
+                  <span>
+                    日发上限：{sender.dailyLimit} · 今日已发 {sender.sentToday} ·
+                    <span className="font-medium ml-1">剩余 {remainingQuota}</span>
+                    {overLimit && (
+                      <span className="ml-2">
+                        当前选择 {recipients.length} 条，超出 {recipients.length - remainingQuota} 条
+                      </span>
+                    )}
+                  </span>
+                  {overLimit && remainingQuota > 0 && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setRecipients((prev) => prev.slice(0, remainingQuota))
+                      }
+                      className="shrink-0 rounded border border-rose-300 bg-white px-2 py-0.5 font-medium hover:bg-rose-100"
+                    >
+                      仅保留前 {remainingQuota} 条
+                    </button>
+                  )}
+                </div>
               )}
             </section>
           )}
