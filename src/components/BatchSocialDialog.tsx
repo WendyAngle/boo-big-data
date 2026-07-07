@@ -51,6 +51,10 @@ import {
   costForSocialPlatform,
   COST_AI_SOCIAL,
   COST_VIEW_PHONE,
+  computeReachBreakdown,
+  performReachAutoUnlocks,
+  useLedger,
+  type AutoUnlockField,
 } from "@/lib/credits-ledger";
 import { MaskedField } from "@/components/MaskedField";
 import {
@@ -124,6 +128,7 @@ export function BatchSocialDialog({
   const profile = useLeadProfile();
   const user = useCurrentUser();
   const callGenerate = useServerFn(generateAiContent);
+  const ledger = useLedger();
 
   const [candidates, setCandidates] = useState<SocialCandidate[]>(incoming);
   const [content, setContent] = useState("");
@@ -188,8 +193,23 @@ export function BatchSocialDialog({
   // 费用
   const unit = costForSocialPlatform(platform);
   const sendTotal = sendableCount * unit;
+  // 未解锁字段的自动查看费合计
+  const viewCostTotal = useMemo(() => {
+    let total = 0;
+    for (const r of verified.slice(0, sendableCount)) {
+      const bd = computeReachBreakdown(
+        { targetKind: r.targetKind, targetId: r.targetId },
+        "social",
+        platform,
+        { reachCostOverride: 0 },
+      );
+      total += bd.viewCost;
+    }
+    return total;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [verified, sendableCount, platform, ledger]);
   const aiCost = aiCount * COST_AI_SOCIAL;
-  const grandTotal = sendTotal + aiCost;
+  const grandTotal = sendTotal + viewCostTotal + aiCost;
 
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   function insertVarAt(v: string) {
@@ -255,6 +275,19 @@ export function BatchSocialDialog({
     let n = 0;
     for (const r of verified.slice(0, dispatched)) {
       const finalContent = renderTemplate(content, r.ctx);
+      // 触达 WhatsApp 自动解锁电话；其他社媒解锁 social:platform
+      const fields: AutoUnlockField[] =
+        platform === "WhatsApp"
+          ? [{ field: "phone" }]
+          : [{ field: "social", subKey: platform }];
+      performReachAutoUnlocks({
+        targetKind: r.targetKind,
+        targetId: r.targetId,
+        targetName: r.name,
+        parentRef: r.parentRef,
+        detail: r.address,
+        fields,
+      });
       createReach({
         targetKind: r.targetKind,
         targetId: r.targetId,
@@ -272,6 +305,8 @@ export function BatchSocialDialog({
     onOpenChange(false);
     toast.success(`已加入触达队列：${n} 条 ${platform} 私信`, {
       description: `共扣除 ${grandTotal} 积分${
+        viewCostTotal > 0 ? `（含自动解锁查看 ${viewCostTotal} 积分）` : ""
+      }${
         aiCost > 0 ? `（含 AI 文案 ${aiCost} 积分）` : ""
       }，可在「触达」模块查看进度`,
     });
