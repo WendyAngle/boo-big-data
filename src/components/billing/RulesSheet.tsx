@@ -1,4 +1,14 @@
-import { Mail, Phone, Share2, Info } from "lucide-react";
+import {
+  Mail,
+  Phone,
+  Share2,
+  Info,
+  Lock,
+  Send,
+  MailPlus,
+  MessageSquare,
+  MessageCircle,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -7,27 +17,68 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const RULES = [
+type Tone = "sky" | "violet" | "emerald" | "amber";
+
+type Rule = {
+  tone: Tone;
+  icon: React.ReactNode;
+  title: string;
+  cost: number;
+  desc: string;
+};
+
+const UNLOCK_RULES: Rule[] = [
   {
-    tone: "sky" as const,
+    tone: "sky",
     icon: <Mail className="h-4 w-4" />,
     title: "查看邮箱",
     cost: 10,
     desc: "解锁联系人邮箱字段，已解锁后不再重复扣费。",
   },
   {
-    tone: "violet" as const,
+    tone: "violet",
     icon: <Phone className="h-4 w-4" />,
     title: "查看电话",
     cost: 60,
     desc: "解锁联系人电话字段，已解锁后不再重复扣费。",
   },
   {
-    tone: "emerald" as const,
+    tone: "emerald",
     icon: <Share2 className="h-4 w-4" />,
     title: "查看社媒账号",
     cost: 30,
     desc: "解锁联系人社媒账号字段，已解锁后不再重复扣费。",
+  },
+];
+
+const REACH_RULES: Rule[] = [
+  {
+    tone: "sky",
+    icon: <MailPlus className="h-4 w-4" />,
+    title: "触达邮箱",
+    cost: 10,
+    desc: "向单个联系人发送一封邮件，按有效收件人计费。",
+  },
+  {
+    tone: "violet",
+    icon: <MessageSquare className="h-4 w-4" />,
+    title: "触达短信",
+    cost: 60,
+    desc: "向单个联系人发送一条短信，按有效号码计费。",
+  },
+  {
+    tone: "amber",
+    icon: <MessageCircle className="h-4 w-4" />,
+    title: "触达 WhatsApp",
+    cost: 100,
+    desc: "向单个已注册 WhatsApp 的号码发送一条私信，未注册号码不计费。",
+  },
+  {
+    tone: "emerald",
+    icon: <Send className="h-4 w-4" />,
+    title: "触达社媒",
+    cost: 50,
+    desc: "通过社媒渠道向单个联系人发送一条私信，按有效账号计费。",
   },
 ];
 
@@ -40,7 +91,7 @@ export function RulesSheet({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[460px] p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden max-h-[85vh] flex flex-col">
         <div className="bg-gradient-to-br from-primary/8 via-primary/4 to-transparent px-6 pt-6 pb-5 border-b">
           <DialogHeader className="space-y-2">
             <DialogTitle className="flex items-center gap-2">
@@ -50,22 +101,60 @@ export function RulesSheet({
               积分规则说明
             </DialogTitle>
             <DialogDescription>
-              以下业务操作将从积分余额中扣除相应积分，同一字段解锁后不再重复扣费。
+              以下业务操作将从积分余额中扣除相应积分，字段解锁一次性计费，触达按次计费。
             </DialogDescription>
           </DialogHeader>
         </div>
 
-        <div className="px-6 py-5 space-y-2.5">
-          {RULES.map((r) => (
-            <RuleCard key={r.title} {...r} />
-          ))}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          <RuleGroup
+            icon={<Lock className="h-3.5 w-3.5" />}
+            title="字段解锁"
+            hint="按字段一次性扣费，已解锁后不再重复计费。"
+            rules={UNLOCK_RULES}
+          />
+          <RuleGroup
+            icon={<Send className="h-3.5 w-3.5" />}
+            title="触达消耗"
+            hint="每次发送均扣费，仅对有效收件人计费。"
+            rules={REACH_RULES}
+          />
         </div>
 
-        <div className="mx-6 mb-6 rounded-lg bg-muted/50 px-3 py-2.5 text-xs text-muted-foreground leading-relaxed">
+        <div className="mx-6 mb-6 mt-1 rounded-lg bg-muted/50 px-3 py-2.5 text-xs text-muted-foreground leading-relaxed shrink-0">
           积分仅用于功能解锁，不可提现。所有扣费流水可在账单列表中查询与复核。
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function RuleGroup({
+  icon,
+  title,
+  hint,
+  rules,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  hint: string;
+  rules: Rule[];
+}) {
+  return (
+    <section className="space-y-2.5">
+      <div className="flex items-center gap-2">
+        <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-muted text-muted-foreground">
+          {icon}
+        </span>
+        <h3 className="text-sm font-semibold">{title}</h3>
+        <span className="text-xs text-muted-foreground">· {hint}</span>
+      </div>
+      <div className="space-y-2">
+        {rules.map((r) => (
+          <RuleCard key={r.title} {...r} />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -80,12 +169,13 @@ function RuleCard({
   title: string;
   cost: number;
   desc: string;
-  tone: "sky" | "violet" | "emerald";
+  tone: Tone;
 }) {
   const tones = {
     sky: "bg-sky-50 text-sky-700 ring-sky-200",
     violet: "bg-violet-50 text-violet-700 ring-violet-200",
     emerald: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    amber: "bg-amber-50 text-amber-700 ring-amber-200",
   } as const;
   return (
     <div className="group rounded-xl ring-1 ring-border p-3.5 hover:ring-primary/30 hover:bg-muted/30 transition-colors">
