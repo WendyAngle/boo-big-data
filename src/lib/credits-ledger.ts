@@ -1037,6 +1037,8 @@ export function seedDemoLedgerIfEmpty() {
     writeLedger(ledger);
     window.localStorage.setItem(LEDGER_SEED_FLAG, "1");
     emitLedger();
+    // seed 完成后同步一次永久解锁集,保证 mock view 数据默认呈现明文
+    syncUnlocksFromLedger();
   } catch {}
 }
 
