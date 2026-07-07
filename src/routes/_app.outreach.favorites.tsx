@@ -599,7 +599,7 @@ function FavoritesPage() {
               onClick={() => setBatchSocialOpen(true)}
             >
               <MessageCircle className="h-4 w-4" />
-              WhatsApp 触达
+              批量 WhatsApp 触达
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -608,9 +608,9 @@ function FavoritesPage() {
                   size="sm"
                   disabled={selected.size === 0}
                   className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
-                  title="更多社媒平台"
+                  title="批量社媒触达"
                 >
-                  更多社媒
+                  批量社媒触达
                   <ChevronDown className="h-3 w-3 opacity-70" />
                 </Button>
               </DropdownMenuTrigger>
