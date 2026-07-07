@@ -363,7 +363,7 @@ function ReachPage() {
                 <TableHead className="w-[170px]">时间</TableHead>
                 <TableHead className="w-[140px]">渠道</TableHead>
                 <TableHead className="w-[220px]">状态 / 原因</TableHead>
-                <TableHead className="w-[90px] text-right">消耗积分</TableHead>
+                <TableHead className="w-[90px]">消耗积分</TableHead>
                 <TableHead>明细说明</TableHead>
                 <TableHead className="w-[160px] text-right">操作</TableHead>
               </TableRow>
@@ -409,7 +409,7 @@ function ReachPage() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="tabular-nums">
                     <div className="font-semibold text-rose-600">-{r.cost}</div>
                     {r.status === "failed" && isReachRefunded(r.id) && (
                       <div className="text-[11px] font-medium text-emerald-600 mt-0.5">
