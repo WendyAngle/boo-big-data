@@ -366,10 +366,10 @@ function ReachPage() {
               <TableRow className="bg-primary/5 hover:bg-primary/5">
                 <TableHead className="w-[280px]">触达对象</TableHead>
                 <TableHead className="w-[140px]">渠道</TableHead>
-                <TableHead>触达明细</TableHead>
+                <TableHead>明细说明</TableHead>
                 <TableHead className="w-[220px]">状态 / 原因</TableHead>
-                <TableHead className="w-[170px]">触达时间</TableHead>
-                <TableHead className="w-[90px] text-right">消耗</TableHead>
+                <TableHead className="w-[170px]">时间</TableHead>
+                <TableHead className="w-[90px] text-right">消耗积分</TableHead>
                 <TableHead className="w-[160px] text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
