@@ -643,6 +643,14 @@ export function BatchSocialDialog({
               </span>
               <span className="font-medium">{sendTotal} 积分</span>
             </div>
+            {viewCostTotal > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  自动解锁查看{platform === "WhatsApp" ? "电话" : `${platform} 账号`}（未解锁字段，永久生效）
+                </span>
+                <span className="font-medium">{viewCostTotal} 积分</span>
+              </div>
+            )}
             {aiCost > 0 && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">
@@ -657,6 +665,11 @@ export function BatchSocialDialog({
                 {grandTotal} 积分
               </span>
             </div>
+            {viewCostTotal > 0 && (
+              <div className="text-[11px] text-rose-700/80 pt-0.5">
+                触达完成后，对应{platform === "WhatsApp" ? "电话号码" : `${platform} 账号`}将永久解锁，后续查看/再次触达不再收取查看费。
+              </div>
+            )}
           </section>
         </div>
 
