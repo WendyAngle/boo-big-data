@@ -76,7 +76,7 @@ export interface LedgerEntry {
 }
 
 const LEDGER_KEY = "boo:ledger:v2";
-const LEDGER_SEED_FLAG = "boo:ledger:v7:seeded";
+const LEDGER_SEED_FLAG = "boo:ledger:v8:seeded";
 const REVEAL_KEY = "boo:reveal:v1";
 
 /* -------------------- ledger store -------------------- */
