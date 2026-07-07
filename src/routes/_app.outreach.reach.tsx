@@ -750,3 +750,74 @@ function TargetCell({
     </Link>
   );
 }
+
+function DetailCell({
+  row,
+  onViewContent,
+}: {
+  row: {
+    targetKind: "enterprise" | "contact";
+    targetId: string;
+    targetName: string;
+    parentRef?: { id: string; name: string };
+    channel?: "email" | "phone" | "social";
+    platform?: string;
+    detail?: string;
+    subject?: string;
+    content?: string;
+  };
+  onViewContent: () => void;
+}) {
+  const targetLabel =
+    row.targetKind === "enterprise"
+      ? row.targetName
+      : `${row.parentRef?.name ?? "—"} · ${row.targetName}`;
+  const link =
+    row.targetKind === "enterprise"
+      ? { to: "/outreach/enterprise/$id" as const, params: { id: row.targetId } }
+      : (() => {
+          const [entId, idx] = row.targetId.split(":");
+          return {
+            to: "/outreach/enterprise/$id/contact/$idx" as const,
+            params: { id: entId, idx },
+          };
+        })();
+  return (
+    <div className="min-w-0">
+      <div className="flex items-center gap-1.5 min-w-0">
+        {row.channel === "social" && row.platform && row.platform !== "WhatsApp" && (
+          <span className="shrink-0 inline-flex items-center rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px] text-foreground">
+            {row.platform}
+          </span>
+        )}
+        <span className="font-mono text-xs text-foreground truncate">
+          {row.detail ?? "—"}
+        </span>
+        {(row.subject || row.content) && (
+          <button
+            type="button"
+            title="查看发送内容"
+            onClick={onViewContent}
+            className="shrink-0 inline-flex h-5 w-5 items-center justify-center rounded text-primary hover:bg-primary/10"
+          >
+            <FileText className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+      <div className="text-[11px] text-muted-foreground truncate mt-0.5 flex items-center gap-1">
+        {row.targetKind === "enterprise" ? (
+          <Building2 className="h-3 w-3" />
+        ) : (
+          <UserRound className="h-3 w-3" />
+        )}
+        <Link
+          to={link.to}
+          params={link.params as never}
+          className="capitalize hover:text-primary truncate"
+        >
+          {targetLabel}
+        </Link>
+      </div>
+    </div>
+  );
+}
