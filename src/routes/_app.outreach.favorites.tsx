@@ -623,8 +623,15 @@ function FavoritesPage() {
                   </span>
                 </DropdownMenuItem>
                 <DropdownMenuItem disabled>
-                  <Facebook className="h-4 w-4" />
+                  <span className="inline-block h-4 w-4" />
                   Facebook
+                  <span className="ml-auto text-[10px] text-muted-foreground">
+                    即将上线
+                  </span>
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled>
+                  <span className="inline-block h-4 w-4" />
+                  LinkedIn
                   <span className="ml-auto text-[10px] text-muted-foreground">
                     即将上线
                   </span>
