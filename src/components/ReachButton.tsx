@@ -247,7 +247,7 @@ export function ReachButton({
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm">
                 <div className="text-muted-foreground">
-                  本次触达将消耗 <span className="font-semibold text-rose-600">{COST_REACH} 积分</span>，并记录到「触达」与「账单」模块。
+                  本次触达将消耗 <span className="font-semibold text-rose-600">{reachCost} 积分</span>，并记录到「触达」与「账单」模块。
                 </div>
                 <div className="rounded-md bg-muted/60 p-3 space-y-1">
                   <div className="flex justify-between text-xs">
@@ -282,7 +282,7 @@ export function ReachButton({
               onClick={confirm}
               className="bg-primary"
             >
-              {isEmail || isPhone ? `确认发送（-${COST_REACH}）` : `确认触达（-${COST_REACH}）`}
+              {isEmail || isPhone ? `确认发送（-${reachCost}）` : `确认触达（-${reachCost}）`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
