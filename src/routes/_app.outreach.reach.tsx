@@ -190,7 +190,7 @@ function ReachPage() {
   const grossCost = reachRows.reduce((s, r) => s + r.cost, 0);
   const refundTotal = reachRows
     .filter((r) => r.status === "failed")
-    .reduce((s, r) => s + (isReachRefunded(r.id) ? COST_REACH : 0), 0);
+    .reduce((s, r) => s + (isReachRefunded(r.id) ? r.cost : 0), 0);
   const netCost = grossCost - refundTotal;
 
   return (
@@ -423,7 +423,7 @@ function ReachPage() {
                               <div className="font-medium">失败原因</div>
                               <div className="mt-0.5">{r.failReason}</div>
                               <div className="mt-1 text-muted-foreground">
-                                已自动退还 {COST_REACH} 积分。
+                                已自动退还 {r.cost} 积分。
                                 {!isRetryableFailReason(r.failReason) && (
                                   <> 该原因不支持重新触达，建议核实联系方式后重新发起。</>
                                 )}
@@ -442,7 +442,7 @@ function ReachPage() {
                     <div className="font-semibold text-rose-600">-{r.cost}</div>
                     {r.status === "failed" && isReachRefunded(r.id) && (
                       <div className="text-[11px] font-medium text-emerald-600 mt-0.5">
-                        已退还 +{COST_REACH}
+                        已退还 +{r.cost}
                       </div>
                     )}
                   </TableCell>
