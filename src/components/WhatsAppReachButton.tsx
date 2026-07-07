@@ -107,7 +107,6 @@ export function WhatsAppReachButton({
           <DropdownMenuItem
             onClick={(e) => e.stopPropagation()}
             onSelect={(e) => {
-              e.preventDefault();
               setMenuOpen(false);
               openManual();
             }}
@@ -118,10 +117,9 @@ export function WhatsAppReachButton({
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={(e) => e.stopPropagation()}
-            onSelect={(e) => {
-              e.preventDefault();
+            onSelect={() => {
               setMenuOpen(false);
-              setAutoOpen(true);
+              window.setTimeout(() => setAutoOpen(true), 0);
             }}
           >
             <ServerCog className="h-4 w-4" />
