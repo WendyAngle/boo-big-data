@@ -13,7 +13,26 @@ export type ReachChannel = "email" | "phone" | "social";
 export type ReachStatus = "pending" | "in_progress" | "success" | "failed";
 export type TargetKind = "enterprise" | "contact";
 
+/** 按字段区分的查看单价（永久解锁,仅首次扣费） */
+export const COST_VIEW_EMAIL = 10;
+export const COST_VIEW_PHONE = 60;
+export const COST_VIEW_SOCIAL = 30;
+/** 其他字段（address/title/seniority）目前不消耗积分,保留常量兼容 */
 export const COST_VIEW = 5;
+
+export function costForView(field: ViewField): number {
+  switch (field) {
+    case "email":
+      return COST_VIEW_EMAIL;
+    case "phone":
+      return COST_VIEW_PHONE;
+    case "social":
+      return COST_VIEW_SOCIAL;
+    default:
+      return COST_VIEW;
+  }
+}
+
 export const COST_REACH = 10;
 
 /** 单条发送积分单价（按渠道） */
@@ -144,7 +163,7 @@ export function chargeView(input: {
   const entry: LedgerEntry = {
     id: makeId("v"),
     kind: "view",
-    cost: COST_VIEW,
+    cost: costForView(input.field),
     createdAt: new Date().toISOString(),
     ...input,
   };
