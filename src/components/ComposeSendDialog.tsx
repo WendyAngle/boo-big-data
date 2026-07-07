@@ -356,11 +356,44 @@ export function ComposeSendDialog({
                         <span className="text-muted-foreground ml-2 text-xs">
                           · {m.displayName}
                           {m.isDefault ? " · 默认" : ""}
+                          {" · 今日剩余 "}
+                          {Math.max(0, m.dailyLimit - m.sentToday)}/{m.dailyLimit}
                         </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+              )}
+              {sender && (
+                <div
+                  className={cn(
+                    "rounded-md border p-2 text-xs flex items-center justify-between gap-2",
+                    overLimit
+                      ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"
+                      : "border-muted bg-muted/40 text-muted-foreground",
+                  )}
+                >
+                  <span>
+                    日发上限：{sender.dailyLimit} · 今日已发 {sender.sentToday} ·
+                    <span className="font-medium ml-1">剩余 {remainingQuota}</span>
+                    {overLimit && (
+                      <span className="ml-2">
+                        当前选择 {recipients.length} 条，超出 {recipients.length - remainingQuota} 条
+                      </span>
+                    )}
+                  </span>
+                  {overLimit && remainingQuota > 0 && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setRecipients((prev) => prev.slice(0, remainingQuota))
+                      }
+                      className="shrink-0 rounded border border-rose-300 bg-white px-2 py-0.5 font-medium hover:bg-rose-100"
+                    >
+                      仅保留前 {remainingQuota} 条
+                    </button>
+                  )}
+                </div>
               )}
             </section>
           )}
