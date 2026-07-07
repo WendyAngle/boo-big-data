@@ -484,9 +484,9 @@ function EnterpriseContactCard({
             />
           </span>
         </div>
-        <div className="flex items-center gap-2 text-muted-foreground min-w-0">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground min-w-0">
           <Mail className="h-3.5 w-3.5 shrink-0" />
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 basis-full sm:basis-auto">
             <MaskedField
               targetKind="contact"
               targetId={`${e.id}:${idx}`}
@@ -497,6 +497,7 @@ function EnterpriseContactCard({
               mono
             />
           </div>
+          <div className="shrink-0">
           <ReachButton
             targetKind="contact"
             targetId={`${e.id}:${idx}`}
@@ -505,11 +506,12 @@ function EnterpriseContactCard({
             channel="email"
             detail={c.email}
           />
+          </div>
         </div>
         {c.phone && (
-          <div className="flex items-center gap-2 text-muted-foreground min-w-0">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground min-w-0">
             <Phone className="h-3.5 w-3.5 shrink-0" />
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 basis-full sm:basis-auto">
               <MaskedField
                 targetKind="contact"
                 targetId={`${e.id}:${idx}`}
@@ -520,6 +522,7 @@ function EnterpriseContactCard({
                 mono
               />
             </div>
+            <div className="shrink-0">
             <ReachButton
               targetKind="contact"
               targetId={`${e.id}:${idx}`}
@@ -528,6 +531,8 @@ function EnterpriseContactCard({
               channel="phone"
               detail={c.phone}
             />
+            </div>
+            <div className="shrink-0">
             <WhatsAppReachButton
               targetKind="contact"
               targetId={`${e.id}:${idx}`}
@@ -535,6 +540,7 @@ function EnterpriseContactCard({
               parentRef={{ id: e.id, name: e.name }}
               phone={c.phone}
             />
+            </div>
           </div>
         )}
       </div>
