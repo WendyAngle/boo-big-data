@@ -21,7 +21,7 @@ import {
   maskSeniority,
   type TargetKind,
   type ViewField,
-  COST_VIEW,
+  costForView,
 } from "@/lib/credits-ledger";
 
 interface Props {
@@ -119,7 +119,7 @@ export function MaskedField({
         field,
         detail: value,
       });
-      toast.success(`已扣除 ${COST_VIEW} 积分，已永久解锁`, {
+      toast.success(`已扣除 ${costForView(field)} 积分，已永久解锁`, {
         description: `查看了 ${targetName} 的${
           {
             email: "邮箱",
@@ -136,7 +136,7 @@ export function MaskedField({
   };
 
   const display = maskFor(field, value);
-  const tip = `查看将消耗 ${COST_VIEW} 积分（仅首次），确认请点击`;
+  const tip = `查看将消耗 ${costForView(field)} 积分（仅首次），确认请点击`;
 
   return (
     <span className={cn("inline-flex items-center gap-1.5", className)}>
