@@ -857,6 +857,12 @@ export function seedDemoLedgerIfEmpty() {
       // ---- 触达失败 ----
       reachEnt(14, "email", 180, "failed", "邮箱无效（地址不存在）"),
       reachContact(10, 0, "social", 95, "failed", "私信发送后长期无响应"),
+      // ---- WhatsApp 触达 mock（100 积分/条）----
+      reachContact(2, 0, "social", 12, "success", undefined, "WhatsApp"),
+      reachEnt(5, "social", 40, "in_progress", undefined, "WhatsApp"),
+      reachContact(9, 0, "social", 75, "pending", undefined, "WhatsApp"),
+      reachContact(15, 1, "social", 210, "failed", "对方未注册 WhatsApp", "WhatsApp"),
+      reachEnt(19, "social", 0.3, "pending", undefined, "WhatsApp"),
       // ---- 更多待触达 ----
       reachContact(0, 0, "email", 0.1, "pending"),
       reachEnt(18, "email", 0.05, "pending"),
