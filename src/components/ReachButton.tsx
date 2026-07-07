@@ -29,6 +29,8 @@ import {
   type ReachChannel,
   type TargetKind,
   costForChannel,
+  computeReachBreakdown,
+  performReachAutoUnlocks,
 } from "@/lib/credits-ledger";
 import { ComposeSendDialog } from "@/components/ComposeSendDialog";
 import { findEnterprise } from "@/data/enterprises";
@@ -93,11 +95,27 @@ export function ReachButton({
   const isPhone = channel === "phone";
   const reachCost = costForChannel(channel, platform);
 
+  // 触达前扣费明细（含未解锁字段的自动查看费）
+  const breakdown = useMemo(
+    () =>
+      computeReachBreakdown({ targetKind, targetId }, channel, platform),
+    [ledger, targetKind, targetId, channel, platform],
+  );
+
   const confirm = () => {
     if (isEmail && !getDefaultUsableMailbox(mailboxes)) {
       toast.error("请先选择发件邮箱");
       return;
     }
+    // 先自动解锁需要的查看字段（幂等）
+    performReachAutoUnlocks({
+      targetKind,
+      targetId,
+      targetName,
+      parentRef,
+      detail,
+      fields: breakdown.unlocksNeeded,
+    });
     createReach({
       targetKind,
       targetId,
@@ -109,18 +127,18 @@ export function ReachButton({
       senderEmail: isEmail ? getDefaultUsableMailbox(mailboxes)?.email : undefined,
     });
     setOpen(false);
+    const totalCharged = breakdown.total;
     toast.success(
       isEmail
-        ? `邮件已加入发送队列，扣除 ${reachCost} 积分`
+        ? `邮件已加入发送队列，共扣除 ${totalCharged} 积分`
         : isPhone
-        ? `短信已加入发送队列，扣除 ${reachCost} 积分`
-        : `已加入触达队列，扣除 ${reachCost} 积分`,
+        ? `短信已加入发送队列，共扣除 ${totalCharged} 积分`
+        : `已加入触达队列，共扣除 ${totalCharged} 积分`,
       {
-        description: isEmail
-          ? `通过 ${getDefaultUsableMailbox(mailboxes)?.email} 发送邮件至 ${targetName}，可在「触达」模块查看进度`
-          : isPhone
-          ? `通过短信触达 ${targetName}（${detail}），可在「触达」模块查看进度`
-          : `通过${channelLabel}触达 ${targetName}，可在「触达」模块查看进度`,
+        description:
+          breakdown.viewCost > 0
+            ? `含自动解锁查看 ${breakdown.viewCost} 积分 + 触达 ${breakdown.reachCost} 积分，可在「触达」模块查看进度`
+            : `触达 ${breakdown.reachCost} 积分（相关信息已解锁，免查看费），可在「触达」模块查看进度`,
       },
     );
   };
