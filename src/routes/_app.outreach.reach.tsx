@@ -364,7 +364,6 @@ function ReachPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-primary/5 hover:bg-primary/5">
-                <TableHead className="w-[280px]">触达对象</TableHead>
                 <TableHead className="w-[140px]">渠道</TableHead>
                 <TableHead>明细说明</TableHead>
                 <TableHead className="w-[220px]">状态 / 原因</TableHead>
@@ -377,30 +376,10 @@ function ReachPage() {
               {filtered.map((r) => (
                 <TableRow key={r.id} className="hover:bg-muted/30">
                   <TableCell>
-                    <TargetCell row={r} />
-                  </TableCell>
-                  <TableCell>
                     <ChannelBadge channel={r.channel!} platform={r.platform} />
                   </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground truncate max-w-[320px]">
-                    <div className="flex items-center gap-1.5">
-                      {r.channel === "social" && r.platform && r.platform !== "WhatsApp" && (
-                        <span className="shrink-0 inline-flex items-center rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px] font-sans text-foreground">
-                          {r.platform}
-                        </span>
-                      )}
-                      <span className="truncate">{r.detail}</span>
-                      {(r.subject || r.content) && (
-                        <button
-                          type="button"
-                          title="查看发送内容"
-                          onClick={() => setViewing(r)}
-                          className="shrink-0 inline-flex h-5 w-5 items-center justify-center rounded text-primary hover:bg-primary/10"
-                        >
-                          <FileText className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
+                  <TableCell className="text-xs max-w-[420px]">
+                    <DetailCell row={r} onViewContent={() => setViewing(r)} />
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col items-start gap-1">
