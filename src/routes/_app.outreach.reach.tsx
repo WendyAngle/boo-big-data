@@ -370,7 +370,6 @@ function ReachPage() {
           </div>
         ) : (
           <Table>
-            {(() => null)()}
             <TableHeader>
               <TableRow className="bg-primary/5 hover:bg-primary/5">
                 <TableHead className="w-[170px]">时间</TableHead>
