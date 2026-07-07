@@ -591,6 +591,16 @@ function FavoritesPage() {
               <MessageSquare className="h-4 w-4" />
               批量发短信
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={selected.size === 0}
+              className="gap-1.5 border-emerald-600/40 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50"
+              onClick={() => setBatchSocialOpen(true)}
+            >
+              <MessageCircle className="h-4 w-4" />
+              WhatsApp 触达
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -598,17 +608,13 @@ function FavoritesPage() {
                   size="sm"
                   disabled={selected.size === 0}
                   className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+                  title="更多社媒平台"
                 >
-                  <MessageCircle className="h-4 w-4" />
-                  批量社媒触达
+                  更多社媒
                   <ChevronDown className="h-3 w-3 opacity-70" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem onClick={() => setBatchSocialOpen(true)}>
-                  <MessageCircle className="h-4 w-4 text-emerald-600" />
-                  WhatsApp
-                </DropdownMenuItem>
                 <DropdownMenuItem disabled>
                   <span className="inline-block h-4 w-4" />
                   TikTok
