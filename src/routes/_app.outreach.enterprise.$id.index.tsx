@@ -1,4 +1,5 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useRef, type MouseEvent } from "react";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import {
   Building2,
   ChevronRight,
@@ -29,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { findEnterprise } from "@/data/enterprises";
 import { recordFootprint } from "@/lib/footprints-store";
-import type { Enterprise } from "@/data/enterprises";
+import type { Enterprise, EnterpriseContact } from "@/data/enterprises";
 import heroBg from "@/assets/enterprise-hero.jpg";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
 import { MaskedField } from "@/components/MaskedField";
@@ -225,117 +226,12 @@ function EnterpriseDetailPage() {
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {e.contacts.map((c, idx) => (
-            <Link
+            <EnterpriseContactCard
               key={idx}
-              id={`contact-${idx}`}
-              to="/outreach/enterprise/$id/contact/$idx"
-              params={{ id: e.id, idx: String(idx) }}
-              onClick={() =>
-                recordFootprint({
-                  module: "contact",
-                  enterpriseId: e.id,
-                  enterpriseName: e.name,
-                  enterpriseCountry: e.country,
-                  enterpriseIndustry: e.industry,
-                  enterpriseRole: e.tradeRole,
-                  contactIdx: idx,
-                  contactName: c.name,
-                  contactTitle: c.title,
-                  contactEmail: c.email,
-                  contactCity: e.city,
-                })
-              }
-              className="group rounded-lg border border-border bg-card hover:ring-1 hover:ring-primary/30 hover:border-primary/40 transition-shadow block"
-            >
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-border/70">
-                <div className="h-9 w-9 rounded-full bg-primary/15 text-primary flex items-center justify-center font-medium uppercase">
-                  {c.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
-                </div>
-                <div className="font-medium flex-1 truncate group-hover:text-primary transition-colors">
-                  {c.name}
-                </div>
-                <FavoriteToggle
-                  kind="contact"
-                  refId={`${e.id}:${idx}`}
-                  payload={{
-                    title: c.name,
-                    subtitle: c.title,
-                    meta: { email: c.email, phone: c.phone || "" },
-                    parentRef: { kind: "enterprise", id: e.id, name: e.name },
-                  }}
-                  variant="inline"
-                  size="sm"
-                />
-              </div>
-              <div className="px-4 py-3 space-y-1.5 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Briefcase className="h-3.5 w-3.5" />
-                  <span className="truncate">
-                    <MaskedField
-                      targetKind="contact"
-                      targetId={`${e.id}:${idx}`}
-                      targetName={c.name}
-                      parentRef={{ id: e.id, name: e.name }}
-                      field="title"
-                      value={c.title}
-                    />
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground min-w-0">
-                  <Mail className="h-3.5 w-3.5 shrink-0" />
-                  <div className="flex-1 min-w-0 truncate">
-                    <MaskedField
-                      targetKind="contact"
-                      targetId={`${e.id}:${idx}`}
-                      targetName={c.name}
-                      parentRef={{ id: e.id, name: e.name }}
-                      field="email"
-                      value={c.email}
-                      mono
-                    />
-                  </div>
-                  <ReachButton
-                    targetKind="contact"
-                    targetId={`${e.id}:${idx}`}
-                    targetName={c.name}
-                    parentRef={{ id: e.id, name: e.name }}
-                    channel="email"
-                    detail={c.email}
-                  />
-                </div>
-                {c.phone && (
-                  <div className="flex items-center gap-2 text-muted-foreground min-w-0">
-                    <Phone className="h-3.5 w-3.5 shrink-0" />
-                    <div className="flex-1 min-w-0 truncate">
-                      <MaskedField
-                        targetKind="contact"
-                        targetId={`${e.id}:${idx}`}
-                        targetName={c.name}
-                        parentRef={{ id: e.id, name: e.name }}
-                        field="phone"
-                        value={c.phone}
-                        mono
-                      />
-                    </div>
-                    <ReachButton
-                      targetKind="contact"
-                      targetId={`${e.id}:${idx}`}
-                      targetName={c.name}
-                      parentRef={{ id: e.id, name: e.name }}
-                      channel="phone"
-                      detail={c.phone}
-                    />
-                    <WhatsAppReachButton
-                      targetKind="contact"
-                      targetId={`${e.id}:${idx}`}
-                      targetName={c.name}
-                      parentRef={{ id: e.id, name: e.name }}
-                      phone={c.phone}
-                    />
-                  </div>
-                )}
-              </div>
-            </Link>
+              enterprise={e}
+              contact={c}
+              index={idx}
+            />
           ))}
         </div>
       </Section>
@@ -477,6 +373,172 @@ function EnterpriseDetailPage() {
         </div>
       </Section>
     </div>
+  );
+}
+
+function EnterpriseContactCard({
+  enterprise: e,
+  contact: c,
+  index: idx,
+}: {
+  enterprise: Enterprise;
+  contact: EnterpriseContact;
+  index: number;
+}) {
+  const navigate = useNavigate();
+  const blankAreaPressStartedRef = useRef(false);
+
+  const isCardBlankAreaEvent = (event: MouseEvent<HTMLElement>) => {
+    const eventTarget = event.target;
+    if (!(eventTarget instanceof Element)) return false;
+
+    // 弹窗/下拉菜单由 Portal 渲染，React 事件可能仍向卡片冒泡；
+    // 只允许“当前卡片 DOM 内 + 非操作控件”的点击进入人物详情。
+    if (!event.currentTarget.contains(eventTarget)) return false;
+    return !eventTarget.closest(
+      [
+        "a",
+        "button",
+        "input",
+        "textarea",
+        "select",
+        "label",
+        "[role='button']",
+        "[role='checkbox']",
+        "[role='menuitem']",
+        "[data-radix-popper-content-wrapper]",
+      ].join(","),
+    );
+  };
+
+  const openContactDetail = () => {
+    recordFootprint({
+      module: "contact",
+      enterpriseId: e.id,
+      enterpriseName: e.name,
+      enterpriseCountry: e.country,
+      enterpriseIndustry: e.industry,
+      enterpriseRole: e.tradeRole,
+      contactIdx: idx,
+      contactName: c.name,
+      contactTitle: c.title,
+      contactEmail: c.email,
+      contactCity: e.city,
+    });
+    navigate({
+      to: "/outreach/enterprise/$id/contact/$idx",
+      params: { id: e.id, idx: String(idx) },
+    });
+  };
+
+  const handleCardClick = (event: MouseEvent<HTMLElement>) => {
+    const isBlankAreaClick = isCardBlankAreaEvent(event);
+    if (!blankAreaPressStartedRef.current || !isBlankAreaClick) {
+      blankAreaPressStartedRef.current = false;
+      return;
+    }
+    blankAreaPressStartedRef.current = false;
+    openContactDetail();
+  };
+
+  return (
+    <article
+      id={`contact-${idx}`}
+      onPointerDownCapture={(event) => {
+        blankAreaPressStartedRef.current = isCardBlankAreaEvent(event);
+      }}
+      onClick={handleCardClick}
+      className="group rounded-lg border border-border bg-card hover:ring-1 hover:ring-primary/30 hover:border-primary/40 transition-shadow cursor-pointer"
+    >
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-border/70">
+        <div className="h-9 w-9 rounded-full bg-primary/15 text-primary flex items-center justify-center font-medium uppercase">
+          {c.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+        </div>
+        <div className="font-medium flex-1 truncate group-hover:text-primary transition-colors">
+          {c.name}
+        </div>
+        <FavoriteToggle
+          kind="contact"
+          refId={`${e.id}:${idx}`}
+          payload={{
+            title: c.name,
+            subtitle: c.title,
+            meta: { email: c.email, phone: c.phone || "" },
+            parentRef: { kind: "enterprise", id: e.id, name: e.name },
+          }}
+          variant="inline"
+          size="sm"
+        />
+      </div>
+      <div className="px-4 py-3 space-y-1.5 text-sm">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Briefcase className="h-3.5 w-3.5" />
+          <span className="truncate">
+            <MaskedField
+              targetKind="contact"
+              targetId={`${e.id}:${idx}`}
+              targetName={c.name}
+              parentRef={{ id: e.id, name: e.name }}
+              field="title"
+              value={c.title}
+            />
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-muted-foreground min-w-0">
+          <Mail className="h-3.5 w-3.5 shrink-0" />
+          <div className="flex-1 min-w-0 truncate">
+            <MaskedField
+              targetKind="contact"
+              targetId={`${e.id}:${idx}`}
+              targetName={c.name}
+              parentRef={{ id: e.id, name: e.name }}
+              field="email"
+              value={c.email}
+              mono
+            />
+          </div>
+          <ReachButton
+            targetKind="contact"
+            targetId={`${e.id}:${idx}`}
+            targetName={c.name}
+            parentRef={{ id: e.id, name: e.name }}
+            channel="email"
+            detail={c.email}
+          />
+        </div>
+        {c.phone && (
+          <div className="flex items-center gap-2 text-muted-foreground min-w-0">
+            <Phone className="h-3.5 w-3.5 shrink-0" />
+            <div className="flex-1 min-w-0 truncate">
+              <MaskedField
+                targetKind="contact"
+                targetId={`${e.id}:${idx}`}
+                targetName={c.name}
+                parentRef={{ id: e.id, name: e.name }}
+                field="phone"
+                value={c.phone}
+                mono
+              />
+            </div>
+            <ReachButton
+              targetKind="contact"
+              targetId={`${e.id}:${idx}`}
+              targetName={c.name}
+              parentRef={{ id: e.id, name: e.name }}
+              channel="phone"
+              detail={c.phone}
+            />
+            <WhatsAppReachButton
+              targetKind="contact"
+              targetId={`${e.id}:${idx}`}
+              targetName={c.name}
+              parentRef={{ id: e.id, name: e.name }}
+              phone={c.phone}
+            />
+          </div>
+        )}
+      </div>
+    </article>
   );
 }
 
