@@ -9,9 +9,9 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   chargeView,
-  isRevealed,
-  setRevealed,
-  useRevealed,
+  isUnlocked,
+  markUnlocked,
+  useUnlocked,
   revealKey,
   maskEmail,
   maskPhone,
@@ -75,17 +75,29 @@ export function MaskedField({
     );
   }
   const key = revealKey(targetKind, targetId, field, subKey);
-  const revealed = useRevealed(key);
+  const unlocked = useUnlocked(key);
+
+  // 已永久解锁 → 直接明文展示,不再展示查看按钮,也不再消耗积分
+  if (unlocked) {
+    return (
+      <span className={cn("inline-flex items-center", className)}>
+        <span
+          className={cn(
+            "select-text",
+            mono && "font-mono tabular-nums text-xs",
+          )}
+        >
+          {value}
+        </span>
+      </span>
+    );
+  }
 
   const onClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (revealed) {
-      setRevealed(key, false);
-      return;
-    }
-    // first reveal — charge once per session per key
-    if (!isRevealed(key)) {
+    // 首次解锁 — 每个字段仅扣费一次,永久解锁
+    if (!isUnlocked(key)) {
       chargeView({
         targetKind,
         targetId,
@@ -94,7 +106,7 @@ export function MaskedField({
         field,
         detail: value,
       });
-      toast.success(`已扣除 ${COST_VIEW} 积分，可在账单查看`, {
+      toast.success(`已扣除 ${COST_VIEW} 积分，已永久解锁`, {
         description: `查看了 ${targetName} 的${
           {
             email: "邮箱",
@@ -104,16 +116,14 @@ export function MaskedField({
             title: "职位信息",
             seniority: "职级信息",
           }[field]
-        }`,
+        }，后续查看不再扣费`,
       });
+      markUnlocked(key);
     }
-    setRevealed(key, true);
   };
 
-  const display = revealed ? value : maskFor(field, value);
-  const tip = revealed
-    ? "点击收起为密文"
-    : `查看将消耗 ${COST_VIEW} 积分哦，确认请点击`;
+  const display = maskFor(field, value);
+  const tip = `查看将消耗 ${COST_VIEW} 积分（仅首次），确认请点击`;
 
   return (
     <span className={cn("inline-flex items-center gap-1.5", className)}>
@@ -121,7 +131,7 @@ export function MaskedField({
         className={cn(
           "select-text",
           mono && "font-mono tabular-nums text-xs",
-          !revealed && "tracking-wider",
+          "tracking-wider",
         )}
       >
         {display}
@@ -135,16 +145,10 @@ export function MaskedField({
               aria-label={tip}
               className={cn(
                 "inline-flex h-6 w-6 items-center justify-center rounded transition-colors",
-                revealed
-                  ? "text-primary hover:bg-primary/10"
-                  : "text-muted-foreground hover:bg-muted hover:text-primary",
+                "text-muted-foreground hover:bg-muted hover:text-primary",
               )}
             >
-              {revealed ? (
-                <EyeOff className="h-3.5 w-3.5" />
-              ) : (
-                <Eye className="h-3.5 w-3.5" />
-              )}
+              <Eye className="h-3.5 w-3.5" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="top">{tip}</TooltipContent>
