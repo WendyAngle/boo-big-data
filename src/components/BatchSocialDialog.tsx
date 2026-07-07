@@ -104,6 +104,7 @@ export function BatchSocialDialog({
   const [aiOpen, setAiOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [targetLang, setTargetLang] = useState<"zh" | "en">("zh");
 
   useEffect(() => {
     if (!open) return;
@@ -113,6 +114,7 @@ export function BatchSocialDialog({
     setAiCount(0);
     setPreviewIdx(0);
     setRevealed(false);
+    setTargetLang("zh");
     // 打开即自动校验（跳过已缓存）
     void verifyMany(
       incoming
@@ -271,6 +273,7 @@ export function BatchSocialDialog({
         channel: "social",
         targetName: sample?.name ?? "AI 生成",
       });
+      setTargetLang(params.language);
       if (res.content) setContent(res.content);
       setAiUsed(true);
       setAiCount((c) => c + 1);
