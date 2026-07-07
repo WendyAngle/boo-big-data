@@ -595,7 +595,7 @@ function FavoritesPage() {
               variant="outline"
               size="sm"
               disabled={selected.size === 0}
-              className="gap-1.5 border-emerald-600/40 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50"
+              className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
               onClick={() => setBatchSocialOpen(true)}
             >
               <MessageCircle className="h-4 w-4" />
