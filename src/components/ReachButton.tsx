@@ -265,7 +265,11 @@ export function ReachButton({
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm">
                 <div className="text-muted-foreground">
-                  本次触达将消耗 <span className="font-semibold text-rose-600">{reachCost} 积分</span>，并记录到「触达」与「账单」模块。
+                  本次触达将消耗 <span className="font-semibold text-rose-600">{breakdown.total} 积分</span>
+                  {breakdown.viewCost > 0 && (
+                    <>（含自动解锁查看 {breakdown.viewCost} 积分）</>
+                  )}
+                  ，并记录到「触达」与「账单」模块。
                 </div>
                 <div className="rounded-md bg-muted/60 p-3 space-y-1">
                   <div className="flex justify-between text-xs">
@@ -290,6 +294,30 @@ export function ReachButton({
                     <span className="font-mono text-foreground truncate max-w-[260px]">{detail}</span>
                   </div>
                 </div>
+                <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs space-y-1">
+                  {breakdown.lines.map((l, i) => (
+                    <div key={i} className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        {l.label}
+                        {l.kind === "view" && l.alreadyUnlocked && (
+                          <span className="ml-1 text-emerald-600">· 已解锁</span>
+                        )}
+                      </span>
+                      <span className="font-medium">
+                        {l.kind === "view" && l.alreadyUnlocked ? "免费" : `${l.cost} 积分`}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between border-t border-rose-200/70 pt-1">
+                    <span className="font-semibold text-rose-700">合计</span>
+                    <span className="font-semibold text-rose-700">{breakdown.total} 积分</span>
+                  </div>
+                  {breakdown.viewCost > 0 && (
+                    <div className="text-[11px] text-rose-700/80 pt-0.5">
+                      触达完成后相关字段将永久解锁，后续查看/再次触达不再收取查看费。
+                    </div>
+                  )}
+                </div>
                 {/* email/phone 走 ComposeSendDialog，此分支仅用于 social */}
               </div>
             </AlertDialogDescription>
@@ -300,7 +328,9 @@ export function ReachButton({
               onClick={confirm}
               className="bg-primary"
             >
-              {isEmail || isPhone ? `确认发送（-${reachCost}）` : `确认触达（-${reachCost}）`}
+              {isEmail || isPhone
+                ? `确认发送（-${breakdown.total}）`
+                : `确认触达（-${breakdown.total}）`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
