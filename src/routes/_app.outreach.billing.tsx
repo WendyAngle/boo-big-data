@@ -860,10 +860,14 @@ function FieldCell({ entry }: { entry: LedgerEntry }) {
     phone: "发送短信",
     social: "触达社媒账号",
   };
+  const label =
+    entry.channel === "social" && entry.platform === "WhatsApp"
+      ? "触达 WhatsApp"
+      : REACH_ACTION_LABEL[entry.channel];
   return (
     <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
       <I className="h-3.5 w-3.5" />
-      <span className="text-foreground">{REACH_ACTION_LABEL[entry.channel]}</span>
+      <span className="text-foreground">{label}</span>
     </span>
   );
 }
