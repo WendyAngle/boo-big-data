@@ -439,27 +439,14 @@ export function BatchSocialDialog({
           {/* 目标号列表（脱敏） */}
           {candidates.length > 0 && (
             <section className="space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <Label className="text-xs text-muted-foreground">
                   目标账号（{candidates.length}）
                 </Label>
-                <button
-                  type="button"
-                  onClick={() => setRevealed((r) => !r)}
-                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  {revealed ? (
-                    <>
-                      <EyeOff className="h-3 w-3" />
-                      隐藏完整号码
-                    </>
-                  ) : (
-                    <>
-                      <EyeOn className="h-3 w-3" />
-                      显示完整号码
-                    </>
-                  )}
-                </button>
+                <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Info className="h-3 w-3" />
+                  号码默认脱敏，点击 👁 首次查看 -{COST_VIEW} 积分，永久解锁；成功发送后自动解锁
+                </span>
               </div>
               <div className="flex flex-wrap gap-1.5 rounded-md border bg-muted/20 p-2 max-h-32 overflow-y-auto">
                 {candidates.map((c) => {
@@ -483,9 +470,20 @@ export function BatchSocialDialog({
                       )}
                     >
                       <span className="font-medium">{c.name}</span>
-                      <span className="font-mono">
-                        · {revealed ? c.address || "—" : maskPhoneWa(c.address)}
-                      </span>
+                      <span className="opacity-60">·</span>
+                      {c.address ? (
+                        <MaskedField
+                          targetKind={c.targetKind}
+                          targetId={c.targetId}
+                          targetName={c.name}
+                          parentRef={c.parentRef}
+                          field="phone"
+                          value={c.address}
+                          mono
+                        />
+                      ) : (
+                        <span className="font-mono text-muted-foreground">—</span>
+                      )}
                       <button
                         type="button"
                         onClick={() =>
