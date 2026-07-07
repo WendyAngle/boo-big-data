@@ -416,7 +416,9 @@ export function ComposeSendDialog({
                   </Badge>
                 )}
               </Label>
-              <Button
+              <div className="flex items-center gap-2">
+                <LangToggle value={targetLang} onChange={setTargetLang} />
+                <Button
                 type="button"
                 size="sm"
                 variant="outline"
@@ -428,7 +430,8 @@ export function ComposeSendDialog({
                 <span className="text-xs text-muted-foreground">
                   -{isEmail ? COST_AI_EMAIL : COST_AI_SMS} 积分/次
                 </span>
-              </Button>
+                </Button>
+              </div>
             </div>
 
             {/* 变量插入 */}
@@ -507,6 +510,9 @@ export function ComposeSendDialog({
                   <span className="ml-1 inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="text-[10px] font-normal text-muted-foreground">
                     实时同步
+                  </span>
+                  <span className="ml-2 rounded border border-border/60 bg-background px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground">
+                    目标语言 · {targetLang === "zh" ? "中文" : "英文"}
                   </span>
                 </Label>
                 {recipients.length > 1 && (
@@ -592,6 +598,7 @@ export function ComposeSendDialog({
         onOpenChange={setAiOpen}
         channel={channel}
         loading={aiLoading}
+        defaultLanguage={targetLang}
         onGenerate={handleAiGenerate}
       />
     </Dialog>
