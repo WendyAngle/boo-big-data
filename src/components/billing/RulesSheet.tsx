@@ -8,7 +8,20 @@ import {
   MailPlus,
   MessageSquare,
   MessageCircle,
+  Sparkles,
 } from "lucide-react";
+import {
+  COST_VIEW_EMAIL,
+  COST_VIEW_PHONE,
+  COST_VIEW_SOCIAL,
+  COST_REACH_EMAIL,
+  COST_REACH_SMS,
+  COST_REACH_SOCIAL,
+  COST_REACH_SOCIAL_WHATSAPP,
+  COST_AI_EMAIL,
+  COST_AI_SMS,
+  COST_AI_SOCIAL,
+} from "@/lib/credits-ledger";
 import {
   Dialog,
   DialogContent,
@@ -32,21 +45,21 @@ const UNLOCK_RULES: Rule[] = [
     tone: "sky",
     icon: <Mail className="h-4 w-4" />,
     title: "查看邮箱",
-    cost: 10,
+    cost: COST_VIEW_EMAIL,
     desc: "解锁联系人邮箱字段，已解锁后不再重复扣费。",
   },
   {
     tone: "violet",
     icon: <Phone className="h-4 w-4" />,
     title: "查看电话",
-    cost: 60,
+    cost: COST_VIEW_PHONE,
     desc: "解锁联系人电话字段，已解锁后不再重复扣费。",
   },
   {
     tone: "emerald",
     icon: <Share2 className="h-4 w-4" />,
     title: "查看社媒账号",
-    cost: 30,
+    cost: COST_VIEW_SOCIAL,
     desc: "解锁联系人社媒账号字段，已解锁后不再重复扣费。",
   },
 ];
@@ -56,29 +69,53 @@ const REACH_RULES: Rule[] = [
     tone: "sky",
     icon: <MailPlus className="h-4 w-4" />,
     title: "触达邮箱",
-    cost: 10,
-    desc: "向单个联系人发送一封邮件，按有效收件人计费。",
+    cost: COST_REACH_EMAIL,
+    desc: "向单个联系人发送一封邮件，按有效收件人计费；若邮箱未解锁，将自动解锁并合并扣费。",
   },
   {
     tone: "violet",
     icon: <MessageSquare className="h-4 w-4" />,
     title: "触达短信",
-    cost: 60,
-    desc: "向单个联系人发送一条短信，按有效号码计费。",
+    cost: COST_REACH_SMS,
+    desc: "向单个联系人发送一条短信，按有效号码计费；若电话未解锁，将自动解锁并合并扣费。",
   },
   {
     tone: "amber",
     icon: <MessageCircle className="h-4 w-4" />,
     title: "触达 WhatsApp",
-    cost: 100,
-    desc: "向单个已注册 WhatsApp 的号码发送一条私信，未注册号码不计费。",
+    cost: COST_REACH_SOCIAL_WHATSAPP,
+    desc: "向单个已注册 WhatsApp 的号码发送一条私信，未注册号码不计费；若电话未解锁，将自动解锁并合并扣费。",
   },
   {
     tone: "emerald",
     icon: <Send className="h-4 w-4" />,
     title: "触达社媒",
-    cost: 50,
-    desc: "通过社媒渠道向单个联系人发送一条私信，按有效账号计费。",
+    cost: COST_REACH_SOCIAL,
+    desc: "通过社媒渠道向单个联系人发送一条私信，按有效账号计费；若社媒账号未解锁，将自动解锁并合并扣费。",
+  },
+];
+
+const AI_RULES: Rule[] = [
+  {
+    tone: "sky",
+    icon: <Sparkles className="h-4 w-4" />,
+    title: "AI 生成邮件文案",
+    cost: COST_AI_EMAIL,
+    desc: "调用 AI 一键生成邮件正文，每次生成按调用计费。",
+  },
+  {
+    tone: "violet",
+    icon: <Sparkles className="h-4 w-4" />,
+    title: "AI 生成短信文案",
+    cost: COST_AI_SMS,
+    desc: "调用 AI 一键生成短信内容，每次生成按调用计费。",
+  },
+  {
+    tone: "emerald",
+    icon: <Sparkles className="h-4 w-4" />,
+    title: "AI 生成社媒文案",
+    cost: COST_AI_SOCIAL,
+    desc: "调用 AI 一键生成社媒私信文案，每次生成按调用计费。",
   },
 ];
 
@@ -118,6 +155,12 @@ export function RulesSheet({
             title="触达消耗"
             hint="每次发送均扣费，仅对有效收件人计费。"
             rules={REACH_RULES}
+          />
+          <RuleGroup
+            icon={<Sparkles className="h-3.5 w-3.5" />}
+            title="AI 文案生成"
+            hint="每次调用 AI 生成按次扣费，与后续发送分别计费。"
+            rules={AI_RULES}
           />
         </div>
 
