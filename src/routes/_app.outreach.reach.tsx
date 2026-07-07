@@ -378,10 +378,15 @@ function ReachPage() {
                     <TargetCell row={r} />
                   </TableCell>
                   <TableCell>
-                    <ChannelBadge channel={r.channel!} platform={r.platform} />
+                    <ChannelBadge channel={r.channel!} />
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground truncate max-w-[320px]">
                     <div className="flex items-center gap-1.5">
+                      {r.channel === "social" && r.platform && (
+                        <span className="shrink-0 inline-flex items-center rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px] font-sans text-foreground">
+                          {r.platform}
+                        </span>
+                      )}
                       <span className="truncate">{r.detail}</span>
                       {(r.subject || r.content) && (
                         <button
