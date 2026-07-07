@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Star,
@@ -761,8 +761,32 @@ function FavoriteCard({
   const meta = KIND_META[record.kind];
   const Icon = meta.icon;
   const navigate = useNavigate();
+  const blankAreaPressStartedRef = useRef(false);
 
   const target = useTarget(record);
+
+  const isCardBlankAreaEvent = (event: MouseEvent<HTMLElement>) => {
+    const eventTarget = event.target;
+    if (!(eventTarget instanceof Element)) return false;
+
+    // Radix Dialog/Dropdown 内容通过 Portal 渲染，React 事件仍会向卡片冒泡；
+    // 只允许来自当前卡片 DOM 内、且不属于交互控件的点击进入详情。
+    if (!event.currentTarget.contains(eventTarget)) return false;
+    return !eventTarget.closest(
+      [
+        "a",
+        "button",
+        "input",
+        "textarea",
+        "select",
+        "label",
+        "[role='button']",
+        "[role='checkbox']",
+        "[role='menuitem']",
+        "[data-radix-popper-content-wrapper]",
+      ].join(","),
+    );
+  };
 
   const openTargetDetail = () => {
     if (!target) return;
@@ -782,30 +806,12 @@ function FavoriteCard({
   };
 
   const handleContactCardClick = (event: MouseEvent<HTMLElement>) => {
-    const clickTarget = event.target;
-    if (!(clickTarget instanceof Element)) return;
-
-    // Radix Dialog/Dropdown 内容通过 Portal 渲染，React 事件仍会向卡片冒泡；
-    // 只允许来自当前卡片 DOM 内、且不属于交互控件的点击进入详情。
-    if (!event.currentTarget.contains(clickTarget)) return;
-    if (
-      clickTarget.closest(
-        [
-          "a",
-          "button",
-          "input",
-          "textarea",
-          "select",
-          "label",
-          "[role='button']",
-          "[role='checkbox']",
-          "[role='menuitem']",
-          "[data-radix-popper-content-wrapper]",
-        ].join(","),
-      )
-    ) {
+    const isBlankAreaClick = isCardBlankAreaEvent(event);
+    if (!blankAreaPressStartedRef.current || !isBlankAreaClick) {
+      blankAreaPressStartedRef.current = false;
       return;
     }
+    blankAreaPressStartedRef.current = false;
 
     openTargetDetail();
   };
@@ -840,6 +846,13 @@ function FavoriteCard({
 
   const card = (linkedContent: ReactNode, contactCardLink = false) => (
     <Card
+      onPointerDownCapture={
+        contactCardLink
+          ? (event) => {
+              blankAreaPressStartedRef.current = isCardBlankAreaEvent(event);
+            }
+          : undefined
+      }
       onClick={contactCardLink ? handleContactCardClick : undefined}
       className={cn(
         "p-4 h-full transition-all relative",
