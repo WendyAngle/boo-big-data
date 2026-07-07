@@ -364,7 +364,6 @@ function ReachPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-primary/5 hover:bg-primary/5">
-                <TableHead className="w-[280px]">触达对象</TableHead>
                 <TableHead className="w-[140px]">渠道</TableHead>
                 <TableHead>明细说明</TableHead>
                 <TableHead className="w-[220px]">状态 / 原因</TableHead>
@@ -377,30 +376,10 @@ function ReachPage() {
               {filtered.map((r) => (
                 <TableRow key={r.id} className="hover:bg-muted/30">
                   <TableCell>
-                    <TargetCell row={r} />
-                  </TableCell>
-                  <TableCell>
                     <ChannelBadge channel={r.channel!} platform={r.platform} />
                   </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground truncate max-w-[320px]">
-                    <div className="flex items-center gap-1.5">
-                      {r.channel === "social" && r.platform && r.platform !== "WhatsApp" && (
-                        <span className="shrink-0 inline-flex items-center rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px] font-sans text-foreground">
-                          {r.platform}
-                        </span>
-                      )}
-                      <span className="truncate">{r.detail}</span>
-                      {(r.subject || r.content) && (
-                        <button
-                          type="button"
-                          title="查看发送内容"
-                          onClick={() => setViewing(r)}
-                          className="shrink-0 inline-flex h-5 w-5 items-center justify-center rounded text-primary hover:bg-primary/10"
-                        >
-                          <FileText className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
+                  <TableCell className="text-xs max-w-[420px]">
+                    <DetailCell row={r} onViewContent={() => setViewing(r)} />
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col items-start gap-1">
@@ -725,49 +704,73 @@ function ActionCell({
   return <span className="text-xs text-muted-foreground">—</span>;
 }
 
-function TargetCell({
+function DetailCell({
   row,
+  onViewContent,
 }: {
-  row: { targetKind: "enterprise" | "contact"; targetId: string; targetName: string; parentRef?: { id: string; name: string } };
+  row: {
+    targetKind: "enterprise" | "contact";
+    targetId: string;
+    targetName: string;
+    parentRef?: { id: string; name: string };
+    channel?: "email" | "phone" | "social";
+    platform?: string;
+    detail?: string;
+    subject?: string;
+    content?: string;
+  };
+  onViewContent: () => void;
 }) {
-  if (row.targetKind === "enterprise") {
-    return (
-      <Link
-        to="/outreach/enterprise/$id"
-        params={{ id: row.targetId }}
-        className="group flex items-center gap-2.5 min-w-0"
-      >
-        <div className="h-8 w-8 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
-          <Building2 className="h-4 w-4" />
-        </div>
-        <div className="min-w-0">
-          <div className="font-medium truncate group-hover:text-primary capitalize">
-            {row.targetName}
-          </div>
-          <div className="text-xs text-muted-foreground">企业</div>
-        </div>
-      </Link>
-    );
-  }
-  // contact: refId like ENT-0001:0
-  const [entId, idx] = row.targetId.split(":");
+  const targetLabel =
+    row.targetKind === "enterprise"
+      ? row.targetName
+      : `${row.parentRef?.name ?? "—"} · ${row.targetName}`;
+  const link =
+    row.targetKind === "enterprise"
+      ? { to: "/outreach/enterprise/$id" as const, params: { id: row.targetId } }
+      : (() => {
+          const [entId, idx] = row.targetId.split(":");
+          return {
+            to: "/outreach/enterprise/$id/contact/$idx" as const,
+            params: { id: entId, idx },
+          };
+        })();
   return (
-    <Link
-      to="/outreach/enterprise/$id/contact/$idx"
-      params={{ id: entId, idx }}
-      className="group flex items-center gap-2.5 min-w-0"
-    >
-      <div className="h-8 w-8 rounded-full bg-accent/20 text-accent-foreground flex items-center justify-center shrink-0">
-        <UserRound className="h-4 w-4" />
+    <div className="min-w-0">
+      <div className="flex items-center gap-1.5 min-w-0">
+        {row.channel === "social" && row.platform && row.platform !== "WhatsApp" && (
+          <span className="shrink-0 inline-flex items-center rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px] text-foreground">
+            {row.platform}
+          </span>
+        )}
+        <span className="font-mono text-xs text-foreground truncate">
+          {row.detail ?? "—"}
+        </span>
+        {(row.subject || row.content) && (
+          <button
+            type="button"
+            title="查看发送内容"
+            onClick={onViewContent}
+            className="shrink-0 inline-flex h-5 w-5 items-center justify-center rounded text-primary hover:bg-primary/10"
+          >
+            <FileText className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
-      <div className="min-w-0">
-        <div className="font-medium truncate group-hover:text-primary capitalize">
-          {row.targetName}
-        </div>
-        <div className="text-xs text-muted-foreground truncate">
-          {row.parentRef?.name ?? "—"}
-        </div>
+      <div className="text-[11px] text-muted-foreground truncate mt-0.5 flex items-center gap-1">
+        {row.targetKind === "enterprise" ? (
+          <Building2 className="h-3 w-3" />
+        ) : (
+          <UserRound className="h-3 w-3" />
+        )}
+        <Link
+          to={link.to}
+          params={link.params as never}
+          className="capitalize hover:text-primary truncate"
+        >
+          {targetLabel}
+        </Link>
       </div>
-    </Link>
+    </div>
   );
 }
