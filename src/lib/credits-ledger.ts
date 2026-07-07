@@ -20,14 +20,22 @@ export const COST_REACH = 10;
 export const COST_REACH_EMAIL = 1;
 export const COST_REACH_SMS = 2;
 export const COST_REACH_SOCIAL = 10;
+/** 社媒各平台单价（覆盖 COST_REACH_SOCIAL 默认值） */
+export const COST_REACH_SOCIAL_WHATSAPP = 100;
 
 /** AI 文案生成积分单价 */
 export const COST_AI_EMAIL = 3;
 export const COST_AI_SMS = 2;
+export const COST_AI_SOCIAL = 3;
 
-export function costForChannel(channel: ReachChannel): number {
+export function costForChannel(channel: ReachChannel, platform?: string): number {
   if (channel === "email") return COST_REACH_EMAIL;
   if (channel === "phone") return COST_REACH_SMS;
+  return costForSocialPlatform(platform);
+}
+
+export function costForSocialPlatform(platform?: string): number {
+  if (platform === "WhatsApp") return COST_REACH_SOCIAL_WHATSAPP;
   return COST_REACH_SOCIAL;
 }
 
@@ -163,7 +171,7 @@ export function createReach(input: {
   const entry: LedgerEntry = {
     id: makeId("r"),
     kind: "reach",
-    cost: cost ?? costForChannel(input.channel),
+    cost: cost ?? costForChannel(input.channel, input.platform),
     createdAt: new Date().toISOString(),
     ...rest,
   };
@@ -180,7 +188,12 @@ export function chargeAiGeneration(input: {
   targetKind?: TargetKind;
   targetId?: string;
 }): LedgerEntry {
-  const cost = input.channel === "email" ? COST_AI_EMAIL : COST_AI_SMS;
+  const cost =
+    input.channel === "email"
+      ? COST_AI_EMAIL
+      : input.channel === "social"
+        ? COST_AI_SOCIAL
+        : COST_AI_SMS;
   const entry: LedgerEntry = {
     id: makeId("ai"),
     kind: "ai_generate",
@@ -190,7 +203,12 @@ export function chargeAiGeneration(input: {
     targetId: input.targetId ?? "—",
     targetName: input.targetName,
     channel: input.channel,
-    detail: input.channel === "email" ? "AI 生成邮件文案" : "AI 生成短信文案",
+    detail:
+      input.channel === "email"
+        ? "AI 生成邮件文案"
+        : input.channel === "social"
+          ? "AI 生成社媒文案"
+          : "AI 生成短信文案",
   };
   ledger = [entry, ...ledger];
   writeLedger(ledger);

@@ -28,6 +28,7 @@ import {
   Facebook,
   Twitter,
   MessageCircle,
+  ChevronDown,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,16 @@ import { ComposeSendDialog } from "@/components/ComposeSendDialog";
 import { recipientsFromFavorites, myContext } from "@/lib/message-vars";
 import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
+import {
+  BatchSocialDialog,
+  type SocialCandidate,
+} from "@/components/BatchSocialDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/_app/outreach/favorites")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 收藏 | Boo数据平台" }] }),
@@ -148,6 +159,7 @@ function FavoritesPage() {
   const [batchEmailOpen, setBatchEmailOpen] = useState(false);
   const [batchSmsOpen, setBatchSmsOpen] = useState(false);
   const [batchSenderId, setBatchSenderId] = useState("");
+  const [batchSocialOpen, setBatchSocialOpen] = useState(false);
   const [calOpen, setCalOpen] = useState(false);
   const profile = useLeadProfile();
   const user = useCurrentUser();
@@ -165,6 +177,56 @@ function FavoritesPage() {
     () => recipientsFromFavorites(selectedRecords, "phone", myVars),
     [selectedRecords, myVars],
   );
+
+  // WhatsApp 候选人：从选中的收藏（企业/联系人）里取 whatsapp 号码
+  const waCandidates = useMemo<SocialCandidate[]>(() => {
+    const out: SocialCandidate[] = [];
+    for (const r of selectedRecords) {
+      if (r.kind === "enterprise") {
+        const e = findEnterprise(r.refId);
+        if (!e) continue;
+        out.push({
+          key: r.id,
+          address: e.whatsapp ?? "",
+          name: r.title,
+          targetKind: "enterprise",
+          targetId: r.refId,
+          enterpriseId: r.refId,
+          ctx: {
+            企业名: e.name,
+            联系人名: e.contacts?.[0]?.name,
+            行业: e.industry,
+            城市: e.city,
+            ...myVars,
+          },
+        });
+      } else if (r.kind === "contact") {
+        const entId = r.parentRef?.id ?? r.refId.split(":")[0];
+        const idx = Number(r.refId.split(":")[1] ?? "0");
+        const e = entId ? findEnterprise(entId) : undefined;
+        const c = e?.contacts?.[idx];
+        out.push({
+          key: r.id,
+          address: c?.whatsapp ?? "",
+          name: r.title,
+          targetKind: "contact",
+          targetId: `${entId}:${idx}`,
+          parentRef: r.parentRef
+            ? { id: r.parentRef.id, name: r.parentRef.name }
+            : undefined,
+          enterpriseId: entId,
+          ctx: {
+            企业名: r.parentRef?.name ?? e?.name,
+            联系人名: r.title,
+            行业: e?.industry,
+            城市: e?.city,
+            ...myVars,
+          },
+        });
+      }
+    }
+    return out;
+  }, [selectedRecords, myVars]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {
@@ -529,6 +591,40 @@ function FavoritesPage() {
               <MessageSquare className="h-4 w-4" />
               批量发短信
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={selected.size === 0}
+                  className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  批量社媒触达
+                  <ChevronDown className="h-3 w-3 opacity-70" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem onClick={() => setBatchSocialOpen(true)}>
+                  <MessageCircle className="h-4 w-4 text-emerald-600" />
+                  WhatsApp
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled>
+                  <span className="inline-block h-4 w-4" />
+                  TikTok
+                  <span className="ml-auto text-[10px] text-muted-foreground">
+                    即将上线
+                  </span>
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled>
+                  <Facebook className="h-4 w-4" />
+                  Facebook
+                  <span className="ml-auto text-[10px] text-muted-foreground">
+                    即将上线
+                  </span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             {selected.size > 0 && (
               <Button
                 variant="outline"
@@ -628,6 +724,12 @@ function FavoritesPage() {
         onOpenChange={setBatchSmsOpen}
         channel="phone"
         recipients={smsRecipients}
+      />
+      <BatchSocialDialog
+        open={batchSocialOpen}
+        onOpenChange={setBatchSocialOpen}
+        platform="WhatsApp"
+        candidates={waCandidates}
       />
     </div>
   );

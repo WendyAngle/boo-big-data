@@ -2,7 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const InputSchema = z.object({
-  channel: z.enum(["email", "sms"]),
+  channel: z.enum(["email", "sms", "social"]),
+  platform: z.string().max(20).optional(),
   scene: z.string().min(1).max(40),
   tone: z.enum(["formal", "friendly", "concise"]).default("friendly"),
   language: z.enum(["zh", "en"]).default("zh"),
@@ -21,19 +22,23 @@ export const generateAiContent = createServerFn({ method: "POST" })
     if (!key) throw new Error("LOVABLE_API_KEY is not configured");
 
     const isEmail = data.channel === "email";
+    const isSocial = data.channel === "social";
+    const platform = data.platform || "WhatsApp";
     const langName = data.language === "zh" ? "中文" : "English";
     const toneMap = { formal: "正式商务", friendly: "友好诚恳", concise: "简洁直接" } as const;
 
     const systemPrompt = [
       `你是一名资深 B2B 外贸出海销售文案专家，正在为「${data.myCompany ?? "我方公司"}」撰写${
-        isEmail ? "开发/跟进邮件" : "营销短信"
+        isEmail ? "开发/跟进邮件" : isSocial ? `${platform} 私信` : "营销短信"
       }。`,
       `语言: ${langName}；语气: ${toneMap[data.tone]}。`,
       `在文案中合理使用以下占位符（保留花括号原样，发送时会被替换）：`,
       `{企业名} {联系人名} {行业} {城市} {我的公司} {我的姓名}`,
       isEmail
         ? `严格输出 JSON：{"subject": "邮件主题（≤60字）","content": "邮件正文（纯文本，含换行）"}。不要解释，不要 Markdown。`
-        : `严格输出 JSON：{"content": "短信内容（${data.language === "zh" ? "≤140 字" : "≤300 chars"}，不含署名和退订）"}。不要解释，不要 Markdown。`,
+        : isSocial
+          ? `严格输出 JSON：{"content": "${platform} 私信内容（${data.language === "zh" ? "≤500 字" : "≤1200 chars"}，语气自然口语化，可含 1-2 个 emoji，不含签名和链接）"}。不要解释，不要 Markdown。`
+          : `严格输出 JSON：{"content": "短信内容（${data.language === "zh" ? "≤140 字" : "≤300 chars"}，不含署名和退订）"}。不要解释，不要 Markdown。`,
     ].join("\n");
 
     const userPrompt = [
