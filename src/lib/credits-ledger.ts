@@ -624,7 +624,7 @@ export function seedDemoLedgerIfEmpty() {
         cost:
           channel === "social"
             ? costForSocialPlatform(platform)
-            : COST_REACH,
+            : costForChannel(channel, platform),
         createdAt: isoMinutesAgo(minAgo),
         targetKind: "enterprise",
         targetId: e.id,
@@ -662,7 +662,7 @@ export function seedDemoLedgerIfEmpty() {
         cost:
           channel === "social"
             ? costForSocialPlatform(platform)
-            : COST_REACH,
+            : costForChannel(channel, platform),
         createdAt: isoMinutesAgo(minAgo),
         targetKind: "contact",
         targetId: `${e.id}:${idx}`,
