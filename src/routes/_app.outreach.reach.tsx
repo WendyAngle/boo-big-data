@@ -704,53 +704,6 @@ function ActionCell({
   return <span className="text-xs text-muted-foreground">—</span>;
 }
 
-function TargetCell({
-  row,
-}: {
-  row: { targetKind: "enterprise" | "contact"; targetId: string; targetName: string; parentRef?: { id: string; name: string } };
-}) {
-  if (row.targetKind === "enterprise") {
-    return (
-      <Link
-        to="/outreach/enterprise/$id"
-        params={{ id: row.targetId }}
-        className="group flex items-center gap-2.5 min-w-0"
-      >
-        <div className="h-8 w-8 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
-          <Building2 className="h-4 w-4" />
-        </div>
-        <div className="min-w-0">
-          <div className="font-medium truncate group-hover:text-primary capitalize">
-            {row.targetName}
-          </div>
-          <div className="text-xs text-muted-foreground">企业</div>
-        </div>
-      </Link>
-    );
-  }
-  // contact: refId like ENT-0001:0
-  const [entId, idx] = row.targetId.split(":");
-  return (
-    <Link
-      to="/outreach/enterprise/$id/contact/$idx"
-      params={{ id: entId, idx }}
-      className="group flex items-center gap-2.5 min-w-0"
-    >
-      <div className="h-8 w-8 rounded-full bg-accent/20 text-accent-foreground flex items-center justify-center shrink-0">
-        <UserRound className="h-4 w-4" />
-      </div>
-      <div className="min-w-0">
-        <div className="font-medium truncate group-hover:text-primary capitalize">
-          {row.targetName}
-        </div>
-        <div className="text-xs text-muted-foreground truncate">
-          {row.parentRef?.name ?? "—"}
-        </div>
-      </div>
-    </Link>
-  );
-}
-
 function DetailCell({
   row,
   onViewContent,
