@@ -368,7 +368,7 @@ export function syncFailedRefunds(now = Date.now()): number {
     newRefunds.push({
       id: makeId("rf"),
       kind: "refund",
-      cost: COST_REACH,
+      cost: r.cost,
       // refund is recorded slightly after the failed reach time
       createdAt: new Date(
         new Date(r.createdAt).getTime() + 1000,
@@ -424,7 +424,7 @@ export function cancelPendingReach(reachId: string): boolean {
   const refund: LedgerEntry = {
     id: makeId("rf"),
     kind: "refund",
-    cost: COST_REACH,
+    cost: r.cost,
     createdAt: new Date().toISOString(),
     targetKind: r.targetKind,
     targetId: r.targetId,
@@ -452,7 +452,7 @@ export function retryFailedReach(reachId: string): LedgerEntry | null {
   const fresh: LedgerEntry = {
     id: makeId("r"),
     kind: "reach",
-    cost: COST_REACH,
+    cost: costForChannel(r.channel, r.platform),
     createdAt: new Date().toISOString(),
     targetKind: r.targetKind,
     targetId: r.targetId,
