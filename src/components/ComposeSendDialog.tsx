@@ -97,6 +97,7 @@ export function ComposeSendDialog({
   const [previewIdx, setPreviewIdx] = useState(0);
   const [aiOpen, setAiOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [targetLang, setTargetLang] = useState<"zh" | "en">("zh");
 
   // 重置 state 每次打开
   useEffect(() => {
@@ -107,6 +108,7 @@ export function ComposeSendDialog({
     setContent("");
     setAiUsed(false);
     setAiCount(0);
+    setTargetLang("zh");
     if (isEmail) {
       setSenderId(
         initialSenderId ?? getDefaultUsableMailbox(mailboxes)?.id ?? mailboxes[0]?.id ?? "",
@@ -252,6 +254,7 @@ export function ComposeSendDialog({
         channel: isEmail ? "email" : "phone",
         targetName: sample?.name ?? "AI 生成",
       });
+      setTargetLang(params.language);
       if (isEmail && res.subject) setSubject(res.subject);
       if (res.content) setContent(res.content);
       setAiUsed(true);
