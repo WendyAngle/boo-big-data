@@ -725,6 +725,12 @@ function FavoritesPage() {
         channel="phone"
         recipients={smsRecipients}
       />
+      <BatchSocialDialog
+        open={batchSocialOpen}
+        onOpenChange={setBatchSocialOpen}
+        platform="WhatsApp"
+        candidates={waCandidates}
+      />
     </div>
   );
 }
