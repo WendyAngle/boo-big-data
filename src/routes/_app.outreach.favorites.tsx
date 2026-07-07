@@ -58,6 +58,7 @@ import {
 } from "@/lib/favorites";
 import { MaskedField } from "@/components/MaskedField";
 import { ReachButton } from "@/components/ReachButton";
+import { WhatsAppReachButton } from "@/components/WhatsAppReachButton";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
 import { findEnterprise } from "@/data/enterprises";
 import {
@@ -1033,6 +1034,13 @@ function _renderMeta(record: FavoriteRecord) {
               parentRef={parentRef}
               channel="phone"
               detail={m.phone}
+            />
+            <WhatsAppReachButton
+              targetKind="contact"
+              targetId={targetId}
+              targetName={record.title}
+              parentRef={parentRef}
+              phone={m.phone}
             />
           </div>
         )}
