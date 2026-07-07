@@ -591,6 +591,40 @@ function FavoritesPage() {
               <MessageSquare className="h-4 w-4" />
               批量发短信
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={selected.size === 0}
+                  className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  批量社媒触达
+                  <ChevronDown className="h-3 w-3 opacity-70" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem onClick={() => setBatchSocialOpen(true)}>
+                  <MessageCircle className="h-4 w-4 text-emerald-600" />
+                  WhatsApp
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled>
+                  <span className="inline-block h-4 w-4" />
+                  TikTok
+                  <span className="ml-auto text-[10px] text-muted-foreground">
+                    即将上线
+                  </span>
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled>
+                  <Facebook className="h-4 w-4" />
+                  Facebook
+                  <span className="ml-auto text-[10px] text-muted-foreground">
+                    即将上线
+                  </span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             {selected.size > 0 && (
               <Button
                 variant="outline"
