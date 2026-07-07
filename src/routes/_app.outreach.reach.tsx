@@ -301,7 +301,7 @@ function ReachPage() {
           <StatusTab active={statusTab === "all"} onClick={() => setStatusTab("all")}>
             全部 <span className="ml-1 text-muted-foreground">{reachRows.length}</span>
           </StatusTab>
-          {(["pending", "in_progress", "success", "failed"] as ReachStatus[]).map((s) => (
+          {(["success", "in_progress", "pending", "failed"] as ReachStatus[]).map((s) => (
             <StatusTab key={s} active={statusTab === s} onClick={() => setStatusTab(s)}>
               {REACH_STATUS_LABEL[s]} <span className="ml-1 text-muted-foreground">{counts[s]}</span>
             </StatusTab>
