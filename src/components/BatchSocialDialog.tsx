@@ -84,6 +84,35 @@ export interface BatchSocialDialogProps {
   candidates: SocialCandidate[];
 }
 
+function LangToggle({
+  value,
+  onChange,
+}: {
+  value: "zh" | "en";
+  onChange: (v: "zh" | "en") => void;
+}) {
+  return (
+    <div className="inline-flex items-center rounded-md border bg-background p-0.5 text-xs">
+      <span className="px-1.5 text-[10px] text-muted-foreground">目标语言</span>
+      {(["zh", "en"] as const).map((v) => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => onChange(v)}
+          className={cn(
+            "rounded px-2 py-0.5 transition-colors",
+            value === v
+              ? "bg-primary/10 text-primary font-medium"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {v === "zh" ? "中文" : "英文"}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function BatchSocialDialog({
   open,
   onOpenChange,
@@ -104,6 +133,7 @@ export function BatchSocialDialog({
   const [aiOpen, setAiOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [targetLang, setTargetLang] = useState<"zh" | "en">("zh");
 
   useEffect(() => {
     if (!open) return;
@@ -113,6 +143,7 @@ export function BatchSocialDialog({
     setAiCount(0);
     setPreviewIdx(0);
     setRevealed(false);
+    setTargetLang("zh");
     // 打开即自动校验（跳过已缓存）
     void verifyMany(
       incoming
@@ -271,6 +302,7 @@ export function BatchSocialDialog({
         channel: "social",
         targetName: sample?.name ?? "AI 生成",
       });
+      setTargetLang(params.language);
       if (res.content) setContent(res.content);
       setAiUsed(true);
       setAiCount((c) => c + 1);
@@ -488,7 +520,9 @@ export function BatchSocialDialog({
                   </Badge>
                 )}
               </Label>
-              <Button
+              <div className="flex items-center gap-2">
+                <LangToggle value={targetLang} onChange={setTargetLang} />
+                <Button
                 type="button"
                 size="sm"
                 variant="outline"
@@ -500,7 +534,8 @@ export function BatchSocialDialog({
                 <span className="text-xs text-muted-foreground">
                   -{COST_AI_SOCIAL} 积分/次
                 </span>
-              </Button>
+                </Button>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-1.5">
@@ -540,6 +575,9 @@ export function BatchSocialDialog({
                 <Label className="text-xs font-medium flex items-center gap-1">
                   <Eye className="h-3.5 w-3.5" />
                   预览（变量已替换）
+                  <span className="ml-2 rounded border border-border/60 bg-background px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground">
+                    目标语言 · {targetLang === "zh" ? "中文" : "英文"}
+                  </span>
                 </Label>
                 {verified.length > 1 && (
                   <Select
@@ -608,6 +646,7 @@ export function BatchSocialDialog({
         onOpenChange={setAiOpen}
         loading={aiLoading}
         platform={platform}
+        defaultLanguage={targetLang}
         onGenerate={handleAiGenerate}
       />
     </Dialog>
@@ -653,12 +692,14 @@ function AiComposeMiniDialog({
   onOpenChange,
   loading,
   platform,
+  defaultLanguage = "zh",
   onGenerate,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   loading: boolean;
   platform: SocialPlatform;
+  defaultLanguage?: "zh" | "en";
   onGenerate: (p: {
     scene: string;
     tone: "formal" | "friendly" | "concise";
@@ -668,8 +709,11 @@ function AiComposeMiniDialog({
 }) {
   const [scene, setScene] = useState("开发信");
   const [tone, setTone] = useState<"formal" | "friendly" | "concise">("friendly");
-  const [language, setLanguage] = useState<"zh" | "en">("zh");
+  const [language, setLanguage] = useState<"zh" | "en">(defaultLanguage);
   const [extra, setExtra] = useState("");
+  useEffect(() => {
+    if (open) setLanguage(defaultLanguage);
+  }, [open, defaultLanguage]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

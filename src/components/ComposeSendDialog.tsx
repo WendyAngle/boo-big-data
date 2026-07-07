@@ -61,6 +61,35 @@ import { generateAiContent } from "@/lib/api/ai-compose.functions";
 
 export type ComposeChannel = "email" | "phone";
 
+function LangToggle({
+  value,
+  onChange,
+}: {
+  value: "zh" | "en";
+  onChange: (v: "zh" | "en") => void;
+}) {
+  return (
+    <div className="inline-flex items-center rounded-md border bg-background p-0.5 text-xs">
+      <span className="px-1.5 text-[10px] text-muted-foreground">目标语言</span>
+      {(["zh", "en"] as const).map((v) => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => onChange(v)}
+          className={cn(
+            "rounded px-2 py-0.5 transition-colors",
+            value === v
+              ? "bg-primary/10 text-primary font-medium"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {v === "zh" ? "中文" : "英文"}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export interface ComposeSendDialogProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -97,6 +126,7 @@ export function ComposeSendDialog({
   const [previewIdx, setPreviewIdx] = useState(0);
   const [aiOpen, setAiOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [targetLang, setTargetLang] = useState<"zh" | "en">("zh");
 
   // 重置 state 每次打开
   useEffect(() => {
@@ -107,6 +137,7 @@ export function ComposeSendDialog({
     setContent("");
     setAiUsed(false);
     setAiCount(0);
+    setTargetLang("zh");
     if (isEmail) {
       setSenderId(
         initialSenderId ?? getDefaultUsableMailbox(mailboxes)?.id ?? mailboxes[0]?.id ?? "",
@@ -252,6 +283,7 @@ export function ComposeSendDialog({
         channel: isEmail ? "email" : "phone",
         targetName: sample?.name ?? "AI 生成",
       });
+      setTargetLang(params.language);
       if (isEmail && res.subject) setSubject(res.subject);
       if (res.content) setContent(res.content);
       setAiUsed(true);
@@ -413,7 +445,9 @@ export function ComposeSendDialog({
                   </Badge>
                 )}
               </Label>
-              <Button
+              <div className="flex items-center gap-2">
+                <LangToggle value={targetLang} onChange={setTargetLang} />
+                <Button
                 type="button"
                 size="sm"
                 variant="outline"
@@ -425,7 +459,8 @@ export function ComposeSendDialog({
                 <span className="text-xs text-muted-foreground">
                   -{isEmail ? COST_AI_EMAIL : COST_AI_SMS} 积分/次
                 </span>
-              </Button>
+                </Button>
+              </div>
             </div>
 
             {/* 变量插入 */}
@@ -504,6 +539,9 @@ export function ComposeSendDialog({
                   <span className="ml-1 inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="text-[10px] font-normal text-muted-foreground">
                     实时同步
+                  </span>
+                  <span className="ml-2 rounded border border-border/60 bg-background px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground">
+                    目标语言 · {targetLang === "zh" ? "中文" : "英文"}
                   </span>
                 </Label>
                 {recipients.length > 1 && (
@@ -589,6 +627,7 @@ export function ComposeSendDialog({
         onOpenChange={setAiOpen}
         channel={channel}
         loading={aiLoading}
+        defaultLanguage={targetLang}
         onGenerate={handleAiGenerate}
       />
     </Dialog>
@@ -602,12 +641,14 @@ function AiComposeDialog({
   onOpenChange,
   channel,
   loading,
+  defaultLanguage = "zh",
   onGenerate,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   channel: ComposeChannel;
   loading: boolean;
+  defaultLanguage?: "zh" | "en";
   onGenerate: (p: {
     scene: string;
     tone: "formal" | "friendly" | "concise";
@@ -618,8 +659,11 @@ function AiComposeDialog({
   const isEmail = channel === "email";
   const [scene, setScene] = useState("开发信");
   const [tone, setTone] = useState<"formal" | "friendly" | "concise">("friendly");
-  const [language, setLanguage] = useState<"zh" | "en">("zh");
+  const [language, setLanguage] = useState<"zh" | "en">(defaultLanguage);
   const [extra, setExtra] = useState("");
+  useEffect(() => {
+    if (open) setLanguage(defaultLanguage);
+  }, [open, defaultLanguage]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
