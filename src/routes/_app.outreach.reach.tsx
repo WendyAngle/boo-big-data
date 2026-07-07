@@ -467,6 +467,7 @@ function ReachPage() {
 
       <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
         <AlertDialogContent>
+          {(() => null)()}
           <AlertDialogHeader>
             <AlertDialogTitle>
               {confirm?.kind === "trigger" && "立即触达？"}
@@ -478,10 +479,10 @@ function ReachPage() {
                 <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。该条触达将立即进入"触达中"状态。</>
               )}
               {confirm?.kind === "cancel" && (
-                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。取消后将自动退还 {COST_REACH} 积分。</>
+                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。取消后将自动退还 {reachRows.find((r) => r.id === confirm.id)?.cost ?? COST_REACH} 积分。</>
               )}
               {confirm?.kind === "retry" && (
-                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。将基于原渠道与明细发起一条新的触达，并扣除 {COST_REACH} 积分。</>
+                <>对象：<span className="font-medium text-foreground">{confirm.target}</span>。将基于原渠道与明细发起一条新的触达，并扣除 {reachRows.find((r) => r.id === confirm.id)?.cost ?? COST_REACH} 积分。</>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -499,12 +500,14 @@ function ReachPage() {
                     toast.success("已立即触达，状态切换为「触达中」");
                   else toast.error("当前状态不可执行立即触达");
                 } else if (confirm.kind === "cancel") {
+                  const c = reachRows.find((r) => r.id === confirm.id)?.cost ?? COST_REACH;
                   if (cancelPendingReach(confirm.id))
-                    toast.success(`已取消触达，退还 ${COST_REACH} 积分`);
+                    toast.success(`已取消触达，退还 ${c} 积分`);
                   else toast.error("仅「待触达」状态可取消");
                 } else if (confirm.kind === "retry") {
+                  const c = reachRows.find((r) => r.id === confirm.id)?.cost ?? COST_REACH;
                   if (retryFailedReach(confirm.id))
-                    toast.success(`已重新触达，扣除 ${COST_REACH} 积分`);
+                    toast.success(`已重新触达，扣除 ${c} 积分`);
                   else toast.error("仅「触达失败」记录可重新触达");
                 }
                 setConfirm(null);
