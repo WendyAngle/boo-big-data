@@ -309,6 +309,7 @@ function ReachPage() {
                 <SelectItem value="email">邮件</SelectItem>
                 <SelectItem value="phone">电话</SelectItem>
                 <SelectItem value="social">社媒</SelectItem>
+                <SelectItem value="whatsapp">WhatsApp</SelectItem>
               </SelectContent>
             </Select>
           </div>
