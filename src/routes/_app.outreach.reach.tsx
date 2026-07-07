@@ -172,6 +172,8 @@ function ReachPage() {
       if (statusTab !== "all" && r.status !== statusTab) return false;
       if (channel === "whatsapp") {
         if (r.channel !== "social" || r.platform !== "WhatsApp") return false;
+      } else if (channel === "social") {
+        if (r.channel !== "social" || r.platform === "WhatsApp") return false;
       } else if (channel !== "all" && r.channel !== channel) {
         return false;
       }
