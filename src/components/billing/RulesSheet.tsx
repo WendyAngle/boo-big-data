@@ -91,7 +91,7 @@ export function RulesSheet({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden max-h-[85vh] flex flex-col">
+      <DialogContent className="sm:max-w-[640px] p-0 overflow-hidden max-h-[85vh] flex flex-col">
         <div className="bg-gradient-to-br from-primary/8 via-primary/4 to-transparent px-6 pt-6 pb-5 border-b">
           <DialogHeader className="space-y-2">
             <DialogTitle className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export function RulesSheet({
               </span>
               积分规则说明
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="whitespace-nowrap">
               以下业务操作将从积分余额中扣除相应积分，字段解锁一次性计费，触达按次计费。
             </DialogDescription>
           </DialogHeader>
@@ -121,7 +121,7 @@ export function RulesSheet({
           />
         </div>
 
-        <div className="mx-6 mb-6 mt-1 rounded-lg bg-muted/50 px-3 py-2.5 text-xs text-muted-foreground leading-relaxed shrink-0">
+        <div className="mx-6 mb-6 mt-1 rounded-lg bg-muted/50 px-3 py-2.5 text-xs text-muted-foreground leading-relaxed shrink-0 whitespace-nowrap">
           积分仅用于功能解锁，不可提现。所有扣费流水可在账单列表中查询与复核。
         </div>
       </DialogContent>
