@@ -883,6 +883,20 @@ export function seedDemoLedgerIfEmpty() {
             : platform === "WhatsApp"
               ? maskPhone(e.phone)
               : `linkedin.com/company/${e.name.toLowerCase().replace(/[^a-z]/g, "")}`;
+      const extra: Partial<LedgerEntry> =
+        channel === "email"
+          ? {
+              senderEmail: i % 2 === 0 ? "sales@boo-demo.com" : "bd@boo-demo.com",
+              subject: `${e.name} · 出海合作邀约`,
+              content: `${e.name} 团队您好,\n\n我们关注到贵司在 ${e.industry} 领域的表现,希望就跨境采购 / 供应链合作与贵司做一次简短沟通。\n\n方便的话,期待回复约定 15 分钟线上交流。\n\nBoo 团队`,
+              aiGenerated: i % 3 === 0,
+            }
+          : channel === "phone"
+            ? {
+                content: `【Boo】您好,我们是 Boo 出海平台,希望就 ${e.name} 的采购 / 供应合作做简短沟通,方便时请回拨此号码或回复 1。`,
+                aiGenerated: i % 2 === 1,
+              }
+            : {};
       return {
         id: makeId("r"),
         kind: "reach",
@@ -898,6 +912,7 @@ export function seedDemoLedgerIfEmpty() {
         platform: channel === "social" ? (platform ?? "LinkedIn") : undefined,
         detail,
         forcedStatus: status,
+        ...extra,
         ...(failReason ? { failReason } : {}),
       };
     };
@@ -921,6 +936,20 @@ export function seedDemoLedgerIfEmpty() {
             : platform === "WhatsApp"
               ? maskPhone(c.phone ?? e.phone)
               : `linkedin.com/in/${c.name.replace(/\s+/g, "-")}`;
+      const extra: Partial<LedgerEntry> =
+        channel === "email"
+          ? {
+              senderEmail: k % 2 === 0 ? "bd@boo-demo.com" : "sales@boo-demo.com",
+              subject: `Hi ${c.name}, 关于 ${e.name} 的一次合作探讨`,
+              content: `Hi ${c.name},\n\n看到您在 ${e.name} 担任${c.title ?? "相关负责人"},我们近期有一批适配贵司业务的方案,希望预约 15 分钟做简短交流。\n\n如方便请回复邮件约定时间。\n\nThanks,\nBoo 团队`,
+              aiGenerated: (i + k) % 2 === 0,
+            }
+          : channel === "phone"
+            ? {
+                content: `【Boo】${c.name} 您好,我们针对 ${e.name} 的业务方向准备了一份简报,方便时请回拨此号码或回复 1。`,
+                aiGenerated: (i + k) % 2 === 1,
+              }
+            : {};
       return {
         id: makeId("r"),
         kind: "reach",
@@ -937,6 +966,7 @@ export function seedDemoLedgerIfEmpty() {
         platform: channel === "social" ? (platform ?? "LinkedIn") : undefined,
         detail,
         forcedStatus: status,
+        ...extra,
         ...(failReason ? { failReason } : {}),
       };
     };
