@@ -76,7 +76,7 @@ export interface LedgerEntry {
 }
 
 const LEDGER_KEY = "boo:ledger:v2";
-const LEDGER_SEED_FLAG = "boo:ledger:v9:seeded";
+const LEDGER_SEED_FLAG = "boo:ledger:v10:seeded";
 const REVEAL_KEY = "boo:reveal:v1";
 
 /* -------------------- ledger store -------------------- */
@@ -624,7 +624,7 @@ export function seedDemoLedgerIfEmpty() {
         cost:
           channel === "social"
             ? costForSocialPlatform(platform)
-            : COST_REACH,
+            : costForChannel(channel, platform),
         createdAt: isoMinutesAgo(minAgo),
         targetKind: "enterprise",
         targetId: e.id,
@@ -662,7 +662,7 @@ export function seedDemoLedgerIfEmpty() {
         cost:
           channel === "social"
             ? costForSocialPlatform(platform)
-            : COST_REACH,
+            : costForChannel(channel, platform),
         createdAt: isoMinutesAgo(minAgo),
         targetKind: "contact",
         targetId: `${e.id}:${idx}`,
