@@ -1046,9 +1046,19 @@ export function resetDemoLedger() {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.removeItem(LEDGER_SEED_FLAG);
+    window.localStorage.removeItem(UNLOCK_KEY);
   } catch {}
+  unlockSet = new Set();
+  emitUnlock();
   ledger = [];
   writeLedger(ledger);
   emitLedger();
   seedDemoLedgerIfEmpty();
+}
+
+// 兼容已 seed 过的老用户:模块加载时同步一次持久解锁集
+if (typeof window !== "undefined") {
+  try {
+    syncUnlocksFromLedger();
+  } catch {}
 }
