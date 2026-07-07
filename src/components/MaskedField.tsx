@@ -1,4 +1,4 @@
-import { Eye } from "lucide-react";
+import { Eye, Unlock } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -80,7 +80,7 @@ export function MaskedField({
   // 已永久解锁 → 直接明文展示,不再展示查看按钮,也不再消耗积分
   if (unlocked) {
     return (
-      <span className={cn("inline-flex items-center", className)}>
+      <span className={cn("inline-flex items-center gap-1.5", className)}>
         <span
           className={cn(
             "select-text",
@@ -89,6 +89,19 @@ export function MaskedField({
         >
           {value}
         </span>
+        <TooltipProvider delayDuration={80}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                aria-label="已永久解锁"
+                className="inline-flex h-6 w-6 items-center justify-center rounded text-emerald-600"
+              >
+                <Unlock className="h-3.5 w-3.5" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top">已永久解锁，查看不再消耗积分</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </span>
     );
   }
