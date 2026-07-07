@@ -45,6 +45,7 @@ import {
 import {
   useUsableMailboxes,
   getDefaultUsableMailbox,
+  updateMailbox,
   type Mailbox,
 } from "@/lib/mailboxes";
 import {
@@ -178,11 +179,17 @@ export function ComposeSendDialog({
   const aiCost = aiCount * (isEmail ? COST_AI_EMAIL : COST_AI_SMS);
   const grandTotal = sendTotal + aiCost;
 
+  // 发件邮箱日发上限剩余额度（仅邮件）
+  const remainingQuota =
+    isEmail && sender ? Math.max(0, sender.dailyLimit - sender.sentToday) : Infinity;
+  const overLimit = isEmail && !!sender && recipients.length > remainingQuota;
+
   const canSend =
     recipients.length > 0 &&
     (!isEmail || !!sender) &&
     (!isEmail || subject.trim().length > 0) &&
-    content.trim().length > 0;
+    content.trim().length > 0 &&
+    !overLimit;
 
   function handleSend() {
     if (!canSend) return;
@@ -203,6 +210,10 @@ export function ComposeSendDialog({
         aiGenerated: aiUsed,
       });
       n++;
+    }
+    // 累加发件邮箱当日已发送数
+    if (isEmail && sender && n > 0) {
+      updateMailbox(sender.id, { sentToday: sender.sentToday + n });
     }
     onOpenChange(false);
     onSent?.(n);
