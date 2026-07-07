@@ -78,6 +78,7 @@ export interface LedgerEntry {
 const LEDGER_KEY = "boo:ledger:v2";
 const LEDGER_SEED_FLAG = "boo:ledger:v11:seeded";
 const REVEAL_KEY = "boo:reveal:v1";
+const UNLOCK_KEY = "boo:unlocked:v1";
 
 /* -------------------- ledger store -------------------- */
 
@@ -537,6 +538,98 @@ export function setRevealed(key: string, value: boolean) {
 export function useRevealed(key: string): boolean {
   useSyncExternalStore(subscribeReveal, getRevealVersion, getRevealVersion);
   return revealSet.has(key);
+}
+
+/* -------------------- unlock cache (permanent) -------------------- */
+/**
+ * 已永久解锁的字段集合(localStorage)。一旦解锁,后续查看不再消耗积分,
+ * 且跨会话保持。与 reveal(session) 的"展开/收起"UI 状态相互独立。
+ */
+function readUnlock(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = window.localStorage.getItem(UNLOCK_KEY);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    if (Array.isArray(arr)) return new Set(arr as string[]);
+  } catch {}
+  return new Set();
+}
+
+function writeUnlock(s: Set<string>) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(UNLOCK_KEY, JSON.stringify([...s]));
+  } catch {}
+}
+
+let unlockSet: Set<string> = readUnlock();
+let unlockVersion = 0;
+const unlockListeners = new Set<() => void>();
+
+function emitUnlock() {
+  unlockVersion++;
+  unlockListeners.forEach((l) => l());
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key === UNLOCK_KEY) {
+      unlockSet = readUnlock();
+      emitUnlock();
+    }
+  });
+}
+
+function subscribeUnlock(cb: () => void) {
+  unlockListeners.add(cb);
+  return () => unlockListeners.delete(cb);
+}
+
+function getUnlockVersion() {
+  return unlockVersion;
+}
+
+export function isUnlocked(key: string): boolean {
+  return unlockSet.has(key);
+}
+
+export function markUnlocked(key: string) {
+  if (unlockSet.has(key)) return;
+  const next = new Set(unlockSet);
+  next.add(key);
+  unlockSet = next;
+  writeUnlock(unlockSet);
+  emitUnlock();
+}
+
+export function useUnlocked(key: string): boolean {
+  useSyncExternalStore(subscribeUnlock, getUnlockVersion, getUnlockVersion);
+  return unlockSet.has(key);
+}
+
+/**
+ * 根据账单中已有的 view 记录同步 unlock 集合,保证 mock/历史数据也自动解锁。
+ * 幂等,可重复调用。
+ */
+export function syncUnlocksFromLedger(): number {
+  let added = 0;
+  const next = new Set(unlockSet);
+  for (const e of ledger) {
+    if (e.kind !== "view" || !e.field) continue;
+    const sub = e.field === "social" ? e.platform : undefined;
+    const k = revealKey(e.targetKind, e.targetId, e.field, sub);
+    if (!next.has(k)) {
+      next.add(k);
+      added++;
+    }
+  }
+  if (added > 0) {
+    unlockSet = next;
+    writeUnlock(unlockSet);
+    emitUnlock();
+  }
+  return added;
 }
 
 /* -------------------- masking helpers -------------------- */
