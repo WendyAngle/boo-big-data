@@ -688,16 +688,28 @@ function AiComposeDialog({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1">
-            <Label className="text-xs">语气</Label>
-            <Select value={tone} onValueChange={(v) => setTone(v as typeof tone)}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="formal">正式商务</SelectItem>
-                <SelectItem value="friendly">友好诚恳</SelectItem>
-                <SelectItem value="concise">简洁直接</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">语气</Label>
+              <Select value={tone} onValueChange={(v) => setTone(v as typeof tone)}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="formal">正式商务</SelectItem>
+                  <SelectItem value="friendly">友好诚恳</SelectItem>
+                  <SelectItem value="concise">简洁直接</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">目标语言</Label>
+              <Select value={language} onValueChange={(v) => setLanguage(v as typeof language)}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="zh">中文</SelectItem>
+                  <SelectItem value="en">英文</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="space-y-1">
             <Label className="text-xs">补充要求（可选）</Label>
