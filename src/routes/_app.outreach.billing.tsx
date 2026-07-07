@@ -570,7 +570,7 @@ function BillingPage() {
                         </button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        信息查看 5 积分/字段 · 触达-发送 1~10 积分/次 · 触达-AI生成 2~3 积分/次 · 失败自动退还
+                        信息查看 10~60 积分/字段 · 触达-发送 10~100 积分/次 · 触达-AI生成 2~3 积分/次 · 失败自动退还
                       </TooltipContent>
                     </Tooltip>
                   </span>

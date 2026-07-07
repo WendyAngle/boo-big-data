@@ -50,7 +50,7 @@ import {
   chargeAiGeneration,
   costForSocialPlatform,
   COST_AI_SOCIAL,
-  COST_VIEW,
+  COST_VIEW_PHONE,
 } from "@/lib/credits-ledger";
 import { MaskedField } from "@/components/MaskedField";
 import {
@@ -445,7 +445,7 @@ export function BatchSocialDialog({
                 </Label>
                 <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                   <Info className="h-3 w-3" />
-                  号码默认脱敏，点击 👁 首次查看 -{COST_VIEW} 积分，永久解锁；成功发送后自动解锁
+                  号码默认脱敏，点击 👁 首次查看 -{COST_VIEW_PHONE} 积分，永久解锁；成功发送后自动解锁
                 </span>
               </div>
               <div className="flex flex-wrap gap-1.5 rounded-md border bg-muted/20 p-2 max-h-32 overflow-y-auto">
