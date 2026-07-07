@@ -138,7 +138,7 @@ function RechargePage() {
   }, [isCustom, pkg, customAmount]);
 
   const totalCredits = order.credits + order.bonus;
-  const unitPrice = order.price > 0 ? (order.price / (order.credits / 1000)).toFixed(2) : "0";
+  const unitPrice = order.price > 0 ? (order.price / (order.credits / 100)).toFixed(2) : "0";
 
   function handlePay() {
     if (needInvoice && invoice.type === "company" && (!invoice.title || !invoice.taxNo)) {
@@ -324,7 +324,7 @@ function RechargePage() {
                     )}
                     <div className="mt-3 text-sm font-semibold text-foreground">¥ {p.price}</div>
                     <div className="text-[11px] text-muted-foreground tabular-nums">
-                      ¥{(p.price / (p.credits / 1000)).toFixed(2)} / 1000 积分
+                      ¥{(p.price / (p.credits / 100)).toFixed(2)} / 100 积分
                     </div>
                     {active && (
                       <div className="absolute top-2 left-2 h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
@@ -584,7 +584,7 @@ function RechargePage() {
                 <span className="tabular-nums font-semibold">{totalCredits.toLocaleString()} 积分</span>
               </Row>
               <Row label="单价">
-                <span className="tabular-nums text-muted-foreground">¥{unitPrice} / 1000 积分</span>
+                 <span className="tabular-nums text-muted-foreground">¥{unitPrice} / 100 积分</span>
               </Row>
               <Separator />
               <Row label="支付方式">
