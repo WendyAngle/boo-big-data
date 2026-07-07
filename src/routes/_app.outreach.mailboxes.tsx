@@ -20,6 +20,7 @@ import {
   Activity,
   Loader2,
   Building2,
+  HelpCircle,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -805,13 +806,34 @@ function MailboxFormDialog({
           </Field>
           <div className="md:col-span-2 space-y-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-              <Field label="日发上限">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                  日发上限
+                  <TooltipProvider delayDuration={150}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="inline-flex items-center justify-center text-muted-foreground hover:text-foreground focus:outline-none"
+                          aria-label="日发上限说明"
+                        >
+                          <HelpCircle className="h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                        该值决定此邮箱每日可触达的邮件上限。设置过高易触发服务商风控，导致邮箱被限流或封禁。建议新邮箱从
+                        <span className="font-medium"> 30–50 封/日 </span>起步，稳定养号 2–4 周后逐步提升；成熟邮箱推荐
+                        <span className="font-medium"> 100–200 封/日</span>，一般不超过 300 封/日。
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </Label>
                 <Input
                   type="number"
                   value={form.dailyLimit}
                   onChange={(e) => update("dailyLimit", Number(e.target.value))}
                 />
-              </Field>
+              </div>
               <div className="flex items-center gap-3 h-9 md:mt-[26px]">
                 <Switch
                   checked={form.isDefault}
@@ -821,11 +843,6 @@ function MailboxFormDialog({
                 <Label className="text-sm">设为默认发件邮箱</Label>
               </div>
             </div>
-            <p className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground leading-relaxed">
-              该值决定此邮箱每日可触达的邮件上限。设置过高易触发服务商风控，导致邮箱被限流或封禁。建议新邮箱从
-              <span className="font-medium text-foreground"> 30–50 封/日 </span>起步，稳定养号 2–4 周后逐步提升；成熟邮箱推荐
-              <span className="font-medium text-foreground"> 100–200 封/日</span>，一般不超过 300 封/日。
-            </p>
           </div>
           <Field label="邮件签名" className="md:col-span-2">
             <Textarea
