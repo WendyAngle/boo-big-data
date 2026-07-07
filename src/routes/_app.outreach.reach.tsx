@@ -449,6 +449,16 @@ function ReachPage() {
             </TableBody>
           </Table>
         )}
+        {filtered.length > 0 && (
+          <div className="px-5 pb-4">
+            <ListPagination
+              page={page}
+              pageSize={pageSize}
+              total={filtered.length}
+              onPageChange={setPage}
+            />
+          </div>
+        )}
       </Card>
 
       <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
