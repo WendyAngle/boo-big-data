@@ -1142,6 +1142,12 @@ function LeadCard({
               channel="phone"
               detail={e.phone}
             />
+            <WhatsAppReachButton
+              targetKind="enterprise"
+              targetId={e.id}
+              targetName={e.name}
+              phone={e.phone}
+            />
           </div>
         </div>
         {firstContact && (
