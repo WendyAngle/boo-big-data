@@ -54,6 +54,9 @@ import {
   costForChannel,
   COST_AI_EMAIL,
   COST_AI_SMS,
+  computeReachBreakdown,
+  performReachAutoUnlocks,
+  useLedger,
 } from "@/lib/credits-ledger";
 import { useLeadProfile } from "@/lib/lead-profile";
 import { useCurrentUser } from "@/lib/current-user";
@@ -116,6 +119,7 @@ export function ComposeSendDialog({
   const navigate = useNavigate();
   const my = myContext(profile, user);
   const callGenerate = useServerFn(generateAiContent);
+  const ledger = useLedger();
 
   const [recipients, setRecipients] = useState<Recipient[]>(incomingRecipients);
   const [subject, setSubject] = useState("");
@@ -202,13 +206,30 @@ export function ComposeSendDialog({
   );
 
   // 费用合计
-  const unit = costForChannel(channel === "phone" ? "phone" : "email");
-  const sendCostPerRecipient = isEmail
-    ? unit
-    : unit * smsSegments(content || ""); // 短信按字符拆分
+  const unit = costForChannel(isEmail ? "email" : "phone");
+  const segments = isEmail ? 1 : Math.max(1, smsSegments(content || ""));
+  const sendCostPerRecipient = isEmail ? unit : unit * segments;
   const sendTotal = recipients.length * sendCostPerRecipient;
+
+  // 未解锁字段的自动查看费合计（按每个收件人独立判断）
+  const viewCostTotal = useMemo(() => {
+    let total = 0;
+    for (const r of recipients) {
+      const bd = computeReachBreakdown(
+        { targetKind: r.targetKind, targetId: r.targetId },
+        isEmail ? "email" : "phone",
+        undefined,
+        { reachCostOverride: 0 },
+      );
+      total += bd.viewCost;
+    }
+    return total;
+    // 依赖 ledger 版本以在解锁状态变化时重算
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipients, isEmail, ledger]);
+
   const aiCost = aiCount * (isEmail ? COST_AI_EMAIL : COST_AI_SMS);
-  const grandTotal = sendTotal + aiCost;
+  const grandTotal = sendTotal + viewCostTotal + aiCost;
 
   // 发件邮箱日发上限剩余额度（仅邮件）
   const remainingQuota =
@@ -228,6 +249,15 @@ export function ComposeSendDialog({
     for (const r of recipients) {
       const finalSubject = isEmail ? renderTemplate(subject, r.ctx) : undefined;
       const finalContent = renderTemplate(content, r.ctx);
+      // 未解锁时先扣查看费并永久解锁（幂等）
+      performReachAutoUnlocks({
+        targetKind: r.targetKind,
+        targetId: r.targetId,
+        targetName: r.name,
+        parentRef: r.parentRef,
+        detail: r.address,
+        fields: isEmail ? [{ field: "email" }] : [{ field: "phone" }],
+      });
       createReach({
         targetKind: r.targetKind,
         targetId: r.targetId,
@@ -239,6 +269,7 @@ export function ComposeSendDialog({
         subject: finalSubject,
         content: finalContent,
         aiGenerated: aiUsed,
+        cost: sendCostPerRecipient,
       });
       n++;
     }
@@ -254,6 +285,8 @@ export function ComposeSendDialog({
         : `已加入发送队列：${n} 条短信`,
       {
         description: `共扣除 ${grandTotal} 积分${
+          viewCostTotal > 0 ? `（含自动解锁查看 ${viewCostTotal} 积分）` : ""
+        }${
           aiCost > 0 ? `（含 AI 文案 ${aiCost} 积分）` : ""
         }，可在「触达」模块查看进度`,
       },
