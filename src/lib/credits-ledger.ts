@@ -815,7 +815,7 @@ export function seedDemoLedgerIfEmpty() {
       return {
         id: makeId("v"),
         kind: "view",
-        cost: COST_VIEW,
+        cost: costForView(field),
         createdAt: isoMinutesAgo(minAgo),
         targetKind: "enterprise",
         targetId: e.id,
@@ -837,7 +837,7 @@ export function seedDemoLedgerIfEmpty() {
       return {
         id: makeId("v"),
         kind: "view",
-        cost: COST_VIEW,
+        cost: costForView(field),
         createdAt: isoMinutesAgo(minAgo),
         targetKind: "contact",
         targetId: `${e.id}:${idx}`,
@@ -1014,7 +1014,7 @@ export function seedDemoLedgerIfEmpty() {
         return {
           id: makeId("v"),
           kind: "view" as LedgerKind,
-          cost: COST_VIEW,
+          cost: COST_VIEW_SOCIAL,
           createdAt: isoMinutesAgo(48),
           targetKind: "enterprise" as TargetKind,
           targetId: e.id,
