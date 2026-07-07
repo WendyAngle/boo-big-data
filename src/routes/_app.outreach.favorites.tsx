@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Star,
@@ -760,8 +760,55 @@ function FavoriteCard({
 }) {
   const meta = KIND_META[record.kind];
   const Icon = meta.icon;
+  const navigate = useNavigate();
 
   const target = useTarget(record);
+
+  const openTargetDetail = () => {
+    if (!target) return;
+    if (target.kind === "enterprise") {
+      navigate({ to: "/outreach/enterprise/$id", params: { id: target.id }, hash: target.hash });
+      return;
+    }
+    if (target.kind === "contact") {
+      navigate({ to: "/outreach/enterprise/$id/contact/$idx", params: { id: target.id, idx: target.idx } });
+      return;
+    }
+    if (target.kind === "product") {
+      navigate({ to: "/outreach/products/$hs", params: { hs: target.id } });
+      return;
+    }
+    navigate({ to: "/outreach/bills" });
+  };
+
+  const handleContactCardClick = (event: MouseEvent<HTMLElement>) => {
+    const clickTarget = event.target;
+    if (!(clickTarget instanceof Element)) return;
+
+    // Radix Dialog/Dropdown 内容通过 Portal 渲染，React 事件仍会向卡片冒泡；
+    // 只允许来自当前卡片 DOM 内、且不属于交互控件的点击进入详情。
+    if (!event.currentTarget.contains(clickTarget)) return;
+    if (
+      clickTarget.closest(
+        [
+          "a",
+          "button",
+          "input",
+          "textarea",
+          "select",
+          "label",
+          "[role='button']",
+          "[role='checkbox']",
+          "[role='menuitem']",
+          "[data-radix-popper-content-wrapper]",
+        ].join(","),
+      )
+    ) {
+      return;
+    }
+
+    openTargetDetail();
+  };
 
   const content = (
     <>
@@ -791,11 +838,13 @@ function FavoriteCard({
 
   const contentClassName = "group flex items-start gap-3 flex-1 min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-  const card = (linkedContent: ReactNode) => (
+  const card = (linkedContent: ReactNode, contactCardLink = false) => (
     <Card
+      onClick={contactCardLink ? handleContactCardClick : undefined}
       className={cn(
         "p-4 h-full transition-all relative",
         "hover:shadow-md hover:border-primary/40",
+        contactCardLink && "cursor-pointer",
         selected && "ring-2 ring-primary/50",
       )}
     >
@@ -846,13 +895,10 @@ function FavoriteCard({
   }
   if (target.kind === "contact") {
     return card(
-      <Link
-        to="/outreach/enterprise/$id/contact/$idx"
-        params={{ id: target.id, idx: target.idx }}
-        className={contentClassName}
-      >
+      <div className={contentClassName}>
         {content}
-      </Link>,
+      </div>,
+      true,
     );
   }
   if (target.kind === "product") {
