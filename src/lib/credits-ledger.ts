@@ -17,9 +17,9 @@ export const COST_VIEW = 5;
 export const COST_REACH = 10;
 
 /** 单条发送积分单价（按渠道） */
-export const COST_REACH_EMAIL = 1;
-export const COST_REACH_SMS = 2;
-export const COST_REACH_SOCIAL = 10;
+export const COST_REACH_EMAIL = 10;
+export const COST_REACH_SMS = 60;
+export const COST_REACH_SOCIAL = 50;
 /** 社媒各平台单价（覆盖 COST_REACH_SOCIAL 默认值） */
 export const COST_REACH_SOCIAL_WHATSAPP = 100;
 
@@ -76,7 +76,7 @@ export interface LedgerEntry {
 }
 
 const LEDGER_KEY = "boo:ledger:v2";
-const LEDGER_SEED_FLAG = "boo:ledger:v8:seeded";
+const LEDGER_SEED_FLAG = "boo:ledger:v9:seeded";
 const REVEAL_KEY = "boo:reveal:v1";
 
 /* -------------------- ledger store -------------------- */
