@@ -192,6 +192,12 @@ function EnterpriseDetailPage() {
                 channel="phone"
                 detail={e.phone}
               />
+              <WhatsAppReachButton
+                targetKind="enterprise"
+                targetId={e.id}
+                targetName={e.name}
+                phone={e.phone}
+              />
             </div>
           </Field>
         </div>
@@ -318,6 +324,13 @@ function EnterpriseDetailPage() {
                       parentRef={{ id: e.id, name: e.name }}
                       channel="phone"
                       detail={c.phone}
+                    />
+                    <WhatsAppReachButton
+                      targetKind="contact"
+                      targetId={`${e.id}:${idx}`}
+                      targetName={c.name}
+                      parentRef={{ id: e.id, name: e.name }}
+                      phone={c.phone}
                     />
                   </div>
                 )}
