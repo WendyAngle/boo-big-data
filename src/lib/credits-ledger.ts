@@ -896,7 +896,15 @@ export function seedDemoLedgerIfEmpty() {
                 content: `【Boo】您好,我们是 Boo 出海平台,希望就 ${e.name} 的采购 / 供应合作做简短沟通,方便时请回拨此号码或回复 1。`,
                 aiGenerated: i % 2 === 1,
               }
-            : {};
+            : channel === "social"
+              ? {
+                  content:
+                    platform === "WhatsApp"
+                      ? `Hi ${e.name} team, this is Boo — we noticed your work in ${e.industry} and would love a quick 10-min chat about cross-border sourcing opportunities. Reply here anytime.`
+                      : `Hi ${e.name} team,\n\nSaw your recent updates in ${e.industry}. We're helping global buyers connect with vendors like you — would you be open to a brief intro call this week?\n\n— Boo team`,
+                  aiGenerated: i % 2 === 0,
+                }
+              : {};
       return {
         id: makeId("r"),
         kind: "reach",
@@ -949,7 +957,15 @@ export function seedDemoLedgerIfEmpty() {
                 content: `【Boo】${c.name} 您好,我们针对 ${e.name} 的业务方向准备了一份简报,方便时请回拨此号码或回复 1。`,
                 aiGenerated: (i + k) % 2 === 1,
               }
-            : {};
+            : channel === "social"
+              ? {
+                  content:
+                    platform === "WhatsApp"
+                      ? `Hi ${c.name}, this is Boo — I came across your profile at ${e.name}. Would love to share a short brief tailored to your team, mind if I send it over?`
+                      : `Hi ${c.name},\n\nSaw you lead ${c.title ?? "the team"} at ${e.name}. We've been supporting similar teams on cross-border partnerships and I'd love to share a short brief — open to a quick chat?\n\n— Boo team`,
+                  aiGenerated: (i + k) % 2 === 0,
+                }
+              : {};
       return {
         id: makeId("r"),
         kind: "reach",
