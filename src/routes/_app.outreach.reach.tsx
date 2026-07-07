@@ -85,6 +85,7 @@ import {
   type ReachStatus,
   type ReachChannel,
 } from "@/lib/credits-ledger";
+import { ListPagination } from "@/components/ListPagination";
 
 export const Route = createFileRoute("/_app/outreach/reach")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 触达 | Boo数据平台" }] }),
@@ -122,6 +123,8 @@ function ReachPage() {
     "all",
   );
   const [kw, setKw] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
   const [confirm, setConfirm] = useState<
     | null
     | {
@@ -182,6 +185,15 @@ function ReachPage() {
       );
     });
   }, [reachRows, statusTab, channel, kw]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusTab, channel, kw]);
+
+  const pageData = useMemo(
+    () => filtered.slice((page - 1) * pageSize, page * pageSize),
+    [filtered, page],
+  );
 
   const grossCost = reachRows.reduce((s, r) => s + r.cost, 0);
   const refundTotal = reachRows
@@ -369,7 +381,7 @@ function ReachPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((r) => (
+              {pageData.map((r) => (
                 <TableRow key={r.id} className="hover:bg-muted/30">
                   <TableCell className="font-mono tabular-nums text-xs text-muted-foreground whitespace-nowrap">
                     {fmtTime(r.createdAt)}
