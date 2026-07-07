@@ -71,6 +71,7 @@ import {
 import { FavoriteToggle } from "@/components/FavoriteToggle";
 import { MaskedField } from "@/components/MaskedField";
 import { ReachButton } from "@/components/ReachButton";
+import { WhatsAppReachButton } from "@/components/WhatsAppReachButton";
 import { AiQuotaPacksDialog } from "@/components/leads/AiQuotaPacksDialog";
 import { toast } from "sonner";
 import {
@@ -1140,6 +1141,12 @@ function LeadCard({
               targetName={e.name}
               channel="phone"
               detail={e.phone}
+            />
+            <WhatsAppReachButton
+              targetKind="enterprise"
+              targetId={e.id}
+              targetName={e.name}
+              phone={e.phone}
             />
           </div>
         </div>

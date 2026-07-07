@@ -30,6 +30,7 @@ import heroBg from "@/assets/enterprise-hero.jpg";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
 import { MaskedField } from "@/components/MaskedField";
 import { ReachButton } from "@/components/ReachButton";
+import { WhatsAppReachButton } from "@/components/WhatsAppReachButton";
 
 interface ContactDetail {
   enterprise: Enterprise;
@@ -396,6 +397,13 @@ function ContactDetailPage() {
                   parentRef={{ id: e.id, name: e.name }}
                   channel="phone"
                   detail={c.phone}
+                />
+                <WhatsAppReachButton
+                  targetKind="contact"
+                  targetId={`${e.id}:${d.idx}`}
+                  targetName={c.name}
+                  parentRef={{ id: e.id, name: e.name }}
+                  phone={c.phone}
                 />
               </div>
             ) : (
