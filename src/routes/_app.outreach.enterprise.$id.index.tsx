@@ -110,9 +110,19 @@ function EnterpriseDetailPage() {
 
       {/* 基本信息 */}
       <Section icon={<Info className="h-4 w-4" />} title="基本信息">
-        {/* 组1：企业名称 / 企业官网 —— 身份标识 */}
+        {/* 组1：企业名称 / 企业别名 —— 身份标识 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
           <Field label="企业名称">{e.name}</Field>
+          <Field label="企业别名">{e.alias || <Muted>未提供</Muted>}</Field>
+        </div>
+        {/* 组2：成立年份 / 企业官网 —— 企业体量 */}
+        <div className="mt-5 pt-5 border-t grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+          <Field label="成立年份">
+            <span className="inline-flex items-center gap-1">
+              <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+              {e.est || <Muted>未提供</Muted>}
+            </span>
+          </Field>
           <Field label="企业官网">
             <a
               href={`https://${e.website}`}
@@ -124,16 +134,6 @@ function EnterpriseDetailPage() {
               {e.website}
               <ExternalLink className="h-3 w-3 opacity-70" />
             </a>
-          </Field>
-        </div>
-        {/* 组2：员工规模 / 成立年份 —— 企业体量 */}
-        <div className="mt-5 pt-5 border-t grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-          <Field label="员工规模">{e.employees}</Field>
-          <Field label="成立年份">
-            <span className="inline-flex items-center gap-1">
-              <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-              {e.est || <Muted>未提供</Muted>}
-            </span>
           </Field>
         </div>
         {/* 组3：所属行业 —— 业务定位 */}
