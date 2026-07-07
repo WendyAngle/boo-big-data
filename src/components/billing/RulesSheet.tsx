@@ -91,7 +91,7 @@ export function RulesSheet({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[640px] p-0 overflow-hidden max-h-[85vh] flex flex-col">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[760px] p-0 overflow-hidden max-h-[85vh] flex flex-col">
         <div className="bg-gradient-to-br from-primary/8 via-primary/4 to-transparent px-6 pt-6 pb-5 border-b">
           <DialogHeader className="space-y-2">
             <DialogTitle className="flex items-center gap-2">
