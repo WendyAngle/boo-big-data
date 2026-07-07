@@ -486,7 +486,7 @@ function EnterpriseContactCard({
         </div>
         <div className="flex items-center gap-2 text-muted-foreground min-w-0">
           <Mail className="h-3.5 w-3.5 shrink-0" />
-          <div className="flex-1 min-w-0 truncate">
+          <div className="flex-1 min-w-0">
             <MaskedField
               targetKind="contact"
               targetId={`${e.id}:${idx}`}
@@ -509,7 +509,7 @@ function EnterpriseContactCard({
         {c.phone && (
           <div className="flex items-center gap-2 text-muted-foreground min-w-0">
             <Phone className="h-3.5 w-3.5 shrink-0" />
-            <div className="flex-1 min-w-0 truncate">
+            <div className="flex-1 min-w-0">
               <MaskedField
                 targetKind="contact"
                 targetId={`${e.id}:${idx}`}
