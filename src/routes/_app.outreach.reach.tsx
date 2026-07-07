@@ -414,8 +414,7 @@ function ReachPage() {
                     </div>
                   </TableCell>
                   <TableCell className="font-mono tabular-nums text-xs text-muted-foreground">
-                    <div>{fmtTime(r.createdAt)}</div>
-                    <div className="text-[11px] opacity-70">{relative(r.createdAt, now)}</div>
+                    {fmtTime(r.createdAt)}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     <div className="font-semibold text-rose-600">-{r.cost}</div>
