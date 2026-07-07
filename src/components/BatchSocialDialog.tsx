@@ -15,7 +15,7 @@ import {
   EyeOff,
   Eye as EyeOn,
 } from "lucide-react";
-import { useServerFn } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
 import {
