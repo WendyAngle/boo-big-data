@@ -28,7 +28,7 @@ import {
   getReachStatus,
   type ReachChannel,
   type TargetKind,
-  COST_REACH,
+  costForChannel,
 } from "@/lib/credits-ledger";
 import { ComposeSendDialog } from "@/components/ComposeSendDialog";
 import { findEnterprise } from "@/data/enterprises";
@@ -91,6 +91,7 @@ export function ReachButton({
   const inFlight = active && (active.status === "pending" || active.status === "in_progress");
   const channelLabel = { email: "邮件", phone: "电话", social: "社媒" }[channel];
   const isPhone = channel === "phone";
+  const reachCost = costForChannel(channel, platform);
 
   const confirm = () => {
     if (isEmail && !getDefaultUsableMailbox(mailboxes)) {
@@ -110,10 +111,10 @@ export function ReachButton({
     setOpen(false);
     toast.success(
       isEmail
-        ? `邮件已加入发送队列，扣除 ${COST_REACH} 积分`
+        ? `邮件已加入发送队列，扣除 ${reachCost} 积分`
         : isPhone
-        ? `短信已加入发送队列，扣除 ${COST_REACH} 积分`
-        : `已加入触达队列，扣除 ${COST_REACH} 积分`,
+        ? `短信已加入发送队列，扣除 ${reachCost} 积分`
+        : `已加入触达队列，扣除 ${reachCost} 积分`,
       {
         description: isEmail
           ? `通过 ${getDefaultUsableMailbox(mailboxes)?.email} 发送邮件至 ${targetName}，可在「触达」模块查看进度`
