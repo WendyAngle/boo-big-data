@@ -378,11 +378,11 @@ function ReachPage() {
                     <TargetCell row={r} />
                   </TableCell>
                   <TableCell>
-                    <ChannelBadge channel={r.channel!} />
+                    <ChannelBadge channel={r.channel!} platform={r.platform} />
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground truncate max-w-[320px]">
                     <div className="flex items-center gap-1.5">
-                      {r.channel === "social" && r.platform && (
+                      {r.channel === "social" && r.platform && r.platform !== "WhatsApp" && (
                         <span className="shrink-0 inline-flex items-center rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px] font-sans text-foreground">
                           {r.platform}
                         </span>
@@ -627,14 +627,13 @@ function StatusTab({
 }
 
 function ChannelBadge({ channel, platform }: { channel: ReachChannel; platform?: string }) {
-  const Icon = channel === "email" ? Mail : channel === "phone" ? Phone : Globe;
+  const isWhatsApp = channel === "social" && platform === "WhatsApp";
+  const Icon = channel === "email" ? Mail : channel === "phone" ? Phone : isWhatsApp ? Send : Globe;
+  const label = isWhatsApp ? "WhatsApp" : REACH_CHANNEL_LABEL[channel];
   return (
     <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted text-xs">
       <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-      <span className="font-medium text-foreground">
-        {REACH_CHANNEL_LABEL[channel]}
-      </span>
-      {platform && <span className="text-muted-foreground">· {platform}</span>}
+      <span className="font-medium text-foreground">{label}</span>
     </span>
   );
 }
