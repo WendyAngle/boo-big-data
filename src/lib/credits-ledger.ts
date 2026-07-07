@@ -179,6 +179,24 @@ export function createReach(input: {
   ledger = [entry, ...ledger];
   writeLedger(ledger);
   emitLedger();
+  // 成功发起触达 → 对应联系方式字段自动永久解锁,后续查看不再扣 5 积分
+  try {
+    const field: ViewField | null =
+      input.channel === "email"
+        ? "email"
+        : input.channel === "phone"
+          ? "phone"
+          : input.platform === "WhatsApp"
+            ? "phone"
+            : "social";
+    const sub =
+      input.channel === "social" && input.platform !== "WhatsApp"
+        ? input.platform
+        : undefined;
+    if (field) {
+      markUnlocked(revealKey(input.targetKind, input.targetId, field, sub));
+    }
+  } catch {}
   return entry;
 }
 
