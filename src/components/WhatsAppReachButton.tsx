@@ -37,6 +37,7 @@ export function WhatsAppReachButton({
 }: Props) {
   const profile = useLeadProfile();
   const user = useCurrentUser();
+  const [menuOpen, setMenuOpen] = useState(false);
   const [autoOpen, setAutoOpen] = useState(false);
 
   const candidates = useMemo<SocialCandidate[]>(() => {
@@ -80,7 +81,7 @@ export function WhatsAppReachButton({
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
-      <DropdownMenu>
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
           <button
             type="button"
@@ -107,6 +108,7 @@ export function WhatsAppReachButton({
             onClick={(e) => e.stopPropagation()}
             onSelect={(e) => {
               e.preventDefault();
+              setMenuOpen(false);
               openManual();
             }}
           >
@@ -118,6 +120,7 @@ export function WhatsAppReachButton({
             onClick={(e) => e.stopPropagation()}
             onSelect={(e) => {
               e.preventDefault();
+              setMenuOpen(false);
               setAutoOpen(true);
             }}
           >
