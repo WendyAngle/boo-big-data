@@ -692,12 +692,14 @@ function AiComposeMiniDialog({
   onOpenChange,
   loading,
   platform,
+  defaultLanguage = "zh",
   onGenerate,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   loading: boolean;
   platform: SocialPlatform;
+  defaultLanguage?: "zh" | "en";
   onGenerate: (p: {
     scene: string;
     tone: "formal" | "friendly" | "concise";
@@ -707,8 +709,11 @@ function AiComposeMiniDialog({
 }) {
   const [scene, setScene] = useState("开发信");
   const [tone, setTone] = useState<"formal" | "friendly" | "concise">("friendly");
-  const [language, setLanguage] = useState<"zh" | "en">("zh");
+  const [language, setLanguage] = useState<"zh" | "en">(defaultLanguage);
   const [extra, setExtra] = useState("");
+  useEffect(() => {
+    if (open) setLanguage(defaultLanguage);
+  }, [open, defaultLanguage]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
