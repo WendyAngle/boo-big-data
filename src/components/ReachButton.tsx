@@ -192,7 +192,11 @@ export function ReachButton({
   }
 
   return (
-    <>
+    <span
+      onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
       <button
         type="button"
         disabled={disabled || !!inFlight}
@@ -315,6 +319,6 @@ export function ReachButton({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </span>
   );
 }
