@@ -1,4 +1,4 @@
-import { Eye, EyeOff } from "lucide-react";
+import { Eye } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
