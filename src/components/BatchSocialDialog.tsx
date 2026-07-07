@@ -51,6 +51,7 @@ import {
   costForSocialPlatform,
   COST_AI_SOCIAL,
   COST_VIEW_PHONE,
+  COST_VIEW_SOCIAL,
   computeReachBreakdown,
   performReachAutoUnlocks,
   useLedger,
@@ -643,14 +644,25 @@ export function BatchSocialDialog({
               </span>
               <span className="font-medium">{sendTotal} 积分</span>
             </div>
-            {viewCostTotal > 0 && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  自动解锁查看{platform === "WhatsApp" ? "电话" : `${platform} 账号`}（未解锁字段，永久生效）
-                </span>
-                <span className="font-medium">{viewCostTotal} 积分</span>
-              </div>
-            )}
+            {viewCostTotal > 0 && (() => {
+              const unitView =
+                platform === "WhatsApp" ? COST_VIEW_PHONE : COST_VIEW_SOCIAL;
+              const unlockCount = Math.round(viewCostTotal / unitView);
+              const alreadyCount = sendableCount - unlockCount;
+              const fieldLabel =
+                platform === "WhatsApp" ? "电话" : `${platform} 账号`;
+              return (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    自动解锁查看{fieldLabel}（{unlockCount} 位未解锁收件人 ×{" "}
+                    {unitView} 积分
+                    {alreadyCount > 0 ? `，另 ${alreadyCount} 位已解锁免费` : ""}
+                    ，永久生效）
+                  </span>
+                  <span className="font-medium">{viewCostTotal} 积分</span>
+                </div>
+              );
+            })()}
             {aiCost > 0 && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">

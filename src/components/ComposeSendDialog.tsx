@@ -54,6 +54,8 @@ import {
   costForChannel,
   COST_AI_EMAIL,
   COST_AI_SMS,
+  COST_VIEW_EMAIL,
+  COST_VIEW_PHONE,
   computeReachBreakdown,
   performReachAutoUnlocks,
   useLedger,
@@ -617,14 +619,22 @@ export function ComposeSendDialog({
               </span>
               <span className="font-medium">{sendTotal} 积分</span>
             </div>
-            {viewCostTotal > 0 && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  自动解锁查看{isEmail ? "邮箱" : "电话"}（未解锁字段，永久生效）
-                </span>
-                <span className="font-medium">{viewCostTotal} 积分</span>
-              </div>
-            )}
+            {viewCostTotal > 0 && (() => {
+              const unitView = isEmail ? COST_VIEW_EMAIL : COST_VIEW_PHONE;
+              const unlockCount = Math.round(viewCostTotal / unitView);
+              const alreadyCount = recipients.length - unlockCount;
+              return (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    自动解锁查看{isEmail ? "邮箱" : "电话"}（{unlockCount} 位未解锁
+                    收件人 × {unitView} 积分
+                    {alreadyCount > 0 ? `，另 ${alreadyCount} 位已解锁免费` : ""}
+                    ，永久生效）
+                  </span>
+                  <span className="font-medium">{viewCostTotal} 积分</span>
+                </div>
+              );
+            })()}
             {aiCost > 0 && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">
