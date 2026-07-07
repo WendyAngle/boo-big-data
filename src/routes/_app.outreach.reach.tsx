@@ -365,6 +365,7 @@ function ReachPage() {
                 <TableHead className="w-[220px]">状态 / 原因</TableHead>
                 <TableHead className="w-[90px]">消耗积分</TableHead>
                 <TableHead>明细说明</TableHead>
+                <TableHead className="w-[160px] text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -418,6 +419,18 @@ function ReachPage() {
                   </TableCell>
                   <TableCell className="text-xs max-w-[420px]">
                     <DetailCell row={r} onViewContent={() => setViewing(r)} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <ActionCell
+                      row={r}
+                      onTrigger={() =>
+                        setConfirm({ kind: "trigger", id: r.id, target: r.targetName })
+                      }
+                      onRetry={() =>
+                        setConfirm({ kind: "retry", id: r.id, target: r.targetName })
+                      }
+                      retryable={isRetryableFailReason(r.failReason)}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
