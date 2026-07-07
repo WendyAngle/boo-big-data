@@ -76,7 +76,7 @@ export interface LedgerEntry {
 }
 
 const LEDGER_KEY = "boo:ledger:v2";
-const LEDGER_SEED_FLAG = "boo:ledger:v7:seeded";
+const LEDGER_SEED_FLAG = "boo:ledger:v8:seeded";
 const REVEAL_KEY = "boo:reveal:v1";
 
 /* -------------------- ledger store -------------------- */
@@ -615,11 +615,16 @@ export function seedDemoLedgerIfEmpty() {
           ? e.email
           : channel === "phone"
             ? maskPhone(e.phone)
-            : `linkedin.com/company/${e.name.toLowerCase().replace(/[^a-z]/g, "")}`;
+            : platform === "WhatsApp"
+              ? maskPhone(e.phone)
+              : `linkedin.com/company/${e.name.toLowerCase().replace(/[^a-z]/g, "")}`;
       return {
         id: makeId("r"),
         kind: "reach",
-        cost: COST_REACH,
+        cost:
+          channel === "social"
+            ? costForSocialPlatform(platform)
+            : COST_REACH,
         createdAt: isoMinutesAgo(minAgo),
         targetKind: "enterprise",
         targetId: e.id,
@@ -648,11 +653,16 @@ export function seedDemoLedgerIfEmpty() {
           ? c.email
           : channel === "phone"
             ? maskPhone(c.phone ?? e.phone)
-            : `linkedin.com/in/${c.name.replace(/\s+/g, "-")}`;
+            : platform === "WhatsApp"
+              ? maskPhone(c.phone ?? e.phone)
+              : `linkedin.com/in/${c.name.replace(/\s+/g, "-")}`;
       return {
         id: makeId("r"),
         kind: "reach",
-        cost: COST_REACH,
+        cost:
+          channel === "social"
+            ? costForSocialPlatform(platform)
+            : COST_REACH,
         createdAt: isoMinutesAgo(minAgo),
         targetKind: "contact",
         targetId: `${e.id}:${idx}`,
@@ -847,6 +857,12 @@ export function seedDemoLedgerIfEmpty() {
       // ---- 触达失败 ----
       reachEnt(14, "email", 180, "failed", "邮箱无效（地址不存在）"),
       reachContact(10, 0, "social", 95, "failed", "私信发送后长期无响应"),
+      // ---- WhatsApp 触达 mock（100 积分/条）----
+      reachContact(2, 0, "social", 12, "success", undefined, "WhatsApp"),
+      reachEnt(5, "social", 40, "in_progress", undefined, "WhatsApp"),
+      reachContact(9, 0, "social", 75, "pending", undefined, "WhatsApp"),
+      reachContact(15, 1, "social", 210, "failed", "对方未注册 WhatsApp", "WhatsApp"),
+      reachEnt(19, "social", 0.3, "pending", undefined, "WhatsApp"),
       // ---- 更多待触达 ----
       reachContact(0, 0, "email", 0.1, "pending"),
       reachEnt(18, "email", 0.05, "pending"),

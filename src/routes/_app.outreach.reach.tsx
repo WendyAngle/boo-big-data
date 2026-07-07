@@ -122,7 +122,9 @@ function ReachPage() {
   }, []);
 
   const [statusTab, setStatusTab] = useState<"all" | ReachStatus>("all");
-  const [channel, setChannel] = useState<"all" | ReachChannel>("all");
+  const [channel, setChannel] = useState<"all" | ReachChannel | "whatsapp">(
+    "all",
+  );
   const [kw, setKw] = useState("");
   const [confirm, setConfirm] = useState<
     | null
@@ -168,7 +170,11 @@ function ReachPage() {
     const k = kw.trim().toLowerCase();
     return reachRows.filter((r) => {
       if (statusTab !== "all" && r.status !== statusTab) return false;
-      if (channel !== "all" && r.channel !== channel) return false;
+      if (channel === "whatsapp") {
+        if (r.channel !== "social" || r.platform !== "WhatsApp") return false;
+      } else if (channel !== "all" && r.channel !== channel) {
+        return false;
+      }
       if (!k) return true;
       return (
         r.targetName.toLowerCase().includes(k) ||
@@ -303,6 +309,7 @@ function ReachPage() {
                 <SelectItem value="email">邮件</SelectItem>
                 <SelectItem value="phone">电话</SelectItem>
                 <SelectItem value="social">社媒</SelectItem>
+                <SelectItem value="whatsapp">WhatsApp</SelectItem>
               </SelectContent>
             </Select>
           </div>
