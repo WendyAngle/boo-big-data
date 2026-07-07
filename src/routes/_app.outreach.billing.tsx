@@ -259,7 +259,11 @@ function BillingPage() {
     const opLabel = (e: LedgerEntry) => {
       if (e.kind === "view") return VIEW_ACTION[e.field!] ?? "";
       if (e.kind === "reach" || e.kind === "refund")
-        return e.channel ? REACH_ACTION[e.channel] ?? "" : "";
+        return e.channel
+          ? e.channel === "social" && e.platform === "WhatsApp"
+            ? "触达 WhatsApp"
+            : REACH_ACTION[e.channel] ?? ""
+          : "";
       if (e.kind === "recharge") return PAY_LABEL[e.paymentMethod ?? ""] ?? "";
       return "";
     };
