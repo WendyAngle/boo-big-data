@@ -491,7 +491,9 @@ export function BatchSocialDialog({
                   </Badge>
                 )}
               </Label>
-              <Button
+              <div className="flex items-center gap-2">
+                <LangToggle value={targetLang} onChange={setTargetLang} />
+                <Button
                 type="button"
                 size="sm"
                 variant="outline"
@@ -503,7 +505,8 @@ export function BatchSocialDialog({
                 <span className="text-xs text-muted-foreground">
                   -{COST_AI_SOCIAL} 积分/次
                 </span>
-              </Button>
+                </Button>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-1.5">
@@ -543,6 +546,9 @@ export function BatchSocialDialog({
                 <Label className="text-xs font-medium flex items-center gap-1">
                   <Eye className="h-3.5 w-3.5" />
                   预览（变量已替换）
+                  <span className="ml-2 rounded border border-border/60 bg-background px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground">
+                    目标语言 · {targetLang === "zh" ? "中文" : "英文"}
+                  </span>
                 </Label>
                 {verified.length > 1 && (
                   <Select
@@ -611,6 +617,7 @@ export function BatchSocialDialog({
         onOpenChange={setAiOpen}
         loading={aiLoading}
         platform={platform}
+        defaultLanguage={targetLang}
         onGenerate={handleAiGenerate}
       />
     </Dialog>
