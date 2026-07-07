@@ -75,6 +75,11 @@ export function WhatsAppReachButton({
 
   return (
     <>
+      <span
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
@@ -99,6 +104,7 @@ export function WhatsAppReachButton({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-44">
           <DropdownMenuItem
+            onClick={(e) => e.stopPropagation()}
             onSelect={(e) => {
               e.preventDefault();
               openManual();
@@ -109,6 +115,7 @@ export function WhatsAppReachButton({
             <span className="ml-auto text-[10px] text-muted-foreground">打开 WhatsApp</span>
           </DropdownMenuItem>
           <DropdownMenuItem
+            onClick={(e) => e.stopPropagation()}
             onSelect={(e) => {
               e.preventDefault();
               setAutoOpen(true);
@@ -120,6 +127,7 @@ export function WhatsAppReachButton({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      </span>
 
       <BatchSocialDialog
         open={autoOpen}
