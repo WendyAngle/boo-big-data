@@ -467,7 +467,6 @@ function ReachPage() {
 
       <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
         <AlertDialogContent>
-          {(() => null)()}
           <AlertDialogHeader>
             <AlertDialogTitle>
               {confirm?.kind === "trigger" && "立即触达？"}
