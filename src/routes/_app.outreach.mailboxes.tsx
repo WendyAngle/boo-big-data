@@ -809,6 +809,11 @@ function MailboxFormDialog({
               value={form.dailyLimit}
               onChange={(e) => update("dailyLimit", Number(e.target.value))}
             />
+            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+              该值决定此邮箱每日可触达的邮件上限。设置过高易触发服务商风控，导致邮箱被限流或封禁。
+              建议新邮箱从 <span className="font-medium text-foreground">30–50 封/日</span> 起步，稳定养号 2–4 周后逐步提升；
+              成熟邮箱推荐 <span className="font-medium text-foreground">100–200 封/日</span>，一般不超过 300 封/日。
+            </p>
           </Field>
           <div className="flex items-end">
             <div className="flex items-center gap-3 h-9">
