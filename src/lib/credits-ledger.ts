@@ -58,6 +58,141 @@ export function costForSocialPlatform(platform?: string): number {
   return COST_REACH_SOCIAL;
 }
 
+/* -------------------- reach auto-unlock cost breakdown -------------------- */
+
+/** 触达时需要自动解锁的查看字段 */
+export interface AutoUnlockField {
+  field: ViewField;
+  subKey?: string;
+}
+
+/** 费用明细行 */
+export interface ReachCostLine {
+  kind: "view" | "reach";
+  label: string;
+  cost: number;
+  field?: ViewField;
+  subKey?: string;
+  /** view 行：是否已解锁（已解锁则 cost=0，仅作展示） */
+  alreadyUnlocked?: boolean;
+}
+
+export interface ReachCostBreakdown {
+  lines: ReachCostLine[];
+  viewCost: number;
+  reachCost: number;
+  total: number;
+  /** 尚未解锁、本次将自动扣费解锁的字段 */
+  unlocksNeeded: AutoUnlockField[];
+}
+
+/**
+ * 根据渠道/平台返回本次触达需要「使用到」的查看字段。
+ * WhatsApp:
+ *  - 默认账号 = 手机号 → 仅需解锁 phone
+ *  - opts.whatsappAccountDistinct = true 表示 WhatsApp 账号是独立标识 → 需额外解锁 social:WhatsApp
+ */
+export function autoUnlockFieldsFor(
+  channel: ReachChannel,
+  platform?: string,
+  opts: { whatsappAccountDistinct?: boolean } = {},
+): AutoUnlockField[] {
+  if (channel === "email") return [{ field: "email" }];
+  if (channel === "phone") return [{ field: "phone" }];
+  if (platform === "WhatsApp") {
+    const arr: AutoUnlockField[] = [{ field: "phone" }];
+    if (opts.whatsappAccountDistinct)
+      arr.push({ field: "social", subKey: "WhatsApp" });
+    return arr;
+  }
+  return [{ field: "social", subKey: platform }];
+}
+
+function viewLabelFor(f: AutoUnlockField): string {
+  if (f.field === "social")
+    return `查看${f.subKey ? f.subKey + " " : ""}社媒账号`;
+  return `查看${VIEW_FIELD_LABEL[f.field].replace(/^联系/, "")}`;
+}
+
+function reachLabelFor(channel: ReachChannel, platform?: string): string {
+  if (channel === "email") return "发送邮件";
+  if (channel === "phone") return "发送短信";
+  return `发送 ${platform ?? "社媒"} 私信`;
+}
+
+/**
+ * 计算一次触达的完整费用明细（含自动解锁 + 触达）。
+ * reachCostOverride 用于短信按段数扩展、社媒按调度实际条数等场景。
+ */
+export function computeReachBreakdown(
+  target: { targetKind: TargetKind; targetId: string },
+  channel: ReachChannel,
+  platform: string | undefined,
+  opts: {
+    whatsappAccountDistinct?: boolean;
+    reachCostOverride?: number;
+  } = {},
+): ReachCostBreakdown {
+  const fields = autoUnlockFieldsFor(channel, platform, opts);
+  const lines: ReachCostLine[] = [];
+  const unlocksNeeded: AutoUnlockField[] = [];
+  let viewCost = 0;
+  for (const f of fields) {
+    const key = revealKey(target.targetKind, target.targetId, f.field, f.subKey);
+    const already = isUnlocked(key);
+    const unit = costForView(f.field);
+    lines.push({
+      kind: "view",
+      label: viewLabelFor(f),
+      cost: already ? 0 : unit,
+      field: f.field,
+      subKey: f.subKey,
+      alreadyUnlocked: already,
+    });
+    if (!already) {
+      viewCost += unit;
+      unlocksNeeded.push(f);
+    }
+  }
+  const reachCost = opts.reachCostOverride ?? costForChannel(channel, platform);
+  lines.push({
+    kind: "reach",
+    label: reachLabelFor(channel, platform),
+    cost: reachCost,
+  });
+  return { lines, viewCost, reachCost, total: viewCost + reachCost, unlocksNeeded };
+}
+
+/**
+ * 对本次触达所需字段执行自动解锁：仅对尚未解锁的字段 chargeView + markUnlocked。
+ * 返回本次因自动解锁所扣的查看积分总额（0 表示全部已解锁）。
+ */
+export function performReachAutoUnlocks(input: {
+  targetKind: TargetKind;
+  targetId: string;
+  targetName: string;
+  parentRef?: { id: string; name: string };
+  detail: string;
+  fields: AutoUnlockField[];
+}): number {
+  let charged = 0;
+  for (const f of input.fields) {
+    const key = revealKey(input.targetKind, input.targetId, f.field, f.subKey);
+    if (isUnlocked(key)) continue;
+    chargeView({
+      targetKind: input.targetKind,
+      targetId: input.targetId,
+      targetName: input.targetName,
+      parentRef: input.parentRef,
+      field: f.field,
+      detail: input.detail,
+    });
+    markUnlocked(key);
+    charged += costForView(f.field);
+  }
+  return charged;
+}
+
 export interface LedgerEntry {
   id: string;
   kind: LedgerKind;
