@@ -12,8 +12,7 @@ import {
   ShieldAlert,
   MessageCircle,
   ServerCog,
-  EyeOff,
-  Eye as EyeOn,
+  Info,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -51,7 +50,9 @@ import {
   chargeAiGeneration,
   costForSocialPlatform,
   COST_AI_SOCIAL,
+  COST_VIEW,
 } from "@/lib/credits-ledger";
+import { MaskedField } from "@/components/MaskedField";
 import {
   useSocialAccounts,
   poolRemaining,
@@ -64,7 +65,6 @@ import {
   verifyMany,
   getWaStatus,
   normalizePhone,
-  maskPhoneWa,
   type WaStatus,
 } from "@/lib/wa-verify";
 import { useLeadProfile } from "@/lib/lead-profile";
@@ -132,7 +132,6 @@ export function BatchSocialDialog({
   const [previewIdx, setPreviewIdx] = useState(0);
   const [aiOpen, setAiOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
-  const [revealed, setRevealed] = useState(false);
   const [targetLang, setTargetLang] = useState<"zh" | "en">("zh");
 
   useEffect(() => {
@@ -142,7 +141,6 @@ export function BatchSocialDialog({
     setAiUsed(false);
     setAiCount(0);
     setPreviewIdx(0);
-    setRevealed(false);
     setTargetLang("zh");
     // 打开即自动校验（跳过已缓存）
     void verifyMany(
