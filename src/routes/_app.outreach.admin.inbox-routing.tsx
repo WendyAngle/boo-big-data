@@ -1,0 +1,228 @@
+import { useMemo, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { Users, Building2, UserRound, Clock, ShieldAlert, UserCheck } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
+import {
+  TEAM_MEMBERS,
+  GROUP_LABEL,
+  useThreads,
+  threadGroup,
+  type GroupKind,
+  type TeamMember,
+} from "@/lib/inbox-store";
+
+export const Route = createFileRoute("/_app/outreach/admin/inbox-routing")({
+  head: () => ({ meta: [{ title: "收件箱分组与分配 | Boo数据平台" }] }),
+  component: InboxRoutingAdmin,
+});
+
+interface GroupConfig {
+  kind: GroupKind;
+  slaFirstResponseMin: number;
+  slaReplyHour: number;
+  members: TeamMember[];
+}
+
+function InboxRoutingAdmin() {
+  const threads = useThreads();
+  const [config, setConfig] = useState<GroupConfig[]>(() => [
+    {
+      kind: "enterprise",
+      slaFirstResponseMin: 30,
+      slaReplyHour: 8,
+      members: TEAM_MEMBERS.filter((m) => m.groups.includes("enterprise")),
+    },
+    {
+      kind: "contact",
+      slaFirstResponseMin: 20,
+      slaReplyHour: 4,
+      members: TEAM_MEMBERS.filter((m) => m.groups.includes("contact")),
+    },
+  ]);
+
+  const workload = useMemo(() => {
+    const m = new Map<string, { assigned: number; unread: number }>();
+    for (const t of threads) {
+      if (!t.meta.assigneeId) continue;
+      const w = m.get(t.meta.assigneeId) ?? { assigned: 0, unread: 0 };
+      w.assigned++;
+      if (t.meta.unread > 0) w.unread++;
+      m.set(t.meta.assigneeId, w);
+    }
+    return m;
+  }, [threads]);
+
+  const poolByGroup: Record<GroupKind, number> = useMemo(() => {
+    const acc: Record<GroupKind, number> = { enterprise: 0, contact: 0 };
+    for (const t of threads) {
+      if (!t.meta.assigneeId) acc[threadGroup(t)]++;
+    }
+    return acc;
+  }, [threads]);
+
+  function updateSla(kind: GroupKind, patch: Partial<GroupConfig>) {
+    setConfig((prev) =>
+      prev.map((g) => (g.kind === kind ? { ...g, ...patch } : g)),
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6 max-w-6xl">
+      <div>
+        <h1 className="text-2xl font-semibold">收件箱分组与分配</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          按目标类型内置两个分组：企业分组、人物分组。全部会话人工分配，不做自动派单。
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {config.map((g) => (
+          <Card key={g.kind} className="p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              {g.kind === "enterprise" ? (
+                <Building2 className="h-5 w-5 text-primary" />
+              ) : (
+                <UserRound className="h-5 w-5 text-primary" />
+              )}
+              <div className="font-semibold">{GROUP_LABEL[g.kind]}</div>
+              <Badge variant="outline" className="ml-auto">
+                池中未分配：{poolByGroup[g.kind]}
+              </Badge>
+            </div>
+
+            <div>
+              <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                <Clock className="h-3 w-3" /> SLA
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="text-xs space-y-1 block">
+                  <span className="text-muted-foreground">首次响应 (分钟)</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={g.slaFirstResponseMin}
+                    onChange={(e) =>
+                      updateSla(g.kind, {
+                        slaFirstResponseMin: Number(e.target.value) || 0,
+                      })
+                    }
+                    className="h-8"
+                  />
+                </label>
+                <label className="text-xs space-y-1 block">
+                  <span className="text-muted-foreground">每次回复 (小时)</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={g.slaReplyHour}
+                    onChange={(e) =>
+                      updateSla(g.kind, {
+                        slaReplyHour: Number(e.target.value) || 0,
+                      })
+                    }
+                    className="h-8"
+                  />
+                </label>
+              </div>
+              <div className="mt-2 text-[11px] text-muted-foreground flex items-start gap-1">
+                <ShieldAlert className="h-3 w-3 mt-0.5 shrink-0" />
+                未分配阶段的 SLA 挂在分组池，超时提醒组长派单；已分配后转由该员工负责。
+              </div>
+            </div>
+
+            <Separator />
+
+            <div>
+              <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                <Users className="h-3 w-3" /> 成员（{g.members.length}）
+              </div>
+              <div className="space-y-1.5">
+                {g.members.map((m) => {
+                  const w = workload.get(m.id);
+                  return (
+                    <div
+                      key={m.id}
+                      className="flex items-center gap-2 text-sm border rounded-md px-2.5 py-1.5"
+                    >
+                      <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center">
+                        {m.avatarLetter}
+                      </span>
+                      <span className="font-medium">{m.name}</span>
+                      {m.role === "lead" && (
+                        <Badge variant="outline" className="text-[10px] h-4 px-1">
+                          组长
+                        </Badge>
+                      )}
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        在办 {w?.assigned ?? 0}
+                        {w && w.unread > 0 && (
+                          <span className="ml-2 text-rose-600">
+                            未读 {w.unread}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-3 text-[11px] text-muted-foreground">
+                Phase 1 演示：成员列表复用系统员工，编辑请前往「员工管理」。
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <UserCheck className="h-4 w-4 text-primary" />
+          <div className="font-semibold">工作量看板</div>
+          <Badge variant="outline" className="ml-2 text-xs">Phase 1 · 静态</Badge>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          {TEAM_MEMBERS.map((m) => {
+            const w = workload.get(m.id);
+            return (
+              <div key={m.id} className="border rounded-md p-3">
+                <div className="flex items-center gap-2">
+                  <span className="h-7 w-7 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center">
+                    {m.avatarLetter}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">{m.name}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {m.groups.map((g) => GROUP_LABEL[g]).join(" / ")}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <div className="text-xl font-semibold">{w?.assigned ?? 0}</div>
+                  <div className="text-[10px] text-muted-foreground">在办</div>
+                </div>
+                {w && w.unread > 0 && (
+                  <div className="text-[11px] text-rose-600 mt-0.5">
+                    未读 {w.unread}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => toast.info("演示：批量派单在 Phase 2 接入")}
+          >
+            批量派单
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+}
