@@ -31,6 +31,7 @@ import { FavoriteToggle } from "@/components/FavoriteToggle";
 import { MaskedField } from "@/components/MaskedField";
 import { ReachButton } from "@/components/ReachButton";
 import { WhatsAppReachButton } from "@/components/WhatsAppReachButton";
+import { RecentCommsCapsule } from "@/components/outreach/RecentCommsCapsule";
 
 interface ContactDetail {
   enterprise: Enterprise;
