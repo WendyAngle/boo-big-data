@@ -443,6 +443,9 @@ function ReachPage() {
                   <TableCell className="text-xs max-w-[420px]">
                     <DetailCell row={r} onViewContent={() => setViewing(r)} />
                   </TableCell>
+                  <TableCell className="text-xs">
+                    <ReplyCell reach={r} thread={threadByKey.get(threadKeyFor(r) ?? "") ?? null} />
+                  </TableCell>
                   {statusTab !== "success" && statusTab !== "in_progress" && (
                     <TableCell className="text-right">
                       <ActionCell
