@@ -528,7 +528,8 @@ function useMetaVersion() {
 export function useThreads(): Thread[] {
   useMetaVersion();
   const entries = useLedger();
-  return [...buildThreads(entries), ...getDemoSocialThreads()];
+  const all = [...buildThreads(entries), ...getDemoSocialThreads()];
+  return sortByUrgency(all);
 }
 
 export function useThread(id: string): Thread | undefined {
@@ -537,7 +538,29 @@ export function useThread(id: string): Thread | undefined {
 }
 
 export function getThreadsSnapshot(): Thread[] {
-  return [...buildThreads(getAllLedger()), ...getDemoSocialThreads()];
+  return sortByUrgency([...buildThreads(getAllLedger()), ...getDemoSocialThreads()]);
+}
+
+/**
+ * 默认排序：SLA 紧急度优先 → 最新更新
+ * 优先级：逾期 > 即将超时 > 有 SLA 未风险 > 无 SLA / 已处理
+ * 组内：逾期与即将超时按剩余时间升序（最紧急在前）；其余按 lastAt 降序
+ */
+function sortByUrgency(list: Thread[]): Thread[] {
+  const scored = list.map((t) => {
+    const sla = slaInfo(t);
+    let bucket = 3;
+    if (sla?.overdue) bucket = 0;
+    else if (sla?.approaching) bucket = 1;
+    else if (sla) bucket = 2;
+    return { t, bucket, leftMs: sla?.leftMs ?? Number.POSITIVE_INFINITY };
+  });
+  scored.sort((a, b) => {
+    if (a.bucket !== b.bucket) return a.bucket - b.bucket;
+    if (a.bucket <= 1) return a.leftMs - b.leftMs; // 紧急桶：最紧急在前
+    return b.t.lastAt.localeCompare(a.t.lastAt);
+  });
+  return scored.map((s) => s.t);
 }
 
 export interface InboxCounts {
