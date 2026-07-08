@@ -1,17 +1,26 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Users, Building2, UserRound, Clock, ShieldAlert, UserCheck } from "lucide-react";
+import { Users, Building2, UserRound, Clock, ShieldAlert, UserCheck, Inbox, Send } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   TEAM_MEMBERS,
   GROUP_LABEL,
   useThreads,
   threadGroup,
+  assignThread,
   type GroupKind,
   type TeamMember,
 } from "@/lib/inbox-store";
@@ -30,6 +39,15 @@ interface GroupConfig {
 
 function InboxRoutingAdmin() {
   const threads = useThreads();
+  // 每个分组的 pending 批量分配目标
+  const [batchAssignee, setBatchAssignee] = useState<Record<GroupKind, string>>({
+    enterprise: "",
+    contact: "",
+  });
+  const [selected, setSelected] = useState<Record<GroupKind, Set<string>>>({
+    enterprise: new Set(),
+    contact: new Set(),
+  });
   const [config, setConfig] = useState<GroupConfig[]>(() => [
     {
       kind: "enterprise",
@@ -65,10 +83,54 @@ function InboxRoutingAdmin() {
     return acc;
   }, [threads]);
 
+  const unassignedByGroup = useMemo(() => {
+    const acc: Record<GroupKind, typeof threads> = { enterprise: [], contact: [] };
+    for (const t of threads) {
+      if (!t.meta.assigneeId) acc[threadGroup(t)].push(t);
+    }
+    return acc;
+  }, [threads]);
+
   function updateSla(kind: GroupKind, patch: Partial<GroupConfig>) {
     setConfig((prev) =>
       prev.map((g) => (g.kind === kind ? { ...g, ...patch } : g)),
     );
+  }
+
+  function toggleOne(kind: GroupKind, id: string, v: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev[kind]);
+      if (v) next.add(id);
+      else next.delete(id);
+      return { ...prev, [kind]: next };
+    });
+  }
+  function toggleAll(kind: GroupKind, ids: string[], v: boolean) {
+    setSelected((prev) => ({
+      ...prev,
+      [kind]: v ? new Set(ids) : new Set(),
+    }));
+  }
+  function doBatchAssign(kind: GroupKind) {
+    const userId = batchAssignee[kind];
+    const ids = Array.from(selected[kind]);
+    if (!userId) {
+      toast.error("请选择要分配的成员");
+      return;
+    }
+    if (ids.length === 0) {
+      toast.error("请先勾选要分配的会话");
+      return;
+    }
+    ids.forEach((id) =>
+      assignThread(id, userId, { reason: "管理后台批量派单" }),
+    );
+    toast.success(`已将 ${ids.length} 条会话分配给该成员`);
+    setSelected((prev) => ({ ...prev, [kind]: new Set() }));
+  }
+  function doAssignOne(id: string, userId: string) {
+    assignThread(id, userId, { reason: "管理后台单条分配" });
+    toast.success("已分配");
   }
 
   return (
@@ -102,31 +164,47 @@ function InboxRoutingAdmin() {
               <div className="grid grid-cols-2 gap-3">
                 <label className="text-xs space-y-1 block">
                   <span className="text-muted-foreground">首次响应 (分钟)</span>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={g.slaFirstResponseMin}
-                    onChange={(e) =>
-                      updateSla(g.kind, {
-                        slaFirstResponseMin: Number(e.target.value) || 0,
-                      })
-                    }
-                    className="h-8"
-                  />
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min={1}
+                      value={g.slaFirstResponseMin}
+                      onChange={(e) =>
+                        updateSla(g.kind, {
+                          slaFirstResponseMin: Number(e.target.value) || 0,
+                        })
+                      }
+                      className="h-8 pr-12 tabular-nums"
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">
+                      分钟
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground pt-0.5">
+                    当前生效：{formatMin(g.slaFirstResponseMin)}
+                  </div>
                 </label>
                 <label className="text-xs space-y-1 block">
                   <span className="text-muted-foreground">每次回复 (小时)</span>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={g.slaReplyHour}
-                    onChange={(e) =>
-                      updateSla(g.kind, {
-                        slaReplyHour: Number(e.target.value) || 0,
-                      })
-                    }
-                    className="h-8"
-                  />
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min={1}
+                      value={g.slaReplyHour}
+                      onChange={(e) =>
+                        updateSla(g.kind, {
+                          slaReplyHour: Number(e.target.value) || 0,
+                        })
+                      }
+                      className="h-8 pr-12 tabular-nums"
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground pointer-events-none">
+                      小时
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground pt-0.5">
+                    当前生效：{formatHour(g.slaReplyHour)}
+                  </div>
                 </label>
               </div>
               <div className="mt-2 text-[11px] text-muted-foreground flex items-start gap-1">
@@ -178,6 +256,116 @@ function InboxRoutingAdmin() {
         ))}
       </div>
 
+      {/* IR-02 · 会话分配入口：未分配会话池 + 单条/批量派单 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {(Object.keys(unassignedByGroup) as GroupKind[]).map((kind) => {
+          const rows = unassignedByGroup[kind];
+          const groupMembers = TEAM_MEMBERS.filter((m) => m.groups.includes(kind));
+          const sel = selected[kind];
+          const allChecked = rows.length > 0 && rows.every((r) => sel.has(r.id));
+          const someChecked = rows.some((r) => sel.has(r.id));
+          return (
+            <Card key={kind} className="p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <Inbox className="h-4 w-4 text-primary" />
+                <div className="font-semibold">
+                  {GROUP_LABEL[kind]} · 未分配会话池
+                </div>
+                <Badge variant="outline" className="ml-auto">
+                  {rows.length} 条待派单
+                </Badge>
+              </div>
+
+              {/* 批量派单工具条 */}
+              <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/30 p-2">
+                <span className="text-xs text-muted-foreground">
+                  已选 <span className="text-foreground font-medium">{sel.size}</span> / {rows.length}
+                </span>
+                <div className="flex-1 min-w-[160px]">
+                  <Select
+                    value={batchAssignee[kind]}
+                    onValueChange={(v) => setBatchAssignee((p) => ({ ...p, [kind]: v }))}
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue placeholder="选择要分配的成员" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {groupMembers.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>
+                          {m.name}
+                          {m.role === "lead" ? "（组长）" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  size="sm"
+                  className="h-8"
+                  disabled={sel.size === 0 || !batchAssignee[kind]}
+                  onClick={() => doBatchAssign(kind)}
+                >
+                  <Send className="h-3.5 w-3.5" />
+                  批量派单
+                </Button>
+              </div>
+
+              {/* 待派单列表 */}
+              <div className="border rounded-md divide-y max-h-80 overflow-auto">
+                {rows.length === 0 ? (
+                  <div className="text-xs text-muted-foreground py-8 text-center">
+                    暂无待分配会话
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 px-2 py-1.5 bg-muted/40 text-[11px] text-muted-foreground">
+                      <Checkbox
+                        checked={allChecked ? true : someChecked ? "indeterminate" : false}
+                        onCheckedChange={(v) => toggleAll(kind, rows.map((r) => r.id), v === true)}
+                        aria-label="全选"
+                      />
+                      <span>会话</span>
+                      <span className="ml-auto pr-1">快速分配</span>
+                    </div>
+                    {rows.slice(0, 30).map((t) => (
+                      <div key={t.id} className="flex items-center gap-2 px-2 py-2">
+                        <Checkbox
+                          checked={sel.has(t.id)}
+                          onCheckedChange={(v) => toggleOne(kind, t.id, v === true)}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm truncate">{t.subject || "(无主题)"}</div>
+                          <div className="text-[11px] text-muted-foreground truncate">
+                            {t.counterparty}
+                          </div>
+                        </div>
+                        <Select onValueChange={(v) => doAssignOne(t.id, v)}>
+                          <SelectTrigger className="h-7 w-32 text-xs">
+                            <SelectValue placeholder="分配给…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {groupMembers.map((m) => (
+                              <SelectItem key={m.id} value={m.id}>
+                                {m.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
+                    {rows.length > 30 && (
+                      <div className="text-[11px] text-muted-foreground text-center py-2">
+                        仅显示前 30 条，其余请在收件箱中处理
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
       <Card className="p-5">
         <div className="flex items-center gap-2 mb-3">
           <UserCheck className="h-4 w-4 text-primary" />
@@ -213,16 +401,25 @@ function InboxRoutingAdmin() {
             );
           })}
         </div>
-        <div className="mt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => toast.info("演示：批量派单在 Phase 2 接入")}
-          >
-            批量派单
-          </Button>
+        <div className="mt-3 text-[11px] text-muted-foreground">
+          派单请前往上方「未分配会话池」进行单条或批量分配。
         </div>
       </Card>
     </div>
   );
+}
+
+function formatMin(v: number) {
+  if (!v) return "—";
+  if (v < 60) return `${v} 分钟`;
+  const h = Math.floor(v / 60);
+  const m = v % 60;
+  return m === 0 ? `${h} 小时` : `${h} 小时 ${m} 分钟`;
+}
+function formatHour(v: number) {
+  if (!v) return "—";
+  if (v < 24) return `${v} 小时`;
+  const d = Math.floor(v / 24);
+  const h = v % 24;
+  return h === 0 ? `${d} 天` : `${d} 天 ${h} 小时`;
 }
