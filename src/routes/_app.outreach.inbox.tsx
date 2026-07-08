@@ -1294,6 +1294,132 @@ function QuickTemplateMenu({
 }
 
 function _ActionBar({ thread }: { thread: Thread }) {
+  return __ActionBarImpl({ thread });
+}
+
+function ProfilePanel({ thread }: { thread: Thread }) {
+  return (
+    <div className="space-y-3 text-sm">
+      <div className="rounded-md border bg-card p-4 space-y-2">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {thread.targetKind === "enterprise" ? (
+            <Building2 className="h-3.5 w-3.5" />
+          ) : (
+            <UserRound className="h-3.5 w-3.5" />
+          )}
+          <span>{thread.targetKind === "enterprise" ? "企业" : "联系人"}</span>
+        </div>
+        <div className="text-base font-semibold">{thread.targetName}</div>
+        {thread.parentRef && (
+          <div className="text-xs text-muted-foreground">
+            所属：{thread.parentRef.name}
+          </div>
+        )}
+        <div className="text-xs">
+          <span className="text-muted-foreground">联系方式：</span>
+          <span className="font-mono">{thread.counterpartyAddress}</span>
+        </div>
+        <div className="text-xs">
+          <span className="text-muted-foreground">渠道：</span>
+          {CHANNEL_LABEL[thread.channel]}
+        </div>
+        {thread.meta.assigneeId && (
+          <div className="text-xs">
+            <span className="text-muted-foreground">当前跟进：</span>
+            {memberById(thread.meta.assigneeId)?.name}
+          </div>
+        )}
+      </div>
+      <div className="rounded-md border bg-card p-4">
+        <div className="text-xs text-muted-foreground mb-2">前往完整档案</div>
+        <Link
+          to={
+            thread.targetKind === "enterprise"
+              ? "/outreach/enterprise/$id"
+              : "/outreach/enterprise/$id/contact/$idx"
+          }
+          params={
+            thread.targetKind === "enterprise"
+              ? { id: thread.targetId }
+              : {
+                  id: thread.targetId.split(":")[0],
+                  idx: thread.targetId.split(":")[1] ?? "0",
+                }
+          }
+          className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+        >
+          打开{thread.targetKind === "enterprise" ? "企业" : "联系人"}详情
+          <ChevronRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function ReachHistoryPanel({ thread }: { thread: Thread }) {
+  const list = useMemo(() => {
+    return getAllLedger().filter(
+      (e) =>
+        e.kind === "reach" &&
+        e.targetKind === thread.targetKind &&
+        e.targetId === thread.targetId,
+    );
+  }, [thread.targetKind, thread.targetId]);
+  if (list.length === 0) {
+    return (
+      <div className="text-sm text-muted-foreground text-center py-10">
+        暂无触达记录
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      {list.map((r) => (
+        <div
+          key={r.id}
+          className="rounded-md border bg-card p-3 text-xs flex items-start gap-3"
+        >
+          <div className="shrink-0 pt-0.5">
+            <Zap className="h-3.5 w-3.5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">
+                {r.channel === "email" ? "邮件" : r.channel === "phone" ? "短信" : "社媒"}
+                {r.platform ? ` · ${r.platform}` : ""}
+              </span>
+              <span className="text-muted-foreground">
+                {formatDateTime(r.createdAt)}
+              </span>
+              <span className="ml-auto text-rose-600 font-semibold tabular-nums">
+                -{r.cost}
+              </span>
+            </div>
+            {r.subject && (
+              <div className="mt-1 text-foreground/80 truncate">{r.subject}</div>
+            )}
+            {r.detail && (
+              <div className="mt-0.5 text-muted-foreground font-mono truncate">
+                {r.detail}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+      <div className="pt-2">
+        <Link
+          to="/outreach/reach"
+          className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+        >
+          打开触达任务列表
+          <ChevronRight className="h-3 w-3" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function __ActionBarImpl({ thread }: { thread: Thread }) {
   const [tagInput, setTagInput] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
 
