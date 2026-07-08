@@ -991,7 +991,22 @@ function ThreadDetail({
       </div>
 
       {/* 时间线 */}
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+      <Tabs defaultValue="thread" className="flex-1 flex flex-col min-h-0">
+        <TabsList className="mx-6 mt-2 h-9 shrink-0 self-start">
+          <TabsTrigger value="thread" className="text-xs gap-1">
+            <MessageCircleReply className="h-3.5 w-3.5" />
+            会话
+          </TabsTrigger>
+          <TabsTrigger value="profile" className="text-xs gap-1">
+            <UserIcon className="h-3.5 w-3.5" />
+            客户资料
+          </TabsTrigger>
+          <TabsTrigger value="history" className="text-xs gap-1">
+            <History className="h-3.5 w-3.5" />
+            触达历史
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="thread" className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4 mt-0">
         {(thread.meta.assignmentEvents ?? []).map((ev) => (
           <div
             key={ev.id}
@@ -1073,7 +1088,14 @@ function ThreadDetail({
             </div>
           </div>
         ))}
-      </div>
+        </TabsContent>
+        <TabsContent value="profile" className="flex-1 min-h-0 overflow-y-auto px-6 py-4 mt-0">
+          <ProfilePanel thread={thread} />
+        </TabsContent>
+        <TabsContent value="history" className="flex-1 min-h-0 overflow-y-auto px-6 py-4 mt-0">
+          <ReachHistoryPanel thread={thread} />
+        </TabsContent>
+      </Tabs>
 
       {/* 回复区 */}
       <div className="border-t bg-muted/20 p-4 shrink-0">
