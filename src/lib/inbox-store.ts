@@ -278,6 +278,11 @@ function threadKey(r: LedgerEntry): string | null {
   return null;
 }
 
+/** 供外部（触达任务列表 → 收件箱 反查）计算 threadKey */
+export function threadKeyFor(r: LedgerEntry): string | null {
+  return threadKey(r);
+}
+
 function ensureMeta(threadId: string, createdAt: string): ThreadMeta {
   let m = metaStore[threadId];
   if (!m) {
