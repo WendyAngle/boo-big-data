@@ -24,12 +24,12 @@ import { Route as AppOutreachReachRouteImport } from './routes/_app.outreach.rea
 import { Route as AppOutreachMailboxesRouteImport } from './routes/_app.outreach.mailboxes'
 import { Route as AppOutreachLeadsRouteImport } from './routes/_app.outreach.leads'
 import { Route as AppOutreachInvoicesRouteImport } from './routes/_app.outreach.invoices'
-import { Route as AppOutreachInquiriesRouteImport } from './routes/_app.outreach.inquiries'
 import { Route as AppOutreachFootprintsEmptyRouteImport } from './routes/_app.outreach.footprints-empty'
 import { Route as AppOutreachFootprintsRouteImport } from './routes/_app.outreach.footprints'
 import { Route as AppOutreachFavoritesEmptyRouteImport } from './routes/_app.outreach.favorites-empty'
 import { Route as AppOutreachFavoritesRouteImport } from './routes/_app.outreach.favorites'
 import { Route as AppOutreachEnterpriseRouteImport } from './routes/_app.outreach.enterprise'
+import { Route as AppOutreachConversationsRouteImport } from './routes/_app.outreach.conversations'
 import { Route as AppOutreachBillsRouteImport } from './routes/_app.outreach.bills'
 import { Route as AppOutreachBillingEmptyRouteImport } from './routes/_app.outreach.billing-empty'
 import { Route as AppOutreachBillingRouteImport } from './routes/_app.outreach.billing'
@@ -124,11 +124,6 @@ const AppOutreachInvoicesRoute = AppOutreachInvoicesRouteImport.update({
   path: '/outreach/invoices',
   getParentRoute: () => AppRoute,
 } as any)
-const AppOutreachInquiriesRoute = AppOutreachInquiriesRouteImport.update({
-  id: '/outreach/inquiries',
-  path: '/outreach/inquiries',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppOutreachFootprintsEmptyRoute =
   AppOutreachFootprintsEmptyRouteImport.update({
     id: '/outreach/footprints-empty',
@@ -156,6 +151,12 @@ const AppOutreachEnterpriseRoute = AppOutreachEnterpriseRouteImport.update({
   path: '/outreach/enterprise',
   getParentRoute: () => AppRoute,
 } as any)
+const AppOutreachConversationsRoute =
+  AppOutreachConversationsRouteImport.update({
+    id: '/outreach/conversations',
+    path: '/outreach/conversations',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppOutreachBillsRoute = AppOutreachBillsRouteImport.update({
   id: '/outreach/bills',
   path: '/outreach/bills',
@@ -268,12 +269,12 @@ export interface FileRoutesByFullPath {
   '/outreach/billing': typeof AppOutreachBillingRoute
   '/outreach/billing-empty': typeof AppOutreachBillingEmptyRoute
   '/outreach/bills': typeof AppOutreachBillsRoute
+  '/outreach/conversations': typeof AppOutreachConversationsRoute
   '/outreach/enterprise': typeof AppOutreachEnterpriseRouteWithChildren
   '/outreach/favorites': typeof AppOutreachFavoritesRoute
   '/outreach/favorites-empty': typeof AppOutreachFavoritesEmptyRoute
   '/outreach/footprints': typeof AppOutreachFootprintsRoute
   '/outreach/footprints-empty': typeof AppOutreachFootprintsEmptyRoute
-  '/outreach/inquiries': typeof AppOutreachInquiriesRoute
   '/outreach/invoices': typeof AppOutreachInvoicesRoute
   '/outreach/leads': typeof AppOutreachLeadsRoute
   '/outreach/mailboxes': typeof AppOutreachMailboxesRoute
@@ -309,11 +310,11 @@ export interface FileRoutesByTo {
   '/outreach/billing': typeof AppOutreachBillingRoute
   '/outreach/billing-empty': typeof AppOutreachBillingEmptyRoute
   '/outreach/bills': typeof AppOutreachBillsRoute
+  '/outreach/conversations': typeof AppOutreachConversationsRoute
   '/outreach/favorites': typeof AppOutreachFavoritesRoute
   '/outreach/favorites-empty': typeof AppOutreachFavoritesEmptyRoute
   '/outreach/footprints': typeof AppOutreachFootprintsRoute
   '/outreach/footprints-empty': typeof AppOutreachFootprintsEmptyRoute
-  '/outreach/inquiries': typeof AppOutreachInquiriesRoute
   '/outreach/invoices': typeof AppOutreachInvoicesRoute
   '/outreach/leads': typeof AppOutreachLeadsRoute
   '/outreach/mailboxes': typeof AppOutreachMailboxesRoute
@@ -350,12 +351,12 @@ export interface FileRoutesById {
   '/_app/outreach/billing': typeof AppOutreachBillingRoute
   '/_app/outreach/billing-empty': typeof AppOutreachBillingEmptyRoute
   '/_app/outreach/bills': typeof AppOutreachBillsRoute
+  '/_app/outreach/conversations': typeof AppOutreachConversationsRoute
   '/_app/outreach/enterprise': typeof AppOutreachEnterpriseRouteWithChildren
   '/_app/outreach/favorites': typeof AppOutreachFavoritesRoute
   '/_app/outreach/favorites-empty': typeof AppOutreachFavoritesEmptyRoute
   '/_app/outreach/footprints': typeof AppOutreachFootprintsRoute
   '/_app/outreach/footprints-empty': typeof AppOutreachFootprintsEmptyRoute
-  '/_app/outreach/inquiries': typeof AppOutreachInquiriesRoute
   '/_app/outreach/invoices': typeof AppOutreachInvoicesRoute
   '/_app/outreach/leads': typeof AppOutreachLeadsRoute
   '/_app/outreach/mailboxes': typeof AppOutreachMailboxesRoute
@@ -393,12 +394,12 @@ export interface FileRouteTypes {
     | '/outreach/billing'
     | '/outreach/billing-empty'
     | '/outreach/bills'
+    | '/outreach/conversations'
     | '/outreach/enterprise'
     | '/outreach/favorites'
     | '/outreach/favorites-empty'
     | '/outreach/footprints'
     | '/outreach/footprints-empty'
-    | '/outreach/inquiries'
     | '/outreach/invoices'
     | '/outreach/leads'
     | '/outreach/mailboxes'
@@ -434,11 +435,11 @@ export interface FileRouteTypes {
     | '/outreach/billing'
     | '/outreach/billing-empty'
     | '/outreach/bills'
+    | '/outreach/conversations'
     | '/outreach/favorites'
     | '/outreach/favorites-empty'
     | '/outreach/footprints'
     | '/outreach/footprints-empty'
-    | '/outreach/inquiries'
     | '/outreach/invoices'
     | '/outreach/leads'
     | '/outreach/mailboxes'
@@ -474,12 +475,12 @@ export interface FileRouteTypes {
     | '/_app/outreach/billing'
     | '/_app/outreach/billing-empty'
     | '/_app/outreach/bills'
+    | '/_app/outreach/conversations'
     | '/_app/outreach/enterprise'
     | '/_app/outreach/favorites'
     | '/_app/outreach/favorites-empty'
     | '/_app/outreach/footprints'
     | '/_app/outreach/footprints-empty'
-    | '/_app/outreach/inquiries'
     | '/_app/outreach/invoices'
     | '/_app/outreach/leads'
     | '/_app/outreach/mailboxes'
@@ -622,13 +623,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachInvoicesRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/outreach/inquiries': {
-      id: '/_app/outreach/inquiries'
-      path: '/outreach/inquiries'
-      fullPath: '/outreach/inquiries'
-      preLoaderRoute: typeof AppOutreachInquiriesRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/outreach/footprints-empty': {
       id: '/_app/outreach/footprints-empty'
       path: '/outreach/footprints-empty'
@@ -662,6 +656,13 @@ declare module '@tanstack/react-router' {
       path: '/outreach/enterprise'
       fullPath: '/outreach/enterprise'
       preLoaderRoute: typeof AppOutreachEnterpriseRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/outreach/conversations': {
+      id: '/_app/outreach/conversations'
+      path: '/outreach/conversations'
+      fullPath: '/outreach/conversations'
+      preLoaderRoute: typeof AppOutreachConversationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/outreach/bills': {
@@ -837,12 +838,12 @@ interface AppRouteChildren {
   AppOutreachBillingRoute: typeof AppOutreachBillingRoute
   AppOutreachBillingEmptyRoute: typeof AppOutreachBillingEmptyRoute
   AppOutreachBillsRoute: typeof AppOutreachBillsRoute
+  AppOutreachConversationsRoute: typeof AppOutreachConversationsRoute
   AppOutreachEnterpriseRoute: typeof AppOutreachEnterpriseRouteWithChildren
   AppOutreachFavoritesRoute: typeof AppOutreachFavoritesRoute
   AppOutreachFavoritesEmptyRoute: typeof AppOutreachFavoritesEmptyRoute
   AppOutreachFootprintsRoute: typeof AppOutreachFootprintsRoute
   AppOutreachFootprintsEmptyRoute: typeof AppOutreachFootprintsEmptyRoute
-  AppOutreachInquiriesRoute: typeof AppOutreachInquiriesRoute
   AppOutreachInvoicesRoute: typeof AppOutreachInvoicesRoute
   AppOutreachLeadsRoute: typeof AppOutreachLeadsRoute
   AppOutreachMailboxesRoute: typeof AppOutreachMailboxesRoute
@@ -875,12 +876,12 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachBillingRoute: AppOutreachBillingRoute,
   AppOutreachBillingEmptyRoute: AppOutreachBillingEmptyRoute,
   AppOutreachBillsRoute: AppOutreachBillsRoute,
+  AppOutreachConversationsRoute: AppOutreachConversationsRoute,
   AppOutreachEnterpriseRoute: AppOutreachEnterpriseRouteWithChildren,
   AppOutreachFavoritesRoute: AppOutreachFavoritesRoute,
   AppOutreachFavoritesEmptyRoute: AppOutreachFavoritesEmptyRoute,
   AppOutreachFootprintsRoute: AppOutreachFootprintsRoute,
   AppOutreachFootprintsEmptyRoute: AppOutreachFootprintsEmptyRoute,
-  AppOutreachInquiriesRoute: AppOutreachInquiriesRoute,
   AppOutreachInvoicesRoute: AppOutreachInvoicesRoute,
   AppOutreachLeadsRoute: AppOutreachLeadsRoute,
   AppOutreachMailboxesRoute: AppOutreachMailboxesRoute,
