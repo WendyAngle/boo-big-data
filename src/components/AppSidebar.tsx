@@ -85,7 +85,7 @@ const menu: Root[] = [
         children: [
           { label: "员工管理", to: "/outreach/users" },
           { label: "发信邮箱", to: "/outreach/mailboxes" },
-          { label: "询盘设置", to: "/outreach/admin/inquiry-settings" },
+          { label: "询盘分派", to: "/outreach/admin/inquiry-dispatch" },
         ],
       },
       {
