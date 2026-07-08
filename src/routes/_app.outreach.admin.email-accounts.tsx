@@ -624,15 +624,15 @@ function AssignSheet({
   }
 
   return (
-    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-[480px] sm:max-w-[480px]">
-        <SheetHeader>
-          <SheetTitle>分配租户</SheetTitle>
-          <SheetDescription>
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>分配租户</DialogTitle>
+          <DialogDescription>
             将选中的 {targets.length} 个邮件账号分配给指定租户。系统会自动校验 DKIM/SPF 与服务商健康度。
-          </SheetDescription>
-        </SheetHeader>
-        <div className="space-y-4 py-4">
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label>目标租户</Label>
             <Select value={tenantId} onValueChange={setTenantId}>
@@ -680,12 +680,12 @@ function AssignSheet({
             })}
           </Card>
         </div>
-        <SheetFooter>
+        <DialogFooter>
           <Button variant="outline" onClick={onClose}>取消</Button>
           <Button onClick={submit}>确认分配</Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
