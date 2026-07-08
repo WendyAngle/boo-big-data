@@ -67,7 +67,7 @@ const menu: Root[] = [
         children: [
           { label: "我的收藏", to: "/outreach/favorites" },
           { label: "浏览足迹", to: "/outreach/footprints" },
-          { label: "触达", to: "/outreach/reach" },
+          { label: "触达任务", to: "/outreach/reach" },
           { label: "收件箱", to: "/outreach/inbox", icon: Inbox },
         ],
       },
@@ -75,8 +75,8 @@ const menu: Root[] = [
         label: "费用中心",
         children: [
           { label: "账单明细", to: "/outreach/billing" },
-          { label: "充值", to: "/outreach/recharge" },
-          { label: "发票", to: "/outreach/invoices" },
+          { label: "账户充值", to: "/outreach/recharge" },
+          { label: "发票管理", to: "/outreach/invoices" },
         ],
       },
       {
