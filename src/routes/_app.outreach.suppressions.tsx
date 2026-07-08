@@ -46,6 +46,7 @@ import {
   removeSuppression,
   useSuppressions,
   type SuppressionKind,
+  type SuppressionRecord,
 } from "@/lib/suppressions-store";
 
 export const Route = createFileRoute("/_app/outreach/suppressions")({
