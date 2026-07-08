@@ -68,7 +68,7 @@ const menu: Root[] = [
           { label: "我的收藏", to: "/outreach/favorites" },
           { label: "浏览足迹", to: "/outreach/footprints" },
           { label: "触达任务", to: "/outreach/reach" },
-          { label: "收件箱", to: "/outreach/inbox", icon: Inbox },
+          { label: "收件箱", to: "/outreach/inbox" },
         ],
       },
       {
