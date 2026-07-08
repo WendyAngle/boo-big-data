@@ -26,7 +26,7 @@ import {
 } from "@/lib/inbox-store";
 
 export const Route = createFileRoute("/_app/outreach/admin/inquiry-settings")({
-  head: () => ({ meta: [{ title: "收件箱分组与分配 | Boo数据平台" }] }),
+  head: () => ({ meta: [{ title: "询盘设置 | Boo数据平台" }] }),
   component: InboxRoutingAdmin,
 });
 
