@@ -1054,30 +1054,42 @@ function SubmitTemplateDialog({
   const [name, setName] = useState("");
   const [channel, setChannel] = useState<SmsTplChannel>("marketing");
   const [locale, setLocale] = useState("zh-CN");
+  const [contentDraft, setContentDraft] = useState(initialContent);
 
   useEffect(() => {
     if (open) {
       setName("");
       setChannel("marketing");
       setLocale(/[a-zA-Z]/.test(initialContent) ? "en-US" : "zh-CN");
+      setContentDraft(initialContent);
     }
   }, [open, initialContent]);
+
+  const hasOptOut = /STOP|UNSUBSCRIBE|退订|TD|回T/i.test(contentDraft);
+  const needOptOut = channel === "marketing" && !hasOptOut;
 
   function submit() {
     if (!name.trim()) {
       toast.error("请填写模板名称");
       return;
     }
-    if (channel === "marketing" && !/STOP|退订|TD/i.test(initialContent)) {
-      toast.error("营销类模板必须包含退订提示（STOP / 退订 / TD）");
+    if (needOptOut) {
+      toast.error("营销类模板必须包含退订提示（STOP / 退订 / TD）", {
+        description: "可点击下方「一键补退订」自动追加",
+      });
       return;
     }
     // 保留 {变量} 语法即可，模板存储层不做转换
-    addSmsTemplate({ name: name.trim(), channel, locale, content: initialContent });
+    addSmsTemplate({ name: name.trim(), channel, locale, content: contentDraft });
     toast.success("已提交审核，预计 1 个工作日内反馈", {
       description: "审核通过后即可在模板下拉中选用",
     });
     onOpenChange(false);
+  }
+
+  function appendOptOut() {
+    const suffix = locale === "en-US" ? " Reply STOP to opt out." : "回复T退订。";
+    setContentDraft((c) => (c.endsWith(suffix.trim()) ? c : c.trimEnd() + " " + suffix));
   }
 
   return (
@@ -1131,17 +1143,50 @@ function SubmitTemplateDialog({
             </div>
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground">内容预览</Label>
-            <div className="mt-1 rounded border bg-muted/40 p-2 font-mono text-xs whitespace-pre-wrap max-h-40 overflow-y-auto">
-              {initialContent || "（空）"}
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-muted-foreground">模板内容（可编辑）</Label>
+              <span className="text-[10px] text-muted-foreground">
+                {contentDraft.length} / 300 字
+              </span>
             </div>
+            <Textarea
+              value={contentDraft}
+              onChange={(e) => setContentDraft(e.target.value)}
+              rows={5}
+              maxLength={300}
+              className="mt-1 font-mono text-xs"
+            />
+            {channel === "marketing" && (
+              needOptOut ? (
+                <div className="mt-1.5 flex items-center gap-2 rounded border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
+                  <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
+                  <span className="flex-1">
+                    营销类模板必须包含退订提示（STOP / 退订 / TD / 回T）——运营商合规要求
+                  </span>
+                  <button
+                    type="button"
+                    onClick={appendOptOut}
+                    className="shrink-0 rounded border border-amber-300 bg-white px-2 py-0.5 font-medium hover:bg-amber-100"
+                  >
+                    一键补退订
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-400">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  已包含退订提示，可提交审核
+                </div>
+              )
+            )}
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button onClick={submit}>提交审核</Button>
+          <Button onClick={submit} disabled={needOptOut}>
+            提交审核
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
