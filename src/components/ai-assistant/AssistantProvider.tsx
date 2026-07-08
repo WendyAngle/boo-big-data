@@ -29,13 +29,25 @@ function clamp(v: number, min: number, max: number) {
   return Math.min(Math.max(v, min), max);
 }
 
-function loadPos(key: string, fallback: { x: number; y: number }) {
+function loadPos(
+  key: string,
+  fallback: { x: number; y: number },
+  size?: { w: number; h: number },
+) {
   if (typeof window === "undefined") return fallback;
   try {
     const raw = window.localStorage.getItem(key);
-    if (!raw) return fallback;
-    const p = JSON.parse(raw) as { x: number; y: number };
-    return { x: Number(p.x) || fallback.x, y: Number(p.y) || fallback.y };
+    const p = raw ? (JSON.parse(raw) as { x: number; y: number }) : fallback;
+    let x = Number.isFinite(p?.x) ? Number(p.x) : fallback.x;
+    let y = Number.isFinite(p?.y) ? Number(p.y) : fallback.y;
+    // Snap stale/off-screen positions back into view.
+    if (size) {
+      const maxX = Math.max(8, window.innerWidth - size.w - 8);
+      const maxY = Math.max(8, window.innerHeight - size.h - 8);
+      x = clamp(x, 8, maxX);
+      y = clamp(y, 8, maxY);
+    }
+    return { x, y };
   } catch {
     return fallback;
   }
@@ -50,7 +62,7 @@ function useDraggable(
   const dragRef = useRef<{ dx: number; dy: number; moved: boolean } | null>(null);
 
   useEffect(() => {
-    setPos(loadPos(storageKey, fallback()));
+    setPos(loadPos(storageKey, fallback(), size));
   }, [storageKey]);
 
   // clamp on window resize
