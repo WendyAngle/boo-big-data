@@ -92,6 +92,7 @@ const menu: Root[] = [
         label: "管理后台",
         children: [
           { label: "邮件服务商", to: "/outreach/admin/email-providers" },
+          { label: "邮件账号", to: "/outreach/admin/email-accounts" },
           { label: "短信服务商", to: "/outreach/admin/sms-providers" },
           { label: "短信路由", to: "/outreach/admin/sms-routing" },
           { label: "短信模板", to: "/outreach/admin/sms-templates" },
