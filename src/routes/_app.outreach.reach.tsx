@@ -676,7 +676,7 @@ function ReplyCell({
   if (!thread || replies === 0) {
     return (
       <Link
-        to="/outreach/inquiries"
+        to="/outreach/conversations"
         search={thread ? { tid: thread.id, view: "all" } : { view: "all" }}
         className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-100"
         title="尚未收到回复，去收件箱主动回复"
@@ -689,7 +689,7 @@ function ReplyCell({
   }
   return (
     <Link
-      to="/outreach/inquiries"
+      to="/outreach/conversations"
       search={{ tid: thread.id, view: "all" }}
       className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100"
       title="打开收件箱查看回复"
