@@ -1131,6 +1131,11 @@ function ThreadDetail({
             )}
             AI 生成回复
           </Button>
+          <QuickTemplateMenu
+            channel={thread.channel}
+            disabled={!!winInfo?.closed}
+            onPick={(body) => setReply(body)}
+          />
         </div>
         {winInfo?.closed && templates.length > 0 ? (
           <div className="space-y-2">
