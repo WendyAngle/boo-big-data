@@ -436,7 +436,15 @@ function ThreadRow({
   );
 }
 
-function ThreadDetail({ thread }: { thread: Thread }) {
+function ThreadDetail({
+  thread,
+  autoAi,
+  onConsumeAction,
+}: {
+  thread: Thread;
+  autoAi?: boolean;
+  onConsumeAction?: () => void;
+}) {
   const [reply, setReply] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -466,6 +474,15 @@ function ThreadDetail({ thread }: { thread: Thread }) {
       setAiLoading(false);
     }
   }
+
+  // 当从企业/联系人详情胶囊上的"AI 回复"按钮进入时，自动触发一次生成，
+  // 生成后清除 URL 上的 action 参数，避免切换会话或刷新时反复触发。
+  useEffect(() => {
+    if (!autoAi) return;
+    aiGenerate();
+    onConsumeAction?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoAi, thread.id]);
 
   function doSend(aiGen = false) {
     if (!reply.trim()) {
