@@ -666,6 +666,17 @@ function ReplyCell({
   thread: Thread | null;
 }) {
   // 仅「触达成功」的邮件/短信任务有意义展示回复；其他状态与社媒渠道显示 —
+  if (reach.status === "in_progress") {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground" title="触达进行中，暂无回复">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        触达中
+      </span>
+    );
+  }
+  if (reach.status === "failed") {
+    return <span className="text-[11px] text-muted-foreground" title="触达失败">—</span>;
+  }
   if (reach.status !== "success") {
     return <span className="text-[11px] text-muted-foreground">—</span>;
   }
@@ -679,11 +690,11 @@ function ReplyCell({
         to="/outreach/conversations"
         search={thread ? { tid: thread.id, view: "all" } : { view: "all" }}
         className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-100"
-        title="尚未收到回复，去收件箱主动回复"
+        title="尚未收到回复，去收件箱主动跟进"
         onClick={(e) => e.stopPropagation()}
       >
         <MessageCircleReply className="h-3 w-3" />
-        去回复
+        主动跟进
       </Link>
     );
   }
@@ -692,11 +703,11 @@ function ReplyCell({
       to="/outreach/conversations"
       search={{ tid: thread.id, view: "all" }}
       className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100"
-      title="打开收件箱查看回复"
+      title={`客户已回复 ${replies} 条，点击进入会话`}
       onClick={(e) => e.stopPropagation()}
     >
       <MessageCircleReply className="h-3 w-3" />
-      {replies > 1 ? `已回复 ${replies}` : "已回复"}
+      {replies > 1 ? `客户已回复 ${replies}` : "客户已回复"}
       <InboxIcon className="h-3 w-3 opacity-60" />
     </Link>
   );

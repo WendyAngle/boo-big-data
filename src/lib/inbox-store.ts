@@ -207,7 +207,9 @@ export interface Thread {
 /* -------------------- Storage -------------------- */
 
 const META_KEY = "boo:inbox:meta:v1";
-const SEED_FLAG = "boo:inbox:seed:v3";
+const SEED_FLAG = "boo:inbox:seed:v4";
+/** Phase 1 演示：当前登录员工，需与 conversations.tsx 中的 CURRENT_TEAM_USER_ID 保持一致 */
+const DEMO_CURRENT_USER = "u_zhang";
 
 function readMeta(): Record<string, ThreadMeta> {
   if (typeof window === "undefined") return {};
@@ -438,6 +440,22 @@ function seedInboundIfNeeded(entries: LedgerEntry[]) {
       m.updatedAt = replyAt;
       changed = true;
     }
+  }
+  // 演示数据：把前若干条"待跟进"会话分派给当前员工，避免"我的待办"视图为空
+  let assigned = 0;
+  for (const r of entries) {
+    if (assigned >= 3) break;
+    const key = threadKey(r);
+    if (!key) continue;
+    const m = metaStore[key];
+    if (!m) continue;
+    if (m.status !== "pending") continue;
+    if (m.assigneeId) continue;
+    if (m.inboundMessages.length === 0) continue;
+    m.assigneeId = DEMO_CURRENT_USER;
+    m.assignee = memberById(DEMO_CURRENT_USER)?.name;
+    assigned++;
+    changed = true;
   }
   if (changed) writeMeta(metaStore);
   window.localStorage.setItem(SEED_FLAG, "1");
