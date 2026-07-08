@@ -79,6 +79,8 @@ const searchSchema = z.object({
     .optional(),
   tid: z.string().optional(),
   q: z.string().optional(),
+  // 从"最新沟通"胶囊中的"AI 回复"进入时，自动生成一条 AI 草稿。
+  action: z.enum(["ai"]).optional(),
 });
 
 type ViewKey = NonNullable<z.infer<typeof searchSchema>["view"]>;
