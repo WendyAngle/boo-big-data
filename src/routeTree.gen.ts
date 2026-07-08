@@ -43,6 +43,7 @@ import { Route as AppPointsProductsBundlesRouteImport } from './routes/_app.poin
 import { Route as AppPointsProductsBasicRouteImport } from './routes/_app.points.products.basic'
 import { Route as AppOutreachProductsHsRouteImport } from './routes/_app.outreach.products.$hs'
 import { Route as AppOutreachEnterpriseIdRouteImport } from './routes/_app.outreach.enterprise.$id'
+import { Route as AppOutreachAdminSmsProvidersRouteImport } from './routes/_app.outreach.admin.sms-providers'
 import { Route as AppOutreachEnterpriseIdIndexRouteImport } from './routes/_app.outreach.enterprise.$id.index'
 import { Route as AppOutreachEnterpriseIdContactIdxRouteImport } from './routes/_app.outreach.enterprise.$id.contact.$idx'
 
@@ -222,6 +223,12 @@ const AppOutreachEnterpriseIdRoute = AppOutreachEnterpriseIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppOutreachEnterpriseRoute,
 } as any)
+const AppOutreachAdminSmsProvidersRoute =
+  AppOutreachAdminSmsProvidersRouteImport.update({
+    id: '/outreach/admin/sms-providers',
+    path: '/outreach/admin/sms-providers',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppOutreachEnterpriseIdIndexRoute =
   AppOutreachEnterpriseIdIndexRouteImport.update({
     id: '/',
@@ -259,6 +266,7 @@ export interface FileRoutesByFullPath {
   '/points/recharges': typeof AppPointsRechargesRoute
   '/outreach/': typeof AppOutreachIndexRoute
   '/points/': typeof AppPointsIndexRoute
+  '/outreach/admin/sms-providers': typeof AppOutreachAdminSmsProvidersRoute
   '/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdRouteWithChildren
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
   '/points/products/basic': typeof AppPointsProductsBasicRoute
@@ -295,6 +303,7 @@ export interface FileRoutesByTo {
   '/points/recharges': typeof AppPointsRechargesRoute
   '/outreach': typeof AppOutreachIndexRoute
   '/points': typeof AppPointsIndexRoute
+  '/outreach/admin/sms-providers': typeof AppOutreachAdminSmsProvidersRoute
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
   '/points/products/basic': typeof AppPointsProductsBasicRoute
   '/points/products/bundles': typeof AppPointsProductsBundlesRoute
@@ -333,6 +342,7 @@ export interface FileRoutesById {
   '/_app/points/recharges': typeof AppPointsRechargesRoute
   '/_app/outreach/': typeof AppOutreachIndexRoute
   '/_app/points/': typeof AppPointsIndexRoute
+  '/_app/outreach/admin/sms-providers': typeof AppOutreachAdminSmsProvidersRoute
   '/_app/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdRouteWithChildren
   '/_app/outreach/products/$hs': typeof AppOutreachProductsHsRoute
   '/_app/points/products/basic': typeof AppPointsProductsBasicRoute
@@ -372,6 +382,7 @@ export interface FileRouteTypes {
     | '/points/recharges'
     | '/outreach/'
     | '/points/'
+    | '/outreach/admin/sms-providers'
     | '/outreach/enterprise/$id'
     | '/outreach/products/$hs'
     | '/points/products/basic'
@@ -408,6 +419,7 @@ export interface FileRouteTypes {
     | '/points/recharges'
     | '/outreach'
     | '/points'
+    | '/outreach/admin/sms-providers'
     | '/outreach/products/$hs'
     | '/points/products/basic'
     | '/points/products/bundles'
@@ -445,6 +457,7 @@ export interface FileRouteTypes {
     | '/_app/points/recharges'
     | '/_app/outreach/'
     | '/_app/points/'
+    | '/_app/outreach/admin/sms-providers'
     | '/_app/outreach/enterprise/$id'
     | '/_app/outreach/products/$hs'
     | '/_app/points/products/basic'
@@ -703,6 +716,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachEnterpriseIdRouteImport
       parentRoute: typeof AppOutreachEnterpriseRoute
     }
+    '/_app/outreach/admin/sms-providers': {
+      id: '/_app/outreach/admin/sms-providers'
+      path: '/outreach/admin/sms-providers'
+      fullPath: '/outreach/admin/sms-providers'
+      preLoaderRoute: typeof AppOutreachAdminSmsProvidersRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/outreach/enterprise/$id/': {
       id: '/_app/outreach/enterprise/$id/'
       path: '/'
@@ -776,6 +796,7 @@ interface AppRouteChildren {
   AppPointsRechargesRoute: typeof AppPointsRechargesRoute
   AppOutreachIndexRoute: typeof AppOutreachIndexRoute
   AppPointsIndexRoute: typeof AppPointsIndexRoute
+  AppOutreachAdminSmsProvidersRoute: typeof AppOutreachAdminSmsProvidersRoute
   AppOutreachProductsHsRoute: typeof AppOutreachProductsHsRoute
   AppPointsProductsBasicRoute: typeof AppPointsProductsBasicRoute
   AppPointsProductsBundlesRoute: typeof AppPointsProductsBundlesRoute
@@ -810,6 +831,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPointsRechargesRoute: AppPointsRechargesRoute,
   AppOutreachIndexRoute: AppOutreachIndexRoute,
   AppPointsIndexRoute: AppPointsIndexRoute,
+  AppOutreachAdminSmsProvidersRoute: AppOutreachAdminSmsProvidersRoute,
   AppOutreachProductsHsRoute: AppOutreachProductsHsRoute,
   AppPointsProductsBasicRoute: AppPointsProductsBasicRoute,
   AppPointsProductsBundlesRoute: AppPointsProductsBundlesRoute,
