@@ -48,6 +48,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/format-date";
@@ -80,6 +82,8 @@ import {
   memberById,
   threadGroup,
   assignThread,
+  previousAssigneeIds,
+  slaInfo,
 } from "@/lib/inbox-store";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 
@@ -480,12 +484,17 @@ function ThreadRow({
 }) {
   const isUnread = thread.meta.unread > 0;
   const last = thread.messages[thread.messages.length - 1];
+  const sla = slaInfo(thread);
+  const woken =
+    thread.meta.wokenAt &&
+    Date.now() - new Date(thread.meta.wokenAt).getTime() < 24 * 3600_000;
   return (
     <button
       onClick={onClick}
       className={cn(
         "w-full text-left px-4 py-3 border-b hover:bg-muted/40 transition-colors block",
         active && "bg-primary/5 border-l-2 border-l-primary",
+        woken && "bg-amber-50/60",
       )}
     >
       <div className="flex items-start gap-2">
@@ -509,6 +518,11 @@ function ThreadRow({
               <span className="text-[11px] text-muted-foreground truncate">
                 · {thread.parentRef.name}
               </span>
+            )}
+            {woken && (
+              <Badge className="text-[10px] py-0 px-1 h-4 bg-amber-500 hover:bg-amber-500">
+                已唤醒
+              </Badge>
             )}
             <span className="ml-auto text-[11px] text-muted-foreground shrink-0">
               {relTime(thread.lastAt)}
@@ -574,6 +588,22 @@ function ThreadRow({
             >
               {STATUS_LABEL[thread.meta.status]}
             </Badge>
+            {sla && (sla.overdue || sla.approaching) && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-[10px] py-0 px-1.5 h-5",
+                  sla.overdue
+                    ? "bg-rose-50 text-rose-700 border-rose-200"
+                    : "bg-amber-50 text-amber-700 border-amber-200",
+                )}
+              >
+                <Clock className="h-2.5 w-2.5 mr-0.5" />
+                {sla.overdue
+                  ? `逾期 ${formatShort(-sla.leftMs)}`
+                  : `剩 ${formatShort(sla.leftMs)}`}
+              </Badge>
+            )}
             {thread.meta.aiIntent && (
               <Badge
                 variant="outline"
@@ -761,6 +791,30 @@ function ThreadDetail({
 
       {/* 时间线 */}
       <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+        {(thread.meta.assignmentEvents ?? []).map((ev) => (
+          <div
+            key={ev.id}
+            className="flex items-center gap-2 text-[11px] text-muted-foreground border-l-2 border-primary/30 pl-3 py-1"
+          >
+            <UserCheck className="h-3 w-3 text-primary" />
+            <span>
+              {ev.from ? memberById(ev.from)?.name ?? "未知" : "未分配"} →{" "}
+              {ev.to ? memberById(ev.to)?.name ?? "未知" : "未分配"}
+            </span>
+            {ev.crossGroup && (
+              <Badge variant="outline" className="text-[10px] h-4 px-1 bg-amber-50 text-amber-700 border-amber-200">
+                跨组
+              </Badge>
+            )}
+            {ev.greetingSent && (
+              <Badge variant="outline" className="text-[10px] h-4 px-1">
+                已发切换招呼
+              </Badge>
+            )}
+            {ev.reason && <span className="text-foreground/70">· {ev.reason}</span>}
+            <span className="ml-auto">{formatDateTime(ev.at)}</span>
+          </div>
+        ))}
         {thread.messages.map((m) => (
           <div key={m.id} className="flex gap-3">
             <div
@@ -949,6 +1003,14 @@ function formatHm(ms: number) {
   return `${h}h ${m}m`;
 }
 
+function formatShort(ms: number) {
+  const total = Math.max(0, Math.floor(ms / 60000));
+  if (total < 60) return `${total}m`;
+  const h = Math.floor(total / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
+
 function ActionBar({ thread }: { thread: Thread }) {
   const [tagInput, setTagInput] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
@@ -1127,11 +1189,57 @@ function ActionBar({ thread }: { thread: Thread }) {
 
 function AssignMenu({ thread }: { thread: Thread }) {
   const group = threadGroup(thread);
-  const eligible = TEAM_MEMBERS.filter((m) => m.groups.includes(group));
   const cur = memberById(thread.meta.assigneeId);
+  const [open, setOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(cur?.id ?? null);
+  const [reason, setReason] = useState("");
+  const [crossGroup, setCrossGroup] = useState(false);
+  const [sendGreeting, setSendGreeting] = useState(false);
+
+  const prevIds = previousAssigneeIds(thread.id);
+  const inGroup = TEAM_MEMBERS.filter((m) => m.groups.includes(group));
+  const outGroup = TEAM_MEMBERS.filter((m) => !m.groups.includes(group));
+  const eligible = crossGroup ? [...inGroup, ...outGroup] : inGroup;
+  // 排序：上次跟进人 → 组内 → 组外
+  const sorted = [...eligible].sort((a, b) => {
+    const ai = prevIds.indexOf(a.id);
+    const bi = prevIds.indexOf(b.id);
+    if (ai !== bi) return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    return 0;
+  });
+
+  const isReassign = !!cur && selectedId !== cur.id;
+  const canSubmit = selectedId && (!isReassign || reason.trim().length > 0);
+
+  function reset() {
+    setSelectedId(cur?.id ?? null);
+    setReason("");
+    setCrossGroup(false);
+    setSendGreeting(false);
+  }
+  function submit() {
+    if (!canSubmit) return;
+    const target = TEAM_MEMBERS.find((m) => m.id === selectedId!);
+    const isCross = !!target && !target.groups.includes(group);
+    assignThread(thread.id, selectedId, {
+      reason: reason.trim() || undefined,
+      crossGroup: isCross,
+      sendGreeting,
+    });
+    toast.success(cur ? `已转派给 ${target?.name}` : `已分配给 ${target?.name}`);
+    setOpen(false);
+    reset();
+  }
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <Popover
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) reset();
+      }}
+    >
+      <PopoverTrigger asChild>
         <Button
           variant={cur ? "outline" : "default"}
           size="sm"
@@ -1140,7 +1248,7 @@ function AssignMenu({ thread }: { thread: Thread }) {
           {cur ? (
             <>
               <UserCheck className="h-3.5 w-3.5" />
-              分配给 {cur.name}
+              {cur.name}
             </>
           ) : (
             <>
@@ -1149,54 +1257,118 @@ function AssignMenu({ thread }: { thread: Thread }) {
             </>
           )}
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60">
-        <DropdownMenuLabel>
-          分配至 · {GROUP_LABEL[group]}
-        </DropdownMenuLabel>
-        <DropdownMenuItem
-          onClick={() => {
-            assignThread(thread.id, CURRENT_TEAM_USER_ID);
-            toast.success("我来跟：会话已分配给我");
-          }}
-        >
-          <Hand className="h-3.5 w-3.5 mr-2" /> 我来跟（抢单）
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        {eligible.map((m) => (
-          <DropdownMenuItem
-            key={m.id}
-            onClick={() => {
-              assignThread(thread.id, m.id);
-              toast.success(`已分配给 ${m.name}`);
-            }}
-          >
-            <span className="h-5 w-5 rounded-full bg-primary/10 text-primary text-[10px] flex items-center justify-center mr-2">
-              {m.avatarLetter}
-            </span>
-            {m.name}
-            {m.role === "lead" && (
-              <span className="ml-1 text-[10px] text-muted-foreground">组长</span>
-            )}
-            {thread.meta.assigneeId === m.id && (
-              <CheckCheck className="ml-auto h-3.5 w-3.5 text-emerald-500" />
-            )}
-          </DropdownMenuItem>
-        ))}
-        {cur && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-0">
+        <div className="p-3 border-b flex items-center gap-2">
+          <span className="text-sm font-medium">
+            {cur ? "转派会话" : "分配会话"} · {GROUP_LABEL[group]}
+          </span>
+          {!cur && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto h-7 gap-1 text-xs"
               onClick={() => {
-                assignThread(thread.id, null);
-                toast.success("已回退到未分配池");
+                assignThread(thread.id, CURRENT_TEAM_USER_ID);
+                toast.success("我来跟：会话已分配给我");
+                setOpen(false);
               }}
             >
-              <UserPlus className="h-3.5 w-3.5 mr-2 rotate-180" /> 取消分配
-            </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+              <Hand className="h-3 w-3" /> 我来跟
+            </Button>
+          )}
+        </div>
+        <div className="max-h-56 overflow-y-auto py-1">
+          {sorted.map((m) => {
+            const isPrev = prevIds[0] === m.id;
+            const isCross = !m.groups.includes(group);
+            return (
+              <button
+                key={m.id}
+                onClick={() => setSelectedId(m.id)}
+                className={cn(
+                  "w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-muted",
+                  selectedId === m.id && "bg-primary/5",
+                )}
+              >
+                <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-[11px] flex items-center justify-center">
+                  {m.avatarLetter}
+                </span>
+                <span className="font-medium">{m.name}</span>
+                {m.role === "lead" && (
+                  <Badge variant="outline" className="text-[10px] h-4 px-1">
+                    组长
+                  </Badge>
+                )}
+                {isPrev && (
+                  <Badge variant="outline" className="text-[10px] h-4 px-1 bg-emerald-50 text-emerald-700 border-emerald-200">
+                    上次跟进人
+                  </Badge>
+                )}
+                {isCross && (
+                  <Badge variant="outline" className="text-[10px] h-4 px-1 bg-amber-50 text-amber-700 border-amber-200">
+                    跨组
+                  </Badge>
+                )}
+                {selectedId === m.id && (
+                  <CheckCheck className="ml-auto h-3.5 w-3.5 text-emerald-500" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div className="p-3 border-t space-y-2">
+          <label className="flex items-center gap-2 text-xs cursor-pointer">
+            <input
+              type="checkbox"
+              checked={crossGroup}
+              onChange={(e) => setCrossGroup(e.target.checked)}
+            />
+            允许跨分组转派（管理员）
+          </label>
+          {isReassign && (
+            <div>
+              <Label className="text-xs">转派原因 <span className="text-rose-500">*</span></Label>
+              <Textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder='例如："客户在我休假期"'
+                rows={2}
+                className="mt-1 resize-none text-xs"
+              />
+            </div>
+          )}
+          {thread.channel === "whatsapp" && isReassign && (
+            <label className="flex items-center gap-2 text-xs cursor-pointer">
+              <input
+                type="checkbox"
+                checked={sendGreeting}
+                onChange={(e) => setSendGreeting(e.target.checked)}
+              />
+              向客户发送一条切换招呼语（共享号需要）
+            </label>
+          )}
+          <div className="flex items-center gap-2 pt-1">
+            <Button size="sm" onClick={submit} disabled={!canSubmit} className="flex-1">
+              {cur ? "确认转派" : "确认分配"}
+            </Button>
+            {cur && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  assignThread(thread.id, null, { reason: reason.trim() || "退回池" });
+                  toast.success("已回退到未分配池");
+                  setOpen(false);
+                  reset();
+                }}
+              >
+                退回池
+              </Button>
+            )}
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
