@@ -401,7 +401,7 @@ function FavoritesPage() {
             </p>
           </div>
           <div className="ml-auto hidden md:flex items-center gap-6 text-sm">
-            {(["enterprise", "contact"] as FavoriteKind[]).map(
+            {(["enterprise", "contact", "product"] as FavoriteKind[]).map(
               (k) => (
                 <div key={k} className="text-center">
                   <div className="text-2xl font-bold tabular-nums">
