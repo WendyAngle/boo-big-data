@@ -4,6 +4,7 @@ import {
   useLedger,
   type LedgerEntry,
 } from "@/lib/credits-ledger";
+import { addSuppression } from "@/lib/suppressions-store";
 
 /* -------------------- Types -------------------- */
 
