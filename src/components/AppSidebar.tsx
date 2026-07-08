@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ShieldCheck, ChevronDown, Users, UserCog, Coins, Send, FolderTree, Box, Wallet, Layers, Receipt, FileText, Search, LayoutDashboard } from "lucide-react";
+import { ShieldCheck, ChevronDown, Users, UserCog, Coins, Send, FolderTree, Box, Wallet, Layers, Receipt, FileText, Search, LayoutDashboard, Inbox } from "lucide-react";
 import { AccountMenu } from "@/components/account/AccountMenu";
+import { useSidebarBadge } from "@/lib/inbox-store";
 
 type Leaf = { label: string; to: string; icon?: typeof Users };
 type Group = { label: string; to?: string; children: Leaf[] };
@@ -67,6 +68,7 @@ const menu: Root[] = [
           { label: "收藏", to: "/outreach/favorites" },
           { label: "足迹", to: "/outreach/footprints" },
           { label: "触达", to: "/outreach/reach" },
+          { label: "收件箱", to: "/outreach/inbox", icon: Inbox },
         ],
       },
       {
