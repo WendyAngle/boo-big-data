@@ -53,6 +53,8 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
+  SelectLabel,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -314,10 +316,10 @@ function InboxPage() {
         </div>
       </div>
       <div className="flex-1 flex min-h-0">
-        {/* 左栏：视图侧栏 —— 窄屏（<1280px）折叠为列表顶部的下拉 */}
+        {/* 左栏：视图侧栏 —— 分「分派」「状态」两段，窄屏（<1280px）折叠为列表顶部下拉 */}
         <aside className="hidden xl:block w-52 shrink-0 border-r bg-muted/20 py-3 overflow-y-auto">
           <div className="px-3 text-[11px] text-muted-foreground mb-1 font-medium tracking-wide">
-            视图
+            分派
           </div>
           <FilterItem
             active={view === "unassigned"}
@@ -328,7 +330,7 @@ function InboxPage() {
           />
           <FilterItem
             active={view === "mine"}
-            label="分配给我"
+            label="我的"
             count={
               threads.filter((t) => t.meta.assigneeId === CURRENT_TEAM_USER_ID)
                 .length
@@ -342,24 +344,15 @@ function InboxPage() {
             onClick={() => goto({ view: "unread", tid: undefined })}
             dot="rose"
           />
+          <div className="px-3 mt-3 text-[11px] text-muted-foreground mb-1 font-medium tracking-wide">
+            状态
+          </div>
           <FilterItem
             active={view === "pending"}
             label="待跟进"
             count={counts.pending}
             onClick={() => goto({ view: "pending", tid: undefined })}
             dot="amber"
-          />
-          <FilterItem
-            active={view === "hasReply"}
-            label="有回复"
-            count={counts.hasReply}
-            onClick={() => goto({ view: "hasReply", tid: undefined })}
-          />
-          <FilterItem
-            active={view === "noReply"}
-            label="未回复"
-            count={counts.noReply}
-            onClick={() => goto({ view: "noReply", tid: undefined })}
           />
           <FilterItem
             active={view === "snoozed"}
@@ -385,30 +378,75 @@ function InboxPage() {
             count={counts.all}
             onClick={() => goto({ view: "all", tid: undefined })}
           />
+          <div className="px-3 mt-3 text-[11px] text-muted-foreground mb-1 font-medium tracking-wide">
+            响应
+          </div>
+          <FilterItem
+            active={view === "hasReply"}
+            label="有回复"
+            count={counts.hasReply}
+            onClick={() => goto({ view: "hasReply", tid: undefined })}
+          />
+          <FilterItem
+            active={view === "noReply"}
+            label="未回复"
+            count={counts.noReply}
+            onClick={() => goto({ view: "noReply", tid: undefined })}
+          />
         </aside>
 
         {/* 中栏：会话列表 */}
         <div className="w-[300px] xl:w-[340px] shrink-0 border-r flex flex-col min-h-0">
           {/* 窄屏下的视图下拉（xl 及以上由侧栏承担） */}
-          <div className="xl:hidden px-2 py-2 border-b bg-muted/20 shrink-0">
+          <div className="xl:hidden px-2 py-2 border-b bg-muted/20 shrink-0 flex items-center gap-2">
+            {/* 快捷 chip：分派维度 */}
+            <div className="flex items-center rounded-md border overflow-hidden">
+              {([
+                { k: "unassigned", label: "未分配", n: counts.unassigned },
+                { k: "mine", label: "我的", n: threads.filter((t) => t.meta.assigneeId === CURRENT_TEAM_USER_ID).length },
+                { k: "unread", label: "未读", n: counts.unread },
+              ] as const).map((c) => (
+                <button
+                  key={c.k}
+                  onClick={() => goto({ view: c.k, tid: undefined })}
+                  className={cn(
+                    "px-2 h-8 text-[11px] transition-colors border-l first:border-l-0",
+                    view === c.k ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted",
+                  )}
+                >
+                  {c.label}
+                  {c.n > 0 && <span className="ml-1 opacity-70">{c.n}</span>}
+                </button>
+              ))}
+            </div>
+            {/* 状态下拉 */}
             <Select
               value={view}
               onValueChange={(v) => goto({ view: v as ViewKey, tid: undefined })}
             >
-              <SelectTrigger className="h-8 text-xs">
+              <SelectTrigger className="h-8 text-xs flex-1">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="unassigned">未分配 · {counts.unassigned}</SelectItem>
-                <SelectItem value="mine">分配给我</SelectItem>
-                <SelectItem value="unread">未读 · {counts.unread}</SelectItem>
-                <SelectItem value="pending">待跟进 · {counts.pending}</SelectItem>
-                <SelectItem value="hasReply">有回复 · {counts.hasReply}</SelectItem>
-                <SelectItem value="noReply">未回复 · {counts.noReply}</SelectItem>
-                <SelectItem value="snoozed">稍后处理 · {counts.snoozed}</SelectItem>
-                <SelectItem value="handled">已处理 · {counts.handled}</SelectItem>
-                <SelectItem value="suppressed">已抑制 · {counts.suppressed}</SelectItem>
-                <SelectItem value="all">全部 · {counts.all}</SelectItem>
+                <SelectGroup>
+                  <SelectLabel>分派</SelectLabel>
+                  <SelectItem value="unassigned">未分配 · {counts.unassigned}</SelectItem>
+                  <SelectItem value="mine">我的</SelectItem>
+                  <SelectItem value="unread">未读 · {counts.unread}</SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>状态</SelectLabel>
+                  <SelectItem value="pending">待跟进 · {counts.pending}</SelectItem>
+                  <SelectItem value="snoozed">稍后处理 · {counts.snoozed}</SelectItem>
+                  <SelectItem value="handled">已处理 · {counts.handled}</SelectItem>
+                  <SelectItem value="suppressed">已抑制 · {counts.suppressed}</SelectItem>
+                  <SelectItem value="all">全部 · {counts.all}</SelectItem>
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>响应</SelectLabel>
+                  <SelectItem value="hasReply">有回复 · {counts.hasReply}</SelectItem>
+                  <SelectItem value="noReply">未回复 · {counts.noReply}</SelectItem>
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
