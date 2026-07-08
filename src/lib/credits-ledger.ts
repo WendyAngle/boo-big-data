@@ -464,7 +464,7 @@ export const REACH_STATUS_COLOR: Record<ReachStatus, string> = {
 
 export const REACH_CHANNEL_LABEL: Record<ReachChannel, string> = {
   email: "邮件",
-  phone: "电话",
+  phone: "短信",
   social: "社媒",
 };
 
