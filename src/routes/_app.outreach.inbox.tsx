@@ -535,13 +535,39 @@ function ThreadRow({
               variant="outline"
               className={cn(
                 "text-[10px] py-0 px-1.5 h-5",
-                thread.channel === "sms"
-                  ? "bg-sky-50 text-sky-700 border-sky-200"
-                  : "bg-violet-50 text-violet-700 border-violet-200",
+                CHANNEL_COLOR[thread.channel],
               )}
             >
-              {thread.channel === "sms" ? "短信" : "邮件"}
+              {CHANNEL_LABEL[thread.channel]}
             </Badge>
+            <Badge
+              variant="outline"
+              className="text-[10px] py-0 px-1.5 h-5 gap-0.5"
+              title={GROUP_LABEL[threadGroup(thread)]}
+            >
+              {threadGroup(thread) === "enterprise" ? (
+                <Building2 className="h-2.5 w-2.5" />
+              ) : (
+                <UserRound className="h-2.5 w-2.5" />
+              )}
+              {threadGroup(thread) === "enterprise" ? "企业" : "人物"}
+            </Badge>
+            {thread.meta.assigneeId ? (
+              <Badge
+                variant="outline"
+                className="text-[10px] py-0 px-1.5 h-5 bg-primary/5 text-primary border-primary/20"
+              >
+                <UserCheck className="h-2.5 w-2.5 mr-0.5" />
+                {memberById(thread.meta.assigneeId)?.name ?? "已分配"}
+              </Badge>
+            ) : (
+              <Badge
+                variant="outline"
+                className="text-[10px] py-0 px-1.5 h-5 bg-amber-50 text-amber-700 border-amber-200"
+              >
+                未分配
+              </Badge>
+            )}
             <Badge
               variant="outline"
               className="text-[10px] py-0 px-1.5 h-5"
