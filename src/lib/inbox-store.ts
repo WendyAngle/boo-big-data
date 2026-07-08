@@ -441,6 +441,22 @@ function seedInboundIfNeeded(entries: LedgerEntry[]) {
       changed = true;
     }
   }
+  // 演示数据：把前若干条"待跟进"会话分派给当前员工，避免"我的待办"视图为空
+  let assigned = 0;
+  for (const r of entries) {
+    if (assigned >= 3) break;
+    const key = threadKey(r);
+    if (!key) continue;
+    const m = metaStore[key];
+    if (!m) continue;
+    if (m.status !== "pending") continue;
+    if (m.assigneeId) continue;
+    if (m.inboundMessages.length === 0) continue;
+    m.assigneeId = DEMO_CURRENT_USER;
+    m.assignee = memberById(DEMO_CURRENT_USER)?.name;
+    assigned++;
+    changed = true;
+  }
   if (changed) writeMeta(metaStore);
   window.localStorage.setItem(SEED_FLAG, "1");
 }
