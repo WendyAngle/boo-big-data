@@ -123,13 +123,13 @@ export function RecentCommsCapsule({ targetKind, targetId }: Props) {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button asChild variant="outline" size="sm" className="gap-1.5">
-            <Link to="/outreach/inquiries" search={{ tid: t.id, action: "ai" }}>
+            <Link to="/outreach/conversations" search={{ tid: t.id, action: "ai" }}>
               <Sparkles className="h-3.5 w-3.5" />
               AI 回复
             </Link>
           </Button>
           <Button asChild size="sm" className="gap-1.5">
-            <Link to="/outreach/inquiries" search={{ tid: t.id }}>
+            <Link to="/outreach/conversations" search={{ tid: t.id }}>
               进入会话
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>

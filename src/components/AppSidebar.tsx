@@ -68,7 +68,7 @@ const menu: Root[] = [
           { label: "我的收藏", to: "/outreach/favorites" },
           { label: "浏览足迹", to: "/outreach/footprints" },
           { label: "触达任务", to: "/outreach/reach" },
-          { label: "多渠道询盘", to: "/outreach/inquiries" },
+          { label: "询盘与回复", to: "/outreach/conversations" },
           { label: "退订名单", to: "/outreach/suppressions" },
         ],
       },
@@ -195,7 +195,7 @@ export function AppSidebar() {
                                 >
                                   {CI && <CI className="h-3.5 w-3.5" />}
                                   <span>{c.label}</span>
-                                  {c.to === "/outreach/inquiries" && badge.unread > 0 && (
+                                  {c.to === "/outreach/conversations" && badge.unread > 0 && (
                                     <span className="ml-auto inline-flex items-center justify-center rounded-full bg-rose-500 text-white text-[10px] leading-none h-4 min-w-4 px-1">
                                       {badge.unread > 99 ? "99+" : badge.unread}
                                     </span>
