@@ -508,6 +508,7 @@ function buildThreads(entries: LedgerEntry[]): Thread[] {
     if (meta.status === "snoozed" && meta.snoozeUntil && new Date(meta.snoozeUntil).getTime() < Date.now()) {
       meta.status = "pending";
       meta.snoozeUntil = undefined;
+      meta.wokenAt = new Date().toISOString();
     }
   }
   return Array.from(map.values()).sort((a, b) => b.lastAt.localeCompare(a.lastAt));
