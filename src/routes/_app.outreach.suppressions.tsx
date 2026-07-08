@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Ban, Mail, Phone, Plus, Search, Trash2, Upload } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Accordion,
   AccordionContent,
@@ -64,6 +67,13 @@ function SuppressionsPage() {
   const [q, setQ] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [removeTargets, setRemoveTargets] = useState<string[] | null>(null);
+
+  // 切换 tab / 搜索时清空选择，避免跨视图误操作
+  useEffect(() => {
+    setSelected(new Set());
+  }, [tab, q]);
 
   const counts = useMemo(
     () => ({
@@ -85,6 +95,23 @@ function SuppressionsPage() {
       )
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }, [list, tab, q]);
+
+  const allChecked = filtered.length > 0 && filtered.every((r) => selected.has(r.id));
+  const someChecked = filtered.some((r) => selected.has(r.id));
+  const selectedInView = filtered.filter((r) => selected.has(r.id));
+
+  function toggleAll(v: boolean) {
+    const next = new Set(selected);
+    if (v) filtered.forEach((r) => next.add(r.id));
+    else filtered.forEach((r) => next.delete(r.id));
+    setSelected(next);
+  }
+  function toggleOne(id: string, v: boolean) {
+    const next = new Set(selected);
+    if (v) next.add(id);
+    else next.delete(id);
+    setSelected(next);
+  }
 
   return (
     <div className="p-6 space-y-4">
@@ -178,12 +205,23 @@ function SuppressionsPage() {
             count={counts.phone}
             onClick={() => setTab("phone")}
           />
+          {selectedInView.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+              onClick={() => setRemoveTargets(selectedInView.map((r) => r.id))}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              批量移除 ({selectedInView.length})
+            </Button>
+          )}
           <div className="ml-auto relative w-72">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="搜索地址 / 原因 / 来源"
+              placeholder={tab === "email" ? "按邮箱 / 原因 / 来源搜索" : "按手机号 / 原因 / 来源搜索"}
               className="pl-8 h-8"
             />
           </div>
@@ -191,6 +229,13 @@ function SuppressionsPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10">
+                <Checkbox
+                  checked={allChecked ? true : someChecked ? "indeterminate" : false}
+                  onCheckedChange={(v) => toggleAll(v === true)}
+                  aria-label="全选"
+                />
+              </TableHead>
               <TableHead className="w-[280px]">{tab === "email" ? "邮箱" : "手机号"}</TableHead>
               <TableHead>原因</TableHead>
               <TableHead>来源</TableHead>
@@ -201,13 +246,20 @@ function SuppressionsPage() {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-10">
+                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-10">
                   暂无退订记录
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((r) => (
                 <TableRow key={r.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selected.has(r.id)}
+                      onCheckedChange={(v) => toggleOne(r.id, v === true)}
+                      aria-label="选中"
+                    />
+                  </TableCell>
                   <TableCell className="font-mono text-xs">{r.value}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-xs">
@@ -225,10 +277,7 @@ function SuppressionsPage() {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-rose-600 hover:text-rose-700"
-                      onClick={() => {
-                        removeSuppression(r.id);
-                        toast.success("已移除，后续可再次触达");
-                      }}
+                      onClick={() => setRemoveTargets([r.id])}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -242,6 +291,23 @@ function SuppressionsPage() {
 
       <AddOneDialog open={addOpen} onOpenChange={setAddOpen} defaultKind={tab} />
       <ImportDialog open={importOpen} onOpenChange={setImportOpen} defaultKind={tab} />
+      <RemoveDialog
+        ids={removeTargets}
+        items={list}
+        onOpenChange={(o) => {
+          if (!o) setRemoveTargets(null);
+        }}
+        onConfirmed={(ids) => {
+          ids.forEach((id) => removeSuppression(id));
+          setSelected((prev) => {
+            const next = new Set(prev);
+            ids.forEach((id) => next.delete(id));
+            return next;
+          });
+          setRemoveTargets(null);
+          toast.success(`已移除 ${ids.length} 条，该地址已恢复可触达状态`);
+        }}
+      />
     </div>
   );
 }
