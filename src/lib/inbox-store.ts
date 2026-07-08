@@ -95,6 +95,22 @@ export const GROUP_LABEL: Record<GroupKind, string> = {
   contact: "人物分组",
 };
 
+/** 分组 SLA 配置（Phase 1 常量；管理页可覆盖但只影响 UI 视觉） */
+export const GROUP_SLA: Record<GroupKind, { firstResponseMin: number; replyHour: number }> = {
+  enterprise: { firstResponseMin: 30, replyHour: 8 },
+  contact: { firstResponseMin: 20, replyHour: 4 },
+};
+
+export interface AssignmentEvent {
+  id: string;
+  from?: string;
+  to?: string;
+  reason?: string;
+  crossGroup?: boolean;
+  greetingSent?: boolean;
+  at: string;
+}
+
 /** 演示用团队成员（Phase 1 mock；后续接入 /outreach/users） */
 export interface TeamMember {
   id: string;
@@ -147,8 +163,12 @@ interface ThreadMeta {
   assignee?: string;
   /** 分配给的员工 id（Phase 1 mock，见 TEAM_MEMBERS） */
   assigneeId?: string;
+  /** 分配 / 转派事件时间线 */
+  assignmentEvents?: AssignmentEvent[];
   /** WhatsApp / Facebook / TikTok 客服窗口截止时间 */
   windowExpiresAt?: string;
+  /** snooze 到期自动唤醒的时间点，用于列表高亮 */
+  wokenAt?: string;
   /** 是否被标为 star */
   starred?: boolean;
   /** 未读的 inbound 数量 */
