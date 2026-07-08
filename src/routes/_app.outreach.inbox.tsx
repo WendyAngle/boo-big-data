@@ -484,12 +484,17 @@ function ThreadRow({
 }) {
   const isUnread = thread.meta.unread > 0;
   const last = thread.messages[thread.messages.length - 1];
+  const sla = slaInfo(thread);
+  const woken =
+    thread.meta.wokenAt &&
+    Date.now() - new Date(thread.meta.wokenAt).getTime() < 24 * 3600_000;
   return (
     <button
       onClick={onClick}
       className={cn(
         "w-full text-left px-4 py-3 border-b hover:bg-muted/40 transition-colors block",
         active && "bg-primary/5 border-l-2 border-l-primary",
+        woken && "bg-amber-50/60",
       )}
     >
       <div className="flex items-start gap-2">
@@ -513,6 +518,11 @@ function ThreadRow({
               <span className="text-[11px] text-muted-foreground truncate">
                 · {thread.parentRef.name}
               </span>
+            )}
+            {woken && (
+              <Badge className="text-[10px] py-0 px-1 h-4 bg-amber-500 hover:bg-amber-500">
+                已唤醒
+              </Badge>
             )}
             <span className="ml-auto text-[11px] text-muted-foreground shrink-0">
               {relTime(thread.lastAt)}
