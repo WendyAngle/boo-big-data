@@ -31,6 +31,7 @@ import { FavoriteToggle } from "@/components/FavoriteToggle";
 import { MaskedField } from "@/components/MaskedField";
 import { ReachButton } from "@/components/ReachButton";
 import { WhatsAppReachButton } from "@/components/WhatsAppReachButton";
+import { RecentCommsCapsule } from "@/components/outreach/RecentCommsCapsule";
 
 interface ContactDetail {
   enterprise: Enterprise;
@@ -285,6 +286,13 @@ function ContactDetailPage() {
           value={d.lastContactedAt.slice(0, 10)}
         />
       </div>
+
+      {/* 最新沟通胶囊卡 */}
+      <RecentCommsCapsule
+        targetKind="contact"
+        targetId={`${e.id}:${d.idx}`}
+        targetName={c.name}
+      />
 
       {/* 基本信息 */}
       <Section icon={<Info className="h-4 w-4" />} title="基本信息">
