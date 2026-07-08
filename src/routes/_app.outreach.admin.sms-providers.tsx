@@ -1,11 +1,20 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ServerCog, Activity, CheckCircle2, AlertTriangle, XCircle, Settings2 } from "lucide-react";
+import {
+  ServerCog,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  Settings2,
+  ShieldOff,
+  Info,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -30,7 +39,10 @@ export const Route = createFileRoute("/_app/outreach/admin/sms-providers")({
   component: SmsProvidersPage,
 });
 
-type Health = "healthy" | "degraded" | "down";
+type Health = "healthy" | "degraded" | "down" | "paused";
+
+// USD 记账口径，其他币种保留原始展示。汇率写死为演示值。
+const FX_TO_USD: Record<string, number> = { USD: 1, CNY: 0.14 };
 
 interface Provider {
   id: string;
@@ -41,9 +53,11 @@ interface Provider {
   enabled: boolean;
   health: Health;
   deliveryRate: number; // 0-1
+  respMs: number; // 平均响应耗时
   tps: number;
   quotaUsed: number; // 0-1
-  cost: string; // 每段
+  /** 原始计价 */
+  cost: { currency: "USD" | "CNY"; perSegment: number };
   lastCheck: string;
 }
 
@@ -57,9 +71,10 @@ const SEED: Provider[] = [
     enabled: true,
     health: "healthy",
     deliveryRate: 0.973,
+    respMs: 1800,
     tps: 100,
     quotaUsed: 0.42,
-    cost: "$0.0075/段",
+    cost: { currency: "USD", perSegment: 0.0075 },
     lastCheck: "1 分钟前",
   },
   {
@@ -71,9 +86,10 @@ const SEED: Provider[] = [
     enabled: true,
     health: "healthy",
     deliveryRate: 0.951,
+    respMs: 2300,
     tps: 60,
     quotaUsed: 0.28,
-    cost: "$0.0068/段",
+    cost: { currency: "USD", perSegment: 0.0068 },
     lastCheck: "刚刚",
   },
   {
@@ -85,9 +101,10 @@ const SEED: Provider[] = [
     enabled: true,
     health: "degraded",
     deliveryRate: 0.881,
+    respMs: 6200,
     tps: 200,
     quotaUsed: 0.76,
-    cost: "¥0.045/段",
+    cost: { currency: "CNY", perSegment: 0.045 },
     lastCheck: "3 分钟前",
   },
   {
@@ -99,9 +116,10 @@ const SEED: Provider[] = [
     enabled: true,
     health: "healthy",
     deliveryRate: 0.988,
+    respMs: 900,
     tps: 300,
     quotaUsed: 0.15,
-    cost: "$0.010/段",
+    cost: { currency: "USD", perSegment: 0.010 },
     lastCheck: "刚刚",
   },
   {
@@ -113,12 +131,23 @@ const SEED: Provider[] = [
     enabled: false,
     health: "down",
     deliveryRate: 0.62,
+    respMs: 15200,
     tps: 80,
     quotaUsed: 0,
-    cost: "$0.008/段",
+    cost: { currency: "USD", perSegment: 0.008 },
     lastCheck: "12 分钟前",
   },
 ];
+
+/** 统一转 USD 显示，tooltip 展示原币值 */
+function formatCostUSD(cost: Provider["cost"]) {
+  const usd = cost.perSegment * (FX_TO_USD[cost.currency] ?? 1);
+  return `$${usd.toFixed(4)}/段`;
+}
+function formatCostOriginal(cost: Provider["cost"]) {
+  const sym = cost.currency === "USD" ? "$" : "¥";
+  return `${sym}${cost.perSegment.toFixed(4)}/段（${cost.currency}）`;
+}
 
 function SmsProvidersPage() {
   const [list, setList] = useState<Provider[]>(SEED);
@@ -138,12 +167,20 @@ function SmsProvidersPage() {
 
   function toggle(id: string) {
     setList((s) =>
-      s.map((p) => (p.id === id ? { ...p, enabled: !p.enabled } : p)),
+      s.map((p) => {
+        if (p.id !== id) return p;
+        if (p.health === "down") {
+          toast.error("服务商已触发熔断，无法在此手动启用；请先解决底层问题");
+          return p;
+        }
+        return { ...p, enabled: !p.enabled };
+      }),
     );
-    toast.success("已更新服务商状态");
+    toast.success("已更新服务商启用状态");
   }
 
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="p-6 space-y-4">
       <div>
         <h1 className="text-2xl font-semibold flex items-center gap-2">
@@ -155,6 +192,22 @@ function SmsProvidersPage() {
           业务人员发短信时无需关心服务商归属。
         </p>
       </div>
+
+      <Card className="p-4 space-y-2 border-primary/20 bg-primary/[0.03]">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Info className="h-4 w-4 text-primary" />
+          健康度判定规则（近 5 分钟滚动窗口）
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs">
+          <RuleCell tone="ok"    label="🟢 正常"   rule="送达率 ≥95% 且 响应 <3s" />
+          <RuleCell tone="warn"  label="🟡 降级"   rule="送达率 85–95% 或 响应 3–10s → 路由权重降至 50%" />
+          <RuleCell tone="err"   label="🔴 异常"   rule="送达率 <85% 或 响应 >10s → 权重清零、等待人工确认" />
+          <RuleCell tone="fatal" label="⛔ 熔断"   rule="连续 3 个窗口 <70% → 自动禁用，30min 后进入观察态" />
+        </div>
+        <div className="text-[11px] text-muted-foreground pt-1">
+          说明：单位「TPS」= 条/秒；单价统一以 <strong>USD</strong> 显示，鼠标悬停可查看原币计价。熔断态下开关强制置灰，需管理员在故障排除后重置。
+        </div>
+      </Card>
 
       <div className="grid grid-cols-4 gap-3">
         <StatCard label="总服务商" value={summary.total.toString()} />
@@ -180,15 +233,24 @@ function SmsProvidersPage() {
               <TableHead>支持渠道</TableHead>
               <TableHead>健康度</TableHead>
               <TableHead>送达率</TableHead>
-              <TableHead>TPS</TableHead>
+              <TableHead>
+                TPS
+                <span className="text-[10px] font-normal text-muted-foreground ml-1">(条/秒)</span>
+              </TableHead>
               <TableHead>今日配额</TableHead>
-              <TableHead>单价</TableHead>
+              <TableHead>
+                单价
+                <span className="text-[10px] font-normal text-muted-foreground ml-1">(USD)</span>
+              </TableHead>
               <TableHead className="text-right">启用</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {list.map((p) => (
-              <TableRow key={p.id}>
+            {list.map((p) => {
+              const isDown = p.health === "down";
+              const effectiveEnabled = isDown ? false : p.enabled;
+              return (
+              <TableRow key={p.id} className={cn(isDown && "opacity-70")}>
                 <TableCell>
                   <div className="font-medium">{p.name}</div>
                   <div className="text-[11px] text-muted-foreground">
@@ -234,6 +296,9 @@ function SmsProvidersPage() {
                   >
                     {(p.deliveryRate * 100).toFixed(1)}%
                   </span>
+                  <div className="text-[10px] text-muted-foreground">
+                    响应 {(p.respMs / 1000).toFixed(1)}s
+                  </div>
                 </TableCell>
                 <TableCell className="text-sm">{p.tps}</TableCell>
                 <TableCell className="w-40">
@@ -244,12 +309,40 @@ function SmsProvidersPage() {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="text-sm text-muted-foreground">{p.cost}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="font-mono cursor-help border-b border-dotted border-muted-foreground/40">
+                        {formatCostUSD(p.cost)}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      原币计价：{formatCostOriginal(p.cost)}
+                    </TooltipContent>
+                  </Tooltip>
+                </TableCell>
                 <TableCell className="text-right">
-                  <Switch checked={p.enabled} onCheckedChange={() => toggle(p.id)} />
+                  <div className="flex items-center justify-end gap-1.5">
+                    {isDown && (
+                      <Badge variant="outline" className="text-[10px] bg-rose-50 text-rose-700 border-rose-200 gap-0.5">
+                        <ShieldOff className="h-3 w-3" /> 熔断禁用
+                      </Badge>
+                    )}
+                    {p.health === "degraded" && p.enabled && (
+                      <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
+                        权重 50%
+                      </Badge>
+                    )}
+                    <Switch
+                      checked={effectiveEnabled}
+                      disabled={isDown}
+                      onCheckedChange={() => toggle(p.id)}
+                    />
+                  </div>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </Card>
@@ -261,6 +354,24 @@ function SmsProvidersPage() {
           详细路由规则见「路由策略」页面。健康度异常时，路由引擎会自动触发 Failover 到备用服务商。
         </div>
       </Card>
+    </div>
+    </TooltipProvider>
+  );
+}
+
+function RuleCell({ tone, label, rule }: { tone: "ok" | "warn" | "err" | "fatal"; label: string; rule: string }) {
+  return (
+    <div
+      className={cn(
+        "rounded-md border p-2 space-y-0.5",
+        tone === "ok" && "border-emerald-200 bg-emerald-50/60",
+        tone === "warn" && "border-amber-200 bg-amber-50/60",
+        tone === "err" && "border-rose-200 bg-rose-50/60",
+        tone === "fatal" && "border-neutral-300 bg-neutral-100",
+      )}
+    >
+      <div className="text-xs font-medium">{label}</div>
+      <div className="text-[11px] text-muted-foreground leading-snug">{rule}</div>
     </div>
   );
 }
@@ -303,9 +414,15 @@ function HealthBadge({ health }: { health: Health }) {
         <AlertTriangle className="h-3 w-3" /> 降级
       </Badge>
     );
+  if (health === "paused")
+    return (
+      <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200 gap-1">
+        <AlertTriangle className="h-3 w-3" /> 暂停
+      </Badge>
+    );
   return (
-    <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 gap-1">
-      <XCircle className="h-3 w-3" /> 异常
+    <Badge variant="outline" className="bg-rose-100 text-rose-800 border-rose-300 gap-1">
+      <XCircle className="h-3 w-3" /> 熔断
     </Badge>
   );
 }
