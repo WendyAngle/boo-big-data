@@ -451,7 +451,7 @@ export function getReachStatus(r: LedgerEntry, now = Date.now()): ReachStatus {
 export const REACH_STATUS_LABEL: Record<ReachStatus, string> = {
   pending: "待触达",
   in_progress: "触达中",
-  success: "已触达",
+  success: "触达成功",
   failed: "触达失败",
 };
 
