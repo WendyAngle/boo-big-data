@@ -488,6 +488,7 @@ function StatCard({
 
 function MailboxCard({
   m,
+  readOnly,
   testing,
   onTest,
   onEdit,
@@ -496,6 +497,7 @@ function MailboxCard({
   onToggleStatus,
 }: {
   m: Mailbox;
+  readOnly?: boolean;
   testing: boolean;
   onTest: () => void;
   onEdit: () => void;
@@ -522,6 +524,9 @@ function MailboxCard({
             <Badge variant="outline" className={statusBadgeCls(m.status)}>
               {m.status}
             </Badge>
+            {m.scope === "personal" && (
+              <Badge variant="outline" className="text-[10px]">个人</Badge>
+            )}
           </div>
           <div className="text-xs text-muted-foreground mt-0.5 truncate">{m.displayName}</div>
         </div>
@@ -564,6 +569,11 @@ function MailboxCard({
         </div>
       </div>
 
+      {readOnly ? (
+        <div className="mt-4 pt-4 border-t flex items-center justify-end">
+          <span className="text-[11px] text-muted-foreground">只读 · 无操作权限</span>
+        </div>
+      ) : (
       <div className="mt-4 pt-4 border-t flex items-center justify-end gap-1">
         <TooltipProvider delayDuration={150}>
           <Tooltip>
@@ -623,6 +633,9 @@ function MailboxCard({
             </TooltipTrigger>
             <TooltipContent>删除</TooltipContent>
           </Tooltip>
+        </TooltipProvider>
+      </div>
+      )}
         </TooltipProvider>
       </div>
     </Card>
