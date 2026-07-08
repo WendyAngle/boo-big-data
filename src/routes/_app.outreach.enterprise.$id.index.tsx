@@ -36,6 +36,7 @@ import { FavoriteToggle } from "@/components/FavoriteToggle";
 import { MaskedField } from "@/components/MaskedField";
 import { ReachButton } from "@/components/ReachButton";
 import { WhatsAppReachButton } from "@/components/WhatsAppReachButton";
+import { RecentCommsCapsule } from "@/components/outreach/RecentCommsCapsule";
 
 export const Route = createFileRoute("/_app/outreach/enterprise/$id/")({
   head: ({ params }) => ({
@@ -109,6 +110,13 @@ function EnterpriseDetailPage() {
 
       {/* Hero */}
       <Hero e={e} />
+
+      {/* 最新沟通胶囊卡 */}
+      <RecentCommsCapsule
+        targetKind="enterprise"
+        targetId={e.id}
+        targetName={e.name}
+      />
 
       {/* 基本信息 */}
       <Section icon={<Info className="h-4 w-4" />} title="基本信息">
