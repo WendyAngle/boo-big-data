@@ -24,6 +24,15 @@ import {
   Loader2,
   RefreshCw,
   MessageCircleReply,
+  Mail,
+  MessageSquare,
+  MessageCircle,
+  Facebook,
+  Music2,
+  Send as SendIcon,
+  ShieldAlert,
+  UserCheck,
+  Hand,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,6 +70,16 @@ import {
   STATUS_LABEL,
   type Thread,
   type AiIntent,
+  type Channel,
+  type GroupKind,
+  CHANNEL_LABEL,
+  CHANNEL_COLOR,
+  WINDOW_HOURS,
+  GROUP_LABEL,
+  TEAM_MEMBERS,
+  memberById,
+  threadGroup,
+  assignThread,
 } from "@/lib/inbox-store";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 
@@ -75,14 +94,50 @@ const searchSchema = z.object({
       "handled",
       "snoozed",
       "suppressed",
+      "unassigned",
+      "mine",
     ])
     .optional(),
-  ch: z.enum(["all", "email", "sms"]).optional(),
+  ch: z
+    .enum(["all", "email", "sms", "whatsapp", "telegram", "facebook", "tiktok"])
+    .optional(),
+  group: z.enum(["all", "enterprise", "contact"]).optional(),
   tid: z.string().optional(),
   q: z.string().optional(),
   // 从"最新沟通"胶囊中的"AI 回复"进入时，自动生成一条 AI 草稿。
   action: z.enum(["ai"]).optional(),
 });
+
+/** 演示环境的"当前登录员工"（Phase 1 mock，见 TEAM_MEMBERS） */
+const CURRENT_TEAM_USER_ID = "u_zhang";
+
+function channelIcon(ch: Channel) {
+  switch (ch) {
+    case "email":
+      return Mail;
+    case "sms":
+      return MessageSquare;
+    case "whatsapp":
+      return MessageCircle;
+    case "telegram":
+      return SendIcon;
+    case "facebook":
+      return Facebook;
+    case "tiktok":
+      return Music2;
+  }
+}
+
+/** WhatsApp / Facebook HSM 演示模板 */
+const HSM_TEMPLATES: Record<string, { id: string; name: string; body: string }[]> = {
+  whatsapp: [
+    { id: "wa_hello", name: "welcome_intro", body: "Hi {{1}}, thanks for reaching out to us earlier. Would this be a good time to continue our conversation?" },
+    { id: "wa_quote", name: "quote_followup", body: "Hi {{1}}, following up on the quote we shared for {{2}}. Let me know if you'd like to schedule a call." },
+  ],
+  facebook: [
+    { id: "fb_update", name: "CONFIRMED_EVENT_UPDATE", body: "Reminder: your appointment on {{1}} is confirmed." },
+  ],
+};
 
 type ViewKey = NonNullable<z.infer<typeof searchSchema>["view"]>;
 
@@ -104,10 +159,12 @@ function InboxPage() {
   const view: ViewKey = search.view ?? (search.tid ? "all" : "unread");
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
+  const group = search.group ?? "all";
 
   const filtered = useMemo(() => {
     let list = threads;
     if (ch !== "all") list = list.filter((t) => t.channel === ch);
+    if (group !== "all") list = list.filter((t) => threadGroup(t) === group);
     if (view === "unread") list = list.filter((t) => t.meta.unread > 0);
     else if (view === "pending")
       list = list.filter((t) => t.meta.status === "pending");
@@ -121,6 +178,10 @@ function InboxPage() {
       list = list.filter((t) => t.meta.status === "snoozed");
     else if (view === "suppressed")
       list = list.filter((t) => t.meta.status === "suppressed");
+    else if (view === "unassigned")
+      list = list.filter((t) => !t.meta.assigneeId);
+    else if (view === "mine")
+      list = list.filter((t) => t.meta.assigneeId === CURRENT_TEAM_USER_ID);
     if (q.trim()) {
       const kw = q.trim().toLowerCase();
       list = list.filter(
@@ -136,6 +197,8 @@ function InboxPage() {
     }
     return list;
   }, [threads, view, q, ch]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  void group;
 
   const currentId = search.tid ?? filtered[0]?.id;
   const current = threads.find((t) => t.id === currentId);
@@ -191,6 +254,10 @@ function InboxPage() {
             { k: "all", label: "全部" },
             { k: "email", label: "邮件" },
             { k: "sms", label: "短信" },
+            { k: "whatsapp", label: "WhatsApp" },
+            { k: "telegram", label: "Telegram" },
+            { k: "facebook", label: "Facebook" },
+            { k: "tiktok", label: "TikTok" },
           ] as const).map((c) => (
             <button
               key={c.k}
@@ -206,6 +273,27 @@ function InboxPage() {
             </button>
           ))}
         </div>
+        {/* 分组切换（企业 / 人物） */}
+        <div className="ml-2 flex items-center rounded-md border overflow-hidden shrink-0">
+          {([
+            { k: "all", label: "全部分组" },
+            { k: "enterprise", label: "企业" },
+            { k: "contact", label: "人物" },
+          ] as const).map((g) => (
+            <button
+              key={g.k}
+              onClick={() => goto({ group: g.k, tid: undefined })}
+              className={cn(
+                "px-3 h-9 text-xs transition-colors",
+                group === g.k
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background hover:bg-muted",
+              )}
+            >
+              {g.label}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="flex-1 flex min-h-0">
         {/* 左栏 */}
@@ -213,6 +301,22 @@ function InboxPage() {
           <div className="px-3 text-[11px] text-muted-foreground mb-1 font-medium tracking-wide">
             视图
           </div>
+          <FilterItem
+            active={view === "unassigned"}
+            label="未分配"
+            count={counts.unassigned}
+            onClick={() => goto({ view: "unassigned", tid: undefined })}
+            dot="amber"
+          />
+          <FilterItem
+            active={view === "mine"}
+            label="分配给我"
+            count={
+              threads.filter((t) => t.meta.assigneeId === CURRENT_TEAM_USER_ID)
+                .length
+            }
+            onClick={() => goto({ view: "mine", tid: undefined })}
+          />
           <FilterItem
             active={view === "unread"}
             label="未读"
