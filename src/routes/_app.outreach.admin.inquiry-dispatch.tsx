@@ -374,46 +374,6 @@ function InboxRoutingAdmin() {
           );
         })}
       </div>
-
-      <Card className="p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <UserCheck className="h-4 w-4 text-primary" />
-          <div className="font-semibold">工作量看板</div>
-          <Badge variant="outline" className="ml-2 text-xs">Phase 1 · 静态</Badge>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {TEAM_MEMBERS.map((m) => {
-            const w = workload.get(m.id);
-            return (
-              <div key={m.id} className="border rounded-md p-3">
-                <div className="flex items-center gap-2">
-                  <span className="h-7 w-7 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center">
-                    {m.avatarLetter}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium truncate">{m.name}</div>
-                    <div className="text-[10px] text-muted-foreground">
-                      {m.groups.map((g) => GROUP_LABEL[g]).join(" / ")}
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <div className="text-xl font-semibold">{w?.assigned ?? 0}</div>
-                  <div className="text-[10px] text-muted-foreground">在办</div>
-                </div>
-                {w && w.unread > 0 && (
-                  <div className="text-[11px] text-rose-600 mt-0.5">
-                    未读 {w.unread}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        <div className="mt-3 text-[11px] text-muted-foreground">
-          派单请前往上方「未分配会话池」进行单条或批量分配。
-        </div>
-      </Card>
     </div>
   );
 }
