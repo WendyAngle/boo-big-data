@@ -86,6 +86,8 @@ import {
   type ReachChannel,
 } from "@/lib/credits-ledger";
 import { ListPagination } from "@/components/ListPagination";
+import { useThreads, threadKeyFor, type Thread } from "@/lib/inbox-store";
+import { Inbox as InboxIcon, MessageCircleReply } from "lucide-react";
 
 export const Route = createFileRoute("/_app/outreach/reach")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 触达 | Boo数据平台" }] }),
@@ -109,6 +111,12 @@ function ReachPage() {
   }, []);
 
   const ledger = useLedger();
+  const threads = useThreads();
+  const threadByKey = useMemo(() => {
+    const m = new Map<string, Thread>();
+    for (const t of threads) m.set(t.id, t);
+    return m;
+  }, [threads]);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => {
@@ -377,6 +385,7 @@ function ReachPage() {
                 <TableHead className="w-[220px]">状态 / 原因</TableHead>
                 <TableHead className="w-[90px]">积分变动</TableHead>
                 <TableHead>明细说明</TableHead>
+                <TableHead className="w-[110px]">回复</TableHead>
                 {statusTab !== "success" && statusTab !== "in_progress" && (
                   <TableHead className="w-[160px] text-right">操作</TableHead>
                 )}
