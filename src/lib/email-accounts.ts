@@ -409,7 +409,7 @@ export function parseCsv(text: string): ImportRow[] {
   const seenInFile = new Set<string>();
   const existing = new Set(STORE.map((a) => `${a.providerId}::${a.identity}`));
   const validKinds: AccountKind[] = ["subuser", "verified-identity", "sending-domain", "smtp-credential"];
-  const validProviders = new Set(PROVIDER_OPTIONS.map((p) => p.id));
+  const validProviders = new Set<string>(PROVIDER_OPTIONS.map((p) => p.id));
 
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(",").map((s) => s.trim());
