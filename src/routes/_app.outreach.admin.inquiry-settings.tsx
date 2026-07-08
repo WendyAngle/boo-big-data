@@ -136,7 +136,7 @@ function InboxRoutingAdmin() {
   return (
     <div className="p-6 space-y-6 max-w-6xl">
       <div>
-        <h1 className="text-2xl font-semibold">收件箱分组与分配</h1>
+        <h1 className="text-2xl font-semibold">询盘设置</h1>
         <p className="text-sm text-muted-foreground mt-1">
           按目标类型内置两个分组：企业分组、人物分组。全部会话人工分配，不做自动派单。
         </p>
