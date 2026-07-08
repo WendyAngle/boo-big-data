@@ -262,7 +262,17 @@ function InboxPage() {
         {/* 右栏：会话详情 */}
         <div className="flex-1 min-w-0 overflow-y-auto bg-background">
           {current ? (
-            <ThreadDetail thread={current} />
+            <ThreadDetail
+              thread={current}
+              autoAi={search.action === "ai"}
+              onConsumeAction={() =>
+                navigate({
+                  to: "/outreach/inbox",
+                  search: { ...search, action: undefined },
+                  replace: true,
+                })
+              }
+            />
           ) : (
             <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
               选择左侧一个会话查看详情
