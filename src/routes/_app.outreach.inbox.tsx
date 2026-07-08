@@ -239,55 +239,62 @@ function InboxPage() {
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col">
       {/* 顶栏 */}
-      <div className="h-14 px-6 border-b flex items-center gap-3 shrink-0">
-        <InboxIcon className="h-5 w-5 text-primary" />
-        <div className="font-semibold">触达收件箱</div>
-        <Badge variant="outline" className="text-xs">
-          {counts.all} 个会话
+      <div className="h-12 px-4 border-b flex items-center gap-2 shrink-0">
+        <InboxIcon className="h-4 w-4 text-primary shrink-0" />
+        <div className="font-semibold text-sm shrink-0">触达收件箱</div>
+        <Badge variant="outline" className="text-[11px] h-5 px-1.5 shrink-0">
+          {counts.all}
         </Badge>
-        {counts.unread > 0 && (
-          <Badge className="bg-rose-500 text-white text-xs">
-            未读 {counts.unread}
-          </Badge>
-        )}
-        <div className="flex-1 max-w-md ml-4 relative">
-          <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <div className="flex-1 min-w-0 max-w-xs relative">
+          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={q}
             onChange={(e) => goto({ q: e.target.value })}
-            placeholder="搜索：企业 / 联系人 / 邮箱 / 主题 / 内容"
-            className="pl-8 h-9"
+            placeholder="搜索企业 / 联系人 / 内容"
+            className="pl-7 h-8 text-xs"
           />
         </div>
-        {/* 渠道切换 */}
-        <div className="ml-2 flex items-center rounded-md border overflow-hidden shrink-0">
+        {/* 渠道切换：图标 tabs，节省横向空间 */}
+        <div className="ml-1 flex items-center rounded-md border overflow-hidden shrink-0">
+          <button
+            onClick={() => goto({ ch: "all", tid: undefined })}
+            className={cn(
+              "px-2 h-8 text-[11px] transition-colors border-r",
+              ch === "all" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted",
+            )}
+          >
+            全部
+          </button>
           {([
-            { k: "all", label: "全部" },
             { k: "email", label: "邮件" },
             { k: "sms", label: "短信" },
             { k: "whatsapp", label: "WhatsApp" },
             { k: "telegram", label: "Telegram" },
             { k: "facebook", label: "Facebook" },
             { k: "tiktok", label: "TikTok" },
-          ] as const).map((c) => (
-            <button
-              key={c.k}
-              onClick={() => goto({ ch: c.k, tid: undefined })}
-              className={cn(
-                "px-3 h-9 text-xs transition-colors",
-                ch === c.k
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-background hover:bg-muted",
-              )}
-            >
-              {c.label}
-            </button>
-          ))}
+          ] as const).map((c) => {
+            const CI = channelIcon(c.k);
+            return (
+              <button
+                key={c.k}
+                title={c.label}
+                onClick={() => goto({ ch: c.k, tid: undefined })}
+                className={cn(
+                  "px-2 h-8 flex items-center justify-center transition-colors border-l first:border-l-0",
+                  ch === c.k
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background hover:bg-muted",
+                )}
+              >
+                <CI className="h-3.5 w-3.5" />
+              </button>
+            );
+          })}
         </div>
         {/* 分组切换（企业 / 人物） */}
-        <div className="ml-2 flex items-center rounded-md border overflow-hidden shrink-0">
+        <div className="ml-1 flex items-center rounded-md border overflow-hidden shrink-0">
           {([
-            { k: "all", label: "全部分组" },
+            { k: "all", label: "全部" },
             { k: "enterprise", label: "企业" },
             { k: "contact", label: "人物" },
           ] as const).map((g) => (
@@ -295,7 +302,7 @@ function InboxPage() {
               key={g.k}
               onClick={() => goto({ group: g.k, tid: undefined })}
               className={cn(
-                "px-3 h-9 text-xs transition-colors",
+                "px-2 h-8 text-[11px] transition-colors border-l first:border-l-0",
                 group === g.k
                   ? "bg-primary text-primary-foreground"
                   : "bg-background hover:bg-muted",
@@ -307,8 +314,8 @@ function InboxPage() {
         </div>
       </div>
       <div className="flex-1 flex min-h-0">
-        {/* 左栏 */}
-        <aside className="w-56 shrink-0 border-r bg-muted/20 py-3 overflow-y-auto">
+        {/* 左栏：视图侧栏 —— 窄屏（<1280px）折叠为列表顶部的下拉 */}
+        <aside className="hidden xl:block w-52 shrink-0 border-r bg-muted/20 py-3 overflow-y-auto">
           <div className="px-3 text-[11px] text-muted-foreground mb-1 font-medium tracking-wide">
             视图
           </div>
@@ -381,21 +388,46 @@ function InboxPage() {
         </aside>
 
         {/* 中栏：会话列表 */}
-        <div className="w-[380px] shrink-0 border-r overflow-y-auto">
-          {displayList.length === 0 ? (
-            <div className="p-10 text-center text-sm text-muted-foreground">
-              该视图下暂无会话
-            </div>
-          ) : (
-            displayList.map((t) => (
-              <ThreadRow
-                key={t.id}
-                thread={t}
-                active={t.id === currentId}
-                onClick={() => goto({ tid: t.id })}
-              />
-            ))
-          )}
+        <div className="w-[300px] xl:w-[340px] shrink-0 border-r flex flex-col min-h-0">
+          {/* 窄屏下的视图下拉（xl 及以上由侧栏承担） */}
+          <div className="xl:hidden px-2 py-2 border-b bg-muted/20 shrink-0">
+            <Select
+              value={view}
+              onValueChange={(v) => goto({ view: v as ViewKey, tid: undefined })}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unassigned">未分配 · {counts.unassigned}</SelectItem>
+                <SelectItem value="mine">分配给我</SelectItem>
+                <SelectItem value="unread">未读 · {counts.unread}</SelectItem>
+                <SelectItem value="pending">待跟进 · {counts.pending}</SelectItem>
+                <SelectItem value="hasReply">有回复 · {counts.hasReply}</SelectItem>
+                <SelectItem value="noReply">未回复 · {counts.noReply}</SelectItem>
+                <SelectItem value="snoozed">稍后处理 · {counts.snoozed}</SelectItem>
+                <SelectItem value="handled">已处理 · {counts.handled}</SelectItem>
+                <SelectItem value="suppressed">已抑制 · {counts.suppressed}</SelectItem>
+                <SelectItem value="all">全部 · {counts.all}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {displayList.length === 0 ? (
+              <div className="p-10 text-center text-sm text-muted-foreground">
+                该视图下暂无会话
+              </div>
+            ) : (
+              displayList.map((t) => (
+                <ThreadRow
+                  key={t.id}
+                  thread={t}
+                  active={t.id === currentId}
+                  onClick={() => goto({ tid: t.id })}
+                />
+              ))
+            )}
+          </div>
         </div>
 
         {/* 右栏：会话详情 */}
