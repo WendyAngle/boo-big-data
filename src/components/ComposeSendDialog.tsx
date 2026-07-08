@@ -34,6 +34,12 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { isSuppressed } from "@/lib/suppressions-store";
+import {
+  useSmsTemplates,
+  toComposeSyntax,
+} from "@/lib/sms-templates-store";
+import { Link } from "@tanstack/react-router";
+import { FileText } from "lucide-react";
 
 import {
   MESSAGE_VARIABLES,
@@ -560,6 +566,7 @@ export function ComposeSendDialog({
               <Label className="text-xs text-muted-foreground">
                 {isEmail ? "正文 *" : "短信内容 *"}
               </Label>
+              {!isEmail && <SmsTemplatePicker onPick={(c) => setContent(c)} />}
               <Textarea
                 ref={contentRef}
                 value={content}
