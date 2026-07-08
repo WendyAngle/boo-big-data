@@ -662,6 +662,55 @@ function Meta({
   );
 }
 
+function ScopeSection({
+  title,
+  subtitle,
+  icon,
+  count,
+  canAdd,
+  onAdd,
+  empty,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+  count: number;
+  canAdd: boolean;
+  onAdd: () => void;
+  empty: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center gap-2">
+        <div className="h-7 w-7 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+          {icon}
+        </div>
+        <div>
+          <div className="text-base font-semibold flex items-center gap-2">
+            {title}
+            <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
+              {count}
+            </Badge>
+          </div>
+          <div className="text-xs text-muted-foreground">{subtitle}</div>
+        </div>
+        {canAdd && (
+          <Button size="sm" variant="outline" className="ml-auto h-8" onClick={onAdd}>
+            <Plus className="h-3.5 w-3.5" /> 新增
+          </Button>
+        )}
+      </div>
+      {count === 0 ? (
+        <Card className="p-8 text-center text-sm text-muted-foreground">{empty}</Card>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">{children}</div>
+      )}
+    </section>
+  );
+}
+
 /* ----------------- form dialog ----------------- */
 
 interface FormState {
