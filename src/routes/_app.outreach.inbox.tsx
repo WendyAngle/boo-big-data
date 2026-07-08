@@ -572,6 +572,7 @@ function ThreadRow({
       className={cn(
         "w-full text-left px-4 py-3 border-b hover:bg-muted/40 transition-colors block",
         active && "bg-primary/5 border-l-2 border-l-primary",
+        !active && isUnread && "border-l-2 border-l-rose-400 bg-rose-50/30",
         woken && "bg-amber-50/60",
       )}
     >
@@ -666,20 +667,24 @@ function ThreadRow({
             >
               {STATUS_LABEL[thread.meta.status]}
             </Badge>
-            {sla && (sla.overdue || sla.approaching) && (
+            {sla && (
               <Badge
                 variant="outline"
                 className={cn(
                   "text-[10px] py-0 px-1.5 h-5",
                   sla.overdue
                     ? "bg-rose-50 text-rose-700 border-rose-200"
-                    : "bg-amber-50 text-amber-700 border-amber-200",
+                    : sla.approaching
+                      ? "bg-amber-50 text-amber-700 border-amber-200"
+                      : "bg-emerald-50 text-emerald-700 border-emerald-200",
                 )}
               >
                 <Clock className="h-2.5 w-2.5 mr-0.5" />
                 {sla.overdue
                   ? `逾期 ${formatShort(-sla.leftMs)}`
-                  : `剩 ${formatShort(sla.leftMs)}`}
+                  : sla.approaching
+                    ? `即将超时 ${formatShort(sla.leftMs)}`
+                    : `SLA ${formatShort(sla.leftMs)}`}
               </Badge>
             )}
             {thread.meta.aiIntent && (
