@@ -317,7 +317,7 @@ function ReachPage() {
               <SelectContent>
                 <SelectItem value="all">全部渠道</SelectItem>
                 <SelectItem value="email">邮件</SelectItem>
-                <SelectItem value="phone">电话</SelectItem>
+                <SelectItem value="phone">短信</SelectItem>
                 <SelectItem value="social">社媒</SelectItem>
                 <SelectItem value="whatsapp">WhatsApp</SelectItem>
               </SelectContent>
