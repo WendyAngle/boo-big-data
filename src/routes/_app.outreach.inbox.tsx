@@ -551,12 +551,14 @@ function FilterItem({
   count,
   onClick,
   dot,
+  icon: Icon,
 }: {
   active: boolean;
   label: string;
   count: number;
   onClick: () => void;
   dot?: "rose" | "amber";
+  icon?: React.ComponentType<{ className?: string }>;
 }) {
   return (
     <button
@@ -576,6 +578,7 @@ function FilterItem({
           )}
         />
       )}
+      {Icon && <Icon className="h-3.5 w-3.5" />}
       <span className="flex-1 text-left">{label}</span>
       <span
         className={cn(
