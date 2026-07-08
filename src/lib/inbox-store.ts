@@ -54,6 +54,73 @@ export const STATUS_LABEL: Record<ThreadStatus, string> = {
   suppressed: "已抑制",
 };
 
+/* -------------------- Channels & groups (v2) -------------------- */
+
+export type Channel =
+  | "email"
+  | "sms"
+  | "whatsapp"
+  | "telegram"
+  | "facebook"
+  | "tiktok";
+
+export const CHANNEL_LABEL: Record<Channel, string> = {
+  email: "邮件",
+  sms: "短信",
+  whatsapp: "WhatsApp",
+  telegram: "Telegram",
+  facebook: "Facebook",
+  tiktok: "TikTok",
+};
+
+/** 会话客服窗口时长（小时）；无窗口概念的渠道为 undefined */
+export const WINDOW_HOURS: Partial<Record<Channel, number>> = {
+  whatsapp: 24,
+  facebook: 24,
+  tiktok: 48,
+};
+
+export const CHANNEL_COLOR: Record<Channel, string> = {
+  email: "bg-violet-50 text-violet-700 border-violet-200",
+  sms: "bg-sky-50 text-sky-700 border-sky-200",
+  whatsapp: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  telegram: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  facebook: "bg-blue-50 text-blue-700 border-blue-200",
+  tiktok: "bg-neutral-100 text-neutral-800 border-neutral-200",
+};
+
+export type GroupKind = "enterprise" | "contact";
+export const GROUP_LABEL: Record<GroupKind, string> = {
+  enterprise: "企业分组",
+  contact: "人物分组",
+};
+
+/** 演示用团队成员（Phase 1 mock；后续接入 /outreach/users） */
+export interface TeamMember {
+  id: string;
+  name: string;
+  avatarLetter: string;
+  groups: GroupKind[];
+  role?: "member" | "lead";
+}
+
+export const TEAM_MEMBERS: TeamMember[] = [
+  { id: "u_zhang", name: "张三", avatarLetter: "张", groups: ["enterprise", "contact"], role: "lead" },
+  { id: "u_li", name: "李四", avatarLetter: "李", groups: ["enterprise"] },
+  { id: "u_wang", name: "王五", avatarLetter: "王", groups: ["contact"] },
+  { id: "u_zhao", name: "赵六", avatarLetter: "赵", groups: ["contact"] },
+  { id: "u_sun", name: "孙七", avatarLetter: "孙", groups: ["enterprise", "contact"] },
+];
+
+export function memberById(id?: string | null): TeamMember | undefined {
+  if (!id) return undefined;
+  return TEAM_MEMBERS.find((m) => m.id === id);
+}
+
+export function threadGroup(t: { targetKind: "enterprise" | "contact" }): GroupKind {
+  return t.targetKind === "enterprise" ? "enterprise" : "contact";
+}
+
 /** 一条会话消息（我方发出 或 对方回复） */
 export interface ThreadMessage {
   id: string;
@@ -78,6 +145,10 @@ interface ThreadMeta {
   tags: string[];
   aiIntent?: AiIntent;
   assignee?: string;
+  /** 分配给的员工 id（Phase 1 mock，见 TEAM_MEMBERS） */
+  assigneeId?: string;
+  /** WhatsApp / Facebook / TikTok 客服窗口截止时间 */
+  windowExpiresAt?: string;
   /** 是否被标为 star */
   starred?: boolean;
   /** 未读的 inbound 数量 */
@@ -101,7 +172,7 @@ export interface Thread {
   targetName: string;
   parentRef?: { id: string; name: string };
   /** 会话所属渠道 */
-  channel: "email" | "sms";
+  channel: Channel;
   /** 对方地址（收件邮箱） */
   counterpartyAddress: string;
   /** 我方 sender */
@@ -431,7 +502,7 @@ function useMetaVersion() {
 export function useThreads(): Thread[] {
   useMetaVersion();
   const entries = useLedger();
-  return buildThreads(entries);
+  return [...buildThreads(entries), ...getDemoSocialThreads()];
 }
 
 export function useThread(id: string): Thread | undefined {
@@ -440,7 +511,7 @@ export function useThread(id: string): Thread | undefined {
 }
 
 export function getThreadsSnapshot(): Thread[] {
-  return buildThreads(getAllLedger());
+  return [...buildThreads(getAllLedger()), ...getDemoSocialThreads()];
 }
 
 export interface InboxCounts {
@@ -454,6 +525,7 @@ export interface InboxCounts {
   hasReply: number;
   noReply: number;
   bounced: number;
+  unassigned: number;
 }
 
 export function useInboxCounts(): InboxCounts {
@@ -469,6 +541,7 @@ export function useInboxCounts(): InboxCounts {
     hasReply: 0,
     noReply: 0,
     bounced: 0,
+    unassigned: 0,
   };
   for (const t of list) {
     if (t.meta.unread > 0) c.unread++;
@@ -479,6 +552,7 @@ export function useInboxCounts(): InboxCounts {
     if (t.meta.status === "suppressed") c.suppressed++;
     if (t.meta.inboundMessages.length > 0) c.hasReply++;
     else c.noReply++;
+    if (!t.meta.assigneeId) c.unassigned++;
   }
   return c;
 }
@@ -660,4 +734,151 @@ export function resetInboxMeta() {
   writeMeta(metaStore);
   if (typeof window !== "undefined") window.localStorage.removeItem(SEED_FLAG);
   emit();
+}
+
+/* -------------------- Assign (v2) -------------------- */
+
+export function assignThread(id: string, userId: string | null, _reason?: string) {
+  const m = metaStore[id];
+  if (!m) return;
+  m.assigneeId = userId ?? undefined;
+  m.assignee = userId ? memberById(userId)?.name : undefined;
+  m.updatedAt = new Date().toISOString();
+  commit();
+}
+
+/* -------------------- Demo social threads (Phase 1 mock) -------------------- */
+
+interface DemoSeed {
+  id: string;
+  channel: Channel;
+  targetKind: "enterprise" | "contact";
+  targetName: string;
+  parentRef?: { id: string; name: string };
+  counterparty: string;
+  lastInbound: string;
+  hoursAgo: number;
+  /** 剩余客服窗口小时数（覆盖默认计算） */
+  windowLeftHours?: number | null;
+  aiIntent?: AiIntent;
+  assigneeId?: string;
+  tags?: string[];
+}
+
+const DEMO_SEEDS: DemoSeed[] = [
+  {
+    id: "demo:wa:1",
+    channel: "whatsapp",
+    targetKind: "contact",
+    targetName: "Anna Müller",
+    parentRef: { id: "demo-ent-1", name: "Bosch GmbH" },
+    counterparty: "+491701234567",
+    lastInbound: "Hi, could you send the pricing PDF for SKU-A?",
+    hoursAgo: 2,
+    aiIntent: "quote",
+    tags: ["高意向"],
+  },
+  {
+    id: "demo:wa:2",
+    channel: "whatsapp",
+    targetKind: "enterprise",
+    targetName: "Rakuten Global",
+    counterparty: "+81901234567",
+    lastInbound: "こんにちは、サンプル送付は可能ですか？",
+    hoursAgo: 26,
+    windowLeftHours: null, // 窗口已过期
+    aiIntent: "interested",
+    assigneeId: "u_li",
+  },
+  {
+    id: "demo:tg:1",
+    channel: "telegram",
+    targetKind: "contact",
+    targetName: "Ivan Petrov",
+    parentRef: { id: "demo-ent-2", name: "TechnoPolymer LLC" },
+    counterparty: "@ivanp",
+    lastInbound: "Interested, please share catalog.",
+    hoursAgo: 5,
+    aiIntent: "interested",
+  },
+  {
+    id: "demo:fb:1",
+    channel: "facebook",
+    targetKind: "contact",
+    targetName: "María López",
+    parentRef: { id: "demo-ent-3", name: "Grupo Andino" },
+    counterparty: "psid:1234567890",
+    lastInbound: "¿Cuál es el precio FOB Shanghai?",
+    hoursAgo: 10,
+    aiIntent: "quote",
+  },
+  {
+    id: "demo:tt:1",
+    channel: "tiktok",
+    targetKind: "contact",
+    targetName: "@sofia_home",
+    counterparty: "openid:tt_9876",
+    lastInbound: "Do you ship to US?",
+    hoursAgo: 30,
+    aiIntent: "interested",
+    assigneeId: "u_wang",
+  },
+];
+
+export function getDemoSocialThreads(): Thread[] {
+  const now = Date.now();
+  return DEMO_SEEDS.map((s) => {
+    const meta = ensureMeta(
+      s.id,
+      new Date(now - s.hoursAgo * 3600_000).toISOString(),
+    );
+    // 首次注入默认值
+    if (meta.inboundMessages.length === 0) {
+      const at = new Date(now - s.hoursAgo * 3600_000).toISOString();
+      meta.inboundMessages.push({
+        id: makeId("in"),
+        direction: "inbound",
+        createdAt: at,
+        fromName: s.targetName,
+        fromAddress: s.counterparty,
+        content: s.lastInbound,
+      });
+      meta.aiIntent = s.aiIntent;
+      meta.unread = 1;
+      meta.status = "pending";
+      if (s.tags) meta.tags = [...s.tags];
+      if (s.assigneeId) {
+        meta.assigneeId = s.assigneeId;
+        meta.assignee = memberById(s.assigneeId)?.name;
+      }
+      // 客服窗口
+      const winH = WINDOW_HOURS[s.channel];
+      if (winH !== undefined) {
+        if (s.windowLeftHours === null) {
+          meta.windowExpiresAt = new Date(now - 3600_000).toISOString(); // 已过期
+        } else {
+          const leftH = s.windowLeftHours ?? Math.max(1, winH - s.hoursAgo);
+          meta.windowExpiresAt = new Date(now + leftH * 3600_000).toISOString();
+        }
+      }
+      writeMeta(metaStore);
+    }
+    return {
+      id: s.id,
+      targetKind: s.targetKind,
+      targetId: s.id,
+      targetName: s.targetName,
+      parentRef: s.parentRef,
+      channel: s.channel,
+      counterpartyAddress: s.counterparty,
+      messages: [...meta.inboundMessages, ...meta.extraMessages].sort((a, b) =>
+        a.createdAt.localeCompare(b.createdAt),
+      ),
+      meta,
+      lastAt: meta.updatedAt,
+      lastPreview: s.lastInbound.slice(0, 120),
+      lastDirection: (meta.extraMessages[meta.extraMessages.length - 1]?.direction ??
+        "inbound") as "inbound" | "outbound",
+    };
+  });
 }

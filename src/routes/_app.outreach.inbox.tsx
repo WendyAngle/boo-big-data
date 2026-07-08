@@ -24,6 +24,15 @@ import {
   Loader2,
   RefreshCw,
   MessageCircleReply,
+  Mail,
+  MessageSquare,
+  MessageCircle,
+  Facebook,
+  Music2,
+  Send as SendIcon,
+  ShieldAlert,
+  UserCheck,
+  Hand,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,6 +70,16 @@ import {
   STATUS_LABEL,
   type Thread,
   type AiIntent,
+  type Channel,
+  type GroupKind,
+  CHANNEL_LABEL,
+  CHANNEL_COLOR,
+  WINDOW_HOURS,
+  GROUP_LABEL,
+  TEAM_MEMBERS,
+  memberById,
+  threadGroup,
+  assignThread,
 } from "@/lib/inbox-store";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
 
@@ -75,14 +94,50 @@ const searchSchema = z.object({
       "handled",
       "snoozed",
       "suppressed",
+      "unassigned",
+      "mine",
     ])
     .optional(),
-  ch: z.enum(["all", "email", "sms"]).optional(),
+  ch: z
+    .enum(["all", "email", "sms", "whatsapp", "telegram", "facebook", "tiktok"])
+    .optional(),
+  group: z.enum(["all", "enterprise", "contact"]).optional(),
   tid: z.string().optional(),
   q: z.string().optional(),
   // 从"最新沟通"胶囊中的"AI 回复"进入时，自动生成一条 AI 草稿。
   action: z.enum(["ai"]).optional(),
 });
+
+/** 演示环境的"当前登录员工"（Phase 1 mock，见 TEAM_MEMBERS） */
+const CURRENT_TEAM_USER_ID = "u_zhang";
+
+function channelIcon(ch: Channel) {
+  switch (ch) {
+    case "email":
+      return Mail;
+    case "sms":
+      return MessageSquare;
+    case "whatsapp":
+      return MessageCircle;
+    case "telegram":
+      return SendIcon;
+    case "facebook":
+      return Facebook;
+    case "tiktok":
+      return Music2;
+  }
+}
+
+/** WhatsApp / Facebook HSM 演示模板 */
+const HSM_TEMPLATES: Record<string, { id: string; name: string; body: string }[]> = {
+  whatsapp: [
+    { id: "wa_hello", name: "welcome_intro", body: "Hi {{1}}, thanks for reaching out to us earlier. Would this be a good time to continue our conversation?" },
+    { id: "wa_quote", name: "quote_followup", body: "Hi {{1}}, following up on the quote we shared for {{2}}. Let me know if you'd like to schedule a call." },
+  ],
+  facebook: [
+    { id: "fb_update", name: "CONFIRMED_EVENT_UPDATE", body: "Reminder: your appointment on {{1}} is confirmed." },
+  ],
+};
 
 type ViewKey = NonNullable<z.infer<typeof searchSchema>["view"]>;
 
@@ -104,10 +159,12 @@ function InboxPage() {
   const view: ViewKey = search.view ?? (search.tid ? "all" : "unread");
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
+  const group = search.group ?? "all";
 
   const filtered = useMemo(() => {
     let list = threads;
     if (ch !== "all") list = list.filter((t) => t.channel === ch);
+    if (group !== "all") list = list.filter((t) => threadGroup(t) === group);
     if (view === "unread") list = list.filter((t) => t.meta.unread > 0);
     else if (view === "pending")
       list = list.filter((t) => t.meta.status === "pending");
@@ -121,6 +178,10 @@ function InboxPage() {
       list = list.filter((t) => t.meta.status === "snoozed");
     else if (view === "suppressed")
       list = list.filter((t) => t.meta.status === "suppressed");
+    else if (view === "unassigned")
+      list = list.filter((t) => !t.meta.assigneeId);
+    else if (view === "mine")
+      list = list.filter((t) => t.meta.assigneeId === CURRENT_TEAM_USER_ID);
     if (q.trim()) {
       const kw = q.trim().toLowerCase();
       list = list.filter(
@@ -136,6 +197,8 @@ function InboxPage() {
     }
     return list;
   }, [threads, view, q, ch]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  void group;
 
   const currentId = search.tid ?? filtered[0]?.id;
   const current = threads.find((t) => t.id === currentId);
@@ -191,6 +254,10 @@ function InboxPage() {
             { k: "all", label: "全部" },
             { k: "email", label: "邮件" },
             { k: "sms", label: "短信" },
+            { k: "whatsapp", label: "WhatsApp" },
+            { k: "telegram", label: "Telegram" },
+            { k: "facebook", label: "Facebook" },
+            { k: "tiktok", label: "TikTok" },
           ] as const).map((c) => (
             <button
               key={c.k}
@@ -206,6 +273,27 @@ function InboxPage() {
             </button>
           ))}
         </div>
+        {/* 分组切换（企业 / 人物） */}
+        <div className="ml-2 flex items-center rounded-md border overflow-hidden shrink-0">
+          {([
+            { k: "all", label: "全部分组" },
+            { k: "enterprise", label: "企业" },
+            { k: "contact", label: "人物" },
+          ] as const).map((g) => (
+            <button
+              key={g.k}
+              onClick={() => goto({ group: g.k, tid: undefined })}
+              className={cn(
+                "px-3 h-9 text-xs transition-colors",
+                group === g.k
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background hover:bg-muted",
+              )}
+            >
+              {g.label}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="flex-1 flex min-h-0">
         {/* 左栏 */}
@@ -213,6 +301,22 @@ function InboxPage() {
           <div className="px-3 text-[11px] text-muted-foreground mb-1 font-medium tracking-wide">
             视图
           </div>
+          <FilterItem
+            active={view === "unassigned"}
+            label="未分配"
+            count={counts.unassigned}
+            onClick={() => goto({ view: "unassigned", tid: undefined })}
+            dot="amber"
+          />
+          <FilterItem
+            active={view === "mine"}
+            label="分配给我"
+            count={
+              threads.filter((t) => t.meta.assigneeId === CURRENT_TEAM_USER_ID)
+                .length
+            }
+            onClick={() => goto({ view: "mine", tid: undefined })}
+          />
           <FilterItem
             active={view === "unread"}
             label="未读"
@@ -431,13 +535,39 @@ function ThreadRow({
               variant="outline"
               className={cn(
                 "text-[10px] py-0 px-1.5 h-5",
-                thread.channel === "sms"
-                  ? "bg-sky-50 text-sky-700 border-sky-200"
-                  : "bg-violet-50 text-violet-700 border-violet-200",
+                CHANNEL_COLOR[thread.channel],
               )}
             >
-              {thread.channel === "sms" ? "短信" : "邮件"}
+              {CHANNEL_LABEL[thread.channel]}
             </Badge>
+            <Badge
+              variant="outline"
+              className="text-[10px] py-0 px-1.5 h-5 gap-0.5"
+              title={GROUP_LABEL[threadGroup(thread)]}
+            >
+              {threadGroup(thread) === "enterprise" ? (
+                <Building2 className="h-2.5 w-2.5" />
+              ) : (
+                <UserRound className="h-2.5 w-2.5" />
+              )}
+              {threadGroup(thread) === "enterprise" ? "企业" : "人物"}
+            </Badge>
+            {thread.meta.assigneeId ? (
+              <Badge
+                variant="outline"
+                className="text-[10px] py-0 px-1.5 h-5 bg-primary/5 text-primary border-primary/20"
+              >
+                <UserCheck className="h-2.5 w-2.5 mr-0.5" />
+                {memberById(thread.meta.assigneeId)?.name ?? "已分配"}
+              </Badge>
+            ) : (
+              <Badge
+                variant="outline"
+                className="text-[10px] py-0 px-1.5 h-5 bg-amber-50 text-amber-700 border-amber-200"
+              >
+                未分配
+              </Badge>
+            )}
             <Badge
               variant="outline"
               className="text-[10px] py-0 px-1.5 h-5"
@@ -483,9 +613,24 @@ function ThreadDetail({
   const [reply, setReply] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [selectedTpl, setSelectedTpl] = useState<string>("");
   const lastInbound = [...thread.messages]
     .reverse()
     .find((m) => m.direction === "inbound");
+
+  // 窗口计算（WA/FB/TT）
+  const winInfo = useMemo(() => {
+    const winH = WINDOW_HOURS[thread.channel];
+    if (winH === undefined) return null;
+    const exp = thread.meta.windowExpiresAt
+      ? new Date(thread.meta.windowExpiresAt).getTime()
+      : null;
+    if (!exp) return { winH, leftMs: winH * 3600_000, closed: false };
+    const leftMs = exp - Date.now();
+    return { winH, leftMs, closed: leftMs <= 0 };
+  }, [thread.channel, thread.meta.windowExpiresAt]);
+
+  const templates = HSM_TEMPLATES[thread.channel] ?? [];
 
   async function aiGenerate() {
     setAiLoading(true);
@@ -520,7 +665,10 @@ function ThreadDetail({
   }, [autoAi, thread.id]);
 
   function doSend(aiGen = false) {
-    if (!reply.trim()) {
+    const content = winInfo?.closed && templates.length
+      ? templates.find((t) => t.id === selectedTpl)?.body ?? reply
+      : reply;
+    if (!content.trim()) {
       toast.error("请输入回复内容");
       return;
     }
@@ -528,7 +676,7 @@ function ThreadDetail({
     setTimeout(() => {
       sendReply({
         threadId: thread.id,
-        content: reply.trim(),
+        content: content.trim(),
         fromAddress: thread.senderEmail || "outreach@bytetech.cn",
         subject: thread.messages[0]?.subject
           ? `Re: ${thread.messages[0].subject.replace(/^Re:\s*/i, "")}`
@@ -536,8 +684,9 @@ function ThreadDetail({
         aiGenerated: aiGen,
       });
       setReply("");
+      setSelectedTpl("");
       setSending(false);
-      toast.success("回复已发送");
+      toast.success(winInfo?.closed ? "已通过 HSM 模板发送" : "回复已发送");
     }, 400);
   }
 
@@ -673,18 +822,52 @@ function ThreadDetail({
 
       {/* 回复区 */}
       <div className="border-t bg-muted/20 p-4 shrink-0">
+        {winInfo && (
+          <div
+            className={cn(
+              "mb-3 rounded-md border px-3 py-2 text-xs flex items-center gap-2",
+              winInfo.closed
+                ? "bg-rose-50 border-rose-200 text-rose-700"
+                : winInfo.leftMs < 2 * 3600_000
+                  ? "bg-amber-50 border-amber-200 text-amber-800"
+                  : "bg-emerald-50 border-emerald-200 text-emerald-800",
+            )}
+          >
+            <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
+            {winInfo.closed ? (
+              <span>
+                {CHANNEL_LABEL[thread.channel]} 客服窗口已关闭，
+                {thread.channel === "whatsapp"
+                  ? "请从下方选择已审核的 HSM 模板发送。"
+                  : thread.channel === "facebook"
+                    ? "需附合规消息标签（如 CONFIRMED_EVENT_UPDATE）。"
+                    : "窗口外禁止外发消息。"}
+              </span>
+            ) : (
+              <span>
+                {CHANNEL_LABEL[thread.channel]} 客服窗口剩余{" "}
+                <b>{formatHm(winInfo.leftMs)}</b>，窗口内可自由文本回复。
+              </span>
+            )}
+          </div>
+        )}
         <div className="flex items-center gap-2 mb-2">
           <MessageCircleReply className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">回复</span>
           <span className="text-xs text-muted-foreground">
-            将以 {thread.senderEmail || "outreach@bytetech.cn"} 发出，保持在同一会话内
+            {thread.channel === "email"
+              ? `将以 ${thread.senderEmail || "outreach@bytetech.cn"} 发出`
+              : thread.channel === "whatsapp"
+                ? "由公司共享 WhatsApp 商号发出（对客户显示同一号码）"
+                : `将以 ${CHANNEL_LABEL[thread.channel]} 渠道发出`}
+            ，保持在同一会话内
           </span>
           <Button
             variant="ghost"
             size="sm"
             className="ml-auto gap-1 h-7"
             onClick={aiGenerate}
-            disabled={aiLoading}
+            disabled={aiLoading || winInfo?.closed}
           >
             {aiLoading ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -694,26 +877,58 @@ function ThreadDetail({
             AI 生成回复
           </Button>
         </div>
-        <Textarea
-          value={reply}
-          onChange={(e) => setReply(e.target.value)}
-          placeholder='写点什么，或点击"AI 生成回复"由 AI 起草…'
-          rows={4}
-          className="resize-none bg-background"
-        />
+        {winInfo?.closed && templates.length > 0 ? (
+          <div className="space-y-2">
+            <div className="grid grid-cols-1 gap-2">
+              {templates.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setSelectedTpl(t.id)}
+                  className={cn(
+                    "text-left rounded-md border bg-background p-3 hover:border-primary transition-colors",
+                    selectedTpl === t.id && "border-primary ring-1 ring-primary/40",
+                  )}
+                >
+                  <div className="text-xs font-medium mb-1">{t.name}</div>
+                  <div className="text-xs text-muted-foreground whitespace-pre-wrap">{t.body}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <Textarea
+            value={reply}
+            onChange={(e) => setReply(e.target.value)}
+            placeholder='写点什么，或点击"AI 生成回复"由 AI 起草…'
+            rows={4}
+            className="resize-none bg-background"
+            disabled={winInfo?.closed}
+          />
+        )}
         <div className="mt-2 flex items-center gap-2">
-          <Button onClick={() => doSend(false)} disabled={sending} className="gap-1.5">
+          <Button
+            onClick={() => doSend(false)}
+            disabled={
+              sending ||
+              (winInfo?.closed && templates.length > 0 && !selectedTpl) ||
+              (winInfo?.closed && templates.length === 0)
+            }
+            className="gap-1.5"
+          >
             {sending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Send className="h-4 w-4" />
             )}
-            发送回复
+            {winInfo?.closed && templates.length > 0 ? "发送模板消息" : "发送回复"}
           </Button>
           <Button
             variant="outline"
-            onClick={() => setReply("")}
-            disabled={!reply || sending}
+            onClick={() => {
+              setReply("");
+              setSelectedTpl("");
+            }}
+            disabled={(!reply && !selectedTpl) || sending}
           >
             清空
           </Button>
@@ -726,12 +941,21 @@ function ThreadDetail({
   );
 }
 
+function formatHm(ms: number) {
+  const total = Math.max(0, Math.floor(ms / 60000));
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h >= 24) return `${Math.floor(h / 24)}d ${h % 24}h`;
+  return `${h}h ${m}m`;
+}
+
 function ActionBar({ thread }: { thread: Thread }) {
   const [tagInput, setTagInput] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
 
   return (
     <div className="flex items-center gap-1 shrink-0">
+      <AssignMenu thread={thread} />
       <Button
         variant="ghost"
         size="icon"
@@ -887,14 +1111,6 @@ function ActionBar({ thread }: { thread: Thread }) {
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={() => {
-              toast.info("转派功能：已推送给「团队负责人」（演示）");
-            }}
-          >
-            <UserPlus className="h-3.5 w-3.5 mr-2" /> 转派给同事
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
             className="text-rose-600 focus:text-rose-600"
             onClick={() => {
               suppressThread(thread.id);
@@ -906,5 +1122,81 @@ function ActionBar({ thread }: { thread: Thread }) {
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
+  );
+}
+
+function AssignMenu({ thread }: { thread: Thread }) {
+  const group = threadGroup(thread);
+  const eligible = TEAM_MEMBERS.filter((m) => m.groups.includes(group));
+  const cur = memberById(thread.meta.assigneeId);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant={cur ? "outline" : "default"}
+          size="sm"
+          className={cn("gap-1 h-8", !cur && "bg-amber-500 hover:bg-amber-600 text-white")}
+        >
+          {cur ? (
+            <>
+              <UserCheck className="h-3.5 w-3.5" />
+              分配给 {cur.name}
+            </>
+          ) : (
+            <>
+              <UserPlus className="h-3.5 w-3.5" />
+              分配
+            </>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-60">
+        <DropdownMenuLabel>
+          分配至 · {GROUP_LABEL[group]}
+        </DropdownMenuLabel>
+        <DropdownMenuItem
+          onClick={() => {
+            assignThread(thread.id, CURRENT_TEAM_USER_ID);
+            toast.success("我来跟：会话已分配给我");
+          }}
+        >
+          <Hand className="h-3.5 w-3.5 mr-2" /> 我来跟（抢单）
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        {eligible.map((m) => (
+          <DropdownMenuItem
+            key={m.id}
+            onClick={() => {
+              assignThread(thread.id, m.id);
+              toast.success(`已分配给 ${m.name}`);
+            }}
+          >
+            <span className="h-5 w-5 rounded-full bg-primary/10 text-primary text-[10px] flex items-center justify-center mr-2">
+              {m.avatarLetter}
+            </span>
+            {m.name}
+            {m.role === "lead" && (
+              <span className="ml-1 text-[10px] text-muted-foreground">组长</span>
+            )}
+            {thread.meta.assigneeId === m.id && (
+              <CheckCheck className="ml-auto h-3.5 w-3.5 text-emerald-500" />
+            )}
+          </DropdownMenuItem>
+        ))}
+        {cur && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => {
+                assignThread(thread.id, null);
+                toast.success("已回退到未分配池");
+              }}
+            >
+              <UserPlus className="h-3.5 w-3.5 mr-2 rotate-180" /> 取消分配
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
