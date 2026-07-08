@@ -735,3 +735,150 @@ export function resetInboxMeta() {
   if (typeof window !== "undefined") window.localStorage.removeItem(SEED_FLAG);
   emit();
 }
+
+/* -------------------- Assign (v2) -------------------- */
+
+export function assignThread(id: string, userId: string | null, _reason?: string) {
+  const m = metaStore[id];
+  if (!m) return;
+  m.assigneeId = userId ?? undefined;
+  m.assignee = userId ? memberById(userId)?.name : undefined;
+  m.updatedAt = new Date().toISOString();
+  commit();
+}
+
+/* -------------------- Demo social threads (Phase 1 mock) -------------------- */
+
+interface DemoSeed {
+  id: string;
+  channel: Channel;
+  targetKind: "enterprise" | "contact";
+  targetName: string;
+  parentRef?: { id: string; name: string };
+  counterparty: string;
+  lastInbound: string;
+  hoursAgo: number;
+  /** 剩余客服窗口小时数（覆盖默认计算） */
+  windowLeftHours?: number | null;
+  aiIntent?: AiIntent;
+  assigneeId?: string;
+  tags?: string[];
+}
+
+const DEMO_SEEDS: DemoSeed[] = [
+  {
+    id: "demo:wa:1",
+    channel: "whatsapp",
+    targetKind: "contact",
+    targetName: "Anna Müller",
+    parentRef: { id: "demo-ent-1", name: "Bosch GmbH" },
+    counterparty: "+491701234567",
+    lastInbound: "Hi, could you send the pricing PDF for SKU-A?",
+    hoursAgo: 2,
+    aiIntent: "quote",
+    tags: ["高意向"],
+  },
+  {
+    id: "demo:wa:2",
+    channel: "whatsapp",
+    targetKind: "enterprise",
+    targetName: "Rakuten Global",
+    counterparty: "+81901234567",
+    lastInbound: "こんにちは、サンプル送付は可能ですか？",
+    hoursAgo: 26,
+    windowLeftHours: null, // 窗口已过期
+    aiIntent: "interested",
+    assigneeId: "u_li",
+  },
+  {
+    id: "demo:tg:1",
+    channel: "telegram",
+    targetKind: "contact",
+    targetName: "Ivan Petrov",
+    parentRef: { id: "demo-ent-2", name: "TechnoPolymer LLC" },
+    counterparty: "@ivanp",
+    lastInbound: "Interested, please share catalog.",
+    hoursAgo: 5,
+    aiIntent: "interested",
+  },
+  {
+    id: "demo:fb:1",
+    channel: "facebook",
+    targetKind: "contact",
+    targetName: "María López",
+    parentRef: { id: "demo-ent-3", name: "Grupo Andino" },
+    counterparty: "psid:1234567890",
+    lastInbound: "¿Cuál es el precio FOB Shanghai?",
+    hoursAgo: 10,
+    aiIntent: "quote",
+  },
+  {
+    id: "demo:tt:1",
+    channel: "tiktok",
+    targetKind: "contact",
+    targetName: "@sofia_home",
+    counterparty: "openid:tt_9876",
+    lastInbound: "Do you ship to US?",
+    hoursAgo: 30,
+    aiIntent: "interested",
+    assigneeId: "u_wang",
+  },
+];
+
+export function getDemoSocialThreads(): Thread[] {
+  const now = Date.now();
+  return DEMO_SEEDS.map((s) => {
+    const meta = ensureMeta(
+      s.id,
+      new Date(now - s.hoursAgo * 3600_000).toISOString(),
+    );
+    // 首次注入默认值
+    if (meta.inboundMessages.length === 0) {
+      const at = new Date(now - s.hoursAgo * 3600_000).toISOString();
+      meta.inboundMessages.push({
+        id: makeId("in"),
+        direction: "inbound",
+        createdAt: at,
+        fromName: s.targetName,
+        fromAddress: s.counterparty,
+        content: s.lastInbound,
+      });
+      meta.aiIntent = s.aiIntent;
+      meta.unread = 1;
+      meta.status = "pending";
+      if (s.tags) meta.tags = [...s.tags];
+      if (s.assigneeId) {
+        meta.assigneeId = s.assigneeId;
+        meta.assignee = memberById(s.assigneeId)?.name;
+      }
+      // 客服窗口
+      const winH = WINDOW_HOURS[s.channel];
+      if (winH !== undefined) {
+        if (s.windowLeftHours === null) {
+          meta.windowExpiresAt = new Date(now - 3600_000).toISOString(); // 已过期
+        } else {
+          const leftH = s.windowLeftHours ?? Math.max(1, winH - s.hoursAgo);
+          meta.windowExpiresAt = new Date(now + leftH * 3600_000).toISOString();
+        }
+      }
+      writeMeta(metaStore);
+    }
+    return {
+      id: s.id,
+      targetKind: s.targetKind,
+      targetId: s.id,
+      targetName: s.targetName,
+      parentRef: s.parentRef,
+      channel: s.channel,
+      counterpartyAddress: s.counterparty,
+      messages: [...meta.inboundMessages, ...meta.extraMessages].sort((a, b) =>
+        a.createdAt.localeCompare(b.createdAt),
+      ),
+      meta,
+      lastAt: meta.updatedAt,
+      lastPreview: s.lastInbound.slice(0, 120),
+      lastDirection: (meta.extraMessages[meta.extraMessages.length - 1]?.direction ??
+        "inbound") as "inbound" | "outbound",
+    };
+  });
+}
