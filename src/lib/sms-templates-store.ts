@@ -155,6 +155,34 @@ export function addSmsTemplate(
   emit();
 }
 
+/** 更新一个模板（仅 pending / rejected 可编辑；rejected 编辑后自动回到 pending） */
+export function updateSmsTemplate(
+  id: string,
+  patch: Partial<Pick<SmsTemplate, "name" | "channel" | "locale" | "content">>,
+) {
+  store = store.map((t) => {
+    if (t.id !== id) return t;
+    if (t.status === "approved") return t;
+    const next: SmsTemplate = {
+      ...t,
+      ...patch,
+      status: "pending",
+      updatedAt: new Date().toISOString().slice(0, 10),
+      rejectReason: undefined,
+    };
+    return next;
+  });
+  write(store);
+  emit();
+}
+
+/** 撤回待审模板（仅 pending 可撤回，直接删除） */
+export function withdrawSmsTemplate(id: string) {
+  store = store.filter((t) => !(t.id === id && t.status === "pending"));
+  write(store);
+  emit();
+}
+
 /** 把模板 {{变量}} 语法转换为撰写框使用的 {变量} 语法 */
 export function toComposeSyntax(tpl: string): string {
   return tpl.replace(/\{\{\s*([^}]+?)\s*\}\}/g, "{$1}");
