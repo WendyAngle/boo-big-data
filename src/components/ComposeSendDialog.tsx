@@ -547,13 +547,40 @@ export function ComposeSendDialog({
                 className="h-7 gap-1"
               >
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
-                {aiUsed ? "AI 重新生成" : "AI 生成"}
+                {isEmail
+                  ? aiUsed
+                    ? "AI 重新生成"
+                    : "AI 生成"
+                  : aiUsed
+                    ? "AI 重新起草"
+                    : "AI 起草模板"}
                 <span className="text-xs text-muted-foreground">
                   -{isEmail ? COST_AI_EMAIL : COST_AI_SMS} 积分/次
                 </span>
                 </Button>
               </div>
             </div>
+
+            {!isEmail && (
+              <div className="rounded-md border border-primary/30 bg-primary/5 p-2.5 space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-medium">
+                  <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                  推荐使用已报备模板
+                  <span className="text-muted-foreground font-normal">
+                    海外营销短信须使用运营商预审模板，直发自由文本可能被拦截或封号
+                  </span>
+                </div>
+                <SmsTemplatePicker
+                  currentId={smsTemplateId}
+                  onPick={(id, name, c) => {
+                    setContent(c);
+                    setSmsTemplateId(id);
+                    setSmsTemplateName(name);
+                    setAiUsed(false);
+                  }}
+                />
+              </div>
+            )}
 
             {/* 变量插入 */}
             <div className="flex flex-wrap items-center gap-1.5">
@@ -590,11 +617,17 @@ export function ComposeSendDialog({
               <Label className="text-xs text-muted-foreground">
                 {isEmail ? "正文 *" : "短信内容 *"}
               </Label>
-              {!isEmail && <SmsTemplatePicker onPick={(c) => setContent(c)} />}
               <Textarea
                 ref={contentRef}
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(e) => {
+                  setContent(e.target.value);
+                  // 手动改动 → 视为脱离已报备模板
+                  if (smsTemplateId) {
+                    setSmsTemplateId(null);
+                    setSmsTemplateName(null);
+                  }
+                }}
                 onFocus={() => setFocusField("content")}
                 rows={isEmail ? 8 : 5}
                 maxLength={isEmail ? 5000 : 300}
@@ -619,6 +652,12 @@ export function ComposeSendDialog({
                   </span>
                 )}
               </div>
+              {!isEmail && content.trim().length > 0 && (
+                <ComplianceStrip
+                  templateName={smsTemplateName}
+                  onSubmitAsTemplate={() => setSubmitTplOpen(true)}
+                />
+              )}
             </div>
           </section>
 
