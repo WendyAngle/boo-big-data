@@ -338,31 +338,69 @@ function MailboxesPage() {
       </Card>
 
       {/* List */}
-      {filtered.length === 0 ? (
-        <Card className="p-12 text-center">
-          <div className="mx-auto h-14 w-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-3">
-            <MailboxIcon className="h-7 w-7" />
-          </div>
-          <div className="text-base font-medium">暂无匹配的邮箱</div>
-          <div className="text-sm text-muted-foreground mt-1">
-            新增一个发件邮箱以开始邮件触达
-          </div>
-          <Button
-            className="mt-4"
-            onClick={() => {
-              setEditing(null);
+      <ScopeSection
+        title="团队共享邮箱"
+        subtitle={
+          isAdmin
+            ? "归企业所有，全员可用于发信。仅租户管理员可维护。"
+            : "归企业所有，全员可用于发信。如需变更请联系租户管理员。"
+        }
+        icon={<Users className="h-4 w-4" />}
+        count={teamList.length}
+        canAdd={isAdmin}
+        onAdd={() => {
+          setEditing(null);
+          setFormInitScope("team");
+          setFormOpen(true);
+        }}
+        empty="暂无团队共享邮箱"
+      >
+        {teamList.map((m) => (
+          <MailboxCard
+            key={m.id}
+            m={m}
+            readOnly={!isAdmin}
+            testing={testingId === m.id}
+            onTest={() => onTest(m)}
+            onEdit={() => {
+              setEditing(m);
               setFormOpen(true);
             }}
-          >
-            <Plus className="h-4 w-4" /> 新增邮箱
-          </Button>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {filtered.map((m) => (
+            onDelete={() => setDelTarget(m)}
+            onSetDefault={() => onSetDefault(m)}
+            onToggleStatus={() => onToggleStatus(m)}
+          />
+        ))}
+      </ScopeSection>
+
+      <ScopeSection
+        title={isAdmin ? "全员个人邮箱" : "我的发信邮箱"}
+        subtitle={
+          isAdmin
+            ? "员工自助绑定，仅本人可用。管理员可查看/回收。"
+            : "由你本人绑定，仅你可用；离职时管理员将回收。"
+        }
+        icon={<UserRound className="h-4 w-4" />}
+        count={personalList.length}
+        canAdd={true}
+        onAdd={() => {
+          setEditing(null);
+          setFormInitScope("personal");
+          setFormOpen(true);
+        }}
+        empty={
+          isAdmin
+            ? "暂无成员个人邮箱"
+            : "尚未绑定个人邮箱，点击右上「新增邮箱」开始"
+        }
+      >
+        {personalList.map((m) => {
+          const isOwner = m.ownerId === CURRENT_TENANT_USER.id;
+          return (
             <MailboxCard
               key={m.id}
               m={m}
+              readOnly={!isAdmin && !isOwner}
               testing={testingId === m.id}
               onTest={() => onTest(m)}
               onEdit={() => {
@@ -373,14 +411,16 @@ function MailboxesPage() {
               onSetDefault={() => onSetDefault(m)}
               onToggleStatus={() => onToggleStatus(m)}
             />
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </ScopeSection>
 
       <MailboxFormDialog
         open={formOpen}
         onOpenChange={setFormOpen}
         editing={editing}
+        initScope={formInitScope}
+        isAdmin={isAdmin}
       />
 
       <AlertDialog open={!!delTarget} onOpenChange={(o) => !o && setDelTarget(null)}>
