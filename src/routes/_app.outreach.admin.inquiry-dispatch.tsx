@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Users, Building2, UserRound, Clock, ShieldAlert, UserCheck, Inbox, Send } from "lucide-react";
+import { Users, Building2, UserRound, Clock, ShieldAlert, Inbox, Send } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
