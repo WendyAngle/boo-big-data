@@ -173,6 +173,21 @@ function InboxPage() {
   const navigate = useNavigate();
   const threads = useThreads();
   const counts = useInboxCounts();
+  // 智能视图计数（前端派生，避免修改 store）
+  const smartCounts = useMemo(() => {
+    let myTodo = 0;
+    let dueSoon = 0;
+    let mine = 0;
+    for (const t of threads) {
+      if (t.meta.assigneeId === CURRENT_TEAM_USER_ID) {
+        mine++;
+        if (t.meta.status === "pending" || t.meta.status === "snoozed") myTodo++;
+      }
+      const s = slaInfo(t);
+      if (s && (s.overdue || s.approaching)) dueSoon++;
+    }
+    return { myTodo, dueSoon, mine };
+  }, [threads]);
   // 从企业/联系人详情等入口带 tid 直接进入时，默认使用 “全部” 视图，
   // 避免出现「右侧展示了会话，中间列表却提示"该视图下暂无会话"」的错位。
   const view: ViewKey = search.view ?? (search.tid ? "all" : "my_todo");
