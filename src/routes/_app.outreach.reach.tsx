@@ -86,6 +86,8 @@ import {
   type ReachChannel,
 } from "@/lib/credits-ledger";
 import { ListPagination } from "@/components/ListPagination";
+import { useThreads, threadKeyFor, type Thread } from "@/lib/inbox-store";
+import { Inbox as InboxIcon, MessageCircleReply } from "lucide-react";
 
 export const Route = createFileRoute("/_app/outreach/reach")({
   head: () => ({ meta: [{ title: "出海大数据平台 · 触达 | Boo数据平台" }] }),
@@ -109,6 +111,12 @@ function ReachPage() {
   }, []);
 
   const ledger = useLedger();
+  const threads = useThreads();
+  const threadByKey = useMemo(() => {
+    const m = new Map<string, Thread>();
+    for (const t of threads) m.set(t.id, t);
+    return m;
+  }, [threads]);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => {
@@ -377,6 +385,7 @@ function ReachPage() {
                 <TableHead className="w-[220px]">状态 / 原因</TableHead>
                 <TableHead className="w-[90px]">积分变动</TableHead>
                 <TableHead>明细说明</TableHead>
+                <TableHead className="w-[110px]">回复</TableHead>
                 {statusTab !== "success" && statusTab !== "in_progress" && (
                   <TableHead className="w-[160px] text-right">操作</TableHead>
                 )}
@@ -433,6 +442,9 @@ function ReachPage() {
                   </TableCell>
                   <TableCell className="text-xs max-w-[420px]">
                     <DetailCell row={r} onViewContent={() => setViewing(r)} />
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    <ReplyCell reach={r} thread={threadByKey.get(threadKeyFor(r) ?? "") ?? null} />
                   </TableCell>
                   {statusTab !== "success" && statusTab !== "in_progress" && (
                     <TableCell className="text-right">
@@ -639,6 +651,32 @@ function ChannelBadge({ channel, platform }: { channel: ReachChannel; platform?:
       <Icon className="h-3.5 w-3.5 text-muted-foreground" />
       <span className="font-medium text-foreground">{label}</span>
     </span>
+  );
+}
+
+function ReplyCell({ reach, thread }: { reach: { channel?: ReachChannel }; thread: Thread | null }) {
+  if (!thread || thread.channel === undefined) {
+    // social 类无 threadKey
+    if (reach.channel !== "email" && reach.channel !== "phone") {
+      return <span className="text-[11px] text-muted-foreground">—</span>;
+    }
+  }
+  const replies = thread?.meta.inboundMessages.length ?? 0;
+  if (!thread || replies === 0) {
+    return <span className="text-[11px] text-muted-foreground">未回复</span>;
+  }
+  return (
+    <Link
+      to="/outreach/inbox"
+      search={{ tid: thread.id, view: "all" }}
+      className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100"
+      title="打开收件箱查看回复"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <MessageCircleReply className="h-3 w-3" />
+      {replies > 1 ? `已回复 ${replies}` : "已回复"}
+      <InboxIcon className="h-3 w-3 opacity-60" />
+    </Link>
   );
 }
 
