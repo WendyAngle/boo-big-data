@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { FileText, Plus, CheckCircle2, Clock, XCircle, Copy, Pencil, Undo2 } from "lucide-react";
+import { FileText, Plus, CheckCircle2, Clock, XCircle, Copy, Pencil, Undo2, Eye, Sparkles, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -49,6 +51,7 @@ function SmsTemplatesPage() {
   const [tab, setTab] = useState<"all" | Status>("all");
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Tpl | null>(null);
+  const [previewing, setPreviewing] = useState<Tpl | null>(null);
 
   const counts = {
     all: list.length,
@@ -203,6 +206,10 @@ function SmsTemplatesPage() {
         onOpenChange={(o) => !o && setEditing(null)}
         onSubmit={submitEdit}
         initial={editing}
+      />
+      <PreviewDialog
+        template={previewing}
+        onOpenChange={(o) => !o && setPreviewing(null)}
       />
     </div>
   );
