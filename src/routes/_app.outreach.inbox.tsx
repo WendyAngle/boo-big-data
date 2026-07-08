@@ -77,6 +77,7 @@ const searchSchema = z.object({
       "suppressed",
     ])
     .optional(),
+  ch: z.enum(["all", "email", "sms"]).optional(),
   tid: z.string().optional(),
   q: z.string().optional(),
   // 从"最新沟通"胶囊中的"AI 回复"进入时，自动生成一条 AI 草稿。
@@ -102,9 +103,11 @@ function InboxPage() {
   // 避免出现「右侧展示了会话，中间列表却提示"该视图下暂无会话"」的错位。
   const view: ViewKey = search.view ?? (search.tid ? "all" : "unread");
   const q = search.q ?? "";
+  const ch = search.ch ?? "all";
 
   const filtered = useMemo(() => {
     let list = threads;
+    if (ch !== "all") list = list.filter((t) => t.channel === ch);
     if (view === "unread") list = list.filter((t) => t.meta.unread > 0);
     else if (view === "pending")
       list = list.filter((t) => t.meta.status === "pending");
@@ -132,7 +135,7 @@ function InboxPage() {
       );
     }
     return list;
-  }, [threads, view, q]);
+  }, [threads, view, q, ch]);
 
   const currentId = search.tid ?? filtered[0]?.id;
   const current = threads.find((t) => t.id === currentId);
@@ -181,6 +184,27 @@ function InboxPage() {
             placeholder="搜索：企业 / 联系人 / 邮箱 / 主题 / 内容"
             className="pl-8 h-9"
           />
+        </div>
+        {/* 渠道切换 */}
+        <div className="ml-2 flex items-center rounded-md border overflow-hidden shrink-0">
+          {([
+            { k: "all", label: "全部" },
+            { k: "email", label: "邮件" },
+            { k: "sms", label: "短信" },
+          ] as const).map((c) => (
+            <button
+              key={c.k}
+              onClick={() => goto({ ch: c.k, tid: undefined })}
+              className={cn(
+                "px-3 h-9 text-xs transition-colors",
+                ch === c.k
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background hover:bg-muted",
+              )}
+            >
+              {c.label}
+            </button>
+          ))}
         </div>
       </div>
       <div className="flex-1 flex min-h-0">
@@ -403,6 +427,17 @@ function ThreadRow({
             {thread.lastPreview}
           </div>
           <div className="mt-1.5 flex items-center gap-1 flex-wrap">
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-[10px] py-0 px-1.5 h-5",
+                thread.channel === "sms"
+                  ? "bg-sky-50 text-sky-700 border-sky-200"
+                  : "bg-violet-50 text-violet-700 border-violet-200",
+              )}
+            >
+              {thread.channel === "sms" ? "短信" : "邮件"}
+            </Badge>
             <Badge
               variant="outline"
               className="text-[10px] py-0 px-1.5 h-5"

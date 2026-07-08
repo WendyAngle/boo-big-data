@@ -69,6 +69,7 @@ const menu: Root[] = [
           { label: "浏览足迹", to: "/outreach/footprints" },
           { label: "触达任务", to: "/outreach/reach" },
           { label: "收件箱", to: "/outreach/inbox" },
+          { label: "退订名单", to: "/outreach/suppressions" },
         ],
       },
       {
@@ -84,6 +85,9 @@ const menu: Root[] = [
         children: [
           { label: "员工管理", to: "/outreach/users" },
           { label: "发信邮箱", to: "/outreach/mailboxes" },
+          { label: "短信服务商", to: "/outreach/admin/sms-providers" },
+          { label: "短信路由", to: "/outreach/admin/sms-routing" },
+          { label: "短信模板", to: "/outreach/admin/sms-templates" },
         ],
       },
     ],

@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { isSuppressed } from "@/lib/suppressions-store";
 
 import {
   MESSAGE_VARIABLES,
@@ -250,8 +251,16 @@ export function ComposeSendDialog({
 
   function handleSend() {
     if (!canSend) return;
+    // 过滤退订名单
+    const kind = isEmail ? "email" : "phone";
+    const blocked = recipients.filter((r) => isSuppressed(kind, r.address));
+    const active = recipients.filter((r) => !isSuppressed(kind, r.address));
+    if (active.length === 0) {
+      toast.error(`所有收件人均在退订名单中，已阻止发送`);
+      return;
+    }
     let n = 0;
-    for (const r of recipients) {
+    for (const r of active) {
       const finalSubject = isEmail ? renderTemplate(subject, r.ctx) : undefined;
       const finalContent = renderTemplate(content, r.ctx);
       // 未解锁时先扣查看费并永久解锁（幂等）
@@ -284,6 +293,12 @@ export function ComposeSendDialog({
     }
     onOpenChange(false);
     onSent?.(n);
+    if (blocked.length > 0) {
+      toast.warning(`已跳过 ${blocked.length} 个退订联系人`, {
+        description: blocked.slice(0, 3).map((b) => b.address).join("、") +
+          (blocked.length > 3 ? ` 等 ${blocked.length} 个` : ""),
+      });
+    }
     toast.success(
       isEmail
         ? `已加入发送队列：${n} 封邮件`
