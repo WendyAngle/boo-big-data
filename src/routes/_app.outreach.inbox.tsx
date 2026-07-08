@@ -37,6 +37,9 @@ import {
   Pin,
   AlarmClock,
   ChevronDown as ChevronDownIcon,
+  FileText,
+  History,
+  User as UserIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -99,6 +102,33 @@ import {
   slaInfo,
 } from "@/lib/inbox-store";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
+import { getAllLedger } from "@/lib/credits-ledger";
+
+/** 邮件场景的快捷回复模板（Phase 1 hardcoded） */
+const EMAIL_QUICK_REPLIES: { id: string; name: string; body: string }[] = [
+  {
+    id: "eq_thanks",
+    name: "致谢 · 确认收到",
+    body: "Hi,\n\nThanks for your reply — noted with thanks. I'll get back to you shortly with the details.\n\nBest regards,",
+  },
+  {
+    id: "eq_quote",
+    name: "报价 · 请提供需求",
+    body: "Hi,\n\nHappy to prepare a formal quote. Could you share:\n1) Target SKUs / quantities\n2) Destination port & Incoterm\n3) Expected shipment date\n\nBest,",
+  },
+  {
+    id: "eq_meeting",
+    name: "邀约 · 30 分钟电话",
+    body: "Hi,\n\nWould you have 30 minutes this week for a quick call? Please share 2-3 slots that work for you and I'll confirm.\n\nBest,",
+  },
+  {
+    id: "eq_followup",
+    name: "跟进 · 二次触达",
+    body: "Hi,\n\nJust following up on my previous email — let me know if you'd like more information or a sample.\n\nBest,",
+  },
+];
 
 const searchSchema = z.object({
   view: z
@@ -961,7 +991,22 @@ function ThreadDetail({
       </div>
 
       {/* 时间线 */}
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+      <Tabs defaultValue="thread" className="flex-1 flex flex-col min-h-0">
+        <TabsList className="mx-6 mt-2 h-9 shrink-0 self-start">
+          <TabsTrigger value="thread" className="text-xs gap-1">
+            <MessageCircleReply className="h-3.5 w-3.5" />
+            会话
+          </TabsTrigger>
+          <TabsTrigger value="profile" className="text-xs gap-1">
+            <UserIcon className="h-3.5 w-3.5" />
+            客户资料
+          </TabsTrigger>
+          <TabsTrigger value="history" className="text-xs gap-1">
+            <History className="h-3.5 w-3.5" />
+            触达历史
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="thread" className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4 mt-0">
         {(thread.meta.assignmentEvents ?? []).map((ev) => (
           <div
             key={ev.id}
@@ -1043,7 +1088,14 @@ function ThreadDetail({
             </div>
           </div>
         ))}
-      </div>
+        </TabsContent>
+        <TabsContent value="profile" className="flex-1 min-h-0 overflow-y-auto px-6 py-4 mt-0">
+          <ProfilePanel thread={thread} />
+        </TabsContent>
+        <TabsContent value="history" className="flex-1 min-h-0 overflow-y-auto px-6 py-4 mt-0">
+          <ReachHistoryPanel thread={thread} />
+        </TabsContent>
+      </Tabs>
 
       {/* 回复区 */}
       <div className="border-t bg-muted/20 p-4 shrink-0">
@@ -1101,6 +1153,11 @@ function ThreadDetail({
             )}
             AI 生成回复
           </Button>
+          <QuickTemplateMenu
+            channel={thread.channel}
+            disabled={!!winInfo?.closed}
+            onPick={(body) => setReply(body)}
+          />
         </div>
         {winInfo?.closed && templates.length > 0 ? (
           <div className="space-y-2">
@@ -1183,6 +1240,186 @@ function formatShort(ms: number) {
 }
 
 function ActionBar({ thread }: { thread: Thread }) {
+  return _ActionBar({ thread });
+}
+
+function QuickTemplateMenu({
+  channel,
+  disabled,
+  onPick,
+}: {
+  channel: Channel;
+  disabled?: boolean;
+  onPick: (body: string) => void;
+}) {
+  const smsTpls = channel === "sms" ? getApprovedSmsTemplates() : [];
+  const list: { id: string; name: string; body: string }[] =
+    channel === "email"
+      ? EMAIL_QUICK_REPLIES
+      : channel === "sms"
+        ? smsTpls.map((t) => ({ id: t.id, name: t.name, body: t.content }))
+        : [];
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1 h-7"
+          disabled={disabled || list.length === 0}
+        >
+          <FileText className="h-3.5 w-3.5" />
+          模板
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-72">
+        <DropdownMenuLabel className="text-[11px] text-muted-foreground">
+          {channel === "email" ? "邮件快捷回复" : "短信审核通过模板"}
+        </DropdownMenuLabel>
+        {list.map((t) => (
+          <DropdownMenuItem
+            key={t.id}
+            className="flex flex-col items-start gap-0.5 py-2"
+            onClick={() => onPick(t.body)}
+          >
+            <span className="text-xs font-medium">{t.name}</span>
+            <span className="text-[11px] text-muted-foreground line-clamp-2">
+              {t.body}
+            </span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function _ActionBar({ thread }: { thread: Thread }) {
+  return __ActionBarImpl({ thread });
+}
+
+function ProfilePanel({ thread }: { thread: Thread }) {
+  return (
+    <div className="space-y-3 text-sm">
+      <div className="rounded-md border bg-card p-4 space-y-2">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {thread.targetKind === "enterprise" ? (
+            <Building2 className="h-3.5 w-3.5" />
+          ) : (
+            <UserRound className="h-3.5 w-3.5" />
+          )}
+          <span>{thread.targetKind === "enterprise" ? "企业" : "联系人"}</span>
+        </div>
+        <div className="text-base font-semibold">{thread.targetName}</div>
+        {thread.parentRef && (
+          <div className="text-xs text-muted-foreground">
+            所属：{thread.parentRef.name}
+          </div>
+        )}
+        <div className="text-xs">
+          <span className="text-muted-foreground">联系方式：</span>
+          <span className="font-mono">{thread.counterpartyAddress}</span>
+        </div>
+        <div className="text-xs">
+          <span className="text-muted-foreground">渠道：</span>
+          {CHANNEL_LABEL[thread.channel]}
+        </div>
+        {thread.meta.assigneeId && (
+          <div className="text-xs">
+            <span className="text-muted-foreground">当前跟进：</span>
+            {memberById(thread.meta.assigneeId)?.name}
+          </div>
+        )}
+      </div>
+      <div className="rounded-md border bg-card p-4">
+        <div className="text-xs text-muted-foreground mb-2">前往完整档案</div>
+        <Link
+          to={
+            thread.targetKind === "enterprise"
+              ? "/outreach/enterprise/$id"
+              : "/outreach/enterprise/$id/contact/$idx"
+          }
+          params={
+            thread.targetKind === "enterprise"
+              ? { id: thread.targetId }
+              : {
+                  id: thread.targetId.split(":")[0],
+                  idx: thread.targetId.split(":")[1] ?? "0",
+                }
+          }
+          className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+        >
+          打开{thread.targetKind === "enterprise" ? "企业" : "联系人"}详情
+          <ChevronRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function ReachHistoryPanel({ thread }: { thread: Thread }) {
+  const list = useMemo(() => {
+    return getAllLedger().filter(
+      (e) =>
+        e.kind === "reach" &&
+        e.targetKind === thread.targetKind &&
+        e.targetId === thread.targetId,
+    );
+  }, [thread.targetKind, thread.targetId]);
+  if (list.length === 0) {
+    return (
+      <div className="text-sm text-muted-foreground text-center py-10">
+        暂无触达记录
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      {list.map((r) => (
+        <div
+          key={r.id}
+          className="rounded-md border bg-card p-3 text-xs flex items-start gap-3"
+        >
+          <div className="shrink-0 pt-0.5">
+            <Zap className="h-3.5 w-3.5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">
+                {r.channel === "email" ? "邮件" : r.channel === "phone" ? "短信" : "社媒"}
+                {r.platform ? ` · ${r.platform}` : ""}
+              </span>
+              <span className="text-muted-foreground">
+                {formatDateTime(r.createdAt)}
+              </span>
+              <span className="ml-auto text-rose-600 font-semibold tabular-nums">
+                -{r.cost}
+              </span>
+            </div>
+            {r.subject && (
+              <div className="mt-1 text-foreground/80 truncate">{r.subject}</div>
+            )}
+            {r.detail && (
+              <div className="mt-0.5 text-muted-foreground font-mono truncate">
+                {r.detail}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+      <div className="pt-2">
+        <Link
+          to="/outreach/reach"
+          className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+        >
+          打开触达任务列表
+          <ChevronRight className="h-3 w-3" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function __ActionBarImpl({ thread }: { thread: Thread }) {
   const [tagInput, setTagInput] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
 
