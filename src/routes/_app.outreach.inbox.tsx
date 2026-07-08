@@ -1218,6 +1218,60 @@ function formatShort(ms: number) {
 }
 
 function ActionBar({ thread }: { thread: Thread }) {
+  return _ActionBar({ thread });
+}
+
+function QuickTemplateMenu({
+  channel,
+  disabled,
+  onPick,
+}: {
+  channel: Channel;
+  disabled?: boolean;
+  onPick: (body: string) => void;
+}) {
+  const smsTpls = channel === "sms" ? getApprovedSmsTemplates() : [];
+  const list: { id: string; name: string; body: string }[] =
+    channel === "email"
+      ? EMAIL_QUICK_REPLIES
+      : channel === "sms"
+        ? smsTpls.map((t) => ({ id: t.id, name: t.name, body: t.content }))
+        : [];
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1 h-7"
+          disabled={disabled || list.length === 0}
+        >
+          <FileText className="h-3.5 w-3.5" />
+          模板
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-72">
+        <DropdownMenuLabel className="text-[11px] text-muted-foreground">
+          {channel === "email" ? "邮件快捷回复" : "短信审核通过模板"}
+        </DropdownMenuLabel>
+        {list.map((t) => (
+          <DropdownMenuItem
+            key={t.id}
+            className="flex flex-col items-start gap-0.5 py-2"
+            onClick={() => onPick(t.body)}
+          >
+            <span className="text-xs font-medium">{t.name}</span>
+            <span className="text-[11px] text-muted-foreground line-clamp-2">
+              {t.body}
+            </span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function _ActionBar({ thread }: { thread: Thread }) {
   const [tagInput, setTagInput] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
 
