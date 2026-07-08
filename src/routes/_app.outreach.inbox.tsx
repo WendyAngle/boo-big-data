@@ -96,7 +96,9 @@ function InboxPage() {
   const navigate = useNavigate();
   const threads = useThreads();
   const counts = useInboxCounts();
-  const view: ViewKey = search.view ?? "unread";
+  // 从企业/联系人详情等入口带 tid 直接进入时，默认使用 “全部” 视图，
+  // 避免出现「右侧展示了会话，中间列表却提示"该视图下暂无会话"」的错位。
+  const view: ViewKey = search.view ?? (search.tid ? "all" : "unread");
   const q = search.q ?? "";
 
   const filtered = useMemo(() => {
@@ -132,6 +134,15 @@ function InboxPage() {
 
   const currentId = search.tid ?? filtered[0]?.id;
   const current = threads.find((t) => t.id === currentId);
+
+  // 保险：如果通过 tid 打开的会话不在当前筛选视图内，则把它并入中栏列表，
+  // 保持右侧详情与左侧列表的一致性。
+  const displayList = useMemo(() => {
+    if (current && !filtered.some((t) => t.id === current.id)) {
+      return [current, ...filtered];
+    }
+    return filtered;
+  }, [filtered, current]);
 
   // 打开会话即标记已读
   useEffect(() => {
@@ -230,12 +241,12 @@ function InboxPage() {
 
         {/* 中栏：会话列表 */}
         <div className="w-[380px] shrink-0 border-r overflow-y-auto">
-          {filtered.length === 0 ? (
+          {displayList.length === 0 ? (
             <div className="p-10 text-center text-sm text-muted-foreground">
               该视图下暂无会话
             </div>
           ) : (
-            filtered.map((t) => (
+            displayList.map((t) => (
               <ThreadRow
                 key={t.id}
                 thread={t}
