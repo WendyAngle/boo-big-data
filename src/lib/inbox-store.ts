@@ -99,6 +99,8 @@ export interface Thread {
   targetId: string;
   targetName: string;
   parentRef?: { id: string; name: string };
+  /** 会话所属渠道 */
+  channel: "email" | "sms";
   /** 对方地址（收件邮箱） */
   counterpartyAddress: string;
   /** 我方 sender */
@@ -176,8 +178,12 @@ function hashStr(s: string) {
 
 /** 会话 id：企业/联系人 + 对方邮箱地址 */
 function threadKey(r: LedgerEntry): string | null {
-  if (r.kind !== "reach" || r.channel !== "email" || !r.detail) return null;
-  return `t:${r.targetKind}:${r.targetId}:${r.detail.toLowerCase()}`;
+  if (r.kind !== "reach" || !r.detail) return null;
+  if (r.channel === "email")
+    return `t:email:${r.targetKind}:${r.targetId}:${r.detail.toLowerCase()}`;
+  if (r.channel === "phone")
+    return `t:sms:${r.targetKind}:${r.targetId}:${r.detail}`;
+  return null;
 }
 
 function ensureMeta(threadId: string, createdAt: string): ThreadMeta {
@@ -243,6 +249,28 @@ const INTENT_TEMPLATES: Array<{ intent: AiIntent; bodies: string[] }> = [
   },
 ];
 
+/** SMS 场景下的短回复模板（比邮件更简短，含 STOP 关键字） */
+const SMS_INTENT_TEMPLATES: Array<{ intent: AiIntent; bodies: string[] }> = [
+  { intent: "interested", bodies: ["Interested — send details please.", "有兴趣，请发资料到我邮箱。", "Ok, share your catalog."] },
+  { intent: "quote", bodies: ["Send price for 5k units.", "报个 FOB 深圳的价"] },
+  { intent: "ooo", bodies: ["On leave, back Mon.", "在休假，下周一联系"] },
+  { intent: "reject", bodies: ["No thanks.", "暂无采购计划"] },
+  { intent: "unsubscribe", bodies: ["STOP", "退订"] },
+  { intent: "complaint", bodies: ["Stop texting me!"] },
+];
+
+function pickSmsIntent(seed: number): { intent: AiIntent; body: string } {
+  // SMS 权重：意向 20% / 询价 15% / OOO 10% / 拒绝 30% / 退订 20% / 投诉 5%
+  const w = [20, 35, 45, 75, 95, 100];
+  const kind = ["interested", "quote", "ooo", "reject", "unsubscribe", "complaint"] as const;
+  const p = seed % 100;
+  const idx = w.findIndex((x) => p < x);
+  const intent = kind[Math.max(0, idx)];
+  const tpl = SMS_INTENT_TEMPLATES.find((t) => t.intent === intent)!;
+  const body = tpl.bodies[seed % tpl.bodies.length];
+  return { intent, body };
+}
+
 function pickIntent(seed: number): { intent: AiIntent; body: string } {
   // 权重：意向 30% / 询价 25% / OOO 15% / 拒绝 20% / 退订 7% / 投诉 3%
   const w = [30, 55, 70, 90, 97, 100];
@@ -266,8 +294,11 @@ function seedInboundIfNeeded(entries: LedgerEntry[]) {
     const m = ensureMeta(key, r.createdAt);
     if (m.inboundMessages.length > 0) continue;
     const h = hashStr(r.id);
-    if (h % 100 < 40) {
-      const { intent, body } = pickIntent(h);
+    const isSms = r.channel === "phone";
+    // SMS 回复率更低（~25%），邮件 ~40%
+    const threshold = isSms ? 25 : 40;
+    if (h % 100 < threshold) {
+      const { intent, body } = isSms ? pickSmsIntent(h) : pickIntent(h);
       // 回复时间：发送后 4~72 小时
       const sentAt = new Date(r.createdAt).getTime();
       const delayH = 4 + (h % 68);
@@ -286,10 +317,16 @@ function seedInboundIfNeeded(entries: LedgerEntry[]) {
       });
       m.aiIntent = intent;
       m.unread = 1;
-      // 退订 / 投诉 → 自动抑制；OOO → snooze 3 天；意向/询价 → 待跟进；拒绝 → 已处理
+      // 退订 / 投诉 → 自动抑制并加入退订名单；OOO → snooze 3 天；意向/询价 → 待跟进；拒绝 → 已处理
       if (intent === "unsubscribe" || intent === "complaint") {
         m.status = "suppressed";
         m.unread = 0;
+        // SMS 场景 STOP 关键字 → 加入手机号退订名单
+        if (isSms && r.detail) {
+          addSuppression("phone", r.detail, intent === "unsubscribe" ? "STOP 关键字" : "投诉");
+        } else if (!isSms && r.detail) {
+          addSuppression("email", r.detail, intent === "unsubscribe" ? "退订请求" : "投诉");
+        }
       } else if (intent === "ooo") {
         m.status = "snoozed";
         m.snoozeUntil = new Date(
@@ -328,6 +365,7 @@ function buildThreads(entries: LedgerEntry[]): Thread[] {
         targetId: r.targetId,
         targetName: r.targetName,
         parentRef: r.parentRef,
+        channel: r.channel === "phone" ? "sms" : "email",
         counterpartyAddress: r.detail || "",
         senderEmail: r.senderEmail,
         messages: [],
