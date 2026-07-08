@@ -54,6 +54,73 @@ export const STATUS_LABEL: Record<ThreadStatus, string> = {
   suppressed: "已抑制",
 };
 
+/* -------------------- Channels & groups (v2) -------------------- */
+
+export type Channel =
+  | "email"
+  | "sms"
+  | "whatsapp"
+  | "telegram"
+  | "facebook"
+  | "tiktok";
+
+export const CHANNEL_LABEL: Record<Channel, string> = {
+  email: "邮件",
+  sms: "短信",
+  whatsapp: "WhatsApp",
+  telegram: "Telegram",
+  facebook: "Facebook",
+  tiktok: "TikTok",
+};
+
+/** 会话客服窗口时长（小时）；无窗口概念的渠道为 undefined */
+export const WINDOW_HOURS: Partial<Record<Channel, number>> = {
+  whatsapp: 24,
+  facebook: 24,
+  tiktok: 48,
+};
+
+export const CHANNEL_COLOR: Record<Channel, string> = {
+  email: "bg-violet-50 text-violet-700 border-violet-200",
+  sms: "bg-sky-50 text-sky-700 border-sky-200",
+  whatsapp: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  telegram: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  facebook: "bg-blue-50 text-blue-700 border-blue-200",
+  tiktok: "bg-neutral-100 text-neutral-800 border-neutral-200",
+};
+
+export type GroupKind = "enterprise" | "contact";
+export const GROUP_LABEL: Record<GroupKind, string> = {
+  enterprise: "企业分组",
+  contact: "人物分组",
+};
+
+/** 演示用团队成员（Phase 1 mock；后续接入 /outreach/users） */
+export interface TeamMember {
+  id: string;
+  name: string;
+  avatarLetter: string;
+  groups: GroupKind[];
+  role?: "member" | "lead";
+}
+
+export const TEAM_MEMBERS: TeamMember[] = [
+  { id: "u_zhang", name: "张三", avatarLetter: "张", groups: ["enterprise", "contact"], role: "lead" },
+  { id: "u_li", name: "李四", avatarLetter: "李", groups: ["enterprise"] },
+  { id: "u_wang", name: "王五", avatarLetter: "王", groups: ["contact"] },
+  { id: "u_zhao", name: "赵六", avatarLetter: "赵", groups: ["contact"] },
+  { id: "u_sun", name: "孙七", avatarLetter: "孙", groups: ["enterprise", "contact"] },
+];
+
+export function memberById(id?: string | null): TeamMember | undefined {
+  if (!id) return undefined;
+  return TEAM_MEMBERS.find((m) => m.id === id);
+}
+
+export function threadGroup(t: { targetKind: "enterprise" | "contact" }): GroupKind {
+  return t.targetKind === "enterprise" ? "enterprise" : "contact";
+}
+
 /** 一条会话消息（我方发出 或 对方回复） */
 export interface ThreadMessage {
   id: string;
@@ -78,6 +145,10 @@ interface ThreadMeta {
   tags: string[];
   aiIntent?: AiIntent;
   assignee?: string;
+  /** 分配给的员工 id（Phase 1 mock，见 TEAM_MEMBERS） */
+  assigneeId?: string;
+  /** WhatsApp / Facebook / TikTok 客服窗口截止时间 */
+  windowExpiresAt?: string;
   /** 是否被标为 star */
   starred?: boolean;
   /** 未读的 inbound 数量 */
@@ -101,7 +172,7 @@ export interface Thread {
   targetName: string;
   parentRef?: { id: string; name: string };
   /** 会话所属渠道 */
-  channel: "email" | "sms";
+  channel: Channel;
   /** 对方地址（收件邮箱） */
   counterpartyAddress: string;
   /** 我方 sender */
