@@ -731,6 +731,7 @@ function FavoritesPage() {
         onOpenChange={setBatchEmailOpen}
         channel="email"
         recipients={emailRecipients}
+        totalSelected={selectedRecords.length}
         initialSenderId={batchSenderId}
       />
       <ComposeSendDialog
@@ -738,6 +739,7 @@ function FavoritesPage() {
         onOpenChange={setBatchSmsOpen}
         channel="phone"
         recipients={smsRecipients}
+        totalSelected={selectedRecords.length}
       />
       <BatchSocialDialog
         open={batchSocialOpen}
