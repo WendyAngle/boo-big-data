@@ -22,6 +22,12 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  useSmsTemplates,
+  addSmsTemplate,
+  type SmsTemplate as Tpl,
+  type SmsTplStatus as Status,
+} from "@/lib/sms-templates-store";
 
 export const Route = createFileRoute("/_app/outreach/admin/sms-templates")({
   head: () => ({
@@ -36,95 +42,8 @@ export const Route = createFileRoute("/_app/outreach/admin/sms-templates")({
   component: SmsTemplatesPage,
 });
 
-type Status = "approved" | "pending" | "rejected";
-
-interface Tpl {
-  id: string;
-  name: string;
-  channel: "marketing" | "otp" | "notification";
-  locale: string;
-  content: string;
-  status: Status;
-  updatedAt: string;
-  submittedBy: string;
-  reviewer?: string;
-  rejectReason?: string;
-}
-
-const SEED: Tpl[] = [
-  {
-    id: "t1",
-    name: "首触 · 产品介绍 EN",
-    channel: "marketing",
-    locale: "en-US",
-    content:
-      "Hi {{联系人名}}, this is {{我的姓名}} from {{我的公司}}. We help {{行业}} companies cut sourcing cost by 20%. Interested in a 15-min chat? Reply STOP to opt out.",
-    status: "approved",
-    updatedAt: "2026-07-01",
-    submittedBy: "李经理",
-    reviewer: "合规组",
-  },
-  {
-    id: "t2",
-    name: "跟进 · 报价请求 中文",
-    channel: "marketing",
-    locale: "zh-CN",
-    content:
-      "{{联系人名}}您好，我是{{我的公司}}的{{我的姓名}}。上次沟通提到的{{产品名}}报价已整理好，可否留个邮箱？回复T退订。",
-    status: "approved",
-    updatedAt: "2026-07-02",
-    submittedBy: "王销售",
-    reviewer: "合规组",
-  },
-  {
-    id: "t3",
-    name: "通知 · 订单发货",
-    channel: "notification",
-    locale: "zh-CN",
-    content: "您的订单{{订单号}}已发货，物流单号：{{运单号}}，预计{{预计送达}}送达。",
-    status: "approved",
-    updatedAt: "2026-06-20",
-    submittedBy: "系统",
-    reviewer: "合规组",
-  },
-  {
-    id: "t4",
-    name: "验证码 · 登录",
-    channel: "otp",
-    locale: "multi",
-    content: "【Boo】您的验证码是 {{code}}，5 分钟内有效，请勿泄露。",
-    status: "approved",
-    updatedAt: "2026-06-10",
-    submittedBy: "系统",
-    reviewer: "合规组",
-  },
-  {
-    id: "t5",
-    name: "促销 · 618 大促",
-    channel: "marketing",
-    locale: "zh-CN",
-    content: "{{联系人名}}亲，618 全场 5 折起，速抢！点击 {{link}} 查看。回复 TD 退订。",
-    status: "pending",
-    updatedAt: "2026-07-06",
-    submittedBy: "运营组",
-  },
-  {
-    id: "t6",
-    name: "催单 · 未回复",
-    channel: "marketing",
-    locale: "en-US",
-    content:
-      "Hey {{联系人名}}, just checking in on my last email — worth a quick call? --{{我的姓名}}",
-    status: "rejected",
-    updatedAt: "2026-07-05",
-    submittedBy: "张销售",
-    reviewer: "合规组",
-    rejectReason: "缺少退订说明（STOP/退订字样）",
-  },
-];
-
 function SmsTemplatesPage() {
-  const [list, setList] = useState<Tpl[]>(SEED);
+  const list = useSmsTemplates();
   const [tab, setTab] = useState<"all" | Status>("all");
   const [addOpen, setAddOpen] = useState(false);
 
@@ -138,14 +57,7 @@ function SmsTemplatesPage() {
   const filtered = tab === "all" ? list : list.filter((t) => t.status === tab);
 
   function submitNew(t: Omit<Tpl, "id" | "status" | "updatedAt" | "submittedBy">) {
-    const rec: Tpl = {
-      ...t,
-      id: `t_${Date.now().toString(36)}`,
-      status: "pending",
-      updatedAt: new Date().toISOString().slice(0, 10),
-      submittedBy: "我",
-    };
-    setList((s) => [rec, ...s]);
+    addSmsTemplate(t);
     toast.success("已提交审核，预计 1 个工作日内反馈");
   }
 
