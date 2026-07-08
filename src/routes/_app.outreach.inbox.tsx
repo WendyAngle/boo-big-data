@@ -34,6 +34,9 @@ import {
   UserCheck,
   Hand,
   Zap,
+  Pin,
+  AlarmClock,
+  ChevronDown as ChevronDownIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -110,6 +113,8 @@ const searchSchema = z.object({
       "suppressed",
       "unassigned",
       "mine",
+      "my_todo",
+      "due_soon",
     ])
     .optional(),
   ch: z
@@ -170,7 +175,8 @@ function InboxPage() {
   const counts = useInboxCounts();
   // 从企业/联系人详情等入口带 tid 直接进入时，默认使用 “全部” 视图，
   // 避免出现「右侧展示了会话，中间列表却提示"该视图下暂无会话"」的错位。
-  const view: ViewKey = search.view ?? (search.tid ? "all" : "pending");
+  const view: ViewKey = search.view ?? (search.tid ? "all" : "my_todo");
+  const [moreOpen, setMoreOpen] = useState(false);
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
   const group = search.group ?? "all";
@@ -196,6 +202,17 @@ function InboxPage() {
       list = list.filter((t) => !t.meta.assigneeId);
     else if (view === "mine")
       list = list.filter((t) => t.meta.assigneeId === CURRENT_TEAM_USER_ID);
+    else if (view === "my_todo")
+      list = list.filter(
+        (t) =>
+          t.meta.assigneeId === CURRENT_TEAM_USER_ID &&
+          (t.meta.status === "pending" || t.meta.status === "snoozed"),
+      );
+    else if (view === "due_soon")
+      list = list.filter((t) => {
+        const s = slaInfo(t);
+        return !!s && (s.overdue || s.approaching);
+      });
     if (q.trim()) {
       const kw = q.trim().toLowerCase();
       list = list.filter(
