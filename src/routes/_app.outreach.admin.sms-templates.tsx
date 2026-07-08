@@ -160,6 +160,14 @@ function SmsTemplatesPage() {
                   <Copy className="h-3.5 w-3.5" />
                   复制
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPreviewing(t)}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  预览
+                </Button>
                 {t.status === "rejected" && (
                   <Button
                     size="sm"
