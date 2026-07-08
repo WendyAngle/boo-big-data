@@ -74,7 +74,16 @@ import {
   type MailboxProvider,
   type MailboxEncryption,
   type MailboxStatus,
+  type MailboxScope,
 } from "@/lib/mailboxes";
+import {
+  useTenantRole,
+  setTenantRole,
+  CURRENT_TENANT_USER,
+  TENANT_DOMAINS,
+  isTenantDomain,
+} from "@/lib/tenant-role";
+import { Users, UserRound, EyeOff, Eye } from "lucide-react";
 
 const CURRENT_TENANT = { id: "T202600", name: "字节跳动" };
 
@@ -109,16 +118,25 @@ function formatDateTime(iso?: string) {
 
 function MailboxesPage() {
   const data = useMailboxes();
+  const role = useTenantRole();
+  const isAdmin = role === "admin";
   const [keyword, setKeyword] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [providerFilter, setProviderFilter] = useState("all");
   const [formOpen, setFormOpen] = useState(false);
+  const [formInitScope, setFormInitScope] = useState<MailboxScope>("personal");
   const [editing, setEditing] = useState<Mailbox | null>(null);
   const [delTarget, setDelTarget] = useState<Mailbox | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return data.filter((m) => {
+      // 成员视角：team 只看到启用中；personal 仅看自己的
+      if (!isAdmin) {
+        if (m.scope === "team" && m.status !== "正常") return false;
+        if (m.scope === "personal" && m.ownerId !== CURRENT_TENANT_USER.id)
+          return false;
+      }
       if (
         keyword &&
         !`${m.email} ${m.displayName} ${m.username}`
@@ -130,7 +148,13 @@ function MailboxesPage() {
       if (providerFilter !== "all" && m.provider !== providerFilter) return false;
       return true;
     });
-  }, [data, keyword, statusFilter, providerFilter]);
+  }, [data, keyword, statusFilter, providerFilter, isAdmin]);
+
+  const teamList = useMemo(() => filtered.filter((m) => m.scope === "team"), [filtered]);
+  const personalList = useMemo(
+    () => filtered.filter((m) => m.scope === "personal"),
+    [filtered],
+  );
 
   const stats = useMemo(() => {
     const c = (s: MailboxStatus) => data.filter((m) => m.status === s).length;
@@ -221,9 +245,27 @@ function MailboxesPage() {
             </div>
             <Button
               size="sm"
+              variant="secondary"
+              className="h-9 bg-white/15 text-white border-white/20 hover:bg-white/25"
+              onClick={() => setTenantRole(isAdmin ? "member" : "admin")}
+              title="演示：切换当前用户角色"
+            >
+              {isAdmin ? (
+                <>
+                  <EyeOff className="h-4 w-4" /> 以员工身份预览
+                </>
+              ) : (
+                <>
+                  <Eye className="h-4 w-4" /> 恢复管理员视图
+                </>
+              )}
+            </Button>
+            <Button
+              size="sm"
               className="h-9 bg-white text-primary hover:bg-white/90 shadow-sm"
               onClick={() => {
                 setEditing(null);
+                setFormInitScope(isAdmin ? "team" : "personal");
                 setFormOpen(true);
               }}
             >
@@ -296,31 +338,69 @@ function MailboxesPage() {
       </Card>
 
       {/* List */}
-      {filtered.length === 0 ? (
-        <Card className="p-12 text-center">
-          <div className="mx-auto h-14 w-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-3">
-            <MailboxIcon className="h-7 w-7" />
-          </div>
-          <div className="text-base font-medium">暂无匹配的邮箱</div>
-          <div className="text-sm text-muted-foreground mt-1">
-            新增一个发件邮箱以开始邮件触达
-          </div>
-          <Button
-            className="mt-4"
-            onClick={() => {
-              setEditing(null);
+      <ScopeSection
+        title="团队共享邮箱"
+        subtitle={
+          isAdmin
+            ? "归企业所有，全员可用于发信。仅租户管理员可维护。"
+            : "归企业所有，全员可用于发信。如需变更请联系租户管理员。"
+        }
+        icon={<Users className="h-4 w-4" />}
+        count={teamList.length}
+        canAdd={isAdmin}
+        onAdd={() => {
+          setEditing(null);
+          setFormInitScope("team");
+          setFormOpen(true);
+        }}
+        empty="暂无团队共享邮箱"
+      >
+        {teamList.map((m) => (
+          <MailboxCard
+            key={m.id}
+            m={m}
+            readOnly={!isAdmin}
+            testing={testingId === m.id}
+            onTest={() => onTest(m)}
+            onEdit={() => {
+              setEditing(m);
               setFormOpen(true);
             }}
-          >
-            <Plus className="h-4 w-4" /> 新增邮箱
-          </Button>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {filtered.map((m) => (
+            onDelete={() => setDelTarget(m)}
+            onSetDefault={() => onSetDefault(m)}
+            onToggleStatus={() => onToggleStatus(m)}
+          />
+        ))}
+      </ScopeSection>
+
+      <ScopeSection
+        title={isAdmin ? "全员个人邮箱" : "我的发信邮箱"}
+        subtitle={
+          isAdmin
+            ? "员工自助绑定，仅本人可用。管理员可查看/回收。"
+            : "由你本人绑定，仅你可用；离职时管理员将回收。"
+        }
+        icon={<UserRound className="h-4 w-4" />}
+        count={personalList.length}
+        canAdd={true}
+        onAdd={() => {
+          setEditing(null);
+          setFormInitScope("personal");
+          setFormOpen(true);
+        }}
+        empty={
+          isAdmin
+            ? "暂无成员个人邮箱"
+            : "尚未绑定个人邮箱，点击右上「新增邮箱」开始"
+        }
+      >
+        {personalList.map((m) => {
+          const isOwner = m.ownerId === CURRENT_TENANT_USER.id;
+          return (
             <MailboxCard
               key={m.id}
               m={m}
+              readOnly={!isAdmin && !isOwner}
               testing={testingId === m.id}
               onTest={() => onTest(m)}
               onEdit={() => {
@@ -331,14 +411,16 @@ function MailboxesPage() {
               onSetDefault={() => onSetDefault(m)}
               onToggleStatus={() => onToggleStatus(m)}
             />
-          ))}
-        </div>
-      )}
+          );
+        })}
+      </ScopeSection>
 
       <MailboxFormDialog
         open={formOpen}
         onOpenChange={setFormOpen}
         editing={editing}
+        initScope={formInitScope}
+        isAdmin={isAdmin}
       />
 
       <AlertDialog open={!!delTarget} onOpenChange={(o) => !o && setDelTarget(null)}>
@@ -406,6 +488,7 @@ function StatCard({
 
 function MailboxCard({
   m,
+  readOnly,
   testing,
   onTest,
   onEdit,
@@ -414,6 +497,7 @@ function MailboxCard({
   onToggleStatus,
 }: {
   m: Mailbox;
+  readOnly?: boolean;
   testing: boolean;
   onTest: () => void;
   onEdit: () => void;
@@ -440,6 +524,9 @@ function MailboxCard({
             <Badge variant="outline" className={statusBadgeCls(m.status)}>
               {m.status}
             </Badge>
+            {m.scope === "personal" && (
+              <Badge variant="outline" className="text-[10px]">个人</Badge>
+            )}
           </div>
           <div className="text-xs text-muted-foreground mt-0.5 truncate">{m.displayName}</div>
         </div>
@@ -482,6 +569,11 @@ function MailboxCard({
         </div>
       </div>
 
+      {readOnly ? (
+        <div className="mt-4 pt-4 border-t flex items-center justify-end">
+          <span className="text-[11px] text-muted-foreground">只读 · 无操作权限</span>
+        </div>
+      ) : (
       <div className="mt-4 pt-4 border-t flex items-center justify-end gap-1">
         <TooltipProvider delayDuration={150}>
           <Tooltip>
@@ -543,6 +635,7 @@ function MailboxCard({
           </Tooltip>
         </TooltipProvider>
       </div>
+      )}
     </Card>
   );
 }
@@ -569,6 +662,55 @@ function Meta({
   );
 }
 
+function ScopeSection({
+  title,
+  subtitle,
+  icon,
+  count,
+  canAdd,
+  onAdd,
+  empty,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+  count: number;
+  canAdd: boolean;
+  onAdd: () => void;
+  empty: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center gap-2">
+        <div className="h-7 w-7 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+          {icon}
+        </div>
+        <div>
+          <div className="text-base font-semibold flex items-center gap-2">
+            {title}
+            <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
+              {count}
+            </Badge>
+          </div>
+          <div className="text-xs text-muted-foreground">{subtitle}</div>
+        </div>
+        {canAdd && (
+          <Button size="sm" variant="outline" className="ml-auto h-8" onClick={onAdd}>
+            <Plus className="h-3.5 w-3.5" /> 新增
+          </Button>
+        )}
+      </div>
+      {count === 0 ? (
+        <Card className="p-8 text-center text-sm text-muted-foreground">{empty}</Card>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">{children}</div>
+      )}
+    </section>
+  );
+}
+
 /* ----------------- form dialog ----------------- */
 
 interface FormState {
@@ -584,9 +726,10 @@ interface FormState {
   dailyLimit: number;
   isDefault: boolean;
   status: MailboxStatus;
+  scope: MailboxScope;
 }
 
-function emptyForm(): FormState {
+function emptyForm(scope: MailboxScope = "personal"): FormState {
   return {
     email: "",
     displayName: "",
@@ -598,6 +741,7 @@ function emptyForm(): FormState {
     dailyLimit: 100,
     isDefault: false,
     status: "正常",
+    scope,
   };
 }
 
@@ -605,16 +749,20 @@ function MailboxFormDialog({
   open,
   onOpenChange,
   editing,
+  initScope,
+  isAdmin,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   editing: Mailbox | null;
+  initScope: MailboxScope;
+  isAdmin: boolean;
 }) {
-  const [form, setForm] = useState<FormState>(emptyForm());
+  const [form, setForm] = useState<FormState>(emptyForm(initScope));
   const [testing, setTesting] = useState(false);
 
   // 同步 editing → form（依赖 open + editing.id）
-  const editingKey = editing?.id ?? "new";
+  const editingKey = editing?.id ?? `new:${initScope}`;
   const [lastKey, setLastKey] = useState<string>("");
   if (open && lastKey !== editingKey) {
     setLastKey(editingKey);
@@ -633,8 +781,9 @@ function MailboxFormDialog({
             dailyLimit: editing.dailyLimit,
             isDefault: editing.isDefault,
             status: editing.status,
+            scope: editing.scope,
           }
-        : emptyForm(),
+        : emptyForm(initScope),
     );
   }
   if (!open && lastKey !== "") setTimeout(() => setLastKey(""), 0);
@@ -655,6 +804,9 @@ function MailboxFormDialog({
 
   const validate = (): string | null => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return "请输入有效的邮箱地址";
+    if (form.scope === "personal" && isTenantDomain(form.email)) {
+      return `该域名 (${TENANT_DOMAINS.join("、")}) 归企业管理，请联系租户管理员添加为团队邮箱`;
+    }
     if (!form.displayName.trim()) return "请输入显示名称";
     if (!form.smtpHost.trim()) return "请输入 SMTP 主机";
     if (!(form.smtpPort > 0 && form.smtpPort < 65536)) return "SMTP 端口无效";
@@ -685,6 +837,8 @@ function MailboxFormDialog({
         dailyLimit: form.dailyLimit,
         status: form.status,
         isDefault: form.isDefault,
+        scope: form.scope,
+        ownerId: form.scope === "personal" ? (editing.ownerId ?? CURRENT_TENANT_USER.id) : undefined,
       });
       toast.success("已更新邮箱信息");
     } else {
@@ -701,6 +855,8 @@ function MailboxFormDialog({
         dailyLimit: form.dailyLimit,
         status: form.status,
         isDefault: form.isDefault,
+        scope: form.scope,
+        ownerId: form.scope === "personal" ? CURRENT_TENANT_USER.id : undefined,
       });
       id = created.id;
       toast.success("已新增邮箱");
@@ -724,6 +880,45 @@ function MailboxFormDialog({
             配置用于邮件触达的 SMTP 发件账号，建议保存后立即测试连接。
           </DialogDescription>
         </DialogHeader>
+        <div className="rounded-md border bg-muted/30 p-3 flex items-start gap-3">
+          <div className="pt-0.5">
+            {form.scope === "team" ? (
+              <Users className="h-4 w-4 text-primary" />
+            ) : (
+              <UserRound className="h-4 w-4 text-primary" />
+            )}
+          </div>
+          <div className="flex-1 space-y-1">
+            <div className="text-sm font-medium">
+              归属：{form.scope === "team" ? "团队共享邮箱" : "我的个人邮箱"}
+            </div>
+            <div className="text-[11px] text-muted-foreground">
+              {form.scope === "team"
+                ? "全员可用；仅租户管理员可维护。"
+                : `仅本人 (${CURRENT_TENANT_USER.name}) 可用。若为本企业域名邮箱，请改为团队邮箱。`}
+            </div>
+            {isAdmin && !editing && (
+              <div className="flex gap-2 pt-1">
+                <Button
+                  size="sm"
+                  variant={form.scope === "team" ? "default" : "outline"}
+                  className="h-7 px-2 text-xs"
+                  onClick={() => update("scope", "team")}
+                >
+                  团队共享
+                </Button>
+                <Button
+                  size="sm"
+                  variant={form.scope === "personal" ? "default" : "outline"}
+                  className="h-7 px-2 text-xs"
+                  onClick={() => update("scope", "personal")}
+                >
+                  个人
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="邮箱地址" required>
             <Input
