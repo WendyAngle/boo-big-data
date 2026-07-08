@@ -666,15 +666,7 @@ function FavoritesPage() {
             <Link to="/outreach/enterprise" className="text-primary mx-1 hover:underline">
               企业
             </Link>
-            、
-            <Link to="/outreach/products" className="text-primary mx-1 hover:underline">
-              商品
-            </Link>
-            或
-            <Link to="/outreach/bills" className="text-primary mx-1 hover:underline">
-              提单
-            </Link>
-            页面，点击星标即可收藏感兴趣的数据
+            页面，点击星标即可收藏感兴趣的企业与人物
           </div>
         </Card>
       ) : (
