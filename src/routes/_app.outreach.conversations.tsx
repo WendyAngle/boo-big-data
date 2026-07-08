@@ -190,6 +190,24 @@ const HSM_TEMPLATES: Record<string, { id: string; name: string; body: string }[]
 
 type ViewKey = NonNullable<z.infer<typeof searchSchema>["view"]>;
 
+const VIEW_LABEL: Record<ViewKey, string> = {
+  my_todo: "我的待办",
+  due_soon: "即将超时",
+  unassigned: "未分配",
+  unread: "未读",
+  mine: "我的全部",
+  pending: "待跟进",
+  snoozed: "稍后处理",
+  handled: "已处理",
+  suppressed: "已抑制",
+  hasReply: "有回复",
+  noReply: "未回复",
+  all: "全部",
+};
+function viewLabel(v: ViewKey) {
+  return VIEW_LABEL[v] ?? "全部";
+}
+
 export const Route = createFileRoute("/_app/outreach/conversations")({
   head: () => ({
     meta: [{ title: "询盘与回复 | Boo数据平台" }],
