@@ -207,7 +207,9 @@ export interface Thread {
 /* -------------------- Storage -------------------- */
 
 const META_KEY = "boo:inbox:meta:v1";
-const SEED_FLAG = "boo:inbox:seed:v3";
+const SEED_FLAG = "boo:inbox:seed:v4";
+/** Phase 1 演示：当前登录员工，需与 conversations.tsx 中的 CURRENT_TEAM_USER_ID 保持一致 */
+const DEMO_CURRENT_USER = "u_zhang";
 
 function readMeta(): Record<string, ThreadMeta> {
   if (typeof window === "undefined") return {};
