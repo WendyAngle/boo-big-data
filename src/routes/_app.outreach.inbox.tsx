@@ -34,6 +34,9 @@ import {
   UserCheck,
   Hand,
   Zap,
+  Pin,
+  AlarmClock,
+  ChevronDown as ChevronDownIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -110,6 +113,8 @@ const searchSchema = z.object({
       "suppressed",
       "unassigned",
       "mine",
+      "my_todo",
+      "due_soon",
     ])
     .optional(),
   ch: z
@@ -168,9 +173,25 @@ function InboxPage() {
   const navigate = useNavigate();
   const threads = useThreads();
   const counts = useInboxCounts();
+  // 智能视图计数（前端派生，避免修改 store）
+  const smartCounts = useMemo(() => {
+    let myTodo = 0;
+    let dueSoon = 0;
+    let mine = 0;
+    for (const t of threads) {
+      if (t.meta.assigneeId === CURRENT_TEAM_USER_ID) {
+        mine++;
+        if (t.meta.status === "pending" || t.meta.status === "snoozed") myTodo++;
+      }
+      const s = slaInfo(t);
+      if (s && (s.overdue || s.approaching)) dueSoon++;
+    }
+    return { myTodo, dueSoon, mine };
+  }, [threads]);
   // 从企业/联系人详情等入口带 tid 直接进入时，默认使用 “全部” 视图，
   // 避免出现「右侧展示了会话，中间列表却提示"该视图下暂无会话"」的错位。
-  const view: ViewKey = search.view ?? (search.tid ? "all" : "pending");
+  const view: ViewKey = search.view ?? (search.tid ? "all" : "my_todo");
+  const [moreOpen, setMoreOpen] = useState(false);
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
   const group = search.group ?? "all";
@@ -196,6 +217,17 @@ function InboxPage() {
       list = list.filter((t) => !t.meta.assigneeId);
     else if (view === "mine")
       list = list.filter((t) => t.meta.assigneeId === CURRENT_TEAM_USER_ID);
+    else if (view === "my_todo")
+      list = list.filter(
+        (t) =>
+          t.meta.assigneeId === CURRENT_TEAM_USER_ID &&
+          (t.meta.status === "pending" || t.meta.status === "snoozed"),
+      );
+    else if (view === "due_soon")
+      list = list.filter((t) => {
+        const s = slaInfo(t);
+        return !!s && (s.overdue || s.approaching);
+      });
     if (q.trim()) {
       const kw = q.trim().toLowerCase();
       list = list.filter(
@@ -320,8 +352,23 @@ function InboxPage() {
         {/* 左栏：视图侧栏 —— 分「分派」「状态」两段，窄屏（<1280px）折叠为列表顶部下拉 */}
         <aside className="hidden xl:block w-52 shrink-0 border-r bg-muted/20 py-3 overflow-y-auto">
           <div className="px-3 text-[11px] text-muted-foreground mb-1 font-medium tracking-wide">
-            分派
+            智能视图
           </div>
+          <FilterItem
+            active={view === "my_todo"}
+            label="我的待办"
+            icon={Pin}
+            count={smartCounts.myTodo}
+            onClick={() => goto({ view: "my_todo", tid: undefined })}
+          />
+          <FilterItem
+            active={view === "due_soon"}
+            label="即将超时"
+            icon={AlarmClock}
+            count={smartCounts.dueSoon}
+            onClick={() => goto({ view: "due_soon", tid: undefined })}
+            dot={smartCounts.dueSoon > 0 ? "rose" : undefined}
+          />
           <FilterItem
             active={view === "unassigned"}
             label="未分配"
@@ -330,70 +377,74 @@ function InboxPage() {
             dot="amber"
           />
           <FilterItem
-            active={view === "mine"}
-            label="我的"
-            count={
-              threads.filter((t) => t.meta.assigneeId === CURRENT_TEAM_USER_ID)
-                .length
-            }
-            onClick={() => goto({ view: "mine", tid: undefined })}
-          />
-          <FilterItem
             active={view === "unread"}
             label="未读"
             count={counts.unread}
             onClick={() => goto({ view: "unread", tid: undefined })}
             dot="rose"
           />
-          <div className="px-3 mt-3 text-[11px] text-muted-foreground mb-1 font-medium tracking-wide">
-            状态
-          </div>
-          <FilterItem
-            active={view === "pending"}
-            label="待跟进"
-            count={counts.pending}
-            onClick={() => goto({ view: "pending", tid: undefined })}
-            dot="amber"
-          />
-          <FilterItem
-            active={view === "snoozed"}
-            label="稍后处理"
-            count={counts.snoozed}
-            onClick={() => goto({ view: "snoozed", tid: undefined })}
-          />
-          <FilterItem
-            active={view === "handled"}
-            label="已处理"
-            count={counts.handled}
-            onClick={() => goto({ view: "handled", tid: undefined })}
-          />
-          <FilterItem
-            active={view === "suppressed"}
-            label="已抑制"
-            count={counts.suppressed}
-            onClick={() => goto({ view: "suppressed", tid: undefined })}
-          />
-          <FilterItem
-            active={view === "all"}
-            label="全部"
-            count={counts.all}
-            onClick={() => goto({ view: "all", tid: undefined })}
-          />
-          <div className="px-3 mt-3 text-[11px] text-muted-foreground mb-1 font-medium tracking-wide">
-            响应
-          </div>
-          <FilterItem
-            active={view === "hasReply"}
-            label="有回复"
-            count={counts.hasReply}
-            onClick={() => goto({ view: "hasReply", tid: undefined })}
-          />
-          <FilterItem
-            active={view === "noReply"}
-            label="未回复"
-            count={counts.noReply}
-            onClick={() => goto({ view: "noReply", tid: undefined })}
-          />
+          <button
+            type="button"
+            onClick={() => setMoreOpen((v) => !v)}
+            className="w-full mt-3 px-3 flex items-center justify-between text-[11px] text-muted-foreground font-medium tracking-wide hover:text-foreground"
+          >
+            <span>更多视图</span>
+            <ChevronDownIcon
+              className={cn("h-3 w-3 transition-transform", moreOpen && "rotate-180")}
+            />
+          </button>
+          {moreOpen && (
+            <div className="mt-1">
+              <FilterItem
+                active={view === "mine"}
+                label="我的全部"
+                count={smartCounts.mine}
+                onClick={() => goto({ view: "mine", tid: undefined })}
+              />
+              <FilterItem
+                active={view === "pending"}
+                label="待跟进"
+                count={counts.pending}
+                onClick={() => goto({ view: "pending", tid: undefined })}
+              />
+              <FilterItem
+                active={view === "snoozed"}
+                label="稍后处理"
+                count={counts.snoozed}
+                onClick={() => goto({ view: "snoozed", tid: undefined })}
+              />
+              <FilterItem
+                active={view === "handled"}
+                label="已处理"
+                count={counts.handled}
+                onClick={() => goto({ view: "handled", tid: undefined })}
+              />
+              <FilterItem
+                active={view === "suppressed"}
+                label="已抑制"
+                count={counts.suppressed}
+                onClick={() => goto({ view: "suppressed", tid: undefined })}
+              />
+              <FilterItem
+                active={view === "hasReply"}
+                label="有回复"
+                count={counts.hasReply}
+                onClick={() => goto({ view: "hasReply", tid: undefined })}
+              />
+              <FilterItem
+                active={view === "noReply"}
+                label="未回复"
+                count={counts.noReply}
+                onClick={() => goto({ view: "noReply", tid: undefined })}
+              />
+              <FilterItem
+                active={view === "all"}
+                label="全部"
+                count={counts.all}
+                onClick={() => goto({ view: "all", tid: undefined })}
+              />
+            </div>
+          )}
         </aside>
 
         {/* 中栏：会话列表 */}
@@ -403,8 +454,9 @@ function InboxPage() {
             {/* 快捷 chip：分派维度 */}
             <div className="flex items-center rounded-md border overflow-hidden">
               {([
+                { k: "my_todo", label: "我的待办", n: smartCounts.myTodo },
+                { k: "due_soon", label: "即将超时", n: smartCounts.dueSoon },
                 { k: "unassigned", label: "未分配", n: counts.unassigned },
-                { k: "mine", label: "我的", n: threads.filter((t) => t.meta.assigneeId === CURRENT_TEAM_USER_ID).length },
                 { k: "unread", label: "未读", n: counts.unread },
               ] as const).map((c) => (
                 <button
@@ -430,23 +482,22 @@ function InboxPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectLabel>分派</SelectLabel>
+                  <SelectLabel>智能视图</SelectLabel>
+                  <SelectItem value="my_todo">我的待办 · {smartCounts.myTodo}</SelectItem>
+                  <SelectItem value="due_soon">即将超时 · {smartCounts.dueSoon}</SelectItem>
                   <SelectItem value="unassigned">未分配 · {counts.unassigned}</SelectItem>
-                  <SelectItem value="mine">我的</SelectItem>
                   <SelectItem value="unread">未读 · {counts.unread}</SelectItem>
                 </SelectGroup>
                 <SelectGroup>
-                  <SelectLabel>状态</SelectLabel>
+                  <SelectLabel>更多视图</SelectLabel>
+                  <SelectItem value="mine">我的全部 · {smartCounts.mine}</SelectItem>
                   <SelectItem value="pending">待跟进 · {counts.pending}</SelectItem>
                   <SelectItem value="snoozed">稍后处理 · {counts.snoozed}</SelectItem>
                   <SelectItem value="handled">已处理 · {counts.handled}</SelectItem>
                   <SelectItem value="suppressed">已抑制 · {counts.suppressed}</SelectItem>
-                  <SelectItem value="all">全部 · {counts.all}</SelectItem>
-                </SelectGroup>
-                <SelectGroup>
-                  <SelectLabel>响应</SelectLabel>
                   <SelectItem value="hasReply">有回复 · {counts.hasReply}</SelectItem>
                   <SelectItem value="noReply">未回复 · {counts.noReply}</SelectItem>
+                  <SelectItem value="all">全部 · {counts.all}</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -500,12 +551,14 @@ function FilterItem({
   count,
   onClick,
   dot,
+  icon: Icon,
 }: {
   active: boolean;
   label: string;
   count: number;
   onClick: () => void;
   dot?: "rose" | "amber";
+  icon?: React.ComponentType<{ className?: string }>;
 }) {
   return (
     <button
@@ -525,6 +578,7 @@ function FilterItem({
           )}
         />
       )}
+      {Icon && <Icon className="h-3.5 w-3.5" />}
       <span className="flex-1 text-left">{label}</span>
       <span
         className={cn(
