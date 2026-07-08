@@ -13,7 +13,7 @@ export interface SuppressionRecord {
 }
 
 const KEY = "boo:suppressions:v1";
-const SEED_KEY = "boo:suppressions:seed:v2";
+const SEED_KEY = "boo:suppressions:seed:v3";
 
 function read(): SuppressionRecord[] {
   if (typeof window === "undefined") return [];
@@ -55,8 +55,8 @@ if (typeof window !== "undefined") {
       emit();
     }
   });
-  // 一次性种子数据，用于演示
-  if (!window.localStorage.getItem(SEED_KEY)) {
+  // 演示种子：版本未匹配 或 当前列表为空 时都重新写入
+  if (!window.localStorage.getItem(SEED_KEY) || store.length === 0) {
     const now = Date.now();
     const H = 3600_000;
     const D = 86400_000;
