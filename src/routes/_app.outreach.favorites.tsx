@@ -374,8 +374,6 @@ function FavoritesPage() {
     { key: "all", label: "全部", icon: Star },
     { key: "enterprise", label: "企业", icon: Building2 },
     { key: "contact", label: "人物", icon: UserRound },
-    { key: "bill", label: "提单", icon: FileText },
-    { key: "product", label: "商品", icon: Package },
   ];
 
   return (
@@ -398,11 +396,11 @@ function FavoritesPage() {
           <div>
             <h1 className="text-xl font-bold">收藏中心</h1>
             <p className="text-white/85 text-sm mt-0.5">
-              集中查看您收藏的企业、关联人物、提单与商品，便于回查与持续跟进
+              集中查看您收藏的企业与关联人物，便于回查与持续跟进
             </p>
           </div>
           <div className="ml-auto hidden md:flex items-center gap-6 text-sm">
-            {(["enterprise", "contact", "bill", "product"] as FavoriteKind[]).map(
+            {(["enterprise", "contact"] as FavoriteKind[]).map(
               (k) => (
                 <div key={k} className="text-center">
                   <div className="text-2xl font-bold tabular-nums">
