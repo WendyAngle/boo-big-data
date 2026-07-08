@@ -833,8 +833,7 @@ function ThreadDetail({
             </>
           )}
           <span className="ml-2">· {thread.counterpartyAddress}</span>
-          {(thread.channel === "email" || thread.channel === "sms") &&
-            thread.messages.some((m) => m.direction === "outbound" && m.ledgerId) && (
+          {thread.messages.some((m) => m.direction === "outbound" && m.ledgerId) && (
               <Link
                 to="/outreach/reach"
                 className="ml-2 inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-1.5 py-0.5 text-[10px] font-medium text-primary hover:bg-primary/10"

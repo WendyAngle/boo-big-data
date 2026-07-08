@@ -654,16 +654,34 @@ function ChannelBadge({ channel, platform }: { channel: ReachChannel; platform?:
   );
 }
 
-function ReplyCell({ reach, thread }: { reach: { channel?: ReachChannel }; thread: Thread | null }) {
-  if (!thread || thread.channel === undefined) {
-    // social 类无 threadKey
-    if (reach.channel !== "email" && reach.channel !== "phone") {
-      return <span className="text-[11px] text-muted-foreground">—</span>;
-    }
+function ReplyCell({
+  reach,
+  thread,
+}: {
+  reach: { channel?: ReachChannel; status: ReachStatus };
+  thread: Thread | null;
+}) {
+  // 仅「触达成功」的邮件/短信任务有意义展示回复；其他状态与社媒渠道显示 —
+  if (reach.status !== "success") {
+    return <span className="text-[11px] text-muted-foreground">—</span>;
+  }
+  if (reach.channel !== "email" && reach.channel !== "phone") {
+    return <span className="text-[11px] text-muted-foreground">—</span>;
   }
   const replies = thread?.meta.inboundMessages.length ?? 0;
   if (!thread || replies === 0) {
-    return <span className="text-[11px] text-muted-foreground">未回复</span>;
+    return (
+      <Link
+        to="/outreach/inbox"
+        search={thread ? { tid: thread.id, view: "all" } : { view: "all" }}
+        className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-100"
+        title="尚未收到回复，去收件箱主动回复"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <MessageCircleReply className="h-3 w-3" />
+        去回复
+      </Link>
+    );
   }
   return (
     <Link
