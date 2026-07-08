@@ -622,7 +622,7 @@ function ThreadDetail({ thread }: { thread: Thread }) {
         <Textarea
           value={reply}
           onChange={(e) => setReply(e.target.value)}
-          placeholder="写点什么，或点击"AI 生成回复"由 AI 起草…"
+          placeholder='写点什么，或点击"AI 生成回复"由 AI 起草…'
           rows={4}
           className="resize-none bg-background"
         />
