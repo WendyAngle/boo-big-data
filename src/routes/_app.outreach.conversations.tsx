@@ -307,9 +307,22 @@ function InboxPage() {
       <div className="h-12 px-4 border-b flex items-center gap-2 shrink-0">
         <InboxIcon className="h-4 w-4 text-primary shrink-0" />
         <div className="font-semibold text-sm shrink-0">询盘与回复</div>
-        <Badge variant="outline" className="text-[11px] h-5 px-1.5 shrink-0">
-          {counts.all}
-        </Badge>
+        <div className="flex items-center gap-1 shrink-0 text-[11px]">
+          <Badge variant="secondary" className="h-5 px-1.5 font-medium">
+            {viewLabel(view)} {displayList.length}
+          </Badge>
+          <span className="text-muted-foreground">/ 全部 {counts.all}</span>
+          {smartCounts.dueSoon > 0 && view !== "due_soon" && (
+            <button
+              onClick={() => goto({ view: "due_soon", tid: undefined })}
+              className="ml-1 inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-1.5 h-5 text-rose-700 hover:bg-rose-100 transition-colors"
+              title="点击查看即将超时会话"
+            >
+              <AlarmClock className="h-3 w-3" />
+              即将超时 {smartCounts.dueSoon}
+            </button>
+          )}
+        </div>
         <div className="flex-1 min-w-0 max-w-xs relative">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
