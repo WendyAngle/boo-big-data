@@ -830,3 +830,61 @@ function AiComposeDialog({
     </Dialog>
   );
 }
+
+/* -------------------- 短信模板选择器 -------------------- */
+
+function SmsTemplatePicker({ onPick }: { onPick: (content: string) => void }) {
+  const all = useSmsTemplates();
+  const approved = all.filter((t) => t.status === "approved");
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+      <span className="text-muted-foreground">已审核模板：</span>
+      <Select
+        onValueChange={(id) => {
+          const t = approved.find((x) => x.id === id);
+          if (t) {
+            onPick(toComposeSyntax(t.content));
+            toast.success(`已套用模板「${t.name}」`);
+          }
+        }}
+      >
+        <SelectTrigger className="h-7 w-[220px] text-xs">
+          <SelectValue placeholder="选择模板套用…" />
+        </SelectTrigger>
+        <SelectContent>
+          {approved.length === 0 ? (
+            <div className="px-2 py-1.5 text-xs text-muted-foreground">
+              暂无已审核模板
+            </div>
+          ) : (
+            approved.map((t) => (
+              <SelectItem key={t.id} value={t.id}>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-[10px] h-4 px-1">
+                    {t.channel === "otp"
+                      ? "验证码"
+                      : t.channel === "marketing"
+                      ? "营销"
+                      : "通知"}
+                  </Badge>
+                  <span>{t.name}</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {t.locale}
+                  </span>
+                </div>
+              </SelectItem>
+            ))
+          )}
+        </SelectContent>
+      </Select>
+      <Link
+        to="/outreach/admin/sms-templates"
+        target="_blank"
+        className="text-primary hover:underline ml-auto"
+      >
+        管理模板 →
+      </Link>
+    </div>
+  );
+}
