@@ -820,11 +820,12 @@ function FavoriteCard({
           >
             {meta.label}
           </Badge>
-          {record.kind !== "enterprise" && (
-            <span className="ml-auto mr-8 text-[11px] text-muted-foreground font-mono truncate">
-              {formatDateTime(record.createdAt)}
-            </span>
-          )}
+          <span
+            className="ml-auto mr-8 text-[11px] text-muted-foreground font-mono truncate"
+            title="收藏时间"
+          >
+            {formatDateTime(record.createdAt)}
+          </span>
         </div>
         <div className="font-medium text-sm truncate">{record.title}</div>
         {record.subtitle && <FavoriteSubtitle record={record} />}
