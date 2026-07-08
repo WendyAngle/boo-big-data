@@ -37,6 +37,9 @@ import {
   Pin,
   AlarmClock,
   ChevronDown as ChevronDownIcon,
+  FileText,
+  History,
+  User as UserIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -99,6 +102,33 @@ import {
   slaInfo,
 } from "@/lib/inbox-store";
 import { generateAiContent } from "@/lib/api/ai-compose.functions";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
+import { getAllLedger } from "@/lib/credits-ledger";
+
+/** 邮件场景的快捷回复模板（Phase 1 hardcoded） */
+const EMAIL_QUICK_REPLIES: { id: string; name: string; body: string }[] = [
+  {
+    id: "eq_thanks",
+    name: "致谢 · 确认收到",
+    body: "Hi,\n\nThanks for your reply — noted with thanks. I'll get back to you shortly with the details.\n\nBest regards,",
+  },
+  {
+    id: "eq_quote",
+    name: "报价 · 请提供需求",
+    body: "Hi,\n\nHappy to prepare a formal quote. Could you share:\n1) Target SKUs / quantities\n2) Destination port & Incoterm\n3) Expected shipment date\n\nBest,",
+  },
+  {
+    id: "eq_meeting",
+    name: "邀约 · 30 分钟电话",
+    body: "Hi,\n\nWould you have 30 minutes this week for a quick call? Please share 2-3 slots that work for you and I'll confirm.\n\nBest,",
+  },
+  {
+    id: "eq_followup",
+    name: "跟进 · 二次触达",
+    body: "Hi,\n\nJust following up on my previous email — let me know if you'd like more information or a sample.\n\nBest,",
+  },
+];
 
 const searchSchema = z.object({
   view: z
