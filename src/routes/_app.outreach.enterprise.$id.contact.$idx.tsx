@@ -287,6 +287,13 @@ function ContactDetailPage() {
         />
       </div>
 
+      {/* 最新沟通胶囊卡 */}
+      <RecentCommsCapsule
+        targetKind="contact"
+        targetId={`${e.id}:${d.idx}`}
+        targetName={c.name}
+      />
+
       {/* 基本信息 */}
       <Section icon={<Info className="h-4 w-4" />} title="基本信息">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-5">
