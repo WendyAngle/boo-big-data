@@ -637,17 +637,16 @@ function FavoritesPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            {selected.size > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10"
-                onClick={removeSelected}
-              >
-                <Trash2 className="h-4 w-4" />
-                取消收藏所选
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={selected.size === 0}
+              className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+              onClick={removeSelected}
+            >
+              <Trash2 className="h-4 w-4" />
+              取消收藏
+            </Button>
           </div>
         </div>
       )}
