@@ -37,9 +37,11 @@ import { isSuppressed } from "@/lib/suppressions-store";
 import {
   useSmsTemplates,
   toComposeSyntax,
+  addSmsTemplate,
+  type SmsTplChannel,
 } from "@/lib/sms-templates-store";
 import { Link } from "@tanstack/react-router";
-import { FileText } from "lucide-react";
+import { FileText, ShieldCheck, ShieldAlert } from "lucide-react";
 
 import {
   MESSAGE_VARIABLES,
@@ -143,6 +145,11 @@ export function ComposeSendDialog({
   const [aiOpen, setAiOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [targetLang, setTargetLang] = useState<"zh" | "en">("zh");
+  // 短信合规追踪：内容是否来自已报备模板
+  const [smsTemplateId, setSmsTemplateId] = useState<string | null>(null);
+  const [smsTemplateName, setSmsTemplateName] = useState<string | null>(null);
+  const [submitTplOpen, setSubmitTplOpen] = useState(false);
+  const [confirmSendOpen, setConfirmSendOpen] = useState(false);
 
   // 重置 state 每次打开
   useEffect(() => {
@@ -154,6 +161,8 @@ export function ComposeSendDialog({
     setAiUsed(false);
     setAiCount(0);
     setTargetLang("zh");
+    setSmsTemplateId(null);
+    setSmsTemplateName(null);
     if (isEmail) {
       setSenderId(
         initialSenderId ?? getDefaultUsableMailbox(mailboxes)?.id ?? mailboxes[0]?.id ?? "",
@@ -255,7 +264,7 @@ export function ComposeSendDialog({
     content.trim().length > 0 &&
     !overLimit;
 
-  function handleSend() {
+  function doSend() {
     if (!canSend) return;
     // 过滤退订名单
     const kind = isEmail ? "email" : "phone";
@@ -319,6 +328,16 @@ export function ComposeSendDialog({
     );
   }
 
+  function handleSend() {
+    if (!canSend) return;
+    // 短信合规软性拦截：未套用已报备模板时二次确认
+    if (!isEmail && !smsTemplateId) {
+      setConfirmSendOpen(true);
+      return;
+    }
+    doSend();
+  }
+
   async function handleAiGenerate(params: {
     scene: string;
     tone: "formal" | "friendly" | "concise";
@@ -347,6 +366,11 @@ export function ComposeSendDialog({
       if (res.content) setContent(res.content);
       setAiUsed(true);
       setAiCount((c) => c + 1);
+      // AI 生成 → 视为未报备草稿
+      if (!isEmail) {
+        setSmsTemplateId(null);
+        setSmsTemplateName(null);
+      }
       setAiOpen(false);
       toast.success(`AI 已生成${isEmail ? "邮件" : "短信"}文案，扣除 ${
         isEmail ? COST_AI_EMAIL : COST_AI_SMS
