@@ -822,18 +822,52 @@ function ThreadDetail({
 
       {/* 回复区 */}
       <div className="border-t bg-muted/20 p-4 shrink-0">
+        {winInfo && (
+          <div
+            className={cn(
+              "mb-3 rounded-md border px-3 py-2 text-xs flex items-center gap-2",
+              winInfo.closed
+                ? "bg-rose-50 border-rose-200 text-rose-700"
+                : winInfo.leftMs < 2 * 3600_000
+                  ? "bg-amber-50 border-amber-200 text-amber-800"
+                  : "bg-emerald-50 border-emerald-200 text-emerald-800",
+            )}
+          >
+            <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
+            {winInfo.closed ? (
+              <span>
+                {CHANNEL_LABEL[thread.channel]} 客服窗口已关闭，
+                {thread.channel === "whatsapp"
+                  ? "请从下方选择已审核的 HSM 模板发送。"
+                  : thread.channel === "facebook"
+                    ? "需附合规消息标签（如 CONFIRMED_EVENT_UPDATE）。"
+                    : "窗口外禁止外发消息。"}
+              </span>
+            ) : (
+              <span>
+                {CHANNEL_LABEL[thread.channel]} 客服窗口剩余{" "}
+                <b>{formatHm(winInfo.leftMs)}</b>，窗口内可自由文本回复。
+              </span>
+            )}
+          </div>
+        )}
         <div className="flex items-center gap-2 mb-2">
           <MessageCircleReply className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">回复</span>
           <span className="text-xs text-muted-foreground">
-            将以 {thread.senderEmail || "outreach@bytetech.cn"} 发出，保持在同一会话内
+            {thread.channel === "email"
+              ? `将以 ${thread.senderEmail || "outreach@bytetech.cn"} 发出`
+              : thread.channel === "whatsapp"
+                ? "由公司共享 WhatsApp 商号发出（对客户显示同一号码）"
+                : `将以 ${CHANNEL_LABEL[thread.channel]} 渠道发出`}
+            ，保持在同一会话内
           </span>
           <Button
             variant="ghost"
             size="sm"
             className="ml-auto gap-1 h-7"
             onClick={aiGenerate}
-            disabled={aiLoading}
+            disabled={aiLoading || winInfo?.closed}
           >
             {aiLoading ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -843,26 +877,58 @@ function ThreadDetail({
             AI 生成回复
           </Button>
         </div>
-        <Textarea
-          value={reply}
-          onChange={(e) => setReply(e.target.value)}
-          placeholder='写点什么，或点击"AI 生成回复"由 AI 起草…'
-          rows={4}
-          className="resize-none bg-background"
-        />
+        {winInfo?.closed && templates.length > 0 ? (
+          <div className="space-y-2">
+            <div className="grid grid-cols-1 gap-2">
+              {templates.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setSelectedTpl(t.id)}
+                  className={cn(
+                    "text-left rounded-md border bg-background p-3 hover:border-primary transition-colors",
+                    selectedTpl === t.id && "border-primary ring-1 ring-primary/40",
+                  )}
+                >
+                  <div className="text-xs font-medium mb-1">{t.name}</div>
+                  <div className="text-xs text-muted-foreground whitespace-pre-wrap">{t.body}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <Textarea
+            value={reply}
+            onChange={(e) => setReply(e.target.value)}
+            placeholder='写点什么，或点击"AI 生成回复"由 AI 起草…'
+            rows={4}
+            className="resize-none bg-background"
+            disabled={winInfo?.closed}
+          />
+        )}
         <div className="mt-2 flex items-center gap-2">
-          <Button onClick={() => doSend(false)} disabled={sending} className="gap-1.5">
+          <Button
+            onClick={() => doSend(false)}
+            disabled={
+              sending ||
+              (winInfo?.closed && templates.length > 0 && !selectedTpl) ||
+              (winInfo?.closed && templates.length === 0)
+            }
+            className="gap-1.5"
+          >
             {sending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Send className="h-4 w-4" />
             )}
-            发送回复
+            {winInfo?.closed && templates.length > 0 ? "发送模板消息" : "发送回复"}
           </Button>
           <Button
             variant="outline"
-            onClick={() => setReply("")}
-            disabled={!reply || sending}
+            onClick={() => {
+              setReply("");
+              setSelectedTpl("");
+            }}
+            disabled={(!reply && !selectedTpl) || sending}
           >
             清空
           </Button>
@@ -873,6 +939,14 @@ function ThreadDetail({
       </div>
     </div>
   );
+}
+
+function formatHm(ms: number) {
+  const total = Math.max(0, Math.floor(ms / 60000));
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h >= 24) return `${Math.floor(h / 24)}d ${h % 24}h`;
+  return `${h}h ${m}m`;
 }
 
 function ActionBar({ thread }: { thread: Thread }) {
