@@ -49,24 +49,24 @@ const menu: Root[] = [
     icon: Send,
     children: [
       {
-        label: "搜索",
+        label: "全域检索",
         to: "/outreach/search",
         children: [],
       },
       {
         label: "客户发现",
         children: [
-          { label: "线索", to: "/outreach/leads" },
-          { label: "企业", to: "/outreach/enterprise" },
-          { label: "商品", to: "/outreach/products" },
+          { label: "商机线索", to: "/outreach/leads" },
+          { label: "企业名录", to: "/outreach/enterprise" },
+          { label: "商品目录", to: "/outreach/products" },
           { label: "提单", to: "/outreach/bills" },
         ],
       },
       {
         label: "客户运营",
         children: [
-          { label: "收藏", to: "/outreach/favorites" },
-          { label: "足迹", to: "/outreach/footprints" },
+          { label: "我的收藏", to: "/outreach/favorites" },
+          { label: "浏览足迹", to: "/outreach/footprints" },
           { label: "触达", to: "/outreach/reach" },
           { label: "收件箱", to: "/outreach/inbox", icon: Inbox },
         ],
@@ -74,7 +74,7 @@ const menu: Root[] = [
       {
         label: "费用中心",
         children: [
-          { label: "账单", to: "/outreach/billing" },
+          { label: "账单明细", to: "/outreach/billing" },
           { label: "充值", to: "/outreach/recharge" },
           { label: "发票", to: "/outreach/invoices" },
         ],
@@ -82,8 +82,8 @@ const menu: Root[] = [
       {
         label: "系统管理",
         children: [
-          { label: "员工", to: "/outreach/users" },
-          { label: "邮箱", to: "/outreach/mailboxes" },
+          { label: "员工管理", to: "/outreach/users" },
+          { label: "发信邮箱", to: "/outreach/mailboxes" },
         ],
       },
     ],
