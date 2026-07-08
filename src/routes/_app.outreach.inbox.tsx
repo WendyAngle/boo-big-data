@@ -454,8 +454,9 @@ function InboxPage() {
             {/* 快捷 chip：分派维度 */}
             <div className="flex items-center rounded-md border overflow-hidden">
               {([
+                { k: "my_todo", label: "我的待办", n: smartCounts.myTodo },
+                { k: "due_soon", label: "即将超时", n: smartCounts.dueSoon },
                 { k: "unassigned", label: "未分配", n: counts.unassigned },
-                { k: "mine", label: "我的", n: threads.filter((t) => t.meta.assigneeId === CURRENT_TEAM_USER_ID).length },
                 { k: "unread", label: "未读", n: counts.unread },
               ] as const).map((c) => (
                 <button
@@ -481,23 +482,22 @@ function InboxPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectLabel>分派</SelectLabel>
+                  <SelectLabel>智能视图</SelectLabel>
+                  <SelectItem value="my_todo">我的待办 · {smartCounts.myTodo}</SelectItem>
+                  <SelectItem value="due_soon">即将超时 · {smartCounts.dueSoon}</SelectItem>
                   <SelectItem value="unassigned">未分配 · {counts.unassigned}</SelectItem>
-                  <SelectItem value="mine">我的</SelectItem>
                   <SelectItem value="unread">未读 · {counts.unread}</SelectItem>
                 </SelectGroup>
                 <SelectGroup>
-                  <SelectLabel>状态</SelectLabel>
+                  <SelectLabel>更多视图</SelectLabel>
+                  <SelectItem value="mine">我的全部 · {smartCounts.mine}</SelectItem>
                   <SelectItem value="pending">待跟进 · {counts.pending}</SelectItem>
                   <SelectItem value="snoozed">稍后处理 · {counts.snoozed}</SelectItem>
                   <SelectItem value="handled">已处理 · {counts.handled}</SelectItem>
                   <SelectItem value="suppressed">已抑制 · {counts.suppressed}</SelectItem>
-                  <SelectItem value="all">全部 · {counts.all}</SelectItem>
-                </SelectGroup>
-                <SelectGroup>
-                  <SelectLabel>响应</SelectLabel>
                   <SelectItem value="hasReply">有回复 · {counts.hasReply}</SelectItem>
                   <SelectItem value="noReply">未回复 · {counts.noReply}</SelectItem>
+                  <SelectItem value="all">全部 · {counts.all}</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
