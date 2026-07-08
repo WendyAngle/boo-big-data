@@ -208,15 +208,27 @@ function MailboxesPage() {
               </p>
             </div>
           </div>
-          <div className="hidden md:flex items-center gap-2 rounded-lg bg-white/15 backdrop-blur-sm px-3 py-2">
-            <Building2 className="h-4 w-4" />
-            <div className="leading-tight">
-              <div className="text-xs text-white/80">当前企业</div>
-              <div className="text-sm font-medium">
-                {CURRENT_TENANT.name}
-                <span className="ml-2 font-mono text-xs text-white/80">{CURRENT_TENANT.id}</span>
+          <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2 rounded-lg bg-white/15 backdrop-blur-sm px-3 py-2">
+              <Building2 className="h-4 w-4" />
+              <div className="leading-tight">
+                <div className="text-xs text-white/80">当前企业</div>
+                <div className="text-sm font-medium">
+                  {CURRENT_TENANT.name}
+                  <span className="ml-2 font-mono text-xs text-white/80">{CURRENT_TENANT.id}</span>
+                </div>
               </div>
             </div>
+            <Button
+              size="sm"
+              className="h-9 bg-white text-primary hover:bg-white/90 shadow-sm"
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4" /> 新增邮箱
+            </Button>
           </div>
         </div>
       </section>
