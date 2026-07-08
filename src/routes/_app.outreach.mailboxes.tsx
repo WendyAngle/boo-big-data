@@ -636,8 +636,6 @@ function MailboxCard({
         </TooltipProvider>
       </div>
       )}
-        </TooltipProvider>
-      </div>
     </Card>
   );
 }
