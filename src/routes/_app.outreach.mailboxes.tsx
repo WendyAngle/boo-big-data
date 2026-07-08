@@ -74,7 +74,16 @@ import {
   type MailboxProvider,
   type MailboxEncryption,
   type MailboxStatus,
+  type MailboxScope,
 } from "@/lib/mailboxes";
+import {
+  useTenantRole,
+  setTenantRole,
+  CURRENT_TENANT_USER,
+  TENANT_DOMAINS,
+  isTenantDomain,
+} from "@/lib/tenant-role";
+import { Users, UserRound, EyeOff, Eye } from "lucide-react";
 
 const CURRENT_TENANT = { id: "T202600", name: "字节跳动" };
 
@@ -109,16 +118,25 @@ function formatDateTime(iso?: string) {
 
 function MailboxesPage() {
   const data = useMailboxes();
+  const role = useTenantRole();
+  const isAdmin = role === "admin";
   const [keyword, setKeyword] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [providerFilter, setProviderFilter] = useState("all");
   const [formOpen, setFormOpen] = useState(false);
+  const [formInitScope, setFormInitScope] = useState<MailboxScope>("personal");
   const [editing, setEditing] = useState<Mailbox | null>(null);
   const [delTarget, setDelTarget] = useState<Mailbox | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return data.filter((m) => {
+      // 成员视角：team 只看到启用中；personal 仅看自己的
+      if (!isAdmin) {
+        if (m.scope === "team" && m.status !== "正常") return false;
+        if (m.scope === "personal" && m.ownerId !== CURRENT_TENANT_USER.id)
+          return false;
+      }
       if (
         keyword &&
         !`${m.email} ${m.displayName} ${m.username}`
@@ -130,7 +148,13 @@ function MailboxesPage() {
       if (providerFilter !== "all" && m.provider !== providerFilter) return false;
       return true;
     });
-  }, [data, keyword, statusFilter, providerFilter]);
+  }, [data, keyword, statusFilter, providerFilter, isAdmin]);
+
+  const teamList = useMemo(() => filtered.filter((m) => m.scope === "team"), [filtered]);
+  const personalList = useMemo(
+    () => filtered.filter((m) => m.scope === "personal"),
+    [filtered],
+  );
 
   const stats = useMemo(() => {
     const c = (s: MailboxStatus) => data.filter((m) => m.status === s).length;
@@ -221,9 +245,27 @@ function MailboxesPage() {
             </div>
             <Button
               size="sm"
+              variant="secondary"
+              className="h-9 bg-white/15 text-white border-white/20 hover:bg-white/25"
+              onClick={() => setTenantRole(isAdmin ? "member" : "admin")}
+              title="演示：切换当前用户角色"
+            >
+              {isAdmin ? (
+                <>
+                  <EyeOff className="h-4 w-4" /> 以员工身份预览
+                </>
+              ) : (
+                <>
+                  <Eye className="h-4 w-4" /> 恢复管理员视图
+                </>
+              )}
+            </Button>
+            <Button
+              size="sm"
               className="h-9 bg-white text-primary hover:bg-white/90 shadow-sm"
               onClick={() => {
                 setEditing(null);
+                setFormInitScope(isAdmin ? "team" : "personal");
                 setFormOpen(true);
               }}
             >
