@@ -655,6 +655,9 @@ function ChannelBadge({ channel, platform }: { channel: ReachChannel; platform?:
 }
 
 function StatusBadge({ status }: { status: ReachStatus }) {
+  return _StatusBadgeImpl({ status });
+}
+function _StatusBadgeImpl({ status }: { status: ReachStatus }) {
   const Icon =
     status === "pending"
       ? Clock
