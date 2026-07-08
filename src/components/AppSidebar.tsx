@@ -68,7 +68,7 @@ const menu: Root[] = [
           { label: "我的收藏", to: "/outreach/favorites" },
           { label: "浏览足迹", to: "/outreach/footprints" },
           { label: "触达任务", to: "/outreach/reach" },
-          { label: "收件箱", to: "/outreach/inbox" },
+          { label: "多渠道询盘", to: "/outreach/inquiries" },
           { label: "退订名单", to: "/outreach/suppressions" },
         ],
       },
@@ -85,7 +85,7 @@ const menu: Root[] = [
         children: [
           { label: "员工管理", to: "/outreach/users" },
           { label: "发信邮箱", to: "/outreach/mailboxes" },
-          { label: "收件箱分组与分配", to: "/outreach/admin/inbox-routing" },
+          { label: "询盘设置", to: "/outreach/admin/inquiry-settings" },
         ],
       },
       {
@@ -195,7 +195,7 @@ export function AppSidebar() {
                                 >
                                   {CI && <CI className="h-3.5 w-3.5" />}
                                   <span>{c.label}</span>
-                                  {c.to === "/outreach/inbox" && badge.unread > 0 && (
+                                  {c.to === "/outreach/inquiries" && badge.unread > 0 && (
                                     <span className="ml-auto inline-flex items-center justify-center rounded-full bg-rose-500 text-white text-[10px] leading-none h-4 min-w-4 px-1">
                                       {badge.unread > 99 ? "99+" : badge.unread}
                                     </span>

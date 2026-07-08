@@ -190,9 +190,9 @@ const HSM_TEMPLATES: Record<string, { id: string; name: string; body: string }[]
 
 type ViewKey = NonNullable<z.infer<typeof searchSchema>["view"]>;
 
-export const Route = createFileRoute("/_app/outreach/inbox")({
+export const Route = createFileRoute("/_app/outreach/inquiries")({
   head: () => ({
-    meta: [{ title: "触达收件箱 | Boo数据平台" }],
+    meta: [{ title: "多渠道询盘 | Boo数据平台" }],
   }),
   validateSearch: (s) => searchSchema.parse(s),
   component: InboxPage,
@@ -295,7 +295,7 @@ function InboxPage() {
 
   function goto(patch: Partial<z.infer<typeof searchSchema>>) {
     navigate({
-      to: "/outreach/inbox",
+      to: "/outreach/inquiries",
       search: { ...search, ...patch },
       replace: true,
     });
@@ -306,7 +306,7 @@ function InboxPage() {
       {/* 顶栏 */}
       <div className="h-12 px-4 border-b flex items-center gap-2 shrink-0">
         <InboxIcon className="h-4 w-4 text-primary shrink-0" />
-        <div className="font-semibold text-sm shrink-0">触达收件箱</div>
+        <div className="font-semibold text-sm shrink-0">多渠道询盘</div>
         <Badge variant="outline" className="text-[11px] h-5 px-1.5 shrink-0">
           {counts.all}
         </Badge>
@@ -558,7 +558,7 @@ function InboxPage() {
               autoAi={search.action === "ai"}
               onConsumeAction={() =>
                 navigate({
-                  to: "/outreach/inbox",
+                  to: "/outreach/inquiries",
                   search: { ...search, action: undefined },
                   replace: true,
                 })
