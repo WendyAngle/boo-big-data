@@ -588,6 +588,22 @@ function ThreadRow({
             >
               {STATUS_LABEL[thread.meta.status]}
             </Badge>
+            {sla && (sla.overdue || sla.approaching) && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-[10px] py-0 px-1.5 h-5",
+                  sla.overdue
+                    ? "bg-rose-50 text-rose-700 border-rose-200"
+                    : "bg-amber-50 text-amber-700 border-amber-200",
+                )}
+              >
+                <Clock className="h-2.5 w-2.5 mr-0.5" />
+                {sla.overdue
+                  ? `逾期 ${formatShort(-sla.leftMs)}`
+                  : `剩 ${formatShort(sla.leftMs)}`}
+              </Badge>
+            )}
             {thread.meta.aiIntent && (
               <Badge
                 variant="outline"
