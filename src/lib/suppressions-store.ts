@@ -13,7 +13,7 @@ export interface SuppressionRecord {
 }
 
 const KEY = "boo:suppressions:v1";
-const SEED_KEY = "boo:suppressions:seed:v1";
+const SEED_KEY = "boo:suppressions:seed:v2";
 
 function read(): SuppressionRecord[] {
   if (typeof window === "undefined") return [];
@@ -58,10 +58,21 @@ if (typeof window !== "undefined") {
   // 一次性种子数据，用于演示
   if (!window.localStorage.getItem(SEED_KEY)) {
     const now = Date.now();
+    const H = 3600_000;
+    const D = 86400_000;
     const seed: SuppressionRecord[] = [
-      { id: "sup_s1", kind: "email", value: "no-reply@example.com", reason: "退订请求", source: "退订链接", createdAt: new Date(now - 5 * 86400_000).toISOString() },
-      { id: "sup_s2", kind: "email", value: "bounced@invalid.io", reason: "硬退信", source: "SMTP 550", createdAt: new Date(now - 3 * 86400_000).toISOString() },
-      { id: "sup_s3", kind: "phone", value: "+8613800001111", reason: "STOP 关键字", source: "MO 消息", createdAt: new Date(now - 2 * 86400_000).toISOString() },
+      // 邮箱：5 条
+      { id: "sup_e1", kind: "email", value: "no-reply@example.com", reason: "退订请求", source: "退订链接", createdAt: new Date(now - 5 * D).toISOString() },
+      { id: "sup_e2", kind: "email", value: "bounced@invalid.io", reason: "硬退信", source: "SMTP 550 5.1.1", createdAt: new Date(now - 3 * D).toISOString() },
+      { id: "sup_e3", kind: "email", value: "complaint@mail.com", reason: "投诉", source: "FBL 投诉回执", createdAt: new Date(now - 2 * D - 4 * H).toISOString(), note: "被标记为垃圾邮件" },
+      { id: "sup_e4", kind: "email", value: "abuse@corp-legal.cn", reason: "法务/合规", source: "手动", createdAt: new Date(now - 26 * H).toISOString(), note: "客户法务来函要求停止一切联系" },
+      { id: "sup_e5", kind: "email", value: "tester@qa.local", reason: "手动添加", source: "手动", createdAt: new Date(now - 6 * H).toISOString(), note: "测试账号" },
+      // 手机号：5 条
+      { id: "sup_p1", kind: "phone", value: "+8613800001111", reason: "STOP 关键字", source: "MO 消息", createdAt: new Date(now - 4 * D).toISOString() },
+      { id: "sup_p2", kind: "phone", value: "+8613900002222", reason: "STOP 关键字", source: "Twilio MO / STOP", createdAt: new Date(now - 2 * D - 5 * H).toISOString() },
+      { id: "sup_p3", kind: "phone", value: "+14155550100", reason: "投诉", source: "运营商反馈", createdAt: new Date(now - 1 * D - 8 * H).toISOString(), note: "美国号码，TCPA 风险" },
+      { id: "sup_p4", kind: "phone", value: "+447700900123", reason: "硬退信", source: "Vonage DLR / Invalid", createdAt: new Date(now - 20 * H).toISOString(), note: "号码不可达" },
+      { id: "sup_p5", kind: "phone", value: "+8617700003333", reason: "手动添加", source: "手动", createdAt: new Date(now - 3 * H).toISOString(), note: "客户电话确认退订" },
     ];
     write(seed);
     store = seed;
