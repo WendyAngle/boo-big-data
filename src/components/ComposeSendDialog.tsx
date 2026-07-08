@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { isSuppressed } from "@/lib/suppressions-store";
 
 import {
   MESSAGE_VARIABLES,
