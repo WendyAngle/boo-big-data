@@ -429,6 +429,17 @@ function ThreadRow({
           <div className="mt-1.5 flex items-center gap-1 flex-wrap">
             <Badge
               variant="outline"
+              className={cn(
+                "text-[10px] py-0 px-1.5 h-5",
+                thread.channel === "sms"
+                  ? "bg-sky-50 text-sky-700 border-sky-200"
+                  : "bg-violet-50 text-violet-700 border-violet-200",
+              )}
+            >
+              {thread.channel === "sms" ? "短信" : "邮件"}
+            </Badge>
+            <Badge
+              variant="outline"
               className="text-[10px] py-0 px-1.5 h-5"
             >
               {STATUS_LABEL[thread.meta.status]}
