@@ -16,6 +16,7 @@ import { Route as AppOutreachIndexRouteImport } from './routes/_app.outreach.ind
 import { Route as AppPointsRechargesRouteImport } from './routes/_app.points.recharges'
 import { Route as AppPointsAppsRouteImport } from './routes/_app.points.apps'
 import { Route as AppOutreachUsersRouteImport } from './routes/_app.outreach.users'
+import { Route as AppOutreachSuppressionsRouteImport } from './routes/_app.outreach.suppressions'
 import { Route as AppOutreachSearchRouteImport } from './routes/_app.outreach.search'
 import { Route as AppOutreachRechargeRouteImport } from './routes/_app.outreach.recharge'
 import { Route as AppOutreachReachEmptyRouteImport } from './routes/_app.outreach.reach-empty'
@@ -77,6 +78,11 @@ const AppPointsAppsRoute = AppPointsAppsRouteImport.update({
 const AppOutreachUsersRoute = AppOutreachUsersRouteImport.update({
   id: '/outreach/users',
   path: '/outreach/users',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOutreachSuppressionsRoute = AppOutreachSuppressionsRouteImport.update({
+  id: '/outreach/suppressions',
+  path: '/outreach/suppressions',
   getParentRoute: () => AppRoute,
 } as any)
 const AppOutreachSearchRoute = AppOutreachSearchRouteImport.update({
@@ -247,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/outreach/reach-empty': typeof AppOutreachReachEmptyRoute
   '/outreach/recharge': typeof AppOutreachRechargeRoute
   '/outreach/search': typeof AppOutreachSearchRoute
+  '/outreach/suppressions': typeof AppOutreachSuppressionsRoute
   '/outreach/users': typeof AppOutreachUsersRoute
   '/points/apps': typeof AppPointsAppsRoute
   '/points/recharges': typeof AppPointsRechargesRoute
@@ -282,6 +289,7 @@ export interface FileRoutesByTo {
   '/outreach/reach-empty': typeof AppOutreachReachEmptyRoute
   '/outreach/recharge': typeof AppOutreachRechargeRoute
   '/outreach/search': typeof AppOutreachSearchRoute
+  '/outreach/suppressions': typeof AppOutreachSuppressionsRoute
   '/outreach/users': typeof AppOutreachUsersRoute
   '/points/apps': typeof AppPointsAppsRoute
   '/points/recharges': typeof AppPointsRechargesRoute
@@ -319,6 +327,7 @@ export interface FileRoutesById {
   '/_app/outreach/reach-empty': typeof AppOutreachReachEmptyRoute
   '/_app/outreach/recharge': typeof AppOutreachRechargeRoute
   '/_app/outreach/search': typeof AppOutreachSearchRoute
+  '/_app/outreach/suppressions': typeof AppOutreachSuppressionsRoute
   '/_app/outreach/users': typeof AppOutreachUsersRoute
   '/_app/points/apps': typeof AppPointsAppsRoute
   '/_app/points/recharges': typeof AppPointsRechargesRoute
@@ -357,6 +366,7 @@ export interface FileRouteTypes {
     | '/outreach/reach-empty'
     | '/outreach/recharge'
     | '/outreach/search'
+    | '/outreach/suppressions'
     | '/outreach/users'
     | '/points/apps'
     | '/points/recharges'
@@ -392,6 +402,7 @@ export interface FileRouteTypes {
     | '/outreach/reach-empty'
     | '/outreach/recharge'
     | '/outreach/search'
+    | '/outreach/suppressions'
     | '/outreach/users'
     | '/points/apps'
     | '/points/recharges'
@@ -428,6 +439,7 @@ export interface FileRouteTypes {
     | '/_app/outreach/reach-empty'
     | '/_app/outreach/recharge'
     | '/_app/outreach/search'
+    | '/_app/outreach/suppressions'
     | '/_app/outreach/users'
     | '/_app/points/apps'
     | '/_app/points/recharges'
@@ -500,6 +512,13 @@ declare module '@tanstack/react-router' {
       path: '/outreach/users'
       fullPath: '/outreach/users'
       preLoaderRoute: typeof AppOutreachUsersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/outreach/suppressions': {
+      id: '/_app/outreach/suppressions'
+      path: '/outreach/suppressions'
+      fullPath: '/outreach/suppressions'
+      preLoaderRoute: typeof AppOutreachSuppressionsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/outreach/search': {
@@ -751,6 +770,7 @@ interface AppRouteChildren {
   AppOutreachReachEmptyRoute: typeof AppOutreachReachEmptyRoute
   AppOutreachRechargeRoute: typeof AppOutreachRechargeRoute
   AppOutreachSearchRoute: typeof AppOutreachSearchRoute
+  AppOutreachSuppressionsRoute: typeof AppOutreachSuppressionsRoute
   AppOutreachUsersRoute: typeof AppOutreachUsersRoute
   AppPointsAppsRoute: typeof AppPointsAppsRoute
   AppPointsRechargesRoute: typeof AppPointsRechargesRoute
@@ -784,6 +804,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachReachEmptyRoute: AppOutreachReachEmptyRoute,
   AppOutreachRechargeRoute: AppOutreachRechargeRoute,
   AppOutreachSearchRoute: AppOutreachSearchRoute,
+  AppOutreachSuppressionsRoute: AppOutreachSuppressionsRoute,
   AppOutreachUsersRoute: AppOutreachUsersRoute,
   AppPointsAppsRoute: AppPointsAppsRoute,
   AppPointsRechargesRoute: AppPointsRechargesRoute,
