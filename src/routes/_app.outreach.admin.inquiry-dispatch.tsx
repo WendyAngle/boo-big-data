@@ -553,10 +553,9 @@ function InboxRoutingAdmin() {
                       <span>会话</span>
                       <span className="ml-auto pr-1">快速分配</span>
                     </div>
-                    {rows.slice(0, 30).map((t) => (
-                      {
-                        const CIcon = channelIconOf(t.channel);
-                        return (
+                    {rows.slice(0, 30).map((t) => {
+                      const CIcon = channelIconOf(t.channel);
+                      return (
                         <div key={t.id} className="flex items-start gap-2 px-2 py-2">
                           <Checkbox
                             className="mt-1"
@@ -598,10 +597,8 @@ function InboxRoutingAdmin() {
                             </SelectContent>
                           </Select>
                         </div>
-                        );
-                      }
-                    })()) as never}
-                    {/* end rows */}
+                      );
+                    })}
                     {rows.length > 30 && (
                       <div className="text-[11px] text-muted-foreground text-center py-2">
                         仅显示前 30 条，其余请在收件箱中处理
