@@ -85,6 +85,7 @@ const menu: Root[] = [
         children: [
           { label: "员工管理", to: "/outreach/users" },
           { label: "发信邮箱", to: "/outreach/mailboxes" },
+          { label: "收件箱分组与分配", to: "/outreach/admin/inbox-routing" },
           { label: "短信服务商", to: "/outreach/admin/sms-providers" },
           { label: "短信路由", to: "/outreach/admin/sms-routing" },
           { label: "短信模板", to: "/outreach/admin/sms-templates" },
