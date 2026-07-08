@@ -8,6 +8,7 @@ import {
   Settings2,
   ShieldOff,
   Info,
+  RotateCcw,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -179,6 +180,18 @@ function SmsProvidersPage() {
     toast.success("已更新服务商启用状态");
   }
 
+  /** 熔断重置：进入观察态（paused），路由权重 0、只观测健康度，30 min 后自动恢复评估 */
+  function resetToObservation(id: string) {
+    setList((s) =>
+      s.map((p) =>
+        p.id === id
+          ? { ...p, health: "paused", enabled: false, lastCheck: "刚刚" }
+          : p,
+      ),
+    );
+    toast.success("已重置为观察态，30 分钟内不参与路由，稳定后可手动启用");
+  }
+
   return (
     <TooltipProvider delayDuration={200}>
     <div className="p-6 space-y-4">
@@ -324,18 +337,34 @@ function SmsProvidersPage() {
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     {isDown && (
-                      <Badge variant="outline" className="text-[10px] bg-rose-50 text-rose-700 border-rose-200 gap-0.5">
-                        <ShieldOff className="h-3 w-3" /> 熔断禁用
-                      </Badge>
+                      <>
+                        <Badge variant="outline" className="text-[10px] bg-rose-50 text-rose-700 border-rose-200 gap-0.5">
+                          <ShieldOff className="h-3 w-3" /> 熔断禁用
+                        </Badge>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[11px]"
+                          onClick={() => resetToObservation(p.id)}
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          重置观察
+                        </Button>
+                      </>
                     )}
                     {p.health === "degraded" && p.enabled && (
                       <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
                         权重 50%
                       </Badge>
                     )}
+                    {p.health === "paused" && (
+                      <Badge variant="outline" className="text-[10px] bg-sky-50 text-sky-700 border-sky-200">
+                        观察中
+                      </Badge>
+                    )}
                     <Switch
                       checked={effectiveEnabled}
-                      disabled={isDown}
+                      disabled={isDown || p.health === "paused"}
                       onCheckedChange={() => toggle(p.id)}
                     />
                   </div>
