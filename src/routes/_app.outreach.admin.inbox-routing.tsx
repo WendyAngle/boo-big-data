@@ -334,9 +334,12 @@ function InboxRoutingAdmin() {
                           onCheckedChange={(v) => toggleOne(kind, t.id, v === true)}
                         />
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm truncate">{t.subject || "(无主题)"}</div>
+                          <div className="text-sm truncate">
+                            {t.targetName}
+                            {t.meta.subject ? ` · ${t.meta.subject}` : ""}
+                          </div>
                           <div className="text-[11px] text-muted-foreground truncate">
-                            {t.counterparty}
+                            {t.counterpartyAddress}
                           </div>
                         </div>
                         <Select onValueChange={(v) => doAssignOne(t.id, v)}>
