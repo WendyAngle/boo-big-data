@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { FileText, Plus, CheckCircle2, Clock, XCircle, Copy } from "lucide-react";
+import { FileText, Plus, CheckCircle2, Clock, XCircle, Copy, Pencil, Undo2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,8 @@ import { cn } from "@/lib/utils";
 import {
   useSmsTemplates,
   addSmsTemplate,
+  updateSmsTemplate,
+  withdrawSmsTemplate,
   type SmsTemplate as Tpl,
   type SmsTplStatus as Status,
 } from "@/lib/sms-templates-store";
@@ -46,6 +48,7 @@ function SmsTemplatesPage() {
   const list = useSmsTemplates();
   const [tab, setTab] = useState<"all" | Status>("all");
   const [addOpen, setAddOpen] = useState(false);
+  const [editing, setEditing] = useState<Tpl | null>(null);
 
   const counts = {
     all: list.length,
@@ -59,6 +62,15 @@ function SmsTemplatesPage() {
   function submitNew(t: Omit<Tpl, "id" | "status" | "updatedAt" | "submittedBy">) {
     addSmsTemplate(t);
     toast.success("已提交审核，预计 1 个工作日内反馈");
+  }
+
+  function submitEdit(patch: Omit<Tpl, "id" | "status" | "updatedAt" | "submittedBy">) {
+    if (!editing) return;
+    updateSmsTemplate(editing.id, patch);
+    toast.success(
+      editing.status === "rejected" ? "已重新提交审核" : "已保存并重新提交审核",
+    );
+    setEditing(null);
   }
 
   return (
@@ -133,7 +145,7 @@ function SmsTemplatesPage() {
                   )}
                 </div>
               </div>
-              <div className="flex flex-col gap-1 shrink-0">
+              <div className="flex flex-col gap-1 shrink-0 w-24">
                 <Button
                   variant="outline"
                   size="sm"
@@ -145,6 +157,40 @@ function SmsTemplatesPage() {
                   <Copy className="h-3.5 w-3.5" />
                   复制
                 </Button>
+                {t.status === "rejected" && (
+                  <Button
+                    size="sm"
+                    className="bg-primary text-primary-foreground"
+                    onClick={() => setEditing(t)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    修改重提
+                  </Button>
+                )}
+                {t.status === "pending" && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditing(t)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      修改
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+                      onClick={() => {
+                        withdrawSmsTemplate(t.id);
+                        toast.success("已撤回");
+                      }}
+                    >
+                      <Undo2 className="h-3.5 w-3.5" />
+                      撤回
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           ))}
@@ -152,6 +198,12 @@ function SmsTemplatesPage() {
       </Card>
 
       <NewTplDialog open={addOpen} onOpenChange={setAddOpen} onSubmit={submitNew} />
+      <NewTplDialog
+        open={!!editing}
+        onOpenChange={(o) => !o && setEditing(null)}
+        onSubmit={submitEdit}
+        initial={editing}
+      />
     </div>
   );
 }
@@ -180,15 +232,27 @@ function NewTplDialog({
   open,
   onOpenChange,
   onSubmit,
+  initial,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onSubmit: (t: Omit<Tpl, "id" | "status" | "updatedAt" | "submittedBy">) => void;
+  initial?: Tpl | null;
 }) {
-  const [name, setName] = useState("");
-  const [channel, setChannel] = useState<Tpl["channel"]>("marketing");
-  const [locale, setLocale] = useState("zh-CN");
-  const [content, setContent] = useState("");
+  const [name, setName] = useState(initial?.name ?? "");
+  const [channel, setChannel] = useState<Tpl["channel"]>(initial?.channel ?? "marketing");
+  const [locale, setLocale] = useState(initial?.locale ?? "zh-CN");
+  const [content, setContent] = useState(initial?.content ?? "");
+  const isEdit = !!initial;
+
+  // 每次打开时用最新 initial 重置字段
+  useEffect(() => {
+    if (!open) return;
+    setName(initial?.name ?? "");
+    setChannel(initial?.channel ?? "marketing");
+    setLocale(initial?.locale ?? "zh-CN");
+    setContent(initial?.content ?? "");
+  }, [open, initial]);
 
   function submit() {
     if (!name.trim() || !content.trim()) {
@@ -209,8 +273,19 @@ function NewTplDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>新建短信模板</DialogTitle>
+          <DialogTitle>
+            {isEdit
+              ? initial?.status === "rejected"
+                ? "修改并重提审核"
+                : "修改待审模板"
+              : "新建短信模板"}
+          </DialogTitle>
         </DialogHeader>
+        {isEdit && initial?.status === "rejected" && initial.rejectReason && (
+          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            上次未通过原因：{initial.rejectReason}
+          </div>
+        )}
         <div className="space-y-3">
           <div>
             <label className="text-xs text-muted-foreground">模板名称</label>
@@ -262,7 +337,7 @@ function NewTplDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button onClick={submit}>提交审核</Button>
+          <Button onClick={submit}>{isEdit ? "重新提交审核" : "提交审核"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
