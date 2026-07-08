@@ -190,7 +190,7 @@ const HSM_TEMPLATES: Record<string, { id: string; name: string; body: string }[]
 
 type ViewKey = NonNullable<z.infer<typeof searchSchema>["view"]>;
 
-export const Route = createFileRoute("/_app/outreach/inbox")({
+export const Route = createFileRoute("/_app/outreach/inquiries")({
   head: () => ({
     meta: [{ title: "触达收件箱 | Boo数据平台" }],
   }),

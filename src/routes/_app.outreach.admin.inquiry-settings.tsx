@@ -25,7 +25,7 @@ import {
   type TeamMember,
 } from "@/lib/inbox-store";
 
-export const Route = createFileRoute("/_app/outreach/admin/inbox-routing")({
+export const Route = createFileRoute("/_app/outreach/admin/inquiry-settings")({
   head: () => ({ meta: [{ title: "收件箱分组与分配 | Boo数据平台" }] }),
   component: InboxRoutingAdmin,
 });
