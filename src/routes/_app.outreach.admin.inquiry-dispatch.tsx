@@ -539,8 +539,20 @@ function InboxRoutingAdmin() {
               {/* 待派单列表 */}
               <div className="border rounded-md divide-y max-h-80 overflow-auto">
                 {rows.length === 0 ? (
-                  <div className="text-xs text-muted-foreground py-8 text-center">
-                    暂无待分配会话
+                  <div className="flex flex-col items-center gap-2 py-8 text-center">
+                    <Inbox className="h-6 w-6 text-muted-foreground/60" />
+                    <div className="text-sm text-muted-foreground">
+                      暂无待分配会话
+                    </div>
+                    <div className="text-[11px] text-muted-foreground/80 max-w-[260px]">
+                      新会话进入后会自动出现在此。也可前往收件箱查看全部会话并手动分配。
+                    </div>
+                    <Button asChild variant="outline" size="sm" className="h-7 mt-1 gap-1">
+                      <Link to="/outreach/conversations">
+                        打开收件箱
+                        <ArrowRight className="h-3 w-3" />
+                      </Link>
+                    </Button>
                   </div>
                 ) : (
                   <>
