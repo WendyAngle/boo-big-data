@@ -955,6 +955,7 @@ function ActionBar({ thread }: { thread: Thread }) {
 
   return (
     <div className="flex items-center gap-1 shrink-0">
+      <AssignMenu thread={thread} />
       <Button
         variant="ghost"
         size="icon"
@@ -1110,14 +1111,6 @@ function ActionBar({ thread }: { thread: Thread }) {
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={() => {
-              toast.info("转派功能：已推送给「团队负责人」（演示）");
-            }}
-          >
-            <UserPlus className="h-3.5 w-3.5 mr-2" /> 转派给同事
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
             className="text-rose-600 focus:text-rose-600"
             onClick={() => {
               suppressThread(thread.id);
@@ -1129,5 +1122,81 @@ function ActionBar({ thread }: { thread: Thread }) {
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
+  );
+}
+
+function AssignMenu({ thread }: { thread: Thread }) {
+  const group = threadGroup(thread);
+  const eligible = TEAM_MEMBERS.filter((m) => m.groups.includes(group));
+  const cur = memberById(thread.meta.assigneeId);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant={cur ? "outline" : "default"}
+          size="sm"
+          className={cn("gap-1 h-8", !cur && "bg-amber-500 hover:bg-amber-600 text-white")}
+        >
+          {cur ? (
+            <>
+              <UserCheck className="h-3.5 w-3.5" />
+              分配给 {cur.name}
+            </>
+          ) : (
+            <>
+              <UserPlus className="h-3.5 w-3.5" />
+              分配
+            </>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-60">
+        <DropdownMenuLabel>
+          分配至 · {GROUP_LABEL[group]}
+        </DropdownMenuLabel>
+        <DropdownMenuItem
+          onClick={() => {
+            assignThread(thread.id, CURRENT_TEAM_USER_ID);
+            toast.success("我来跟：会话已分配给我");
+          }}
+        >
+          <Hand className="h-3.5 w-3.5 mr-2" /> 我来跟（抢单）
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        {eligible.map((m) => (
+          <DropdownMenuItem
+            key={m.id}
+            onClick={() => {
+              assignThread(thread.id, m.id);
+              toast.success(`已分配给 ${m.name}`);
+            }}
+          >
+            <span className="h-5 w-5 rounded-full bg-primary/10 text-primary text-[10px] flex items-center justify-center mr-2">
+              {m.avatarLetter}
+            </span>
+            {m.name}
+            {m.role === "lead" && (
+              <span className="ml-1 text-[10px] text-muted-foreground">组长</span>
+            )}
+            {thread.meta.assigneeId === m.id && (
+              <CheckCheck className="ml-auto h-3.5 w-3.5 text-emerald-500" />
+            )}
+          </DropdownMenuItem>
+        ))}
+        {cur && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => {
+                assignThread(thread.id, null);
+                toast.success("已回退到未分配池");
+              }}
+            >
+              <UserPlus className="h-3.5 w-3.5 mr-2 rotate-180" /> 取消分配
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
