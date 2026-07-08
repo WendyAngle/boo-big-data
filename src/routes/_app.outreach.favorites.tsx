@@ -374,6 +374,7 @@ function FavoritesPage() {
     { key: "all", label: "全部", icon: Star },
     { key: "enterprise", label: "企业", icon: Building2 },
     { key: "contact", label: "人物", icon: UserRound },
+    { key: "product", label: "商品", icon: Package },
   ];
 
   return (
