@@ -613,9 +613,24 @@ function ThreadDetail({
   const [reply, setReply] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [selectedTpl, setSelectedTpl] = useState<string>("");
   const lastInbound = [...thread.messages]
     .reverse()
     .find((m) => m.direction === "inbound");
+
+  // 窗口计算（WA/FB/TT）
+  const winInfo = useMemo(() => {
+    const winH = WINDOW_HOURS[thread.channel];
+    if (winH === undefined) return null;
+    const exp = thread.meta.windowExpiresAt
+      ? new Date(thread.meta.windowExpiresAt).getTime()
+      : null;
+    if (!exp) return { winH, leftMs: winH * 3600_000, closed: false };
+    const leftMs = exp - Date.now();
+    return { winH, leftMs, closed: leftMs <= 0 };
+  }, [thread.channel, thread.meta.windowExpiresAt]);
+
+  const templates = HSM_TEMPLATES[thread.channel] ?? [];
 
   async function aiGenerate() {
     setAiLoading(true);
@@ -650,7 +665,10 @@ function ThreadDetail({
   }, [autoAi, thread.id]);
 
   function doSend(aiGen = false) {
-    if (!reply.trim()) {
+    const content = winInfo?.closed && templates.length
+      ? templates.find((t) => t.id === selectedTpl)?.body ?? reply
+      : reply;
+    if (!content.trim()) {
       toast.error("请输入回复内容");
       return;
     }
@@ -658,7 +676,7 @@ function ThreadDetail({
     setTimeout(() => {
       sendReply({
         threadId: thread.id,
-        content: reply.trim(),
+        content: content.trim(),
         fromAddress: thread.senderEmail || "outreach@bytetech.cn",
         subject: thread.messages[0]?.subject
           ? `Re: ${thread.messages[0].subject.replace(/^Re:\s*/i, "")}`
@@ -666,8 +684,9 @@ function ThreadDetail({
         aiGenerated: aiGen,
       });
       setReply("");
+      setSelectedTpl("");
       setSending(false);
-      toast.success("回复已发送");
+      toast.success(winInfo?.closed ? "已通过 HSM 模板发送" : "回复已发送");
     }, 400);
   }
 
