@@ -100,6 +100,8 @@ export interface ComposeSendDialogProps {
   onOpenChange: (v: boolean) => void;
   channel: ComposeChannel;
   recipients: Recipient[];
+  /** 上层选中总数（用于展示"已自动过滤 N 条无地址"） */
+  totalSelected?: number;
   /** 已知发件邮箱（来自上层），不传则内部使用默认邮箱 */
   initialSenderId?: string;
   /** 发送成功回调（已扣费、已生成触达记录） */
@@ -111,6 +113,7 @@ export function ComposeSendDialog({
   onOpenChange,
   channel,
   recipients: incomingRecipients,
+  totalSelected,
   initialSenderId,
   onSent,
 }: ComposeSendDialogProps) {
@@ -358,10 +361,20 @@ export function ComposeSendDialog({
               <Label className="text-xs text-muted-foreground">
                 收件人（{recipients.length}）
               </Label>
-              {recipients.length === 0 && (
+              {recipients.length === 0 ? (
                 <span className="text-xs text-rose-600">
-                  无有效收件人，请关闭后重试
+                  {typeof totalSelected === "number" && totalSelected > 0
+                    ? `已选 ${totalSelected} 条，均无${isEmail ? "邮箱" : "电话"}，已全部过滤`
+                    : "无有效收件人，请关闭后重试"}
                 </span>
+              ) : (
+                typeof totalSelected === "number" &&
+                totalSelected > recipients.length && (
+                  <span className="text-xs text-amber-600">
+                    已自动过滤 {totalSelected - recipients.length} 条无
+                    {isEmail ? "邮箱" : "电话"}的数据
+                  </span>
+                )
               )}
             </div>
             <div className="flex flex-wrap gap-1.5 rounded-md border bg-muted/30 p-2 max-h-28 overflow-y-auto">
