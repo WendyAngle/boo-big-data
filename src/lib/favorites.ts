@@ -19,7 +19,7 @@ export interface FavoriteRecord extends FavoritePayload {
 }
 
 const STORAGE_KEY = "boo:favorites:v1";
-const SEED_FLAG_KEY = "boo:favorites:v2:seeded";
+const SEED_FLAG_KEY = "boo:favorites:v3:seeded";
 
 function readStore(): Record<string, FavoriteRecord> {
   if (typeof window === "undefined") return {};
@@ -212,69 +212,6 @@ function buildDemoRecords(): FavoriteRecord[] {
         ...(contact.phone ? { phone: contact.phone } : {}),
       },
       parentRef: { kind: "enterprise", id: ent.id, name: ent.name },
-    });
-  });
-  // 3 商品 (真实 HS6)
-  const productHs = ["680100", "680221", "680911"];
-  productHs.forEach((hs, idx) => {
-    const lk = findByHs(hs);
-    if (!lk) return;
-    out.push({
-      id: `product:${hs}`,
-      kind: "product",
-      refId: hs,
-      createdAt: isoDaysAgo(idx + 2, 11, 5 + idx),
-      title: lk.l4.name,
-      subtitle: lk.l4.en,
-      meta: { hs, category: `${lk.l1.name} / ${lk.l2.name}` },
-    });
-  });
-  // 3 提单
-  const billRows = [
-    {
-      no: "BL20260112001",
-      exporter: "STONE SHIPPERS LIMITED",
-      importer: "LIVING SPACES FURNITURE LLC",
-      fromPort: "NHAVA SHEVA",
-      toPort: "LOS ANGELES, CA",
-      hs: "680221",
-      date: "2026-01-12",
-    },
-    {
-      no: "BL20260205017",
-      exporter: "FBR MARBLE INC",
-      importer: "NATURAL STONE RESOURCES",
-      fromPort: "GENOA",
-      toPort: "NEW YORK/NEWARK, NJ",
-      hs: "680100",
-      date: "2026-02-05",
-    },
-    {
-      no: "BL20260308042",
-      exporter: "YAMUNA SLATE INDUSTRIES",
-      importer: "M STONE",
-      fromPort: "MUNDRA",
-      toPort: "HOUSTON, TX",
-      hs: "680300",
-      date: "2026-03-08",
-    },
-  ];
-  billRows.forEach((b, idx) => {
-    out.push({
-      id: `bill:${b.no}`,
-      kind: "bill",
-      refId: b.no,
-      createdAt: isoDaysAgo(idx + 3, 16, 20 + idx),
-      title: `提单 ${b.no}`,
-      subtitle: b.exporter + " → " + b.importer,
-      meta: {
-        exporter: b.exporter,
-        importer: b.importer,
-        fromPort: b.fromPort,
-        toPort: b.toPort,
-        hs: b.hs,
-        date: b.date,
-      },
     });
   });
   return out;
