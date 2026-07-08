@@ -502,7 +502,7 @@ function useMetaVersion() {
 export function useThreads(): Thread[] {
   useMetaVersion();
   const entries = useLedger();
-  return buildThreads(entries);
+  return [...buildThreads(entries), ...getDemoSocialThreads()];
 }
 
 export function useThread(id: string): Thread | undefined {
@@ -511,7 +511,7 @@ export function useThread(id: string): Thread | undefined {
 }
 
 export function getThreadsSnapshot(): Thread[] {
-  return buildThreads(getAllLedger());
+  return [...buildThreads(getAllLedger()), ...getDemoSocialThreads()];
 }
 
 export interface InboxCounts {
@@ -525,6 +525,7 @@ export interface InboxCounts {
   hasReply: number;
   noReply: number;
   bounced: number;
+  unassigned: number;
 }
 
 export function useInboxCounts(): InboxCounts {
@@ -540,6 +541,7 @@ export function useInboxCounts(): InboxCounts {
     hasReply: 0,
     noReply: 0,
     bounced: 0,
+    unassigned: 0,
   };
   for (const t of list) {
     if (t.meta.unread > 0) c.unread++;
@@ -550,6 +552,7 @@ export function useInboxCounts(): InboxCounts {
     if (t.meta.status === "suppressed") c.suppressed++;
     if (t.meta.inboundMessages.length > 0) c.hasReply++;
     else c.noReply++;
+    if (!t.meta.assigneeId) c.unassigned++;
   }
   return c;
 }
