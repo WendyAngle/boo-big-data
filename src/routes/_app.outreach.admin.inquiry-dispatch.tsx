@@ -222,6 +222,13 @@ function InboxRoutingAdmin() {
               <div className="space-y-1.5">
                 {g.members.map((m) => {
                   const w = workload.get(m.id);
+                  const assigned = w?.assigned ?? 0;
+                  const loadTone =
+                    assigned >= 20
+                      ? "text-rose-600"
+                      : assigned >= 10
+                        ? "text-amber-600"
+                        : "text-muted-foreground";
                   return (
                     <div
                       key={m.id}
@@ -236,8 +243,8 @@ function InboxRoutingAdmin() {
                           组长
                         </Badge>
                       )}
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        在办 {w?.assigned ?? 0}
+                      <span className={`ml-auto text-xs font-medium tabular-nums ${loadTone}`}>
+                        在办 {assigned}
                         {w && w.unread > 0 && (
                           <span className="ml-2 text-rose-600">
                             未读 {w.unread}
@@ -249,7 +256,7 @@ function InboxRoutingAdmin() {
                 })}
               </div>
               <div className="mt-3 text-[11px] text-muted-foreground">
-                Phase 1 演示：成员列表复用系统员工，编辑请前往「员工管理」。
+                成员列表复用系统员工，编辑请前往「员工管理」。负载 ≥10 橙色 / ≥20 红色。
               </div>
             </div>
           </Card>
