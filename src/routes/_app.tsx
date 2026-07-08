@@ -1,6 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { AppSidebar } from "@/components/AppSidebar";
-import { AssistantProvider } from "@/components/ai-assistant/AssistantProvider";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
@@ -13,7 +12,6 @@ function AppLayout() {
       <main className="flex-1 min-w-0">
         <Outlet />
       </main>
-      <AssistantProvider />
     </div>
   );
 }
