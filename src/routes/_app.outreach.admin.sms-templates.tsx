@@ -243,6 +243,65 @@ function StatusBadge({ status }: { status: Status }) {
   );
 }
 
+/* ---------- 变量元数据 & 示例数据（ST-02 变量说明 / ST-03 预览） ---------- */
+
+interface VarDef {
+  key: string;
+  desc: string;
+  sample: string;
+}
+
+const VAR_GROUPS: Record<"system" | "contact" | "dynamic", { label: string; items: VarDef[] }> = {
+  system: {
+    label: "系统变量",
+    items: [
+      { key: "我的姓名", desc: "当前发送人姓名", sample: "John" },
+      { key: "我的公司", desc: "当前发送人所属公司", sample: "TechCorp" },
+      { key: "我的职位", desc: "当前发送人职位", sample: "Sales Manager" },
+      { key: "我的邮箱", desc: "当前发送人的登录邮箱", sample: "john@techcorp.com" },
+    ],
+  },
+  contact: {
+    label: "联系人变量",
+    items: [
+      { key: "联系人名", desc: "收件联系人姓名（必填数据源）", sample: "Sarah" },
+      { key: "联系人职位", desc: "联系人所在企业中的职位", sample: "Buyer" },
+      { key: "联系人公司", desc: "联系人所属企业名称", sample: "Living Spaces LLC" },
+      { key: "联系人国家", desc: "联系人所在国家（用于本地化）", sample: "United States" },
+    ],
+  },
+  dynamic: {
+    label: "动态变量",
+    items: [
+      { key: "行业", desc: "联系人所在行业类目", sample: "furniture" },
+      { key: "产品名", desc: "本次推广的产品名称", sample: "Marble Countertop" },
+      { key: "订单号", desc: "订单/运单编号（通知类）", sample: "BL20260112001" },
+      { key: "验证码", desc: "OTP 场景一次性口令", sample: "482913" },
+      { key: "折扣", desc: "促销活动优惠力度", sample: "20%" },
+    ],
+  },
+};
+
+function resolveSample(varName: string): string {
+  for (const g of Object.values(VAR_GROUPS)) {
+    const m = g.items.find((i) => i.key === varName);
+    if (m) return m.sample;
+  }
+  return `{{${varName}}}`;
+}
+
+/** 渲染预览：{{变量}} 替换为示例值；未识别变量保留原样以便用户发现拼写错误 */
+function renderPreview(content: string): { text: string; unresolved: string[] } {
+  const unresolved: string[] = [];
+  const text = content.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_, name: string) => {
+    const key = name.trim();
+    const sample = resolveSample(key);
+    if (sample === `{{${key}}}`) unresolved.push(key);
+    return sample;
+  });
+  return { text, unresolved: Array.from(new Set(unresolved)) };
+}
+
 function NewTplDialog({
   open,
   onOpenChange,
@@ -258,9 +317,9 @@ function NewTplDialog({
   const [channel, setChannel] = useState<Tpl["channel"]>(initial?.channel ?? "marketing");
   const [locale, setLocale] = useState(initial?.locale ?? "zh-CN");
   const [content, setContent] = useState(initial?.content ?? "");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isEdit = !!initial;
 
-  // 每次打开时用最新 initial 重置字段
   useEffect(() => {
     if (!open) return;
     setName(initial?.name ?? "");
@@ -269,12 +328,34 @@ function NewTplDialog({
     setContent(initial?.content ?? "");
   }, [open, initial]);
 
+  function insertVar(key: string) {
+    const el = textareaRef.current;
+    const token = `{{${key}}}`;
+    if (!el) {
+      setContent((c) => c + token);
+      return;
+    }
+    const start = el.selectionStart ?? content.length;
+    const end = el.selectionEnd ?? content.length;
+    const next = content.slice(0, start) + token + content.slice(end);
+    setContent(next);
+    // 恢复光标到插入尾
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = start + token.length;
+      el.setSelectionRange(pos, pos);
+    });
+  }
+
+  const preview = useMemo(() => renderPreview(content), [content]);
+  const hasOptOut = /STOP|退订|TD/i.test(content);
+
   function submit() {
     if (!name.trim() || !content.trim()) {
       toast.error("请填写名称与内容");
       return;
     }
-    if (channel === "marketing" && !/STOP|退订|TD/i.test(content)) {
+    if (channel === "marketing" && !hasOptOut) {
       toast.error("营销类模板必须包含退订提示（STOP / 退订 / TD）");
       return;
     }
@@ -286,7 +367,7 @@ function NewTplDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isEdit
@@ -295,64 +376,197 @@ function NewTplDialog({
                 : "修改待审模板"
               : "新建短信模板"}
           </DialogTitle>
+          <DialogDescription>
+            使用 <code className="text-xs">{"{{变量名}}"}</code> 语法插入动态字段。右侧变量面板可直接点击插入到光标位置，下方预览区实时展示替换效果。
+          </DialogDescription>
         </DialogHeader>
         {isEdit && initial?.status === "rejected" && initial.rejectReason && (
           <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
             上次未通过原因：{initial.rejectReason}
           </div>
         )}
-        <div className="space-y-3">
-          <div>
-            <label className="text-xs text-muted-foreground">模板名称</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+
+        <div className="grid grid-cols-5 gap-4">
+          {/* 左：表单 */}
+          <div className="col-span-3 space-y-3">
             <div>
-              <label className="text-xs text-muted-foreground">渠道类型</label>
-              <Select value={channel} onValueChange={(v) => setChannel(v as Tpl["channel"])}>
-                <SelectTrigger className="mt-1 h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="marketing">营销</SelectItem>
-                  <SelectItem value="notification">通知</SelectItem>
-                  <SelectItem value="otp">验证码</SelectItem>
-                </SelectContent>
-              </Select>
+              <label className="text-xs text-muted-foreground">模板名称</label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="mt-1"
+                placeholder="例：首触 · 产品介绍 EN"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground">渠道类型</label>
+                <Select value={channel} onValueChange={(v) => setChannel(v as Tpl["channel"])}>
+                  <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="marketing">营销</SelectItem>
+                    <SelectItem value="notification">通知</SelectItem>
+                    <SelectItem value="otp">验证码</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">语言 / 地区</label>
+                <Select value={locale} onValueChange={setLocale}>
+                  <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="zh-CN">中文</SelectItem>
+                    <SelectItem value="en-US">英文</SelectItem>
+                    <SelectItem value="multi">多语言</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">语言 / 地区</label>
-              <Select value={locale} onValueChange={setLocale}>
-                <SelectTrigger className="mt-1 h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="zh-CN">中文</SelectItem>
-                  <SelectItem value="en-US">英文</SelectItem>
-                  <SelectItem value="multi">多语言</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center justify-between">
+                <label className="text-xs text-muted-foreground">
+                  模板内容
+                </label>
+                <span className="text-[11px] text-muted-foreground tabular-nums">
+                  {content.length} 字符 · 预计 {Math.max(1, Math.ceil(content.length / 70))} 段
+                </span>
+              </div>
+              <Textarea
+                ref={textareaRef}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={6}
+                className="mt-1 font-mono text-xs"
+                placeholder="Hi {{联系人名}}, this is {{我的姓名}} from {{我的公司}}. Reply STOP to opt out."
+              />
+              {channel === "marketing" && (
+                <div className={cn(
+                  "mt-1.5 text-[11px] flex items-start gap-1",
+                  hasOptOut ? "text-emerald-600" : "text-rose-600",
+                )}>
+                  {hasOptOut ? <CheckCircle2 className="h-3 w-3 mt-0.5" /> : <AlertTriangle className="h-3 w-3 mt-0.5" />}
+                  {hasOptOut ? "已包含退订提示（STOP / 退订 / TD）" : "营销类必须包含退订提示，否则无法保存"}
+                </div>
+              )}
+            </div>
+
+            {/* 预览面板（ST-03） */}
+            <div className="rounded-md border bg-muted/30 p-3 space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-medium">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                预览效果
+                <span className="text-[10px] text-muted-foreground font-normal">
+                  （示例数据）
+                </span>
+              </div>
+              <div className="rounded bg-background border p-2.5 text-sm whitespace-pre-wrap font-mono min-h-[3rem]">
+                {preview.text || <span className="text-muted-foreground">在上方输入模板内容即可预览…</span>}
+              </div>
+              {preview.unresolved.length > 0 && (
+                <div className="text-[11px] text-amber-700 flex items-start gap-1">
+                  <AlertTriangle className="h-3 w-3 mt-0.5" />
+                  未识别变量：{preview.unresolved.map((v) => `{{${v}}}`).join("、")}
+                  <span className="text-muted-foreground">（发送时将保留原样）</span>
+                </div>
+              )}
             </div>
           </div>
-          <div>
-            <label className="text-xs text-muted-foreground">内容（可插入变量 {"{{...}}"}）</label>
-            <Textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={5}
-              className="mt-1 font-mono text-xs"
-              placeholder="Hi {{联系人名}}, ... Reply STOP to opt out."
-            />
-            <div className="mt-1 text-[11px] text-muted-foreground">
-              长度：{content.length} 字符 · 预计 {Math.max(1, Math.ceil(content.length / 70))} 段
-            </div>
+
+          {/* 右：变量面板（ST-02） */}
+          <div className="col-span-2">
+            <div className="text-xs text-muted-foreground mb-1.5">可用变量（点击插入）</div>
+            <Tabs defaultValue="contact" className="w-full">
+              <TabsList className="grid grid-cols-3 h-8">
+                <TabsTrigger value="system" className="text-xs">系统</TabsTrigger>
+                <TabsTrigger value="contact" className="text-xs">联系人</TabsTrigger>
+                <TabsTrigger value="dynamic" className="text-xs">动态</TabsTrigger>
+              </TabsList>
+              {(Object.keys(VAR_GROUPS) as Array<keyof typeof VAR_GROUPS>).map((k) => (
+                <TabsContent key={k} value={k} className="mt-2 space-y-1.5 max-h-72 overflow-y-auto pr-1">
+                  {VAR_GROUPS[k].items.map((v) => (
+                    <button
+                      key={v.key}
+                      type="button"
+                      onClick={() => insertVar(v.key)}
+                      className="w-full text-left rounded-md border bg-background hover:border-primary/50 hover:bg-primary/5 px-2.5 py-1.5 transition-colors group"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <code className="text-xs font-medium text-primary">{`{{${v.key}}}`}</code>
+                        <span className="text-[10px] text-muted-foreground group-hover:text-primary">
+                          插入 →
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                        {v.desc} · 示例：<span className="font-mono">{v.sample}</span>
+                      </div>
+                    </button>
+                  ))}
+                </TabsContent>
+              ))}
+            </Tabs>
           </div>
         </div>
+
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            取消
-          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
           <Button onClick={submit}>{isEdit ? "重新提交审核" : "提交审核"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** 列表行独立的预览弹窗（ST-03 只读预览） */
+function PreviewDialog({
+  template,
+  onOpenChange,
+}: {
+  template: Tpl | null;
+  onOpenChange: (o: boolean) => void;
+}) {
+  const preview = useMemo(
+    () => (template ? renderPreview(template.content) : { text: "", unresolved: [] }),
+    [template],
+  );
+  return (
+    <Dialog open={!!template} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            模板预览
+          </DialogTitle>
+          <DialogDescription>
+            使用示例数据替换 <code className="text-xs">{"{{变量}}"}</code> 后的实际发送效果。
+          </DialogDescription>
+        </DialogHeader>
+        {template && (
+          <div className="space-y-3">
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">原始模板</div>
+              <div className="rounded border bg-muted/40 p-2.5 text-xs font-mono whitespace-pre-wrap">
+                {template.content}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">预览效果</div>
+              <div className="rounded border bg-emerald-50/50 border-emerald-200 p-2.5 text-sm whitespace-pre-wrap">
+                {preview.text}
+              </div>
+              {preview.unresolved.length > 0 && (
+                <div className="text-[11px] text-amber-700 mt-1.5 flex items-start gap-1">
+                  <AlertTriangle className="h-3 w-3 mt-0.5" />
+                  未识别变量：{preview.unresolved.map((v) => `{{${v}}}`).join("、")}
+                </div>
+              )}
+            </div>
+            <div className="text-[11px] text-muted-foreground">
+              长度：{template.content.length} 字符 · 预计 {Math.max(1, Math.ceil(template.content.length / 70))} 段
+            </div>
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>关闭</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
