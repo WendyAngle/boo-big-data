@@ -7,6 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -103,6 +109,58 @@ function SuppressionsPage() {
           </Button>
         </div>
       </div>
+
+      <Card className="px-4 py-1">
+        <Accordion type="single" collapsible>
+          <AccordionItem value="src" className="border-0">
+            <AccordionTrigger className="py-2 text-sm hover:no-underline">
+              来源说明：STOP 关键字 / 硬退信 分别是什么？
+            </AccordionTrigger>
+            <AccordionContent className="pb-3">
+              <div className="grid gap-3 md:grid-cols-2 text-xs">
+                <div className="rounded-md border bg-muted/30 p-3 space-y-1.5">
+                  <div className="flex items-center gap-1.5 font-medium text-sm">
+                    <Phone className="h-3.5 w-3.5 text-primary" />
+                    STOP 关键字（短信）
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed">
+                    国际短信合规要求：收件人回复退订关键字即视为退订，服务商（Twilio / Vonage 等）会自动拦截后续营销短信，发送方必须同步加入退订名单，否则面临封号与合规处罚（美国 TCPA / CTIA、欧盟 GDPR）。
+                  </p>
+                  <div className="pt-1 space-y-0.5">
+                    <div>
+                      <span className="text-muted-foreground">常见关键字：</span>
+                      <code className="text-[11px]">STOP · UNSUBSCRIBE · END · CANCEL · 退订 · TD</code>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">反向恢复：</span>
+                      <code className="text-[11px]">START · UNSTOP · YES</code>
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground pt-1">
+                    触发链路：用户回复 → 服务商 MO 回调 → 写入退订名单 → 后续任务跳过该号码，扣 0 积分。
+                  </p>
+                </div>
+                <div className="rounded-md border bg-muted/30 p-3 space-y-1.5">
+                  <div className="flex items-center gap-1.5 font-medium text-sm">
+                    <Mail className="h-3.5 w-3.5 text-primary" />
+                    硬退信 Hard Bounce（邮件）
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed">
+                    邮件投递时收到的<strong>永久性</strong>失败回执，代表该邮箱根本无法送达（邮箱不存在 / 已注销 / 域名 MX 失效 / 账号被封）。继续发送会拉低发件域与 IP 信誉度，导致其它正常邮件被判为垃圾邮件。
+                  </p>
+                  <div className="pt-1">
+                    <span className="text-muted-foreground">典型 SMTP 状态码：</span>
+                    <code className="text-[11px]">550 5.1.1 · 550 5.1.10 · 553</code>
+                  </div>
+                  <p className="text-muted-foreground pt-1">
+                    对比<strong>软退信</strong>（收件箱满 / 服务器超时等临时故障）：可稍后重试，<strong>不</strong>入退订名单。
+                  </p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </Card>
 
       <Card className="p-0 overflow-hidden">
         <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-2">
