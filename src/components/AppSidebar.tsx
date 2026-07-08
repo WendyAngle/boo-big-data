@@ -92,6 +92,7 @@ const menu: Root[] = [
 
 export function AppSidebar() {
   const { location } = useRouterState();
+  const badge = useSidebarBadge();
   const [open, setOpen] = useState<Record<string, boolean>>({
     出海大数据平台: true,
     客户发现: true,
