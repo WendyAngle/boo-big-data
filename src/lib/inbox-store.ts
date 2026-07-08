@@ -759,13 +759,82 @@ export function resetInboxMeta() {
 
 /* -------------------- Assign (v2) -------------------- */
 
-export function assignThread(id: string, userId: string | null, _reason?: string) {
+export function assignThread(
+  id: string,
+  userId: string | null,
+  opts?: { reason?: string; crossGroup?: boolean; sendGreeting?: boolean },
+) {
   const m = metaStore[id];
   if (!m) return;
+  const from = m.assigneeId;
   m.assigneeId = userId ?? undefined;
   m.assignee = userId ? memberById(userId)?.name : undefined;
-  m.updatedAt = new Date().toISOString();
+  const now = new Date().toISOString();
+  m.updatedAt = now;
+  if (!m.assignmentEvents) m.assignmentEvents = [];
+  m.assignmentEvents.push({
+    id: makeId("ae"),
+    from,
+    to: userId ?? undefined,
+    reason: opts?.reason,
+    crossGroup: opts?.crossGroup,
+    greetingSent: opts?.sendGreeting,
+    at: now,
+  });
+  if (opts?.sendGreeting && userId) {
+    m.extraMessages.push({
+      id: makeId("ob"),
+      direction: "outbound",
+      createdAt: now,
+      fromName: memberById(userId)?.name || "你",
+      fromAddress: "",
+      content: `Hi, ${memberById(userId)?.name ?? "客服"} 接手您的会话，后续由我为您跟进，请随时提问。`,
+      events: [{ type: "delivered", at: now }],
+    });
+  }
   commit();
+}
+
+/** 从事件历史中提取该会话上一次的跟进人（去重、最近优先） */
+export function previousAssigneeIds(threadId: string): string[] {
+  const m = metaStore[threadId];
+  if (!m?.assignmentEvents) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (let i = m.assignmentEvents.length - 1; i >= 0; i--) {
+    const to = m.assignmentEvents[i].to;
+    if (to && !seen.has(to) && to !== m.assigneeId) {
+      seen.add(to);
+      out.push(to);
+    }
+  }
+  return out;
+}
+
+/** 计算 SLA 状态：基于最后一条 inbound 时间 + 分组首响阈值 */
+export function slaInfo(t: Thread): {
+  deadlineMs: number;
+  leftMs: number;
+  overdue: boolean;
+  approaching: boolean;
+} | null {
+  if (t.meta.status === "handled" || t.meta.status === "suppressed" || t.meta.status === "snoozed")
+    return null;
+  const lastIn = [...t.messages].reverse().find((m) => m.direction === "inbound");
+  if (!lastIn) return null;
+  const cfg = GROUP_SLA[threadGroup(t)];
+  // 已分配后按"每次回复 SLA"；未分配按"首响 SLA"
+  const budgetMs = t.meta.assigneeId
+    ? cfg.replyHour * 3600_000
+    : cfg.firstResponseMin * 60_000;
+  const deadlineMs = new Date(lastIn.createdAt).getTime() + budgetMs;
+  const leftMs = deadlineMs - Date.now();
+  return {
+    deadlineMs,
+    leftMs,
+    overdue: leftMs < 0,
+    approaching: leftMs >= 0 && leftMs < budgetMs * 0.2,
+  };
 }
 
 /* -------------------- Demo social threads (Phase 1 mock) -------------------- */
