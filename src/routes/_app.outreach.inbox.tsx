@@ -352,8 +352,23 @@ function InboxPage() {
         {/* 左栏：视图侧栏 —— 分「分派」「状态」两段，窄屏（<1280px）折叠为列表顶部下拉 */}
         <aside className="hidden xl:block w-52 shrink-0 border-r bg-muted/20 py-3 overflow-y-auto">
           <div className="px-3 text-[11px] text-muted-foreground mb-1 font-medium tracking-wide">
-            分派
+            智能视图
           </div>
+          <FilterItem
+            active={view === "my_todo"}
+            label="我的待办"
+            icon={Pin}
+            count={smartCounts.myTodo}
+            onClick={() => goto({ view: "my_todo", tid: undefined })}
+          />
+          <FilterItem
+            active={view === "due_soon"}
+            label="即将超时"
+            icon={AlarmClock}
+            count={smartCounts.dueSoon}
+            onClick={() => goto({ view: "due_soon", tid: undefined })}
+            dot={smartCounts.dueSoon > 0 ? "rose" : undefined}
+          />
           <FilterItem
             active={view === "unassigned"}
             label="未分配"
@@ -362,70 +377,74 @@ function InboxPage() {
             dot="amber"
           />
           <FilterItem
-            active={view === "mine"}
-            label="我的"
-            count={
-              threads.filter((t) => t.meta.assigneeId === CURRENT_TEAM_USER_ID)
-                .length
-            }
-            onClick={() => goto({ view: "mine", tid: undefined })}
-          />
-          <FilterItem
             active={view === "unread"}
             label="未读"
             count={counts.unread}
             onClick={() => goto({ view: "unread", tid: undefined })}
             dot="rose"
           />
-          <div className="px-3 mt-3 text-[11px] text-muted-foreground mb-1 font-medium tracking-wide">
-            状态
-          </div>
-          <FilterItem
-            active={view === "pending"}
-            label="待跟进"
-            count={counts.pending}
-            onClick={() => goto({ view: "pending", tid: undefined })}
-            dot="amber"
-          />
-          <FilterItem
-            active={view === "snoozed"}
-            label="稍后处理"
-            count={counts.snoozed}
-            onClick={() => goto({ view: "snoozed", tid: undefined })}
-          />
-          <FilterItem
-            active={view === "handled"}
-            label="已处理"
-            count={counts.handled}
-            onClick={() => goto({ view: "handled", tid: undefined })}
-          />
-          <FilterItem
-            active={view === "suppressed"}
-            label="已抑制"
-            count={counts.suppressed}
-            onClick={() => goto({ view: "suppressed", tid: undefined })}
-          />
-          <FilterItem
-            active={view === "all"}
-            label="全部"
-            count={counts.all}
-            onClick={() => goto({ view: "all", tid: undefined })}
-          />
-          <div className="px-3 mt-3 text-[11px] text-muted-foreground mb-1 font-medium tracking-wide">
-            响应
-          </div>
-          <FilterItem
-            active={view === "hasReply"}
-            label="有回复"
-            count={counts.hasReply}
-            onClick={() => goto({ view: "hasReply", tid: undefined })}
-          />
-          <FilterItem
-            active={view === "noReply"}
-            label="未回复"
-            count={counts.noReply}
-            onClick={() => goto({ view: "noReply", tid: undefined })}
-          />
+          <button
+            type="button"
+            onClick={() => setMoreOpen((v) => !v)}
+            className="w-full mt-3 px-3 flex items-center justify-between text-[11px] text-muted-foreground font-medium tracking-wide hover:text-foreground"
+          >
+            <span>更多视图</span>
+            <ChevronDownIcon
+              className={cn("h-3 w-3 transition-transform", moreOpen && "rotate-180")}
+            />
+          </button>
+          {moreOpen && (
+            <div className="mt-1">
+              <FilterItem
+                active={view === "mine"}
+                label="我的全部"
+                count={smartCounts.mine}
+                onClick={() => goto({ view: "mine", tid: undefined })}
+              />
+              <FilterItem
+                active={view === "pending"}
+                label="待跟进"
+                count={counts.pending}
+                onClick={() => goto({ view: "pending", tid: undefined })}
+              />
+              <FilterItem
+                active={view === "snoozed"}
+                label="稍后处理"
+                count={counts.snoozed}
+                onClick={() => goto({ view: "snoozed", tid: undefined })}
+              />
+              <FilterItem
+                active={view === "handled"}
+                label="已处理"
+                count={counts.handled}
+                onClick={() => goto({ view: "handled", tid: undefined })}
+              />
+              <FilterItem
+                active={view === "suppressed"}
+                label="已抑制"
+                count={counts.suppressed}
+                onClick={() => goto({ view: "suppressed", tid: undefined })}
+              />
+              <FilterItem
+                active={view === "hasReply"}
+                label="有回复"
+                count={counts.hasReply}
+                onClick={() => goto({ view: "hasReply", tid: undefined })}
+              />
+              <FilterItem
+                active={view === "noReply"}
+                label="未回复"
+                count={counts.noReply}
+                onClick={() => goto({ view: "noReply", tid: undefined })}
+              />
+              <FilterItem
+                active={view === "all"}
+                label="全部"
+                count={counts.all}
+                onClick={() => goto({ view: "all", tid: undefined })}
+              />
+            </div>
+          )}
         </aside>
 
         {/* 中栏：会话列表 */}
