@@ -47,6 +47,7 @@ import { Route as AppOutreachAdminSmsTemplatesRouteImport } from './routes/_app.
 import { Route as AppOutreachAdminSmsRoutingRouteImport } from './routes/_app.outreach.admin.sms-routing'
 import { Route as AppOutreachAdminSmsProvidersRouteImport } from './routes/_app.outreach.admin.sms-providers'
 import { Route as AppOutreachAdminInquiryDispatchRouteImport } from './routes/_app.outreach.admin.inquiry-dispatch'
+import { Route as AppOutreachAdminEmailProvidersRouteImport } from './routes/_app.outreach.admin.email-providers'
 import { Route as AppOutreachEnterpriseIdIndexRouteImport } from './routes/_app.outreach.enterprise.$id.index'
 import { Route as AppOutreachEnterpriseIdContactIdxRouteImport } from './routes/_app.outreach.enterprise.$id.contact.$idx'
 
@@ -251,6 +252,12 @@ const AppOutreachAdminInquiryDispatchRoute =
     path: '/outreach/admin/inquiry-dispatch',
     getParentRoute: () => AppRoute,
   } as any)
+const AppOutreachAdminEmailProvidersRoute =
+  AppOutreachAdminEmailProvidersRouteImport.update({
+    id: '/outreach/admin/email-providers',
+    path: '/outreach/admin/email-providers',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppOutreachEnterpriseIdIndexRoute =
   AppOutreachEnterpriseIdIndexRouteImport.update({
     id: '/',
@@ -288,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/points/recharges': typeof AppPointsRechargesRoute
   '/outreach/': typeof AppOutreachIndexRoute
   '/points/': typeof AppPointsIndexRoute
+  '/outreach/admin/email-providers': typeof AppOutreachAdminEmailProvidersRoute
   '/outreach/admin/inquiry-dispatch': typeof AppOutreachAdminInquiryDispatchRoute
   '/outreach/admin/sms-providers': typeof AppOutreachAdminSmsProvidersRoute
   '/outreach/admin/sms-routing': typeof AppOutreachAdminSmsRoutingRoute
@@ -328,6 +336,7 @@ export interface FileRoutesByTo {
   '/points/recharges': typeof AppPointsRechargesRoute
   '/outreach': typeof AppOutreachIndexRoute
   '/points': typeof AppPointsIndexRoute
+  '/outreach/admin/email-providers': typeof AppOutreachAdminEmailProvidersRoute
   '/outreach/admin/inquiry-dispatch': typeof AppOutreachAdminInquiryDispatchRoute
   '/outreach/admin/sms-providers': typeof AppOutreachAdminSmsProvidersRoute
   '/outreach/admin/sms-routing': typeof AppOutreachAdminSmsRoutingRoute
@@ -370,6 +379,7 @@ export interface FileRoutesById {
   '/_app/points/recharges': typeof AppPointsRechargesRoute
   '/_app/outreach/': typeof AppOutreachIndexRoute
   '/_app/points/': typeof AppPointsIndexRoute
+  '/_app/outreach/admin/email-providers': typeof AppOutreachAdminEmailProvidersRoute
   '/_app/outreach/admin/inquiry-dispatch': typeof AppOutreachAdminInquiryDispatchRoute
   '/_app/outreach/admin/sms-providers': typeof AppOutreachAdminSmsProvidersRoute
   '/_app/outreach/admin/sms-routing': typeof AppOutreachAdminSmsRoutingRoute
@@ -413,6 +423,7 @@ export interface FileRouteTypes {
     | '/points/recharges'
     | '/outreach/'
     | '/points/'
+    | '/outreach/admin/email-providers'
     | '/outreach/admin/inquiry-dispatch'
     | '/outreach/admin/sms-providers'
     | '/outreach/admin/sms-routing'
@@ -453,6 +464,7 @@ export interface FileRouteTypes {
     | '/points/recharges'
     | '/outreach'
     | '/points'
+    | '/outreach/admin/email-providers'
     | '/outreach/admin/inquiry-dispatch'
     | '/outreach/admin/sms-providers'
     | '/outreach/admin/sms-routing'
@@ -494,6 +506,7 @@ export interface FileRouteTypes {
     | '/_app/points/recharges'
     | '/_app/outreach/'
     | '/_app/points/'
+    | '/_app/outreach/admin/email-providers'
     | '/_app/outreach/admin/inquiry-dispatch'
     | '/_app/outreach/admin/sms-providers'
     | '/_app/outreach/admin/sms-routing'
@@ -784,6 +797,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachAdminInquiryDispatchRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/outreach/admin/email-providers': {
+      id: '/_app/outreach/admin/email-providers'
+      path: '/outreach/admin/email-providers'
+      fullPath: '/outreach/admin/email-providers'
+      preLoaderRoute: typeof AppOutreachAdminEmailProvidersRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/outreach/enterprise/$id/': {
       id: '/_app/outreach/enterprise/$id/'
       path: '/'
@@ -857,6 +877,7 @@ interface AppRouteChildren {
   AppPointsRechargesRoute: typeof AppPointsRechargesRoute
   AppOutreachIndexRoute: typeof AppOutreachIndexRoute
   AppPointsIndexRoute: typeof AppPointsIndexRoute
+  AppOutreachAdminEmailProvidersRoute: typeof AppOutreachAdminEmailProvidersRoute
   AppOutreachAdminInquiryDispatchRoute: typeof AppOutreachAdminInquiryDispatchRoute
   AppOutreachAdminSmsProvidersRoute: typeof AppOutreachAdminSmsProvidersRoute
   AppOutreachAdminSmsRoutingRoute: typeof AppOutreachAdminSmsRoutingRoute
@@ -895,6 +916,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPointsRechargesRoute: AppPointsRechargesRoute,
   AppOutreachIndexRoute: AppOutreachIndexRoute,
   AppPointsIndexRoute: AppPointsIndexRoute,
+  AppOutreachAdminEmailProvidersRoute: AppOutreachAdminEmailProvidersRoute,
   AppOutreachAdminInquiryDispatchRoute: AppOutreachAdminInquiryDispatchRoute,
   AppOutreachAdminSmsProvidersRoute: AppOutreachAdminSmsProvidersRoute,
   AppOutreachAdminSmsRoutingRoute: AppOutreachAdminSmsRoutingRoute,
