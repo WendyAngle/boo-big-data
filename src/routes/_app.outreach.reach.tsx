@@ -654,6 +654,32 @@ function ChannelBadge({ channel, platform }: { channel: ReachChannel; platform?:
   );
 }
 
+function ReplyCell({ reach, thread }: { reach: { channel?: ReachChannel }; thread: Thread | null }) {
+  if (!thread || thread.channel === undefined) {
+    // social 类无 threadKey
+    if (reach.channel !== "email" && reach.channel !== "phone") {
+      return <span className="text-[11px] text-muted-foreground">—</span>;
+    }
+  }
+  const replies = thread?.meta.inboundMessages.length ?? 0;
+  if (!thread || replies === 0) {
+    return <span className="text-[11px] text-muted-foreground">未回复</span>;
+  }
+  return (
+    <Link
+      to="/outreach/inbox"
+      search={{ tid: thread.id, view: "all" }}
+      className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-100"
+      title="打开收件箱查看回复"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <MessageCircleReply className="h-3 w-3" />
+      {replies > 1 ? `已回复 ${replies}` : "已回复"}
+      <InboxIcon className="h-3 w-3 opacity-60" />
+    </Link>
+  );
+}
+
 function StatusBadge({ status }: { status: ReachStatus }) {
   const Icon =
     status === "pending"
