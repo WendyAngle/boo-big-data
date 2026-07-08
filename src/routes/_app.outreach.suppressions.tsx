@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Ban, Mail, Phone, Plus, Search, Trash2, Upload } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Accordion,
   AccordionContent,
@@ -43,6 +46,7 @@ import {
   removeSuppression,
   useSuppressions,
   type SuppressionKind,
+  type SuppressionRecord,
 } from "@/lib/suppressions-store";
 
 export const Route = createFileRoute("/_app/outreach/suppressions")({
@@ -64,6 +68,13 @@ function SuppressionsPage() {
   const [q, setQ] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [removeTargets, setRemoveTargets] = useState<string[] | null>(null);
+
+  // 切换 tab / 搜索时清空选择，避免跨视图误操作
+  useEffect(() => {
+    setSelected(new Set());
+  }, [tab, q]);
 
   const counts = useMemo(
     () => ({
@@ -85,6 +96,23 @@ function SuppressionsPage() {
       )
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }, [list, tab, q]);
+
+  const allChecked = filtered.length > 0 && filtered.every((r) => selected.has(r.id));
+  const someChecked = filtered.some((r) => selected.has(r.id));
+  const selectedInView = filtered.filter((r) => selected.has(r.id));
+
+  function toggleAll(v: boolean) {
+    const next = new Set(selected);
+    if (v) filtered.forEach((r) => next.add(r.id));
+    else filtered.forEach((r) => next.delete(r.id));
+    setSelected(next);
+  }
+  function toggleOne(id: string, v: boolean) {
+    const next = new Set(selected);
+    if (v) next.add(id);
+    else next.delete(id);
+    setSelected(next);
+  }
 
   return (
     <div className="p-6 space-y-4">
@@ -178,12 +206,23 @@ function SuppressionsPage() {
             count={counts.phone}
             onClick={() => setTab("phone")}
           />
+          {selectedInView.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+              onClick={() => setRemoveTargets(selectedInView.map((r) => r.id))}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              批量移除 ({selectedInView.length})
+            </Button>
+          )}
           <div className="ml-auto relative w-72">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="搜索地址 / 原因 / 来源"
+              placeholder={tab === "email" ? "按邮箱 / 原因 / 来源搜索" : "按手机号 / 原因 / 来源搜索"}
               className="pl-8 h-8"
             />
           </div>
@@ -191,6 +230,13 @@ function SuppressionsPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10">
+                <Checkbox
+                  checked={allChecked ? true : someChecked ? "indeterminate" : false}
+                  onCheckedChange={(v) => toggleAll(v === true)}
+                  aria-label="全选"
+                />
+              </TableHead>
               <TableHead className="w-[280px]">{tab === "email" ? "邮箱" : "手机号"}</TableHead>
               <TableHead>原因</TableHead>
               <TableHead>来源</TableHead>
@@ -201,13 +247,20 @@ function SuppressionsPage() {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-sm text-muted-foreground py-10">
+                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-10">
                   暂无退订记录
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((r) => (
                 <TableRow key={r.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selected.has(r.id)}
+                      onCheckedChange={(v) => toggleOne(r.id, v === true)}
+                      aria-label="选中"
+                    />
+                  </TableCell>
                   <TableCell className="font-mono text-xs">{r.value}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-xs">
@@ -225,10 +278,7 @@ function SuppressionsPage() {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 text-rose-600 hover:text-rose-700"
-                      onClick={() => {
-                        removeSuppression(r.id);
-                        toast.success("已移除，后续可再次触达");
-                      }}
+                      onClick={() => setRemoveTargets([r.id])}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -242,6 +292,23 @@ function SuppressionsPage() {
 
       <AddOneDialog open={addOpen} onOpenChange={setAddOpen} defaultKind={tab} />
       <ImportDialog open={importOpen} onOpenChange={setImportOpen} defaultKind={tab} />
+      <RemoveDialog
+        ids={removeTargets}
+        items={list}
+        onOpenChange={(o) => {
+          if (!o) setRemoveTargets(null);
+        }}
+        onConfirmed={(ids) => {
+          ids.forEach((id) => removeSuppression(id));
+          setSelected((prev) => {
+            const next = new Set(prev);
+            ids.forEach((id) => next.delete(id));
+            return next;
+          });
+          setRemoveTargets(null);
+          toast.success(`已移除 ${ids.length} 条，该地址已恢复可触达状态`);
+        }}
+      />
     </div>
   );
 }
@@ -375,6 +442,125 @@ function AddOneDialog({
             取消
           </Button>
           <Button onClick={submit}>确认添加</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const REMOVE_REASONS = [
+  { value: "误操作加入", desc: "被错误加入退订名单，需要恢复" },
+  { value: "客户主动恢复", desc: "客户来信/来电确认希望恢复接收" },
+  { value: "测试数据清理", desc: "清理测试环境产生的记录" },
+  { value: "其他", desc: "其他情况，请在备注中说明" },
+] as const;
+
+function RemoveDialog({
+  ids,
+  items,
+  onOpenChange,
+  onConfirmed,
+}: {
+  ids: string[] | null;
+  items: SuppressionRecord[];
+  onOpenChange: (open: boolean) => void;
+  onConfirmed: (ids: string[]) => void;
+}) {
+  const [reason, setReason] = useState<string>(REMOVE_REASONS[0].value);
+  const [note, setNote] = useState("");
+  const open = ids !== null && ids.length > 0;
+  const targets = useMemo(
+    () => (ids ? items.filter((r) => ids.includes(r.id)) : []),
+    [ids, items],
+  );
+
+  useEffect(() => {
+    if (open) {
+      setReason(REMOVE_REASONS[0].value);
+      setNote("");
+    }
+  }, [open]);
+
+  function submit() {
+    if (!ids || ids.length === 0) return;
+    if (reason === "其他" && !note.trim()) {
+      toast.error("选择「其他」时请填写备注说明");
+      return;
+    }
+    // 备注仅用于前端确认交互，store 无字段存储；此处仅作用户确认凭据。
+    onConfirmed(ids);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>确认移除退订记录</DialogTitle>
+          <DialogDescription>
+            移除后，共 <strong>{targets.length}</strong> 个地址将恢复可触达状态，后续触达任务不再自动跳过。请选择本次移除的原因，以便审计追溯。
+          </DialogDescription>
+        </DialogHeader>
+
+        {targets.length > 0 && (
+          <div className="rounded-md border bg-muted/40 max-h-32 overflow-auto px-3 py-2 space-y-1">
+            {targets.slice(0, 8).map((r) => (
+              <div key={r.id} className="font-mono text-xs text-muted-foreground">
+                {r.value}
+              </div>
+            ))}
+            {targets.length > 8 && (
+              <div className="text-xs text-muted-foreground">
+                …另有 {targets.length - 8} 条
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label className="text-sm">移除原因</Label>
+            <RadioGroup value={reason} onValueChange={setReason} className="gap-2">
+              {REMOVE_REASONS.map((r) => (
+                <label
+                  key={r.value}
+                  htmlFor={`rm-${r.value}`}
+                  className={cn(
+                    "flex items-start gap-2 rounded-md border p-2.5 cursor-pointer text-sm transition-colors",
+                    reason === r.value ? "border-primary bg-primary/5" : "hover:bg-muted/50",
+                  )}
+                >
+                  <RadioGroupItem value={r.value} id={`rm-${r.value}`} className="mt-0.5" />
+                  <div className="space-y-0.5">
+                    <div className="font-medium">{r.value}</div>
+                    <div className="text-xs text-muted-foreground">{r.desc}</div>
+                  </div>
+                </label>
+              ))}
+            </RadioGroup>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm">
+              备注{reason === "其他" && <span className="text-rose-500 ml-1">*</span>}
+            </Label>
+            <Textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={reason === "其他" ? "请说明本次移除的具体情况" : "可选"}
+              rows={2}
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            取消
+          </Button>
+          <Button
+            className="bg-rose-600 hover:bg-rose-700 text-white"
+            onClick={submit}
+          >
+            确认移除
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
