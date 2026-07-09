@@ -249,12 +249,17 @@ function InboxPage() {
     let needsHuman = 0;
     for (const t of threads) {
       if (t.meta.aiIntent === "interested" || t.meta.aiIntent === "quote") high++;
-      if (
-        t.meta.aiIntent === "complaint" ||
-        t.meta.aiIntent === "unsubscribe" ||
-        !t.meta.assigneeId
-      )
-        needsHuman++;
+      if (!t.meta.humanTakeover) {
+        const sla = slaInfo(t);
+        if (
+          t.meta.aiIntent === "complaint" ||
+          t.meta.aiIntent === "unsubscribe" ||
+          !t.meta.assigneeId ||
+          (sla && sla.overdue)
+        ) {
+          needsHuman++;
+        }
+      }
     }
     return { high, needsHuman };
   }, [threads]);
@@ -305,10 +310,16 @@ function InboxPage() {
       );
     else if (view === "needs_human")
       list = list.filter(
-        (t) =>
-          t.meta.aiIntent === "complaint" ||
-          t.meta.aiIntent === "unsubscribe" ||
-          !!t.meta.assigneeId === false,
+        (t) => {
+          if (t.meta.humanTakeover) return false;
+          const sla = slaInfo(t);
+          return (
+            t.meta.aiIntent === "complaint" ||
+            t.meta.aiIntent === "unsubscribe" ||
+            !t.meta.assigneeId ||
+            (!!sla && sla.overdue)
+          );
+        },
       );
     if (q.trim()) {
       const kw = q.trim().toLowerCase();
