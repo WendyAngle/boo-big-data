@@ -147,6 +147,8 @@ export interface ThreadMessage {
   subject?: string;
   content: string;
   aiGenerated?: boolean;
+  /** 对方回复的中文译文（仅 inbound 且原文非中文时提供） */
+  contentZh?: string;
   /** outbound 关联的 ledger id */
   ledgerId?: string;
   /** outbound 送达事件（模拟） */
