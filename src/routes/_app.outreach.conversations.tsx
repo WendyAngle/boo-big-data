@@ -204,8 +204,8 @@ const VIEW_LABEL: Record<ViewKey, string> = {
   unassigned: "未分配",
   unread: "未读",
   mine: "我的全部",
-  pending: "待跟进",
-  waiting: "等待回复",
+  pending: "待我回复",
+  waiting: "等客回复",
   snoozed: "稍后处理",
   won: "已成交",
   lost: "已流失",
@@ -455,8 +455,8 @@ function InboxPage() {
               <SelectItem value="all">状态：全部（{counts.all}）</SelectItem>
               <SelectGroup>
                 <SelectLabel>生命周期</SelectLabel>
-                <SelectItem value="pending">待回复（{counts.pending}）</SelectItem>
-                <SelectItem value="waiting">等待回复（{counts.waiting}）</SelectItem>
+                <SelectItem value="pending">待我回复（{counts.pending}）</SelectItem>
+                <SelectItem value="waiting">等客回复（{counts.waiting}）</SelectItem>
                 <SelectItem value="snoozed">稍后处理（{counts.snoozed}）</SelectItem>
                 <SelectItem value="won">已成交（{counts.won}）</SelectItem>
                 <SelectItem value="lost">已流失（{counts.lost}）</SelectItem>
@@ -641,7 +641,7 @@ function ThreadRow({
                     : "bg-amber-500 hover:bg-amber-500 text-white",
                 )}
               >
-                {isUnread ? "待回复" : "待跟进"}
+                {isUnread ? "待我回复" : "跟进中"}
               </Badge>
             )}
             {thread.parentRef && (

@@ -47,8 +47,8 @@ export const INTENT_COLOR: Record<AiIntent, string> = {
 };
 
 export const STATUS_LABEL: Record<ThreadStatus, string> = {
-  pending: "待跟进",
-  waiting_reply: "等待回复",
+  pending: "待我回复",
+  waiting_reply: "等客回复",
   in_cadence: "跟进中",
   snoozed: "已稍后处理",
   won: "已成交",
