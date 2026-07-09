@@ -81,6 +81,7 @@ export const Route = createFileRoute("/_app/outreach/unlocked")({
 
 type ChannelFilter = "all" | "email" | "sms" | "social" | "whatsapp";
 type OwnerFilter = "all" | "enterprise" | "person";
+type AggregateMode = "none" | "owner";
 
 const REVEAL_LIMIT = 10;
 
@@ -314,6 +315,7 @@ function UnlockedPage() {
   const [q, setQ] = useState("");
   const [channel, setChannel] = useState<ChannelFilter>("all");
   const [owner, setOwner] = useState<OwnerFilter>("all");
+  const [aggregate, setAggregate] = useState<AggregateMode>("none");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -395,7 +397,7 @@ function UnlockedPage() {
     : "解锁时间";
 
   const groupedByDate = useMemo(() => {
-    // First bucket contacts by date, then aggregate by owner within each day
+    // First bucket contacts by date, then optionally aggregate by owner within each day
     const byDate = new Map<string, UnlockedContact[]>();
     for (const c of filtered) {
       const k = dateKeyOf(c.unlock_time);
@@ -404,33 +406,50 @@ function UnlockedPage() {
     }
     const out: { dateKey: string; count: number; groups: ContactGroup[] }[] = [];
     for (const [dateKey, list] of byDate.entries()) {
-      const map = new Map<string, ContactGroup>();
-      for (const c of list) {
-        const k = `${c.owner_type}:${c.owner_id}`;
-        let g = map.get(k);
-        if (!g) {
-          g = {
-            key: `${dateKey}:${k}`,
+      let groups: ContactGroup[];
+      if (aggregate === "owner") {
+        const map = new Map<string, ContactGroup>();
+        for (const c of list) {
+          const k = `${c.owner_type}:${c.owner_id}`;
+          let g = map.get(k);
+          if (!g) {
+            g = {
+              key: `${dateKey}:${k}`,
+              owner_type: c.owner_type,
+              owner_id: c.owner_id,
+              owner_name: c.owner_name,
+              parent_ref: c.parent_ref,
+              contacts: [],
+              latestUnlock: 0,
+            };
+            map.set(k, g);
+          }
+          g.contacts.push(c);
+          if (!g.parent_ref && c.parent_ref) g.parent_ref = c.parent_ref;
+          if (c.unlock_time > g.latestUnlock) g.latestUnlock = c.unlock_time;
+        }
+        groups = Array.from(map.values()).sort(
+          (a, b) => b.latestUnlock - a.latestUnlock,
+        );
+      } else {
+        // Flat: one card per contact
+        groups = list
+          .slice()
+          .sort((a, b) => b.unlock_time - a.unlock_time)
+          .map((c) => ({
+            key: `${dateKey}:${c.owner_type}:${c.owner_id}:${c.contact_type}:${c.contact_value}`,
             owner_type: c.owner_type,
             owner_id: c.owner_id,
             owner_name: c.owner_name,
             parent_ref: c.parent_ref,
-            contacts: [],
-            latestUnlock: 0,
-          };
-          map.set(k, g);
-        }
-        g.contacts.push(c);
-        if (!g.parent_ref && c.parent_ref) g.parent_ref = c.parent_ref;
-        if (c.unlock_time > g.latestUnlock) g.latestUnlock = c.unlock_time;
+            contacts: [c],
+            latestUnlock: c.unlock_time,
+          }));
       }
-      const groups = Array.from(map.values()).sort(
-        (a, b) => b.latestUnlock - a.latestUnlock,
-      );
       out.push({ dateKey, count: list.length, groups });
     }
     return out.sort((a, b) => (a.dateKey < b.dateKey ? 1 : -1));
-  }, [filtered]);
+  }, [filtered, aggregate]);
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -542,10 +561,28 @@ function UnlockedPage() {
             </PopoverContent>
           </Popover>
         </div>
-        <div className="text-xs text-muted-foreground">
-          共 <span className="font-medium text-foreground">{stats.count}</span> 条 ·{" "}
-          <span className="font-medium text-foreground">{stats.enterprises}</span> 家企业 ·{" "}
-          <span className="font-medium text-foreground">{stats.persons}</span> 位人物
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="text-xs text-muted-foreground">
+            共 <span className="font-medium text-foreground">{stats.count}</span> 条 ·{" "}
+            <span className="font-medium text-foreground">{stats.enterprises}</span> 家企业 ·{" "}
+            <span className="font-medium text-foreground">{stats.persons}</span> 位人物
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">展示方式</span>
+            <Tabs
+              value={aggregate}
+              onValueChange={(v) => setAggregate(v as AggregateMode)}
+            >
+              <TabsList className="h-8">
+                <TabsTrigger value="none" className="text-xs px-2.5">
+                  平铺
+                </TabsTrigger>
+                <TabsTrigger value="owner" className="text-xs px-2.5">
+                  按企业 / 人物聚合
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
       </Card>
 
