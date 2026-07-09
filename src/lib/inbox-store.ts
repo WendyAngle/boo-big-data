@@ -416,7 +416,7 @@ const SMS_INTENT_TEMPLATES: Array<{ intent: AiIntent; bodies: ReplyBody[] }> = [
   { intent: "complaint", bodies: [{ body: "Stop texting me!", zh: "不要再给我发短信了！" }] },
 ];
 
-function pickSmsIntent(seed: number): { intent: AiIntent; body: string } {
+function pickSmsIntent(seed: number): { intent: AiIntent; body: string; zh?: string } {
   // SMS 权重：意向 20% / 询价 15% / OOO 10% / 拒绝 30% / 退订 20% / 投诉 5%
   const w = [20, 35, 45, 75, 95, 100];
   const kind = ["interested", "quote", "ooo", "reject", "unsubscribe", "complaint"] as const;
@@ -424,11 +424,11 @@ function pickSmsIntent(seed: number): { intent: AiIntent; body: string } {
   const idx = w.findIndex((x) => p < x);
   const intent = kind[Math.max(0, idx)];
   const tpl = SMS_INTENT_TEMPLATES.find((t) => t.intent === intent)!;
-  const body = tpl.bodies[seed % tpl.bodies.length];
-  return { intent, body };
+  const pick = tpl.bodies[seed % tpl.bodies.length];
+  return { intent, body: pick.body, zh: pick.zh };
 }
 
-function pickIntent(seed: number): { intent: AiIntent; body: string } {
+function pickIntent(seed: number): { intent: AiIntent; body: string; zh?: string } {
   // 权重：意向 30% / 询价 25% / OOO 15% / 拒绝 20% / 退订 7% / 投诉 3%
   const w = [30, 55, 70, 90, 97, 100];
   const kind = ["interested", "quote", "ooo", "reject", "unsubscribe", "complaint"] as const;
@@ -436,8 +436,8 @@ function pickIntent(seed: number): { intent: AiIntent; body: string } {
   const idx = w.findIndex((x) => p < x);
   const intent = kind[Math.max(0, idx)];
   const tpl = INTENT_TEMPLATES.find((t) => t.intent === intent)!;
-  const body = tpl.bodies[seed % tpl.bodies.length];
-  return { intent, body };
+  const pick = tpl.bodies[seed % tpl.bodies.length];
+  return { intent, body: pick.body, zh: pick.zh };
 }
 
 /** 首次访问收件箱时，对已有邮件触达按 ~40% 概率补上一条对方回复 */
@@ -455,7 +455,7 @@ function seedInboundIfNeeded(entries: LedgerEntry[]) {
     // SMS 回复率更低（~25%），邮件 ~40%
     const threshold = isSms ? 25 : 40;
     if (h % 100 < threshold) {
-      const { intent, body } = isSms ? pickSmsIntent(h) : pickIntent(h);
+      const { intent, body, zh } = isSms ? pickSmsIntent(h) : pickIntent(h);
       // 回复时间：发送后 4~72 小时
       const sentAt = new Date(r.createdAt).getTime();
       const delayH = 4 + (h % 68);
@@ -471,6 +471,7 @@ function seedInboundIfNeeded(entries: LedgerEntry[]) {
         fromAddress: r.detail || "",
         subject: r.subject ? `Re: ${r.subject}` : undefined,
         content: body,
+        contentZh: zh && !isChinese(body) ? zh : undefined,
       });
       m.aiIntent = intent;
       m.unread = 1;
