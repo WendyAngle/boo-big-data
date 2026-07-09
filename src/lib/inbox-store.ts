@@ -1141,7 +1141,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     lastInboundZh: "你好，请问可以寄样品吗？",
     hoursAgo: 3,
     windowLeftHours: null, // 窗口已过期
-    aiIntent: "ooo",
+    aiIntent: "interested",
     assigneeId: "u_li",
   },
   {
