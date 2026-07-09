@@ -183,6 +183,13 @@ interface ThreadMeta {
   tasks: Array<{ id: string; title: string; dueAt?: string; done: boolean }>;
   /** 是否已加入跟进序列 */
   cadenceEnrolled?: boolean;
+  /** 人工接管标记：当 AI/自动流程无法胜任时，由人工员工显式接管；接管后会话从「人工接管」筛选中移除，形成闭环 */
+  humanTakeover?: {
+    at: string;
+    byId: string;
+    byName: string;
+    reason?: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
