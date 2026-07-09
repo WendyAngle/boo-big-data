@@ -866,6 +866,8 @@ function ThreadDetail({
       });
       setReply("");
       setSelectedTpl("");
+      if (typeof window !== "undefined") window.localStorage.removeItem(draftKey);
+      setDraftSavedAt(null);
       setSending(false);
       toast.success(winInfo?.closed ? "已通过 HSM 模板发送" : "回复已发送");
     }, 400);
