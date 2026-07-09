@@ -242,8 +242,7 @@ function InboxPage() {
   }, [threads]);
   // 从企业/联系人详情等入口带 tid 直接进入时，默认使用 “全部” 视图，
   // 避免出现「右侧展示了会话，中间列表却提示"该视图下暂无会话"」的错位。
-  const view: ViewKey = search.view ?? (search.tid ? "all" : "my_todo");
-  const [moreOpen, setMoreOpen] = useState(false);
+  const view: ViewKey = search.view ?? "all";
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
   const group = search.group ?? "all";
@@ -280,6 +279,18 @@ function InboxPage() {
         const s = slaInfo(t);
         return !!s && (s.overdue || s.approaching);
       });
+    else if (view === "high_intent")
+      list = list.filter(
+        (t) =>
+          t.meta.aiIntent === "interested" || t.meta.aiIntent === "quote",
+      );
+    else if (view === "needs_human")
+      list = list.filter(
+        (t) =>
+          t.meta.aiIntent === "complaint" ||
+          t.meta.aiIntent === "unsubscribe" ||
+          !!t.meta.assigneeId === false,
+      );
     if (q.trim()) {
       const kw = q.trim().toLowerCase();
       list = list.filter(
