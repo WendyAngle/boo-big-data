@@ -30,7 +30,7 @@ export function AccountMenu() {
                 {user.name}
               </div>
               <div className="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">
-                {user.role}
+                {user.phone}
               </div>
             </div>
             <ChevronUp className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground shrink-0" />
