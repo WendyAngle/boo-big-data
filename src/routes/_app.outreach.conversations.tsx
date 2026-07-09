@@ -369,21 +369,41 @@ function InboxPage() {
       {/* 顶栏 */}
       <div className="h-12 px-4 border-b flex items-center gap-2 shrink-0">
         <InboxIcon className="h-4 w-4 text-primary shrink-0" />
-        <div className="font-semibold text-sm shrink-0">询盘与回复</div>
-        <div className="flex items-center gap-1 shrink-0 text-[11px]">
-          <Badge variant="secondary" className="h-5 px-1.5 font-medium">
-            {viewLabel(view)} {displayList.length}
-          </Badge>
-          <span className="text-muted-foreground">/ 全部 {counts.all}</span>
-          {smartCounts.dueSoon > 0 && view !== "due_soon" && (
-            <button
-              onClick={() => goto({ view: "due_soon", tid: undefined })}
-              className="ml-1 inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-1.5 h-5 text-rose-700 hover:bg-rose-100 transition-colors"
-              title="点击查看即将超时会话"
-            >
-              <AlarmClock className="h-3 w-3" />
-              即将超时 {smartCounts.dueSoon}
-            </button>
+        <div className="font-semibold text-sm shrink-0">
+          询盘与回复
+          <span className="ml-1 text-muted-foreground font-normal">({counts.all})</span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0 text-[11px] text-muted-foreground">
+          {counts.unread > 0 && (
+            <>
+              <span className="text-border">|</span>
+              <button
+                onClick={() => goto({ view: "unread", tid: undefined })}
+                className={cn(
+                  "inline-flex items-center gap-1 transition-colors hover:text-rose-700",
+                  view === "unread" ? "text-rose-700 font-medium" : "",
+                )}
+                title="点击查看未读会话"
+              >
+                未读 <span className="tabular-nums">{counts.unread}</span>
+              </button>
+            </>
+          )}
+          {smartCounts.dueSoon > 0 && (
+            <>
+              <span className="text-border">|</span>
+              <button
+                onClick={() => goto({ view: "due_soon", tid: undefined })}
+                className={cn(
+                  "inline-flex items-center gap-1 transition-colors hover:text-amber-700",
+                  view === "due_soon" ? "text-amber-700 font-medium" : "",
+                )}
+                title="点击查看即将超时会话"
+              >
+                即将超时 <span className="tabular-nums">{smartCounts.dueSoon}</span>
+                <AlarmClock className="h-3 w-3 text-amber-600" />
+              </button>
+            </>
           )}
         </div>
         <div className="flex-1 min-w-0 max-w-xs relative">
