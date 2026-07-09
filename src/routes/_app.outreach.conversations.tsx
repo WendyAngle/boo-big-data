@@ -287,8 +287,12 @@ function InboxPage() {
       list = list.filter((t) => t.meta.inboundMessages.length > 0);
     else if (view === "noReply")
       list = list.filter((t) => t.meta.inboundMessages.length === 0);
-    else if (view === "handled")
-      list = list.filter((t) => t.meta.status === "handled");
+    else if (view === "won")
+      list = list.filter((t) => t.meta.status === "won");
+    else if (view === "lost")
+      list = list.filter((t) => t.meta.status === "lost");
+    else if (view === "waiting")
+      list = list.filter((t) => t.meta.status === "waiting_reply");
     else if (view === "snoozed")
       list = list.filter((t) => t.meta.status === "snoozed");
     else if (view === "suppressed")
