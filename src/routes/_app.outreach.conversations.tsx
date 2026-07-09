@@ -162,6 +162,8 @@ const searchSchema = z.object({
   group: z.enum(["all", "enterprise", "contact"]).optional(),
   tid: z.string().optional(),
   q: z.string().optional(),
+  /** 意向档位过滤：高/中/低/全部（左侧列表顶部 Tab） */
+  intent: z.enum(["all", "high", "mid", "low"]).optional(),
   // 从"最新沟通"胶囊中的"AI 回复"进入时，自动生成一条 AI 草稿。
   action: z.enum(["ai"]).optional(),
 });
