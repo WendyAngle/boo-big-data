@@ -67,7 +67,7 @@ const menu: Root[] = [
         children: [
           { label: "我的收藏", to: "/outreach/favorites" },
           { label: "浏览足迹", to: "/outreach/footprints" },
-          { label: "解锁记录", to: "/outreach/unlocked", icon: KeyRound },
+          { label: "解锁记录", to: "/outreach/unlocked" },
           { label: "触达任务", to: "/outreach/reach" },
           { label: "询盘与回复", to: "/outreach/conversations" },
           { label: "退订名单", to: "/outreach/suppressions" },
