@@ -669,90 +669,67 @@ function ThreadRow({
             </span>
             {thread.lastPreview}
           </div>
-          <div className="mt-1.5 flex items-center gap-1 flex-wrap">
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-[10px] py-0 px-1.5 h-5",
-                CHANNEL_COLOR[thread.channel],
-              )}
-            >
-              {CHANNEL_LABEL[thread.channel]}
-            </Badge>
-            <Badge
-              variant="outline"
-              className="text-[10px] py-0 px-1.5 h-5 gap-0.5"
-              title={GROUP_LABEL[threadGroup(thread)]}
-            >
-              {threadGroup(thread) === "enterprise" ? (
-                <Building2 className="h-2.5 w-2.5" />
-              ) : (
-                <UserRound className="h-2.5 w-2.5" />
-              )}
-              {threadGroup(thread) === "enterprise" ? "企业" : "人物"}
-            </Badge>
-            {thread.meta.assigneeId ? (
-              <Badge
-                variant="outline"
-                className="text-[10px] py-0 px-1.5 h-5 bg-primary/5 text-primary border-primary/20"
-              >
-                <UserCheck className="h-2.5 w-2.5 mr-0.5" />
-                {memberById(thread.meta.assigneeId)?.name ?? "已分配"}
-              </Badge>
-            ) : (
-              <Badge
-                variant="outline"
-                className="text-[10px] py-0 px-1.5 h-5 bg-amber-50 text-amber-700 border-amber-200"
-              >
-                未分配
-              </Badge>
-            )}
-            <Badge
-              variant="outline"
-              className="text-[10px] py-0 px-1.5 h-5"
-            >
-              {STATUS_LABEL[thread.meta.status]}
-            </Badge>
-            {sla && (
-              <Badge
-                variant="outline"
-                className={cn(
-                  "text-[10px] py-0 px-1.5 h-5",
-                  sla.overdue
-                    ? "bg-rose-50 text-rose-700 border-rose-200"
-                    : sla.approaching
-                      ? "bg-amber-50 text-amber-700 border-amber-200"
-                      : "bg-emerald-50 text-emerald-700 border-emerald-200",
-                )}
-              >
-                <Clock className="h-2.5 w-2.5 mr-0.5" />
-                {sla.overdue
-                  ? `逾期 ${formatShort(-sla.leftMs)}`
-                  : sla.approaching
-                    ? `即将超时 ${formatShort(sla.leftMs)}`
-                    : `SLA ${formatShort(sla.leftMs)}`}
-              </Badge>
-            )}
-            {thread.meta.aiIntent && (
-              <Badge
-                variant="outline"
-                className={cn(
-                  "text-[10px] py-0 px-1.5 h-5",
-                  INTENT_COLOR[thread.meta.aiIntent],
-                )}
-              >
-                {INTENT_LABEL[thread.meta.aiIntent]}
-              </Badge>
-            )}
-            {thread.meta.tags.map((t) => (
-              <Badge
-                key={t}
-                variant="outline"
-                className="text-[10px] py-0 px-1.5 h-5"
-              >
-                {t}
-              </Badge>
-            ))}
+          {/* 精简徽标行：只保留 1 枚最高优先级状态标签 + 渠道图标 */}
+          <div className="mt-1.5 flex items-center gap-1.5 text-muted-foreground">
+            {(() => {
+              const CI = channelIcon(thread.channel);
+              return (
+                <CI
+                  className="h-3 w-3 shrink-0"
+                  aria-label={CHANNEL_LABEL[thread.channel]}
+                />
+              );
+            })()}
+            <span className="text-[10px]">{CHANNEL_LABEL[thread.channel]}</span>
+            {(() => {
+              // 单一优先级徽标：逾期 > 即将超时 > 高意向 > 接管中 > 未分配
+              if (sla?.overdue) {
+                return (
+                  <Badge className="ml-auto h-4 py-0 px-1.5 text-[10px] bg-rose-500 hover:bg-rose-500 text-white gap-0.5">
+                    <AlarmClock className="h-2.5 w-2.5" />
+                    逾期 {formatShort(-sla.leftMs)}
+                  </Badge>
+                );
+              }
+              if (sla?.approaching) {
+                return (
+                  <Badge className="ml-auto h-4 py-0 px-1.5 text-[10px] bg-amber-500 hover:bg-amber-500 text-white gap-0.5">
+                    <Clock className="h-2.5 w-2.5" />
+                    即将超时 {formatShort(sla.leftMs)}
+                  </Badge>
+                );
+              }
+              if (
+                thread.meta.aiIntent === "interested" ||
+                thread.meta.aiIntent === "quote"
+              ) {
+                return (
+                  <Badge className="ml-auto h-4 py-0 px-1.5 text-[10px] bg-emerald-500 hover:bg-emerald-500 text-white gap-0.5">
+                    <Sparkles className="h-2.5 w-2.5" />
+                    {INTENT_LABEL[thread.meta.aiIntent]}
+                  </Badge>
+                );
+              }
+              if (thread.meta.humanTakeover) {
+                return null; // humanTakeover 已在标题行显示"接管中"
+              }
+              if (!thread.meta.assigneeId) {
+                return (
+                  <Badge
+                    variant="outline"
+                    className="ml-auto h-4 py-0 px-1.5 text-[10px] bg-amber-50 text-amber-700 border-amber-200"
+                  >
+                    未分配
+                  </Badge>
+                );
+              }
+              return (
+                <span className="ml-auto text-[10px] inline-flex items-center gap-0.5">
+                  <UserCheck className="h-2.5 w-2.5" />
+                  {memberById(thread.meta.assigneeId)?.name}
+                </span>
+              );
+            })()}
           </div>
         </div>
       </div>
@@ -777,6 +754,45 @@ function ThreadDetail({
   const [aiLoading, setAiLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [selectedTpl, setSelectedTpl] = useState<string>("");
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+  const draftKey = `boo:inbox:draft:${thread.id}`;
+  // 切换会话：从 localStorage 恢复该会话的草稿
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(draftKey);
+      if (raw) {
+        const j = JSON.parse(raw) as { content?: string; savedAt?: string };
+        setReply(j.content ?? "");
+        setDraftSavedAt(j.savedAt ?? null);
+      } else {
+        setReply("");
+        setDraftSavedAt(null);
+      }
+    } catch {
+      setReply("");
+      setDraftSavedAt(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thread.id]);
+  // 草稿自动保存（1.2s 防抖）
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const h = window.setTimeout(() => {
+      if (reply.trim()) {
+        const savedAt = new Date().toISOString();
+        window.localStorage.setItem(
+          draftKey,
+          JSON.stringify({ content: reply, savedAt }),
+        );
+        setDraftSavedAt(savedAt);
+      } else {
+        window.localStorage.removeItem(draftKey);
+        setDraftSavedAt(null);
+      }
+    }, 1200);
+    return () => window.clearTimeout(h);
+  }, [reply, draftKey]);
   const lastInbound = [...thread.messages]
     .reverse()
     .find((m) => m.direction === "inbound");
@@ -850,6 +866,8 @@ function ThreadDetail({
       });
       setReply("");
       setSelectedTpl("");
+      if (typeof window !== "undefined") window.localStorage.removeItem(draftKey);
+      setDraftSavedAt(null);
       setSending(false);
       toast.success(winInfo?.closed ? "已通过 HSM 模板发送" : "回复已发送");
     }, 400);
@@ -1221,14 +1239,23 @@ function ThreadDetail({
             onClick={() => {
               setReply("");
               setSelectedTpl("");
+              if (typeof window !== "undefined")
+                window.localStorage.removeItem(draftKey);
+              setDraftSavedAt(null);
             }}
             disabled={(!reply && !selectedTpl) || sending}
           >
             清空
           </Button>
-          <span className="ml-auto text-xs text-muted-foreground">
-            回复后本会话状态自动切换为「等待回复」
-          </span>
+          <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
+            {draftSavedAt && (
+              <span className="inline-flex items-center gap-1 text-emerald-600">
+                <CheckCheck className="h-3 w-3" />
+                草稿已自动保存 · {relTime(draftSavedAt)}
+              </span>
+            )}
+            <span>回复后本会话状态自动切换为「等待回复」</span>
+          </div>
         </div>
       </div>
     </div>
@@ -1438,22 +1465,6 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
   return (
     <div className="flex items-center gap-1 shrink-0">
       <AssignMenu thread={thread} />
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={() => {
-          toggleStar(thread.id);
-        }}
-        aria-label="加星"
-      >
-        <Star
-          className={cn(
-            "h-4 w-4",
-            thread.meta.starred ? "fill-amber-400 text-amber-400" : "",
-          )}
-        />
-      </Button>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -1523,47 +1534,43 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
         </DropdownMenu>
       )}
 
-      <Button
-        variant={thread.meta.humanTakeover ? "default" : "outline"}
-        size="sm"
-        className={cn(
-          "gap-1 h-8",
-          thread.meta.humanTakeover &&
-            "bg-sky-500 hover:bg-sky-600 text-white border-sky-500",
-        )}
+      {/* 模式：人工接管 — 紧凑 toggle */}
+      <button
+        type="button"
         onClick={() => {
           const on = !thread.meta.humanTakeover;
           setHumanTakeover(thread.id, on);
           toast.success(
-            on
-              ? "已切换为人工接管，跟进序列已暂停"
-              : "已撤销人工接管，恢复自动跟进",
+            on ? "已切换为人工接管，跟进序列已暂停" : "已撤销人工接管，恢复自动跟进",
           );
         }}
         title={
           thread.meta.humanTakeover
-            ? "撤销人工接管，交回自动流程"
-            : "由我接管该会话，暂停自动跟进"
+            ? "人工接管中 · 点击撤销"
+            : "切换为人工接管（暂停自动跟进）"
         }
+        className={cn(
+          "ml-1 inline-flex items-center gap-1 h-8 px-2 rounded-md border text-xs transition-colors",
+          thread.meta.humanTakeover
+            ? "bg-sky-500 border-sky-500 text-white hover:bg-sky-600"
+            : "border-border text-muted-foreground hover:bg-muted",
+        )}
       >
         <Hand className="h-3.5 w-3.5" />
-        {thread.meta.humanTakeover ? "撤销接管" : "人工接管"}
-      </Button>
-
-      <Button
-        variant="outline"
-        size="sm"
-        className="gap-1 h-8"
-        onClick={() => {
-          enrollCadence(thread.id, !thread.meta.cadenceEnrolled);
-          toast.success(
-            thread.meta.cadenceEnrolled ? "已退出跟进序列" : "已加入 3/7/14 天跟进序列",
-          );
-        }}
-      >
-        <Repeat className="h-3.5 w-3.5" />
-        {thread.meta.cadenceEnrolled ? "退出序列" : "加入序列"}
-      </Button>
+        <span
+          className={cn(
+            "h-3 w-6 rounded-full relative transition-colors",
+            thread.meta.humanTakeover ? "bg-white/40" : "bg-muted-foreground/30",
+          )}
+        >
+          <span
+            className={cn(
+              "absolute top-0.5 h-2 w-2 rounded-full bg-white transition-all",
+              thread.meta.humanTakeover ? "left-3.5" : "left-0.5",
+            )}
+          />
+        </span>
+      </button>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -1572,6 +1579,34 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuItem
+            onClick={() => {
+              toggleStar(thread.id);
+              toast.success(thread.meta.starred ? "已取消加星" : "已加星");
+            }}
+          >
+            <Star
+              className={cn(
+                "h-3.5 w-3.5 mr-2",
+                thread.meta.starred ? "fill-amber-400 text-amber-400" : "",
+              )}
+            />
+            {thread.meta.starred ? "取消加星" : "加星"}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              enrollCadence(thread.id, !thread.meta.cadenceEnrolled);
+              toast.success(
+                thread.meta.cadenceEnrolled
+                  ? "已退出跟进序列"
+                  : "已加入 3/7/14 天跟进序列",
+              );
+            }}
+          >
+            <Repeat className="h-3.5 w-3.5 mr-2" />
+            {thread.meta.cadenceEnrolled ? "退出跟进序列" : "加入跟进序列"}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuLabel>标签 / 分类</DropdownMenuLabel>
           <div className="px-2 py-1.5 flex items-center gap-1">
             <Input
