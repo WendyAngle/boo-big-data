@@ -308,56 +308,112 @@ function ensureMeta(threadId: string, createdAt: string): ThreadMeta {
 
 /* -------------------- Reply seed data -------------------- */
 
-const INTENT_TEMPLATES: Array<{ intent: AiIntent; bodies: string[] }> = [
+type ReplyBody = { body: string; zh?: string };
+
+/** 若原文本身是中文，则不再重复提供 zh 译文 */
+function isChinese(s: string) {
+  return /[\u4e00-\u9fa5]/.test(s);
+}
+
+const INTENT_TEMPLATES: Array<{ intent: AiIntent; bodies: ReplyBody[] }> = [
   {
     intent: "interested",
     bodies: [
-      "Thanks for reaching out — this actually aligns with what we're evaluating this quarter. Could you share a short deck and pricing tiers?",
-      "很感兴趣，方便本周内做个 30 分钟的电话会吗？也请把资料一并发一下。",
-      "Sounds interesting. Please loop in our procurement lead — cc'd. What are the typical MOQs?",
+      {
+        body: "Thanks for reaching out — this actually aligns with what we're evaluating this quarter. Could you share a short deck and pricing tiers?",
+        zh: "感谢来信 —— 这与我们本季度正在评估的方向正好吻合。可否发一份简短的资料和分档报价？",
+      },
+      { body: "很感兴趣，方便本周内做个 30 分钟的电话会吗？也请把资料一并发一下。" },
+      {
+        body: "Sounds interesting. Please loop in our procurement lead — cc'd. What are the typical MOQs?",
+        zh: "看起来不错。已将我们的采购负责人加入抄送，请一并沟通。你们通常的最小起订量是多少？",
+      },
     ],
   },
   {
     intent: "quote",
     bodies: [
-      "Could you send a formal quote for 5,000 units, delivered CIF Rotterdam? Also, lead time please.",
-      "麻烦按 20HQ 报个 FOB 深圳的价，含目录里 SKU-A 和 SKU-C，谢谢。",
+      {
+        body: "Could you send a formal quote for 5,000 units, delivered CIF Rotterdam? Also, lead time please.",
+        zh: "请就 5,000 件、CIF 鹿特丹交付方式提供正式报价，同时请告知交货周期。",
+      },
+      { body: "麻烦按 20HQ 报个 FOB 深圳的价，含目录里 SKU-A 和 SKU-C，谢谢。" },
     ],
   },
   {
     intent: "ooo",
     bodies: [
-      "I'm out of office until Monday with limited email access. For urgent matters please contact my colleague.",
-      "我正在休假，将于下周一回复邮件，紧急事项请联系同事 David。",
+      {
+        body: "I'm out of office until Monday with limited email access. For urgent matters please contact my colleague.",
+        zh: "我正在休假，下周一才会回来，期间邮件查看有限。如有紧急事项，请联系我的同事。",
+      },
+      { body: "我正在休假，将于下周一回复邮件，紧急事项请联系同事 David。" },
     ],
   },
   {
     intent: "reject",
     bodies: [
-      "Thanks but we already work with an existing supplier and are not looking to switch this year.",
-      "感谢来信，我们暂无相关采购计划，祝好。",
+      {
+        body: "Thanks but we already work with an existing supplier and are not looking to switch this year.",
+        zh: "感谢来信，我们已有长期合作的供应商，今年暂不打算更换，祝好。",
+      },
+      { body: "感谢来信，我们暂无相关采购计划，祝好。" },
     ],
   },
   {
     intent: "unsubscribe",
-    bodies: ["Please remove me from your list. Thanks."],
+    bodies: [{ body: "Please remove me from your list. Thanks.", zh: "请将我从你们的邮件列表中移除，谢谢。" }],
   },
   {
     intent: "complaint",
     bodies: [
-      "This is the third email this week — please stop contacting us or I will report as spam.",
+      {
+        body: "This is the third email this week — please stop contacting us or I will report as spam.",
+        zh: "这已经是本周的第三封邮件 —— 请停止联系我们，否则我将把邮件举报为垃圾邮件。",
+      },
     ],
   },
 ];
 
 /** SMS 场景下的短回复模板（比邮件更简短，含 STOP 关键字） */
-const SMS_INTENT_TEMPLATES: Array<{ intent: AiIntent; bodies: string[] }> = [
-  { intent: "interested", bodies: ["Interested — send details please.", "有兴趣，请发资料到我邮箱。", "Ok, share your catalog."] },
-  { intent: "quote", bodies: ["Send price for 5k units.", "报个 FOB 深圳的价"] },
-  { intent: "ooo", bodies: ["On leave, back Mon.", "在休假，下周一联系"] },
-  { intent: "reject", bodies: ["No thanks.", "暂无采购计划"] },
-  { intent: "unsubscribe", bodies: ["STOP", "退订"] },
-  { intent: "complaint", bodies: ["Stop texting me!"] },
+const SMS_INTENT_TEMPLATES: Array<{ intent: AiIntent; bodies: ReplyBody[] }> = [
+  {
+    intent: "interested",
+    bodies: [
+      { body: "Interested — send details please.", zh: "有兴趣，请把详细资料发给我。" },
+      { body: "有兴趣，请发资料到我邮箱。" },
+      { body: "Ok, share your catalog.", zh: "好的，把你们的产品目录发过来。" },
+    ],
+  },
+  {
+    intent: "quote",
+    bodies: [
+      { body: "Send price for 5k units.", zh: "请报 5,000 件的价格。" },
+      { body: "报个 FOB 深圳的价" },
+    ],
+  },
+  {
+    intent: "ooo",
+    bodies: [
+      { body: "On leave, back Mon.", zh: "正在休假，下周一回。" },
+      { body: "在休假，下周一联系" },
+    ],
+  },
+  {
+    intent: "reject",
+    bodies: [
+      { body: "No thanks.", zh: "不需要，谢谢。" },
+      { body: "暂无采购计划" },
+    ],
+  },
+  {
+    intent: "unsubscribe",
+    bodies: [
+      { body: "STOP", zh: "退订" },
+      { body: "退订" },
+    ],
+  },
+  { intent: "complaint", bodies: [{ body: "Stop texting me!", zh: "不要再给我发短信了！" }] },
 ];
 
 function pickSmsIntent(seed: number): { intent: AiIntent; body: string } {
