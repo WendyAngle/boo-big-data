@@ -651,6 +651,7 @@ function ThreadRow({
   onClick: () => void;
 }) {
   const isUnread = thread.meta.unread > 0;
+  const isPending = thread.meta.status === "pending";
   const last = thread.messages[thread.messages.length - 1];
   const sla = slaInfo(thread);
   const woken =
@@ -662,7 +663,8 @@ function ThreadRow({
       className={cn(
         "w-full text-left px-4 py-3 border-b hover:bg-muted/40 transition-colors block",
         active && "bg-primary/5 border-l-2 border-l-primary",
-        !active && isUnread && "border-l-2 border-l-rose-400 bg-rose-50/30",
+        !active && isUnread && "border-l-2 border-l-rose-500 bg-rose-50/40",
+        !active && !isUnread && isPending && "border-l-2 border-l-amber-400 bg-amber-50/30",
         woken && "bg-amber-50/60",
       )}
     >
@@ -683,6 +685,18 @@ function ThreadRow({
             >
               {thread.targetName}
             </span>
+            {(isUnread || isPending) && (
+              <Badge
+                className={cn(
+                  "h-4 py-0 px-1.5 text-[10px] font-medium",
+                  isUnread
+                    ? "bg-rose-500 hover:bg-rose-500 text-white"
+                    : "bg-amber-500 hover:bg-amber-500 text-white",
+                )}
+              >
+                {isUnread ? "待回复" : "待跟进"}
+              </Badge>
+            )}
             {thread.parentRef && (
               <span className="text-[11px] text-muted-foreground truncate">
                 · {thread.parentRef.name}
