@@ -78,6 +78,7 @@ import {
   toggleStar,
   enrollCadence,
   suppressThread,
+  setHumanTakeover,
   addTag,
   addTaskForThread,
   updateIntent,
@@ -248,12 +249,17 @@ function InboxPage() {
     let needsHuman = 0;
     for (const t of threads) {
       if (t.meta.aiIntent === "interested" || t.meta.aiIntent === "quote") high++;
-      if (
-        t.meta.aiIntent === "complaint" ||
-        t.meta.aiIntent === "unsubscribe" ||
-        !t.meta.assigneeId
-      )
-        needsHuman++;
+      if (!t.meta.humanTakeover) {
+        const sla = slaInfo(t);
+        if (
+          t.meta.aiIntent === "complaint" ||
+          t.meta.aiIntent === "unsubscribe" ||
+          !t.meta.assigneeId ||
+          (sla && sla.overdue)
+        ) {
+          needsHuman++;
+        }
+      }
     }
     return { high, needsHuman };
   }, [threads]);
@@ -304,10 +310,16 @@ function InboxPage() {
       );
     else if (view === "needs_human")
       list = list.filter(
-        (t) =>
-          t.meta.aiIntent === "complaint" ||
-          t.meta.aiIntent === "unsubscribe" ||
-          !!t.meta.assigneeId === false,
+        (t) => {
+          if (t.meta.humanTakeover) return false;
+          const sla = slaInfo(t);
+          return (
+            t.meta.aiIntent === "complaint" ||
+            t.meta.aiIntent === "unsubscribe" ||
+            !t.meta.assigneeId ||
+            (!!sla && sla.overdue)
+          );
+        },
       );
     if (q.trim()) {
       const kw = q.trim().toLowerCase();
@@ -719,6 +731,14 @@ function ThreadRow({
                 已唤醒
               </Badge>
             )}
+            {thread.meta.humanTakeover && (
+              <Badge
+                className="h-4 py-0 px-1.5 text-[10px] font-medium shrink-0 whitespace-nowrap bg-sky-500 hover:bg-sky-500 text-white gap-0.5"
+                title={`已由 ${thread.meta.humanTakeover.byName} 接管`}
+              >
+                <Hand className="h-2.5 w-2.5" /> 接管中
+              </Badge>
+            )}
             <span className="ml-auto text-[11px] text-muted-foreground shrink-0">
               {relTime(thread.lastAt)}
             </span>
@@ -1013,6 +1033,20 @@ function ThreadDetail({
               {thread.meta.cadenceEnrolled && (
                 <Badge variant="outline" className="text-[11px]">
                   <Repeat className="h-3 w-3 mr-1" /> 已加入跟进序列
+                </Badge>
+              )}
+              {thread.meta.humanTakeover && (
+                <Badge
+                  variant="outline"
+                  className="text-[11px] bg-sky-50 text-sky-700 border-sky-200"
+                  title={
+                    thread.meta.humanTakeover.reason
+                      ? `原因：${thread.meta.humanTakeover.reason}`
+                      : undefined
+                  }
+                >
+                  <Hand className="h-3 w-3 mr-1" />
+                  已人工接管 · {thread.meta.humanTakeover.byName}
                 </Badge>
               )}
               {thread.meta.tags.map((t) => (
@@ -1543,6 +1577,33 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
       >
         <CheckCheck className="h-3.5 w-3.5" />
         {thread.meta.status === "handled" ? "撤销处理" : "标记已处理"}
+      </Button>
+
+      <Button
+        variant={thread.meta.humanTakeover ? "default" : "outline"}
+        size="sm"
+        className={cn(
+          "gap-1 h-8",
+          thread.meta.humanTakeover &&
+            "bg-sky-500 hover:bg-sky-600 text-white border-sky-500",
+        )}
+        onClick={() => {
+          const on = !thread.meta.humanTakeover;
+          setHumanTakeover(thread.id, on);
+          toast.success(
+            on
+              ? "已切换为人工接管，跟进序列已暂停"
+              : "已撤销人工接管，恢复自动跟进",
+          );
+        }}
+        title={
+          thread.meta.humanTakeover
+            ? "撤销人工接管，交回自动流程"
+            : "由我接管该会话，暂停自动跟进"
+        }
+      >
+        <Hand className="h-3.5 w-3.5" />
+        {thread.meta.humanTakeover ? "撤销接管" : "人工接管"}
       </Button>
 
       <Button
