@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   KeyRound,
@@ -63,6 +63,7 @@ import {
   type ContactType,
   type UnlockedContact,
 } from "@/lib/unlocked-contacts";
+import { seedDemoLedgerIfEmpty } from "@/lib/credits-ledger";
 import { isSuppressed } from "@/lib/suppressions-store";
 import type { DateRange } from "react-day-picker";
 
@@ -343,6 +344,10 @@ function StatTile({ label, value, hint }: { label: string; value: number; hint: 
 }
 
 function UnlockedPageInner() {
+  useEffect(() => {
+    seedDemoLedgerIfEmpty();
+  }, []);
+
   const all = useUnlockedContacts();
   const [q, setQ] = useState("");
   const [channel, setChannel] = useState<ChannelFilter>("all");

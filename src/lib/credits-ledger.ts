@@ -230,7 +230,8 @@ export interface LedgerEntry {
 }
 
 const LEDGER_KEY = "boo:ledger:v2";
-const LEDGER_SEED_FLAG = "boo:ledger:v13:seeded";
+const LEDGER_SEED_VERSION = "v14";
+const LEDGER_SEED_FLAG = `boo:ledger:${LEDGER_SEED_VERSION}:seeded`;
 const REVEAL_KEY = "boo:reveal:v1";
 const UNLOCK_KEY = "boo:unlocked:v1";
 
@@ -859,10 +860,53 @@ function isoMinutesAgo(min: number) {
   return new Date(Date.now() - min * 60_000).toISOString();
 }
 
+function unlockableSeedDateKeys(arr: LedgerEntry[]): Set<string> {
+  const dates = new Set<string>();
+  for (const e of arr) {
+    if (e.kind === "reach") {
+      dates.add(e.createdAt.slice(0, 10));
+      continue;
+    }
+    if (
+      e.kind === "view" &&
+      (e.field === "email" || e.field === "phone" || e.field === "social")
+    ) {
+      dates.add(e.createdAt.slice(0, 10));
+    }
+  }
+  return dates;
+}
+
+function clearLegacyLedgerSeedFlags() {
+  if (typeof window === "undefined") return;
+  try {
+    for (const key of Object.keys(window.localStorage)) {
+      if (/^boo:ledger:v\d+:seeded$/.test(key) && key !== LEDGER_SEED_FLAG) {
+        window.localStorage.removeItem(key);
+      }
+    }
+  } catch {}
+}
+
+function hasLegacyLedgerSeedFlag() {
+  if (typeof window === "undefined") return false;
+  try {
+    return Object.keys(window.localStorage).some(
+      (key) => /^boo:ledger:v\d+:seeded$/.test(key) && key !== LEDGER_SEED_FLAG,
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function seedDemoLedgerIfEmpty() {
   if (typeof window === "undefined") return;
   try {
     if (window.localStorage.getItem(LEDGER_SEED_FLAG)) return;
+    const existingLedger = readLedger();
+    const legacySeeded = hasLegacyLedgerSeedFlag();
+    const dateKeys = unlockableSeedDateKeys(existingLedger);
+    const staleSingleDaySeed = existingLedger.length >= 20 && dateKeys.size <= 1;
     // 天为单位的分钟数,用于将 seed 数据按日打散到最近两周,
     // 避免所有解锁/触达记录都堆到今天,更贴近真实使用节奏。
     const D = 1440;
@@ -1254,8 +1298,9 @@ export function seedDemoLedgerIfEmpty() {
         detail: "订单 R20260612143012 · ¥179 · 赠 100 积分",
       },
     ];
-    ledger = [...seed, ...ledger];
+    ledger = legacySeeded || staleSingleDaySeed ? seed : [...seed, ...ledger];
     writeLedger(ledger);
+    clearLegacyLedgerSeedFlags();
     window.localStorage.setItem(LEDGER_SEED_FLAG, "1");
     emitLedger();
     // seed 完成后同步一次永久解锁集,保证 mock view 数据默认呈现明文
