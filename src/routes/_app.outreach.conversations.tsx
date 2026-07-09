@@ -1239,14 +1239,23 @@ function ThreadDetail({
             onClick={() => {
               setReply("");
               setSelectedTpl("");
+              if (typeof window !== "undefined")
+                window.localStorage.removeItem(draftKey);
+              setDraftSavedAt(null);
             }}
             disabled={(!reply && !selectedTpl) || sending}
           >
             清空
           </Button>
-          <span className="ml-auto text-xs text-muted-foreground">
-            回复后本会话状态自动切换为「等待回复」
-          </span>
+          <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
+            {draftSavedAt && (
+              <span className="inline-flex items-center gap-1 text-emerald-600">
+                <CheckCheck className="h-3 w-3" />
+                草稿已自动保存 · {relTime(draftSavedAt)}
+              </span>
+            )}
+            <span>回复后本会话状态自动切换为「等待回复」</span>
+          </div>
         </div>
       </div>
     </div>
