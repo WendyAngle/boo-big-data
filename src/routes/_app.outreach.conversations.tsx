@@ -688,7 +688,7 @@ function ThreadRow({
             {(isUnread || isPending) && (
               <Badge
                 className={cn(
-                  "h-4 py-0 px-1.5 text-[10px] font-medium",
+                  "h-4 py-0 px-1.5 text-[10px] font-medium shrink-0 whitespace-nowrap",
                   isUnread
                     ? "bg-rose-500 hover:bg-rose-500 text-white"
                     : "bg-amber-500 hover:bg-amber-500 text-white",
