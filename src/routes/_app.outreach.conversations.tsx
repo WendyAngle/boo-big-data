@@ -145,6 +145,8 @@ const searchSchema = z.object({
       "mine",
       "my_todo",
       "due_soon",
+      "high_intent",
+      "needs_human",
     ])
     .optional(),
   ch: z
@@ -203,6 +205,8 @@ const VIEW_LABEL: Record<ViewKey, string> = {
   hasReply: "有回复",
   noReply: "未回复",
   all: "全部",
+  high_intent: "高意向",
+  needs_human: "人工接管",
 };
 function viewLabel(v: ViewKey) {
   return VIEW_LABEL[v] ?? "全部";
@@ -236,10 +240,24 @@ function InboxPage() {
     }
     return { myTodo, dueSoon, mine };
   }, [threads]);
+  // 按标签维度的计数（用于中栏顶部的标签筛选条）
+  const intentCounts = useMemo(() => {
+    let high = 0;
+    let needsHuman = 0;
+    for (const t of threads) {
+      if (t.meta.aiIntent === "interested" || t.meta.aiIntent === "quote") high++;
+      if (
+        t.meta.aiIntent === "complaint" ||
+        t.meta.aiIntent === "unsubscribe" ||
+        !t.meta.assigneeId
+      )
+        needsHuman++;
+    }
+    return { high, needsHuman };
+  }, [threads]);
   // 从企业/联系人详情等入口带 tid 直接进入时，默认使用 “全部” 视图，
   // 避免出现「右侧展示了会话，中间列表却提示"该视图下暂无会话"」的错位。
-  const view: ViewKey = search.view ?? (search.tid ? "all" : "my_todo");
-  const [moreOpen, setMoreOpen] = useState(false);
+  const view: ViewKey = search.view ?? "all";
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
   const group = search.group ?? "all";
@@ -276,6 +294,18 @@ function InboxPage() {
         const s = slaInfo(t);
         return !!s && (s.overdue || s.approaching);
       });
+    else if (view === "high_intent")
+      list = list.filter(
+        (t) =>
+          t.meta.aiIntent === "interested" || t.meta.aiIntent === "quote",
+      );
+    else if (view === "needs_human")
+      list = list.filter(
+        (t) =>
+          t.meta.aiIntent === "complaint" ||
+          t.meta.aiIntent === "unsubscribe" ||
+          !!t.meta.assigneeId === false,
+      );
     if (q.trim()) {
       const kw = q.trim().toLowerCase();
       list = list.filter(
@@ -410,159 +440,17 @@ function InboxPage() {
         </div>
       </div>
       <div className="flex-1 flex min-h-0">
-        {/* 左栏：视图侧栏 —— 分「分派」「状态」两段，窄屏（<1280px）折叠为列表顶部下拉 */}
-        <aside className="hidden xl:block w-52 shrink-0 border-r bg-muted/20 py-3 overflow-y-auto">
-          <div className="px-3 text-[11px] text-muted-foreground mb-1 font-medium tracking-wide">
-            智能视图
-          </div>
-          <FilterItem
-            active={view === "my_todo"}
-            label="我的待办"
-            icon={Pin}
-            count={smartCounts.myTodo}
-            onClick={() => goto({ view: "my_todo", tid: undefined })}
-          />
-          <FilterItem
-            active={view === "due_soon"}
-            label="即将超时"
-            icon={AlarmClock}
-            count={smartCounts.dueSoon}
-            onClick={() => goto({ view: "due_soon", tid: undefined })}
-            dot={smartCounts.dueSoon > 0 ? "rose" : undefined}
-          />
-          <FilterItem
-            active={view === "unassigned"}
-            label="未分配"
-            count={counts.unassigned}
-            onClick={() => goto({ view: "unassigned", tid: undefined })}
-            dot="amber"
-          />
-          <FilterItem
-            active={view === "unread"}
-            label="未读"
-            count={counts.unread}
-            onClick={() => goto({ view: "unread", tid: undefined })}
-            dot="rose"
-          />
-          <button
-            type="button"
-            onClick={() => setMoreOpen((v) => !v)}
-            className="w-full mt-3 px-3 flex items-center justify-between text-[11px] text-muted-foreground font-medium tracking-wide hover:text-foreground"
-          >
-            <span>更多视图</span>
-            <ChevronDownIcon
-              className={cn("h-3 w-3 transition-transform", moreOpen && "rotate-180")}
-            />
-          </button>
-          {moreOpen && (
-            <div className="mt-1">
-              <FilterItem
-                active={view === "mine"}
-                label="我的全部"
-                count={smartCounts.mine}
-                onClick={() => goto({ view: "mine", tid: undefined })}
-              />
-              <FilterItem
-                active={view === "pending"}
-                label="待跟进"
-                count={counts.pending}
-                onClick={() => goto({ view: "pending", tid: undefined })}
-              />
-              <FilterItem
-                active={view === "snoozed"}
-                label="稍后处理"
-                count={counts.snoozed}
-                onClick={() => goto({ view: "snoozed", tid: undefined })}
-              />
-              <FilterItem
-                active={view === "handled"}
-                label="已处理"
-                count={counts.handled}
-                onClick={() => goto({ view: "handled", tid: undefined })}
-              />
-              <FilterItem
-                active={view === "suppressed"}
-                label="已抑制"
-                count={counts.suppressed}
-                onClick={() => goto({ view: "suppressed", tid: undefined })}
-              />
-              <FilterItem
-                active={view === "hasReply"}
-                label="有回复"
-                count={counts.hasReply}
-                onClick={() => goto({ view: "hasReply", tid: undefined })}
-              />
-              <FilterItem
-                active={view === "noReply"}
-                label="未回复"
-                count={counts.noReply}
-                onClick={() => goto({ view: "noReply", tid: undefined })}
-              />
-              <FilterItem
-                active={view === "all"}
-                label="全部"
-                count={counts.all}
-                onClick={() => goto({ view: "all", tid: undefined })}
-              />
-            </div>
-          )}
-        </aside>
-
         {/* 中栏：会话列表 */}
-        <div className="w-[300px] xl:w-[340px] shrink-0 border-r flex flex-col min-h-0">
-          {/* 窄屏下的视图下拉（xl 及以上由侧栏承担） */}
-          <div className="xl:hidden px-2 py-2 border-b bg-muted/20 shrink-0 flex items-center gap-2">
-            {/* 快捷 chip：分派维度 */}
-            <div className="flex items-center rounded-md border overflow-hidden">
-              {([
-                { k: "my_todo", label: "我的待办", n: smartCounts.myTodo },
-                { k: "due_soon", label: "即将超时", n: smartCounts.dueSoon },
-                { k: "unassigned", label: "未分配", n: counts.unassigned },
-                { k: "unread", label: "未读", n: counts.unread },
-              ] as const).map((c) => (
-                <button
-                  key={c.k}
-                  onClick={() => goto({ view: c.k, tid: undefined })}
-                  className={cn(
-                    "px-2 h-8 text-[11px] transition-colors border-l first:border-l-0",
-                    view === c.k ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted",
-                  )}
-                >
-                  {c.label}
-                  {c.n > 0 && <span className="ml-1 opacity-70">{c.n}</span>}
-                </button>
-              ))}
-            </div>
-            {/* 状态下拉 */}
-            <Select
-              value={view}
-              onValueChange={(v) => goto({ view: v as ViewKey, tid: undefined })}
-            >
-              <SelectTrigger className="h-8 text-xs flex-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>智能视图</SelectLabel>
-                  <SelectItem value="my_todo">我的待办 · {smartCounts.myTodo}</SelectItem>
-                  <SelectItem value="due_soon">即将超时 · {smartCounts.dueSoon}</SelectItem>
-                  <SelectItem value="unassigned">未分配 · {counts.unassigned}</SelectItem>
-                  <SelectItem value="unread">未读 · {counts.unread}</SelectItem>
-                </SelectGroup>
-                <SelectGroup>
-                  <SelectLabel>更多视图</SelectLabel>
-                  <SelectItem value="mine">我的全部 · {smartCounts.mine}</SelectItem>
-                  <SelectItem value="pending">待跟进 · {counts.pending}</SelectItem>
-                  <SelectItem value="snoozed">稍后处理 · {counts.snoozed}</SelectItem>
-                  <SelectItem value="handled">已处理 · {counts.handled}</SelectItem>
-                  <SelectItem value="suppressed">已抑制 · {counts.suppressed}</SelectItem>
-                  <SelectItem value="hasReply">有回复 · {counts.hasReply}</SelectItem>
-                  <SelectItem value="noReply">未回复 · {counts.noReply}</SelectItem>
-                  <SelectItem value="all">全部 · {counts.all}</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="w-[320px] xl:w-[380px] shrink-0 border-r flex flex-col min-h-0">
+          {/* 标签筛选：直接以意向/状态标签过滤全部回复 */}
+          <TagFilterBar
+            view={view}
+            counts={counts}
+            highIntentCount={intentCounts.high}
+            needsHumanCount={intentCounts.needsHuman}
+            dueSoonCount={smartCounts.dueSoon}
+            onChange={(v) => goto({ view: v, tid: undefined })}
+          />
           <div className="flex-1 overflow-y-auto">
             {displayList.length === 0 ? (
               <div className="p-10 text-center text-sm text-muted-foreground">
@@ -653,6 +541,93 @@ function FilterItem({
   );
 }
 
+function TagFilterBar({
+  view,
+  counts,
+  highIntentCount,
+  needsHumanCount,
+  dueSoonCount,
+  onChange,
+}: {
+  view: ViewKey;
+  counts: {
+    all: number;
+    unread: number;
+    pending: number;
+    unassigned: number;
+    handled: number;
+  };
+  highIntentCount: number;
+  needsHumanCount: number;
+  dueSoonCount: number;
+  onChange: (v: ViewKey) => void;
+}) {
+  const chips: Array<{
+    k: ViewKey;
+    label: string;
+    n: number;
+    tone?: "rose" | "emerald" | "amber" | "sky";
+  }> = [
+    { k: "all", label: "全部", n: counts.all },
+    { k: "pending", label: "待回复", n: counts.pending, tone: "rose" },
+    { k: "unread", label: "未读", n: counts.unread, tone: "rose" },
+    { k: "high_intent", label: "高意向", n: highIntentCount, tone: "emerald" },
+    { k: "needs_human", label: "人工接管", n: needsHumanCount, tone: "sky" },
+    { k: "due_soon", label: "即将超时", n: dueSoonCount, tone: "amber" },
+    { k: "unassigned", label: "未分配", n: counts.unassigned, tone: "amber" },
+    { k: "handled", label: "已处理", n: counts.handled },
+  ];
+  const toneClass = (
+    active: boolean,
+    tone?: "rose" | "emerald" | "amber" | "sky",
+  ) => {
+    if (active) return "bg-primary text-primary-foreground border-primary";
+    switch (tone) {
+      case "rose":
+        return "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100";
+      case "emerald":
+        return "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100";
+      case "amber":
+        return "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100";
+      case "sky":
+        return "bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100";
+      default:
+        return "bg-background text-foreground/80 border-border hover:bg-muted";
+    }
+  };
+  return (
+    <div className="px-2.5 py-2 border-b bg-muted/20 shrink-0 flex flex-wrap items-center gap-1.5">
+      {chips.map((c) => {
+        const active = view === c.k;
+        return (
+          <button
+            key={c.k}
+            onClick={() => onChange(c.k)}
+            className={cn(
+              "inline-flex items-center gap-1 h-7 px-2.5 rounded-full border text-[11px] transition-colors",
+              toneClass(active, c.tone),
+            )}
+          >
+            <span>{c.label}</span>
+            {c.n > 0 && (
+              <span
+                className={cn(
+                  "text-[10px] px-1 rounded-full",
+                  active
+                    ? "bg-primary-foreground/20 text-primary-foreground"
+                    : "bg-black/5 text-current",
+                )}
+              >
+                {c.n}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function relTime(iso: string) {
   const t = new Date(iso).getTime();
   const diff = Date.now() - t;
@@ -676,6 +651,7 @@ function ThreadRow({
   onClick: () => void;
 }) {
   const isUnread = thread.meta.unread > 0;
+  const isPending = thread.meta.status === "pending";
   const last = thread.messages[thread.messages.length - 1];
   const sla = slaInfo(thread);
   const woken =
@@ -687,7 +663,8 @@ function ThreadRow({
       className={cn(
         "w-full text-left px-4 py-3 border-b hover:bg-muted/40 transition-colors block",
         active && "bg-primary/5 border-l-2 border-l-primary",
-        !active && isUnread && "border-l-2 border-l-rose-400 bg-rose-50/30",
+        !active && isUnread && "border-l-2 border-l-rose-500 bg-rose-50/40",
+        !active && !isUnread && isPending && "border-l-2 border-l-amber-400 bg-amber-50/30",
         woken && "bg-amber-50/60",
       )}
     >
@@ -708,6 +685,18 @@ function ThreadRow({
             >
               {thread.targetName}
             </span>
+            {(isUnread || isPending) && (
+              <Badge
+                className={cn(
+                  "h-4 py-0 px-1.5 text-[10px] font-medium",
+                  isUnread
+                    ? "bg-rose-500 hover:bg-rose-500 text-white"
+                    : "bg-amber-500 hover:bg-amber-500 text-white",
+                )}
+              >
+                {isUnread ? "待回复" : "待跟进"}
+              </Badge>
+            )}
             {thread.parentRef && (
               <span className="text-[11px] text-muted-foreground truncate">
                 · {thread.parentRef.name}
