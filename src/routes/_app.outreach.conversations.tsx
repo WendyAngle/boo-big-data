@@ -406,7 +406,61 @@ function InboxPage() {
             </>
           )}
         </div>
-        <div className="flex-1 min-w-0 max-w-xs relative">
+        {/* 统一筛选面板：渠道 / 类型 / 状态 / 搜索 */}
+        <div className="ml-2 flex items-center gap-1.5 shrink-0">
+          <Select value={ch} onValueChange={(v) => goto({ ch: v as typeof ch, tid: undefined })}>
+            <SelectTrigger className="h-8 text-xs w-[128px]">
+              <SelectValue placeholder="渠道" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">渠道：全部</SelectItem>
+              <SelectItem value="email">邮件</SelectItem>
+              <SelectItem value="sms">短信</SelectItem>
+              <SelectItem value="whatsapp">WhatsApp</SelectItem>
+              <SelectItem value="telegram">Telegram</SelectItem>
+              <SelectItem value="facebook">Facebook</SelectItem>
+              <SelectItem value="tiktok">TikTok</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={group}
+            onValueChange={(v) => goto({ group: v as typeof group, tid: undefined })}
+          >
+            <SelectTrigger className="h-8 text-xs w-[112px]">
+              <SelectValue placeholder="类型" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">类型：全部</SelectItem>
+              <SelectItem value="enterprise">企业</SelectItem>
+              <SelectItem value="contact">人物</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={view}
+            onValueChange={(v) => goto({ view: v as ViewKey, tid: undefined })}
+          >
+            <SelectTrigger className="h-8 text-xs w-[140px]">
+              <SelectValue placeholder="状态" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">状态：全部（{counts.all}）</SelectItem>
+              <SelectItem value="pending">待回复（{counts.pending}）</SelectItem>
+              <SelectItem value="unread">未读（{counts.unread}）</SelectItem>
+              <SelectItem value="high_intent">高意向（{intentCounts.high}）</SelectItem>
+              <SelectItem value="needs_human">人工接管（{intentCounts.needsHuman}）</SelectItem>
+              <SelectItem value="due_soon">即将超时（{smartCounts.dueSoon}）</SelectItem>
+              <SelectItem value="unassigned">未分配（{counts.unassigned}）</SelectItem>
+              <SelectItem value="mine">我的全部（{smartCounts.mine}）</SelectItem>
+              <SelectItem value="my_todo">我的待办（{smartCounts.myTodo}）</SelectItem>
+              <SelectItem value="snoozed">稍后处理</SelectItem>
+              <SelectItem value="handled">已处理（{counts.handled}）</SelectItem>
+              <SelectItem value="suppressed">已抑制</SelectItem>
+              <SelectItem value="hasReply">有回复</SelectItem>
+              <SelectItem value="noReply">未回复</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex-1 min-w-0 max-w-xs relative ml-1">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={q}
@@ -415,77 +469,30 @@ function InboxPage() {
             className="pl-7 h-8 text-xs"
           />
         </div>
-        {/* 渠道切换：图标 tabs，节省横向空间 */}
-        <div className="ml-1 flex items-center rounded-md border overflow-hidden shrink-0">
-          <button
-            onClick={() => goto({ ch: "all", tid: undefined })}
-            className={cn(
-              "px-2 h-8 text-[11px] transition-colors border-r",
-              ch === "all" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted",
-            )}
-          >
-            全部
-          </button>
-          {([
-            { k: "email", label: "邮件" },
-            { k: "sms", label: "短信" },
-            { k: "whatsapp", label: "WhatsApp" },
-            { k: "telegram", label: "Telegram" },
-            { k: "facebook", label: "Facebook" },
-            { k: "tiktok", label: "TikTok" },
-          ] as const).map((c) => {
-            const CI = channelIcon(c.k);
-            return (
-              <button
-                key={c.k}
-                title={c.label}
-                onClick={() => goto({ ch: c.k, tid: undefined })}
-                className={cn(
-                  "px-2 h-8 flex items-center justify-center transition-colors border-l first:border-l-0",
-                  ch === c.k
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-background hover:bg-muted",
-                )}
-              >
-                <CI className="h-3.5 w-3.5" />
-              </button>
-            );
-          })}
-        </div>
-        {/* 分组切换（企业 / 人物） */}
-        <div className="ml-1 flex items-center rounded-md border overflow-hidden shrink-0">
-          {([
-            { k: "all", label: "全部" },
-            { k: "enterprise", label: "企业" },
-            { k: "contact", label: "人物" },
-          ] as const).map((g) => (
-            <button
-              key={g.k}
-              onClick={() => goto({ group: g.k, tid: undefined })}
-              className={cn(
-                "px-2 h-8 text-[11px] transition-colors border-l first:border-l-0",
-                group === g.k
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-background hover:bg-muted",
-              )}
-            >
-              {g.label}
-            </button>
-          ))}
-        </div>
       </div>
       <div className="flex-1 flex min-h-0">
         {/* 中栏：会话列表 */}
         <div className="w-[320px] xl:w-[380px] shrink-0 border-r flex flex-col min-h-0">
-          {/* 标签筛选：直接以意向/状态标签过滤全部回复 */}
-          <TagFilterBar
-            view={view}
-            counts={counts}
-            highIntentCount={intentCounts.high}
-            needsHumanCount={intentCounts.needsHuman}
-            dueSoonCount={smartCounts.dueSoon}
-            onChange={(v) => goto({ view: v, tid: undefined })}
-          />
+          {/* 结果条：显示当前筛选与匹配数量 */}
+          <div className="px-3 py-2 border-b bg-muted/20 shrink-0 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>
+              显示结果：
+              <span className="text-foreground font-medium tabular-nums mx-1">
+                {displayList.length}
+              </span>
+              条会话
+            </span>
+            {(view !== "all" || ch !== "all" || group !== "all" || q) && (
+              <button
+                onClick={() =>
+                  goto({ view: "all", ch: "all", group: "all", q: "", tid: undefined })
+                }
+                className="text-primary hover:underline"
+              >
+                清除筛选
+              </button>
+            )}
+          </div>
           <div className="flex-1 overflow-y-auto">
             {displayList.length === 0 ? (
               <div className="p-10 text-center text-sm text-muted-foreground">
