@@ -561,10 +561,28 @@ function UnlockedPage() {
             </PopoverContent>
           </Popover>
         </div>
-        <div className="text-xs text-muted-foreground">
-          共 <span className="font-medium text-foreground">{stats.count}</span> 条 ·{" "}
-          <span className="font-medium text-foreground">{stats.enterprises}</span> 家企业 ·{" "}
-          <span className="font-medium text-foreground">{stats.persons}</span> 位人物
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="text-xs text-muted-foreground">
+            共 <span className="font-medium text-foreground">{stats.count}</span> 条 ·{" "}
+            <span className="font-medium text-foreground">{stats.enterprises}</span> 家企业 ·{" "}
+            <span className="font-medium text-foreground">{stats.persons}</span> 位人物
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">展示方式</span>
+            <Tabs
+              value={aggregate}
+              onValueChange={(v) => setAggregate(v as AggregateMode)}
+            >
+              <TabsList className="h-8">
+                <TabsTrigger value="none" className="text-xs px-2.5">
+                  平铺
+                </TabsTrigger>
+                <TabsTrigger value="owner" className="text-xs px-2.5">
+                  按企业 / 人物聚合
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
       </Card>
 
