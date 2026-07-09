@@ -731,6 +731,14 @@ function ThreadRow({
                 已唤醒
               </Badge>
             )}
+            {thread.meta.humanTakeover && (
+              <Badge
+                className="h-4 py-0 px-1.5 text-[10px] font-medium shrink-0 whitespace-nowrap bg-sky-500 hover:bg-sky-500 text-white gap-0.5"
+                title={`已由 ${thread.meta.humanTakeover.byName} 接管`}
+              >
+                <Hand className="h-2.5 w-2.5" /> 接管中
+              </Badge>
+            )}
             <span className="ml-auto text-[11px] text-muted-foreground shrink-0">
               {relTime(thread.lastAt)}
             </span>
