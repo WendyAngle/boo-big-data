@@ -74,7 +74,8 @@ import {
   useInboxCounts,
   markThreadRead,
   snoozeThread,
-  markHandled,
+  closeThread,
+  reopenThread,
   toggleStar,
   enrollCadence,
   suppressThread,
@@ -138,10 +139,12 @@ const searchSchema = z.object({
     .enum([
       "unread",
       "pending",
+      "waiting",
       "all",
       "hasReply",
       "noReply",
-      "handled",
+      "won",
+      "lost",
       "snoozed",
       "suppressed",
       "unassigned",
@@ -202,8 +205,10 @@ const VIEW_LABEL: Record<ViewKey, string> = {
   unread: "未读",
   mine: "我的全部",
   pending: "待跟进",
+  waiting: "等待回复",
   snoozed: "稍后处理",
-  handled: "已处理",
+  won: "已成交",
+  lost: "已流失",
   suppressed: "已抑制",
   hasReply: "有回复",
   noReply: "未回复",
@@ -282,8 +287,12 @@ function InboxPage() {
       list = list.filter((t) => t.meta.inboundMessages.length > 0);
     else if (view === "noReply")
       list = list.filter((t) => t.meta.inboundMessages.length === 0);
-    else if (view === "handled")
-      list = list.filter((t) => t.meta.status === "handled");
+    else if (view === "won")
+      list = list.filter((t) => t.meta.status === "won");
+    else if (view === "lost")
+      list = list.filter((t) => t.meta.status === "lost");
+    else if (view === "waiting")
+      list = list.filter((t) => t.meta.status === "waiting_reply");
     else if (view === "snoozed")
       list = list.filter((t) => t.meta.status === "snoozed");
     else if (view === "suppressed")
@@ -444,19 +453,25 @@ function InboxPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">状态：全部（{counts.all}）</SelectItem>
-              <SelectItem value="pending">待回复（{counts.pending}）</SelectItem>
-              <SelectItem value="unread">未读（{counts.unread}）</SelectItem>
-              <SelectItem value="high_intent">高意向（{intentCounts.high}）</SelectItem>
-              <SelectItem value="needs_human">人工接管（{intentCounts.needsHuman}）</SelectItem>
-              <SelectItem value="due_soon">即将超时（{smartCounts.dueSoon}）</SelectItem>
-              <SelectItem value="unassigned">未分配（{counts.unassigned}）</SelectItem>
-              <SelectItem value="mine">我的全部（{smartCounts.mine}）</SelectItem>
-              <SelectItem value="my_todo">我的待办（{smartCounts.myTodo}）</SelectItem>
-              <SelectItem value="snoozed">稍后处理</SelectItem>
-              <SelectItem value="handled">已处理（{counts.handled}）</SelectItem>
-              <SelectItem value="suppressed">已抑制</SelectItem>
-              <SelectItem value="hasReply">有回复</SelectItem>
-              <SelectItem value="noReply">未回复</SelectItem>
+              <SelectGroup>
+                <SelectLabel>生命周期</SelectLabel>
+                <SelectItem value="pending">待回复（{counts.pending}）</SelectItem>
+                <SelectItem value="waiting">等待回复（{counts.waiting}）</SelectItem>
+                <SelectItem value="snoozed">稍后处理（{counts.snoozed}）</SelectItem>
+                <SelectItem value="won">已成交（{counts.won}）</SelectItem>
+                <SelectItem value="lost">已流失（{counts.lost}）</SelectItem>
+                <SelectItem value="suppressed">已抑制（{counts.suppressed}）</SelectItem>
+              </SelectGroup>
+              <SelectGroup>
+                <SelectLabel>智能视图</SelectLabel>
+                <SelectItem value="unread">未读（{counts.unread}）</SelectItem>
+                <SelectItem value="high_intent">高意向（{intentCounts.high}）</SelectItem>
+                <SelectItem value="needs_human">人工接管（{intentCounts.needsHuman}）</SelectItem>
+                <SelectItem value="due_soon">即将超时（{smartCounts.dueSoon}）</SelectItem>
+                <SelectItem value="unassigned">未分配（{counts.unassigned}）</SelectItem>
+                <SelectItem value="mine">我的全部（{smartCounts.mine}）</SelectItem>
+                <SelectItem value="my_todo">我的待办（{smartCounts.myTodo}）</SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
         </div>
@@ -1463,20 +1478,50 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Button
-        variant="outline"
-        size="sm"
-        className="gap-1 h-8"
-        onClick={() => {
-          markHandled(thread.id, thread.meta.status !== "handled");
-          toast.success(
-            thread.meta.status === "handled" ? "已恢复为待跟进" : "已标记为已处理",
-          );
-        }}
-      >
-        <CheckCheck className="h-3.5 w-3.5" />
-        {thread.meta.status === "handled" ? "撤销处理" : "标记已处理"}
-      </Button>
+      {thread.meta.status === "won" || thread.meta.status === "lost" ? (
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1 h-8"
+          onClick={() => {
+            reopenThread(thread.id);
+            toast.success("已恢复为待跟进");
+          }}
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          恢复跟进
+        </Button>
+      ) : (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1 h-8">
+              <CheckCheck className="h-3.5 w-3.5" />
+              标记关单
+              <ChevronDownIcon className="h-3 w-3 opacity-60" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => {
+                closeThread(thread.id, "won");
+                toast.success("已标记为已成交");
+              }}
+            >
+              <CheckCheck className="h-4 w-4 text-emerald-600" />
+              已成交
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                closeThread(thread.id, "lost");
+                toast.success("已标记为已流失");
+              }}
+            >
+              <Ban className="h-4 w-4 text-slate-500" />
+              已流失
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
 
       <Button
         variant={thread.meta.humanTakeover ? "default" : "outline"}
