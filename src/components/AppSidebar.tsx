@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ShieldCheck, ChevronDown, Users, UserCog, Coins, Send, FolderTree, Box, Wallet, Layers, Receipt, FileText, Search, LayoutDashboard, Inbox } from "lucide-react";
+import { ShieldCheck, ChevronDown, Users, UserCog, Coins, Send, FolderTree, Box, Wallet, Layers, Receipt, FileText, Search, LayoutDashboard, Inbox, KeyRound } from "lucide-react";
 import { AccountMenu } from "@/components/account/AccountMenu";
 import { useSidebarBadge } from "@/lib/inbox-store";
 
@@ -67,6 +67,7 @@ const menu: Root[] = [
         children: [
           { label: "我的收藏", to: "/outreach/favorites" },
           { label: "浏览足迹", to: "/outreach/footprints" },
+          { label: "解锁记录", to: "/outreach/unlocked", icon: KeyRound },
           { label: "触达任务", to: "/outreach/reach" },
           { label: "询盘与回复", to: "/outreach/conversations" },
           { label: "退订名单", to: "/outreach/suppressions" },
