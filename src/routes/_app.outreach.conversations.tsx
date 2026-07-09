@@ -240,6 +240,21 @@ function InboxPage() {
     }
     return { myTodo, dueSoon, mine };
   }, [threads]);
+  // 按标签维度的计数（用于中栏顶部的标签筛选条）
+  const intentCounts = useMemo(() => {
+    let high = 0;
+    let needsHuman = 0;
+    for (const t of threads) {
+      if (t.meta.aiIntent === "interested" || t.meta.aiIntent === "quote") high++;
+      if (
+        t.meta.aiIntent === "complaint" ||
+        t.meta.aiIntent === "unsubscribe" ||
+        !t.meta.assigneeId
+      )
+        needsHuman++;
+    }
+    return { high, needsHuman };
+  }, [threads]);
   // 从企业/联系人详情等入口带 tid 直接进入时，默认使用 “全部” 视图，
   // 避免出现「右侧展示了会话，中间列表却提示"该视图下暂无会话"」的错位。
   const view: ViewKey = search.view ?? "all";
