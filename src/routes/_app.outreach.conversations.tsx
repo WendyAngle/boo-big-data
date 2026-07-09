@@ -696,6 +696,13 @@ function ThreadRow({
               );
             })()}
             <span className="text-[10px]">{CHANNEL_LABEL[thread.channel]}</span>
+            {(thread.meta.aiIntent === "interested" ||
+              thread.meta.aiIntent === "quote") && (
+              <Badge className="h-4 py-0 px-1.5 text-[10px] bg-emerald-500 hover:bg-emerald-500 text-white gap-0.5">
+                <Sparkles className="h-2.5 w-2.5" />
+                {INTENT_LABEL[thread.meta.aiIntent]}
+              </Badge>
+            )}
             {(() => {
               // 单一优先级徽标：逾期 > 即将超时 > 高意向 > 接管中 > 未分配
               if (sla?.overdue) {
@@ -711,17 +718,6 @@ function ThreadRow({
                   <Badge className="ml-auto h-4 py-0 px-1.5 text-[10px] bg-amber-500 hover:bg-amber-500 text-white gap-0.5">
                     <Clock className="h-2.5 w-2.5" />
                     即将超时 {formatShort(sla.leftMs)}
-                  </Badge>
-                );
-              }
-              if (
-                thread.meta.aiIntent === "interested" ||
-                thread.meta.aiIntent === "quote"
-              ) {
-                return (
-                  <Badge className="ml-auto h-4 py-0 px-1.5 text-[10px] bg-emerald-500 hover:bg-emerald-500 text-white gap-0.5">
-                    <Sparkles className="h-2.5 w-2.5" />
-                    {INTENT_LABEL[thread.meta.aiIntent]}
                   </Badge>
                 );
               }
