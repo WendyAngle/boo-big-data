@@ -477,9 +477,6 @@ function InboxPage() {
                 {counts.unread > 0 && (
                   <SelectItem value="unread">未读（{counts.unread}）</SelectItem>
                 )}
-                {intentCounts.high > 0 && (
-                  <SelectItem value="high_intent">高意向（{intentCounts.high}）</SelectItem>
-                )}
                 {intentCounts.needsHuman > 0 && (
                   <SelectItem value="needs_human">人工接管（{intentCounts.needsHuman}）</SelectItem>
                 )}
