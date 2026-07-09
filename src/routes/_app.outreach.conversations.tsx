@@ -834,10 +834,14 @@ function ThreadDetail({
   thread,
   autoAi,
   onConsumeAction,
+  scorePanelOpen,
+  onToggleScorePanel,
 }: {
   thread: Thread;
   autoAi?: boolean;
   onConsumeAction?: () => void;
+  scorePanelOpen?: boolean;
+  onToggleScorePanel?: () => void;
 }) {
   const [reply, setReply] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
