@@ -12,9 +12,11 @@ import {
   Eye,
   EyeOff,
   CalendarDays,
+  Calendar as CalendarIcon,
   X,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -144,6 +146,16 @@ function fmtDate(d?: Date) {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+function dateKeyOf(ts: number): string {
+  const d = new Date(ts);
+  return fmtDate(d);
+}
+
+function weekdayCN(dateStr: string) {
+  const d = new Date(dateStr);
+  return ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][d.getDay()];
 }
 
 type ContactGroup = {
