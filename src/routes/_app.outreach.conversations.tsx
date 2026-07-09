@@ -669,90 +669,67 @@ function ThreadRow({
             </span>
             {thread.lastPreview}
           </div>
-          <div className="mt-1.5 flex items-center gap-1 flex-wrap">
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-[10px] py-0 px-1.5 h-5",
-                CHANNEL_COLOR[thread.channel],
-              )}
-            >
-              {CHANNEL_LABEL[thread.channel]}
-            </Badge>
-            <Badge
-              variant="outline"
-              className="text-[10px] py-0 px-1.5 h-5 gap-0.5"
-              title={GROUP_LABEL[threadGroup(thread)]}
-            >
-              {threadGroup(thread) === "enterprise" ? (
-                <Building2 className="h-2.5 w-2.5" />
-              ) : (
-                <UserRound className="h-2.5 w-2.5" />
-              )}
-              {threadGroup(thread) === "enterprise" ? "企业" : "人物"}
-            </Badge>
-            {thread.meta.assigneeId ? (
-              <Badge
-                variant="outline"
-                className="text-[10px] py-0 px-1.5 h-5 bg-primary/5 text-primary border-primary/20"
-              >
-                <UserCheck className="h-2.5 w-2.5 mr-0.5" />
-                {memberById(thread.meta.assigneeId)?.name ?? "已分配"}
-              </Badge>
-            ) : (
-              <Badge
-                variant="outline"
-                className="text-[10px] py-0 px-1.5 h-5 bg-amber-50 text-amber-700 border-amber-200"
-              >
-                未分配
-              </Badge>
-            )}
-            <Badge
-              variant="outline"
-              className="text-[10px] py-0 px-1.5 h-5"
-            >
-              {STATUS_LABEL[thread.meta.status]}
-            </Badge>
-            {sla && (
-              <Badge
-                variant="outline"
-                className={cn(
-                  "text-[10px] py-0 px-1.5 h-5",
-                  sla.overdue
-                    ? "bg-rose-50 text-rose-700 border-rose-200"
-                    : sla.approaching
-                      ? "bg-amber-50 text-amber-700 border-amber-200"
-                      : "bg-emerald-50 text-emerald-700 border-emerald-200",
-                )}
-              >
-                <Clock className="h-2.5 w-2.5 mr-0.5" />
-                {sla.overdue
-                  ? `逾期 ${formatShort(-sla.leftMs)}`
-                  : sla.approaching
-                    ? `即将超时 ${formatShort(sla.leftMs)}`
-                    : `SLA ${formatShort(sla.leftMs)}`}
-              </Badge>
-            )}
-            {thread.meta.aiIntent && (
-              <Badge
-                variant="outline"
-                className={cn(
-                  "text-[10px] py-0 px-1.5 h-5",
-                  INTENT_COLOR[thread.meta.aiIntent],
-                )}
-              >
-                {INTENT_LABEL[thread.meta.aiIntent]}
-              </Badge>
-            )}
-            {thread.meta.tags.map((t) => (
-              <Badge
-                key={t}
-                variant="outline"
-                className="text-[10px] py-0 px-1.5 h-5"
-              >
-                {t}
-              </Badge>
-            ))}
+          {/* 精简徽标行：只保留 1 枚最高优先级状态标签 + 渠道图标 */}
+          <div className="mt-1.5 flex items-center gap-1.5 text-muted-foreground">
+            {(() => {
+              const CI = channelIcon(thread.channel);
+              return (
+                <CI
+                  className="h-3 w-3 shrink-0"
+                  aria-label={CHANNEL_LABEL[thread.channel]}
+                />
+              );
+            })()}
+            <span className="text-[10px]">{CHANNEL_LABEL[thread.channel]}</span>
+            {(() => {
+              // 单一优先级徽标：逾期 > 即将超时 > 高意向 > 接管中 > 未分配
+              if (sla?.overdue) {
+                return (
+                  <Badge className="ml-auto h-4 py-0 px-1.5 text-[10px] bg-rose-500 hover:bg-rose-500 text-white gap-0.5">
+                    <AlarmClock className="h-2.5 w-2.5" />
+                    逾期 {formatShort(-sla.leftMs)}
+                  </Badge>
+                );
+              }
+              if (sla?.approaching) {
+                return (
+                  <Badge className="ml-auto h-4 py-0 px-1.5 text-[10px] bg-amber-500 hover:bg-amber-500 text-white gap-0.5">
+                    <Clock className="h-2.5 w-2.5" />
+                    即将超时 {formatShort(sla.leftMs)}
+                  </Badge>
+                );
+              }
+              if (
+                thread.meta.aiIntent === "interested" ||
+                thread.meta.aiIntent === "quote"
+              ) {
+                return (
+                  <Badge className="ml-auto h-4 py-0 px-1.5 text-[10px] bg-emerald-500 hover:bg-emerald-500 text-white gap-0.5">
+                    <Sparkles className="h-2.5 w-2.5" />
+                    {INTENT_LABEL[thread.meta.aiIntent]}
+                  </Badge>
+                );
+              }
+              if (thread.meta.humanTakeover) {
+                return null; // humanTakeover 已在标题行显示"接管中"
+              }
+              if (!thread.meta.assigneeId) {
+                return (
+                  <Badge
+                    variant="outline"
+                    className="ml-auto h-4 py-0 px-1.5 text-[10px] bg-amber-50 text-amber-700 border-amber-200"
+                  >
+                    未分配
+                  </Badge>
+                );
+              }
+              return (
+                <span className="ml-auto text-[10px] inline-flex items-center gap-0.5">
+                  <UserCheck className="h-2.5 w-2.5" />
+                  {memberById(thread.meta.assigneeId)?.name}
+                </span>
+              );
+            })()}
           </div>
         </div>
       </div>
