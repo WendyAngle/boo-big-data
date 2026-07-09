@@ -1478,20 +1478,50 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Button
-        variant="outline"
-        size="sm"
-        className="gap-1 h-8"
-        onClick={() => {
-          markHandled(thread.id, thread.meta.status !== "handled");
-          toast.success(
-            thread.meta.status === "handled" ? "已恢复为待跟进" : "已标记为已处理",
-          );
-        }}
-      >
-        <CheckCheck className="h-3.5 w-3.5" />
-        {thread.meta.status === "handled" ? "撤销处理" : "标记已处理"}
-      </Button>
+      {thread.meta.status === "won" || thread.meta.status === "lost" ? (
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1 h-8"
+          onClick={() => {
+            reopenThread(thread.id);
+            toast.success("已恢复为待跟进");
+          }}
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          恢复跟进
+        </Button>
+      ) : (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1 h-8">
+              <CheckCheck className="h-3.5 w-3.5" />
+              标记关单
+              <ChevronDownIcon className="h-3 w-3 opacity-60" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => {
+                closeThread(thread.id, "won");
+                toast.success("已标记为已成交");
+              }}
+            >
+              <CheckCheck className="h-4 w-4 text-emerald-600" />
+              已成交
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                closeThread(thread.id, "lost");
+                toast.success("已标记为已流失");
+              }}
+            >
+              <Ban className="h-4 w-4 text-slate-500" />
+              已流失
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
 
       <Button
         variant={thread.meta.humanTakeover ? "default" : "outline"}
