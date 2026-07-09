@@ -225,7 +225,7 @@ export interface Thread {
 /* -------------------- Storage -------------------- */
 
 const META_KEY = "boo:inbox:meta:v1";
-const SEED_FLAG = "boo:inbox:seed:v6";
+const SEED_FLAG = "boo:inbox:seed:v7";
 /** Phase 1 演示：当前登录员工，需与 conversations.tsx 中的 CURRENT_TEAM_USER_ID 保持一致 */
 const DEMO_CURRENT_USER = "u_zhang";
 
@@ -1139,7 +1139,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     counterparty: "+81901234567",
     lastInbound: "こんにちは、サンプル送付は可能ですか？",
     lastInboundZh: "你好，请问可以寄样品吗？",
-    hoursAgo: 26,
+    hoursAgo: 3,
     windowLeftHours: null, // 窗口已过期
     aiIntent: "interested",
     assigneeId: "u_li",
@@ -1176,7 +1176,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     counterparty: "openid:tt_9876",
     lastInbound: "Do you ship to US?",
     lastInboundZh: "你们发货到美国吗？",
-    hoursAgo: 30,
+    hoursAgo: 2,
     aiIntent: "interested",
     assigneeId: "u_wang",
   },
@@ -1222,7 +1222,7 @@ const DEMO_SEEDS: DemoSeed[] = [
       "Please share the updated catalog in PDF. We are planning an order before end of Q3.",
     lastInboundZh:
       "请发送最新的 PDF 产品目录。我们计划在三季度末前下单。",
-    hoursAgo: 32,
+    hoursAgo: 6,
     aiIntent: "interested",
   },
   // -------- SMS replies (2) --------
@@ -1248,8 +1248,48 @@ const DEMO_SEEDS: DemoSeed[] = [
     counterparty: "+393471234567",
     lastInbound: "Ok grazie, invia proforma per 200 pezzi SKU-C.",
     lastInboundZh: "好的，谢谢，请发送 200 件 SKU-C 的形式发票。",
-    hoursAgo: 12,
+    hoursAgo: 1,
     aiIntent: "quote",
+  },
+  // -------- 非高意向样本：让"高意向"过滤不再等于"全部" --------
+  {
+    id: "demo:em:4",
+    channel: "email",
+    targetKind: "contact",
+    targetName: "Pierre Dubois",
+    parentRef: { id: "demo-ent-8", name: "Lyon Distribution" },
+    counterparty: "p.dubois@lyondistrib.fr",
+    lastInbound:
+      "I'm out of the office until August 5 with limited access to email. For urgent matters please contact my colleague marie@lyondistrib.fr.",
+    lastInboundZh:
+      "8 月 5 日前休假，邮件回复延迟。紧急事宜请联系同事 marie@lyondistrib.fr。",
+    hoursAgo: 7,
+    aiIntent: "ooo",
+  },
+  {
+    id: "demo:em:5",
+    channel: "email",
+    targetKind: "enterprise",
+    targetName: "Copenhagen Wholesale",
+    counterparty: "sourcing@cphwholesale.dk",
+    lastInbound:
+      "Thanks for reaching out. We've already committed to another supplier for this category — no need to follow up further.",
+    lastInboundZh:
+      "感谢来信，此类目我们已与其他供应商合作，无需再跟进。",
+    hoursAgo: 14,
+    aiIntent: "reject",
+  },
+  {
+    id: "demo:wa:3",
+    channel: "whatsapp",
+    targetKind: "contact",
+    targetName: "Ken Watanabe",
+    parentRef: { id: "demo-ent-9", name: "Tokyo Retail" },
+    counterparty: "+81801122334",
+    lastInbound: "Got it, thanks.",
+    lastInboundZh: "收到，谢谢。",
+    hoursAgo: 4,
+    // 低信号确认，AI 未打意向标签
   },
 ];
 
