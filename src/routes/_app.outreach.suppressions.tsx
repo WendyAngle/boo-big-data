@@ -209,17 +209,6 @@ function SuppressionsPage() {
             count={counts.phone}
             onClick={() => setTab("phone")}
           />
-          {selectedInView.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700"
-              onClick={() => setRemoveTargets(selectedInView.map((r) => r.id))}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              批量移除 ({selectedInView.length})
-            </Button>
-          )}
           <div className="ml-auto relative w-72">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
@@ -229,6 +218,10 @@ function SuppressionsPage() {
               className="pl-8 h-8"
             />
           </div>
+          <Button size="sm" className="h-8" onClick={() => setAddOpen(true)}>
+            <Plus className="h-3.5 w-3.5" />
+            手动添加
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -238,9 +231,15 @@ function SuppressionsPage() {
             <Upload className="h-3.5 w-3.5" />
             批量导入
           </Button>
-          <Button size="sm" className="h-8" onClick={() => setAddOpen(true)}>
-            <Plus className="h-3.5 w-3.5" />
-            手动添加
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:text-muted-foreground disabled:border-border"
+            disabled={selectedInView.length === 0}
+            onClick={() => setRemoveTargets(selectedInView.map((r) => r.id))}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            批量移除{selectedInView.length > 0 ? ` (${selectedInView.length})` : ""}
           </Button>
         </div>
         <Table>
