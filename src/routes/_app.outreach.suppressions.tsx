@@ -116,27 +116,47 @@ function SuppressionsPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold flex items-center gap-2">
-            <Ban className="h-5 w-5 text-rose-500" />
-            退订名单
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            系统会在收到退订请求、投诉、STOP 关键字或硬退信时自动加入。名单中的地址将被后续所有触达任务跳过。
-          </p>
+      <section className="relative overflow-hidden rounded-2xl ring-1 ring-border">
+        <div
+          className="absolute inset-0"
+          style={{ background: "var(--gradient-hero)" }}
+        />
+        <div
+          className="absolute inset-0 opacity-30 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(circle at 80% 30%, rgba(255,255,255,0.45) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(255,255,255,0.25) 0%, transparent 45%)",
+          }}
+        />
+        <div className="relative px-8 py-10 flex items-center gap-5 text-white">
+          <div className="h-14 w-14 rounded-2xl bg-white/25 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/30">
+            <Ban className="h-7 w-7" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-bold tracking-wide">退订名单</h1>
+            <p className="text-white/90 text-sm mt-1">
+              系统会在收到退订请求、投诉、STOP 关键字或硬退信时自动加入。名单中的地址将被后续所有触达任务跳过。
+            </p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <Button
+              variant="outline"
+              onClick={() => setImportOpen(true)}
+              className="bg-white/15 border-white/40 text-white hover:bg-white/25 hover:text-white backdrop-blur-sm"
+            >
+              <Upload className="h-4 w-4" />
+              批量导入
+            </Button>
+            <Button
+              onClick={() => setAddOpen(true)}
+              className="bg-white text-primary hover:bg-white/90"
+            >
+              <Plus className="h-4 w-4" />
+              手动添加
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2 shrink-0">
-          <Button variant="outline" onClick={() => setImportOpen(true)}>
-            <Upload className="h-4 w-4" />
-            批量导入
-          </Button>
-          <Button onClick={() => setAddOpen(true)}>
-            <Plus className="h-4 w-4" />
-            手动添加
-          </Button>
-        </div>
-      </div>
+      </section>
 
       <Card className="px-4 py-1">
         <Accordion type="single" collapsible>
