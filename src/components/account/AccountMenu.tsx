@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { KeyRound, LogOut, ChevronUp, ShieldCheck, Mail } from "lucide-react";
+import { KeyRound, LogOut, ChevronUp, ShieldCheck, Phone } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -50,8 +50,8 @@ export function AccountMenu() {
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold truncate">{user.name}</div>
                 <div className="text-xs text-muted-foreground truncate flex items-center gap-1 mt-0.5">
-                  <Mail className="h-3 w-3" />
-                  {user.email}
+                  <Phone className="h-3 w-3" />
+                  {user.phone}
                 </div>
               </div>
             </div>

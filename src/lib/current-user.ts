@@ -6,6 +6,7 @@ const DEFAULT_PWD = "admin123";
 export interface CurrentUser {
   name: string;
   email: string;
+  phone: string;
   role: string;
   avatarLetter: string;
 }
@@ -13,6 +14,7 @@ export interface CurrentUser {
 export const CURRENT_USER: CurrentUser = {
   name: "管理员",
   email: "admin@boo.com",
+  phone: "+86 138 0000 0000",
   role: "超级管理员",
   avatarLetter: "A",
 };
