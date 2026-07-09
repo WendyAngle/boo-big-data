@@ -863,6 +863,9 @@ export function seedDemoLedgerIfEmpty() {
   if (typeof window === "undefined") return;
   try {
     if (window.localStorage.getItem(LEDGER_SEED_FLAG)) return;
+    // 天为单位的分钟数,用于将 seed 数据按日打散到最近两周,
+    // 避免所有解锁/触达记录都堆到今天,更贴近真实使用节奏。
+    const D = 1440;
     // 所有 seed 数据均基于真实企业，避免出现"未找到该企业"
     const E = ENTERPRISES;
     const pickEnt = (i: number) => E[i % E.length];
