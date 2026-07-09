@@ -53,7 +53,7 @@ export const STATUS_LABEL: Record<ThreadStatus, string> = {
   snoozed: "已稍后处理",
   won: "已成交",
   lost: "已流失",
-  suppressed: "已抑制",
+  suppressed: "已退订",
 };
 
 /** 关单原因（成交 / 流失） */

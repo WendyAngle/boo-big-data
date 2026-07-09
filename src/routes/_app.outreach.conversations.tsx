@@ -209,7 +209,7 @@ const VIEW_LABEL: Record<ViewKey, string> = {
   snoozed: "稍后处理",
   won: "已成交",
   lost: "已流失",
-  suppressed: "已抑制",
+  suppressed: "已退订",
   hasReply: "有回复",
   noReply: "未回复",
   all: "全部",
@@ -461,7 +461,7 @@ function InboxPage() {
                 <SelectItem value="won">已成交（{counts.won}）</SelectItem>
                 <SelectItem value="lost">已流失（{counts.lost}）</SelectItem>
                 {counts.suppressed > 0 && (
-                  <SelectItem value="suppressed">已抑制（{counts.suppressed}）</SelectItem>
+                  <SelectItem value="suppressed">已退订（{counts.suppressed}）</SelectItem>
                 )}
               </SelectGroup>
               <SelectGroup>
