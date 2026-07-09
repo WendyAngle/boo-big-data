@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { KeyRound, LogOut, ChevronUp, ShieldCheck, Phone } from "lucide-react";
+import { KeyRound, LogOut, ChevronUp, Phone } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -30,7 +30,7 @@ export function AccountMenu() {
                 {user.name}
               </div>
               <div className="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">
-                {user.role}
+                {user.phone}
               </div>
             </div>
             <ChevronUp className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground shrink-0" />
@@ -54,10 +54,6 @@ export function AccountMenu() {
                   {user.phone}
                 </div>
               </div>
-            </div>
-            <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[11px] font-medium">
-              <ShieldCheck className="h-3 w-3" />
-              {user.role}
             </div>
           </div>
           <div className="p-1">

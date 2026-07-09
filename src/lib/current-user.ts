@@ -12,7 +12,7 @@ export interface CurrentUser {
 }
 
 export const CURRENT_USER: CurrentUser = {
-  name: "管理员",
+  name: "莫文蔚",
   email: "admin@boo.com",
   phone: "+86 138 0000 0000",
   role: "超级管理员",
