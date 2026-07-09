@@ -1065,6 +1065,11 @@ export function getDemoSocialThreads(): Thread[] {
       }
       writeMeta(metaStore);
     }
+    // 回填：早期版本没有 contentZh 字段，此处按 seed 补齐（仅演示种子的第一条入站）。
+    if (s.lastInboundZh && !isChinese(s.lastInbound) && meta.inboundMessages[0] && !meta.inboundMessages[0].contentZh) {
+      meta.inboundMessages[0].contentZh = s.lastInboundZh;
+      writeMeta(metaStore);
+    }
     return {
       id: s.id,
       targetKind: s.targetKind,
