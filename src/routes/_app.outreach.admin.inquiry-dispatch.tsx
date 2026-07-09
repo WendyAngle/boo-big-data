@@ -348,13 +348,37 @@ function InboxRoutingAdmin() {
               {!editingSla[g.kind] ? (
                 <div className="rounded-md border bg-muted/20 px-3 py-2.5 grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <div className="text-[11px] text-muted-foreground">首次响应时限</div>
+                    <div className="text-[11px] text-muted-foreground flex items-center gap-1">
+                      首次响应时限
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button type="button" className="hover:text-foreground" aria-label="首次响应说明">
+                            <Info className="h-3 w-3" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[240px] text-xs">
+                          从会话进入未分配池开始计时，衡量分组首次接单速度；超时将自动提醒组长派单。
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                     <div className="font-medium tabular-nums">
                       {formatMin(g.slaFirstResponseMin)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-muted-foreground">每次回复时限</div>
+                    <div className="text-[11px] text-muted-foreground flex items-center gap-1">
+                      每次回复时限
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button type="button" className="hover:text-foreground" aria-label="每次回复说明">
+                            <Info className="h-3 w-3" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-[240px] text-xs">
+                          从客户最新一条消息发出开始计时，衡量已分配员工的跟进效率；超时将标记逾期并双向提醒。
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                     <div className="font-medium tabular-nums">
                       {formatHour(g.slaReplyHour)}
                     </div>
@@ -419,6 +443,13 @@ function InboxRoutingAdmin() {
               <div className="mt-2 text-[11px] text-muted-foreground flex items-start gap-1">
                 <ShieldAlert className="h-3 w-3 mt-0.5 shrink-0" />
                 未分配阶段的 SLA 挂在分组池，超时提醒组长派单；已分配后转由该员工负责。
+              </div>
+              <div className="mt-2 rounded-md border border-amber-200 bg-amber-50/60 px-2.5 py-2 text-[11px] text-amber-800 space-y-0.5">
+                <div className="font-medium flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" /> 违规后果
+                </div>
+                <div>• 未分配超时：自动提醒组长派单，会话高亮标记于分派池</div>
+                <div>• 已分配超时：标记逾期，双向提醒员工与组长，计入 SLA 报表</div>
               </div>
             </div>
 
