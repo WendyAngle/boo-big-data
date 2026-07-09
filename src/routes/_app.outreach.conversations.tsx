@@ -255,8 +255,13 @@ function InboxPage() {
   const intentCounts = useMemo(() => {
     let high = 0;
     let needsHuman = 0;
+    let mid = 0;
+    let low = 0;
     for (const t of threads) {
-      if (scoreIntent(t).band === "high") high++;
+      const band = scoreIntent(t).band;
+      if (band === "high") high++;
+      else if (band === "mid") mid++;
+      else low++;
       if (!t.meta.humanTakeover) {
         const sla = slaInfo(t);
         if (
@@ -269,11 +274,12 @@ function InboxPage() {
         }
       }
     }
-    return { high, needsHuman };
+    return { high, mid, low, needsHuman };
   }, [threads]);
   // 从企业/联系人详情等入口带 tid 直接进入时，默认使用 “全部” 视图，
   // 避免出现「右侧展示了会话，中间列表却提示"该视图下暂无会话"」的错位。
   const view: ViewKey = search.view ?? "all";
+  const intent = search.intent ?? "all";
   const [scorePanelOpen, setScorePanelOpen] = useState(true);
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
@@ -283,6 +289,8 @@ function InboxPage() {
     let list = threads;
     if (ch !== "all") list = list.filter((t) => t.channel === ch);
     if (group !== "all") list = list.filter((t) => threadGroup(t) === group);
+    if (intent !== "all")
+      list = list.filter((t) => scoreIntent(t).band === intent);
     if (view === "unread") list = list.filter((t) => t.meta.unread > 0);
     else if (view === "pending")
       list = list.filter((t) => t.meta.status === "pending");
