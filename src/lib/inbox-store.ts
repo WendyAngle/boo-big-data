@@ -515,7 +515,7 @@ function seedInboundIfNeeded(entries: LedgerEntry[]) {
           new Date(replyAt).getTime() + 3 * 24 * 3600_000,
         ).toISOString();
       } else if (intent === "reject") {
-        m.status = "handled";
+        m.status = "lost";
         m.unread = 0;
       } else {
         m.status = "pending";
@@ -701,7 +701,8 @@ export function useInboxCounts(): InboxCounts {
     if (t.meta.unread > 0) c.unread++;
     if (t.meta.status === "pending") c.pending++;
     if (t.meta.status === "waiting_reply") c.waiting++;
-    if (t.meta.status === "handled") c.handled++;
+    if (t.meta.status === "won") c.won++;
+    if (t.meta.status === "lost") c.lost++;
     if (t.meta.status === "snoozed") c.snoozed++;
     if (t.meta.status === "suppressed") c.suppressed++;
     if (t.meta.inboundMessages.length > 0) c.hasReply++;
@@ -752,11 +753,20 @@ export function snoozeThread(id: string, ms: number) {
   commit();
 }
 
-export function markHandled(id: string, handled = true) {
+export function closeThread(id: string, outcome: CloseOutcome) {
   const m = metaStore[id];
   if (!m) return;
-  m.status = handled ? "handled" : "pending";
-  if (handled) m.unread = 0;
+  m.status = outcome;
+  m.unread = 0;
+  m.updatedAt = new Date().toISOString();
+  commit();
+}
+
+/** 从"已成交/已流失"恢复到待跟进 */
+export function reopenThread(id: string) {
+  const m = metaStore[id];
+  if (!m) return;
+  m.status = "pending";
   m.updatedAt = new Date().toISOString();
   commit();
 }
@@ -997,7 +1007,12 @@ export function slaInfo(t: Thread): {
   overdue: boolean;
   approaching: boolean;
 } | null {
-  if (t.meta.status === "handled" || t.meta.status === "suppressed" || t.meta.status === "snoozed")
+  if (
+    t.meta.status === "won" ||
+    t.meta.status === "lost" ||
+    t.meta.status === "suppressed" ||
+    t.meta.status === "snoozed"
+  )
     return null;
   const lastIn = [...t.messages].reverse().find((m) => m.direction === "inbound");
   if (!lastIn) return null;
