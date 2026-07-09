@@ -108,6 +108,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
 import { getAllLedger } from "@/lib/credits-ledger";
 import { IntentScorePanel } from "@/components/outreach/IntentScorePanel";
+import { scoreIntent } from "@/lib/ai-intent-score";
 import { Target as TargetIcon, PanelRightClose, PanelRightOpen } from "lucide-react";
 
 /** 邮件场景的快捷回复模板（Phase 1 hardcoded） */
@@ -253,7 +254,7 @@ function InboxPage() {
     let high = 0;
     let needsHuman = 0;
     for (const t of threads) {
-      if (t.meta.aiIntent === "interested" || t.meta.aiIntent === "quote") high++;
+      if (scoreIntent(t).band === "high") high++;
       if (!t.meta.humanTakeover) {
         const sla = slaInfo(t);
         if (
@@ -313,10 +314,7 @@ function InboxPage() {
         return !!s && (s.overdue || s.approaching);
       });
     else if (view === "high_intent")
-      list = list.filter(
-        (t) =>
-          t.meta.aiIntent === "interested" || t.meta.aiIntent === "quote",
-      );
+      list = list.filter((t) => scoreIntent(t).band === "high");
     else if (view === "needs_human")
       list = list.filter(
         (t) => {
@@ -696,13 +694,29 @@ function ThreadRow({
               );
             })()}
             <span className="text-[10px]">{CHANNEL_LABEL[thread.channel]}</span>
-            {(thread.meta.aiIntent === "interested" ||
-              thread.meta.aiIntent === "quote") && (
-              <Badge className="h-4 py-0 px-1.5 text-[10px] bg-emerald-500 hover:bg-emerald-500 text-white gap-0.5">
-                <Sparkles className="h-2.5 w-2.5" />
-                {INTENT_LABEL[thread.meta.aiIntent]}
-              </Badge>
-            )}
+            {(() => {
+              const band = scoreIntent(thread).band;
+              if (band === "high") {
+                return (
+                  <Badge className="h-4 py-0 px-1.5 text-[10px] bg-emerald-500 hover:bg-emerald-500 text-white gap-0.5">
+                    <Sparkles className="h-2.5 w-2.5" />
+                    高意向
+                  </Badge>
+                );
+              }
+              if (band === "mid") {
+                return (
+                  <Badge
+                    variant="outline"
+                    className="h-4 py-0 px-1.5 text-[10px] bg-sky-50 text-sky-700 border-sky-200 gap-0.5"
+                  >
+                    <Sparkles className="h-2.5 w-2.5" />
+                    中意向
+                  </Badge>
+                );
+              }
+              return null;
+            })()}
             {(() => {
               // 单一优先级徽标：逾期 > 即将超时 > 高意向 > 接管中 > 未分配
               if (sla?.overdue) {
