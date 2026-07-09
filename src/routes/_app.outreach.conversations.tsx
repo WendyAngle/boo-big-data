@@ -754,6 +754,45 @@ function ThreadDetail({
   const [aiLoading, setAiLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [selectedTpl, setSelectedTpl] = useState<string>("");
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+  const draftKey = `boo:inbox:draft:${thread.id}`;
+  // 切换会话：从 localStorage 恢复该会话的草稿
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(draftKey);
+      if (raw) {
+        const j = JSON.parse(raw) as { content?: string; savedAt?: string };
+        setReply(j.content ?? "");
+        setDraftSavedAt(j.savedAt ?? null);
+      } else {
+        setReply("");
+        setDraftSavedAt(null);
+      }
+    } catch {
+      setReply("");
+      setDraftSavedAt(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thread.id]);
+  // 草稿自动保存（1.2s 防抖）
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const h = window.setTimeout(() => {
+      if (reply.trim()) {
+        const savedAt = new Date().toISOString();
+        window.localStorage.setItem(
+          draftKey,
+          JSON.stringify({ content: reply, savedAt }),
+        );
+        setDraftSavedAt(savedAt);
+      } else {
+        window.localStorage.removeItem(draftKey);
+        setDraftSavedAt(null);
+      }
+    }, 1200);
+    return () => window.clearTimeout(h);
+  }, [reply, draftKey]);
   const lastInbound = [...thread.messages]
     .reverse()
     .find((m) => m.direction === "inbound");
