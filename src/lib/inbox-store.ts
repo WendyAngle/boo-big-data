@@ -22,7 +22,8 @@ export type ThreadStatus =
   | "waiting_reply" // 我方已回复，等对方
   | "in_cadence" // 已加入自动序列
   | "snoozed"
-  | "handled"
+  | "won" // 已成交
+  | "lost" // 已流失
   | "suppressed";
 
 export const INTENT_LABEL: Record<AiIntent, string> = {
@@ -50,8 +51,16 @@ export const STATUS_LABEL: Record<ThreadStatus, string> = {
   waiting_reply: "等待回复",
   in_cadence: "跟进中",
   snoozed: "已稍后处理",
-  handled: "已处理",
+  won: "已成交",
+  lost: "已流失",
   suppressed: "已抑制",
+};
+
+/** 关单原因（成交 / 流失） */
+export type CloseOutcome = "won" | "lost";
+export const CLOSE_OUTCOME_LABEL: Record<CloseOutcome, string> = {
+  won: "已成交",
+  lost: "已流失",
 };
 
 /* -------------------- Channels & groups (v2) -------------------- */
@@ -226,7 +235,15 @@ function readMeta(): Record<string, ThreadMeta> {
     const raw = window.localStorage.getItem(META_KEY);
     if (!raw) return {};
     const j = JSON.parse(raw);
-    if (j && typeof j === "object") return j as Record<string, ThreadMeta>;
+    if (j && typeof j === "object") {
+      // 迁移：旧版 "handled" 语义不明，默认视为"已流失"（用户可在 UI 改判为"已成交"）
+      const rec = j as Record<string, ThreadMeta>;
+      for (const k in rec) {
+        const m = rec[k];
+        if ((m.status as string) === "handled") m.status = "lost";
+      }
+      return rec;
+    }
   } catch {}
   return {};
 }
