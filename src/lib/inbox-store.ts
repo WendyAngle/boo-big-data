@@ -782,6 +782,52 @@ export function enrollCadence(id: string, enrolled = true) {
   commit();
 }
 
+/**
+ * 人工接管闭环：
+ * - 开启：写入接管标记；未分配则自动分配给当前员工并写入分配事件（原因=人工接管）；
+ *   暂停跟进序列；清零未读；状态置为待跟进，便于员工立即回复。
+ * - 撤销：清除接管标记，其它状态维持不变，交回自动流程。
+ */
+export function setHumanTakeover(
+  id: string,
+  on: boolean,
+  opts?: { userId?: string; reason?: string },
+) {
+  const m = metaStore[id];
+  if (!m) return;
+  const now = new Date().toISOString();
+  if (on) {
+    const userId = opts?.userId || DEMO_CURRENT_USER;
+    const member = memberById(userId);
+    m.humanTakeover = {
+      at: now,
+      byId: userId,
+      byName: member?.name || "当前员工",
+      reason: opts?.reason,
+    };
+    if (!m.assigneeId) {
+      const from = m.assigneeId;
+      m.assigneeId = userId;
+      m.assignee = member?.name;
+      if (!m.assignmentEvents) m.assignmentEvents = [];
+      m.assignmentEvents.push({
+        id: makeId("ae"),
+        from,
+        to: userId,
+        reason: opts?.reason || "人工接管",
+        at: now,
+      });
+    }
+    if (m.cadenceEnrolled) m.cadenceEnrolled = false;
+    if (m.status === "in_cadence" || m.status === "snoozed") m.status = "pending";
+    m.unread = 0;
+  } else {
+    m.humanTakeover = undefined;
+  }
+  m.updatedAt = now;
+  commit();
+}
+
 export function suppressThread(id: string) {
   const m = metaStore[id];
   if (!m) return;
