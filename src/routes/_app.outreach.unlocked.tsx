@@ -45,6 +45,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { formatDateTime } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
@@ -140,7 +146,32 @@ function fmtDate(d?: Date) {
   return `${y}-${m}-${day}`;
 }
 
-function ContactCard({
+type ContactGroup = {
+  key: string;
+  owner_type: "enterprise" | "person";
+  owner_id: string;
+  owner_name: string;
+  parent_ref?: UnlockedContact["parent_ref"];
+  contacts: UnlockedContact[];
+  latestUnlock: number;
+};
+
+function ContactValue({ value }: { value: string }) {
+  return (
+    <Tooltip delayDuration={150}>
+      <TooltipTrigger asChild>
+        <span className="font-mono text-sm text-foreground tracking-wide truncate cursor-default">
+          {value}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" align="start" className="max-w-[420px] break-all font-mono text-xs">
+        {value}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function ContactRow({
   c,
   revealed,
   onToggle,
@@ -150,29 +181,82 @@ function ContactCard({
   onToggle: () => void;
 }) {
   const kind = toDisplayKind(c);
-  const isPerson = c.owner_type === "person";
-  const enterpriseRef = isPerson ? c.parent_ref : undefined;
+  const display = revealed ? c.contact_value : maskContact(c.contact_type, c.contact_value);
+  return (
+    <div className="flex items-center gap-2 min-w-0">
+      <span
+        className={cn(
+          "inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium",
+          kindTone(kind),
+        )}
+      >
+        {kindIcon(kind)}
+        {KIND_LABEL[kind]}
+      </span>
+      <div className="flex-1 min-w-0 flex items-center gap-1">
+        <ContactValue value={display} />
+      </div>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="shrink-0 inline-flex h-6 w-6 items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+        aria-label={revealed ? "隐藏明文" : "查看明文"}
+        title={revealed ? "隐藏明文" : "查看明文"}
+      >
+        {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+      </button>
+    </div>
+  );
+}
+
+function GroupCard({
+  g,
+  revealed,
+  onToggle,
+}: {
+  g: ContactGroup;
+  revealed: Set<string>;
+  onToggle: (key: string) => void;
+}) {
+  const isPerson = g.owner_type === "person";
+  const enterpriseRef = isPerson ? g.parent_ref : undefined;
   const enterpriseLink = isPerson
     ? enterpriseRef
       ? `/outreach/enterprise/${enterpriseRef.id}`
       : undefined
-    : `/outreach/enterprise/${c.owner_id}`;
+    : `/outreach/enterprise/${g.owner_id}`;
 
   return (
     <Card className="p-4 flex flex-col gap-3 hover:shadow-md hover:border-primary/30 transition-all">
-      <div className="flex items-center justify-between gap-2">
-        <span
-          className={cn(
-            "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium",
-            kindTone(kind),
+      <div className="flex items-start justify-between gap-2 min-w-0">
+        <div className="min-w-0 space-y-1">
+          <div className="flex items-center gap-1.5 text-sm text-foreground min-w-0">
+            {isPerson ? (
+              <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            ) : (
+              <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            )}
+            <span className="truncate font-medium">{g.owner_name}</span>
+          </div>
+          {isPerson && (
+            <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground min-w-0 pl-5">
+              <Building2 className="h-3 w-3 shrink-0" />
+              {enterpriseRef && enterpriseLink ? (
+                <Link
+                  to={enterpriseLink}
+                  className="truncate hover:text-primary hover:underline underline-offset-2"
+                >
+                  {enterpriseRef.name}
+                </Link>
+              ) : (
+                <span className="truncate italic">未关联企业</span>
+              )}
+            </div>
           )}
-        >
-          {kindIcon(kind)}
-          {KIND_LABEL[kind]}
-        </span>
+        </div>
         <span
           className={cn(
-            "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px]",
+            "inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px]",
             isPerson
               ? "border-slate-200 bg-slate-50 text-slate-700"
               : "border-primary/30 bg-primary/5 text-primary",
@@ -180,52 +264,26 @@ function ContactCard({
         >
           {isPerson ? <User className="h-3 w-3" /> : <Building2 className="h-3 w-3" />}
           {isPerson ? "人物" : "企业"}
+          <span className="ml-1 tabular-nums opacity-70">· {g.contacts.length}</span>
         </span>
       </div>
 
-      <div className="flex items-center gap-2 min-w-0">
-        <span className="font-mono text-sm text-foreground tracking-wide truncate">
-          {revealed ? c.contact_value : maskContact(c.contact_type, c.contact_value)}
-        </span>
-        <button
-          type="button"
-          onClick={onToggle}
-          className="shrink-0 inline-flex h-6 w-6 items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-          aria-label={revealed ? "隐藏明文" : "查看明文"}
-          title={revealed ? "隐藏明文" : "查看明文"}
-        >
-          {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-        </button>
-      </div>
-
-      <div className="border-t pt-2 space-y-1 min-w-0">
-        <div className="flex items-center gap-1.5 text-sm text-foreground min-w-0">
-          {isPerson ? (
-            <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          ) : (
-            <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          )}
-          <span className="truncate font-medium">{c.owner_name}</span>
-        </div>
-        {isPerson && (
-          <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground min-w-0 pl-5">
-            <Building2 className="h-3 w-3 shrink-0" />
-            {enterpriseRef && enterpriseLink ? (
-              <Link
-                to={enterpriseLink}
-                className="truncate hover:text-primary hover:underline underline-offset-2"
-              >
-                {enterpriseRef.name}
-              </Link>
-            ) : (
-              <span className="truncate italic">未关联企业</span>
-            )}
-          </div>
-        )}
+      <div className="border-t pt-3 space-y-2">
+        {g.contacts.map((c) => {
+          const key = `${c.owner_type}:${c.owner_id}:${c.contact_type}:${c.contact_value}`;
+          return (
+            <ContactRow
+              key={key}
+              c={c}
+              revealed={revealed.has(key)}
+              onToggle={() => onToggle(key)}
+            />
+          );
+        })}
       </div>
 
       <div className="flex items-center justify-between text-[11px] text-muted-foreground tabular-nums">
-        <span>解锁于 {formatDateTime(new Date(c.unlock_time).toISOString())}</span>
+        <span>最近解锁 {formatDateTime(new Date(g.latestUnlock).toISOString())}</span>
         {!isPerson && enterpriseLink && (
           <Link
             to={enterpriseLink}
@@ -324,7 +382,32 @@ function UnlockedPage() {
       : fmtDate(dateRange.from)
     : "解锁时间";
 
+  const groups = useMemo(() => {
+    const map = new Map<string, ContactGroup>();
+    for (const c of filtered) {
+      const k = `${c.owner_type}:${c.owner_id}`;
+      let g = map.get(k);
+      if (!g) {
+        g = {
+          key: k,
+          owner_type: c.owner_type,
+          owner_id: c.owner_id,
+          owner_name: c.owner_name,
+          parent_ref: c.parent_ref,
+          contacts: [],
+          latestUnlock: 0,
+        };
+        map.set(k, g);
+      }
+      g.contacts.push(c);
+      if (!g.parent_ref && c.parent_ref) g.parent_ref = c.parent_ref;
+      if (c.unlock_time > g.latestUnlock) g.latestUnlock = c.unlock_time;
+    }
+    return Array.from(map.values()).sort((a, b) => b.latestUnlock - a.latestUnlock);
+  }, [filtered]);
+
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-6 space-y-4">
       <section className="relative overflow-hidden rounded-2xl ring-1 ring-border">
         <div
@@ -450,17 +533,14 @@ function UnlockedPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          {filtered.map((c) => {
-            const key = `${c.owner_id}:${c.contact_type}:${c.contact_value}`;
-            return (
-              <ContactCard
-                key={key}
-                c={c}
-                revealed={revealed.has(key)}
-                onToggle={() => toggleReveal(key)}
-              />
-            );
-          })}
+          {groups.map((g) => (
+            <GroupCard
+              key={g.key}
+              g={g}
+              revealed={revealed}
+              onToggle={toggleReveal}
+            />
+          ))}
         </div>
       )}
 
@@ -483,5 +563,6 @@ function UnlockedPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 }
