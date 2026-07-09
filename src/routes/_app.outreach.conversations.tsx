@@ -541,6 +541,93 @@ function FilterItem({
   );
 }
 
+function TagFilterBar({
+  view,
+  counts,
+  highIntentCount,
+  needsHumanCount,
+  dueSoonCount,
+  onChange,
+}: {
+  view: ViewKey;
+  counts: {
+    all: number;
+    unread: number;
+    pending: number;
+    unassigned: number;
+    handled: number;
+  };
+  highIntentCount: number;
+  needsHumanCount: number;
+  dueSoonCount: number;
+  onChange: (v: ViewKey) => void;
+}) {
+  const chips: Array<{
+    k: ViewKey;
+    label: string;
+    n: number;
+    tone?: "rose" | "emerald" | "amber" | "sky";
+  }> = [
+    { k: "all", label: "全部", n: counts.all },
+    { k: "pending", label: "待回复", n: counts.pending, tone: "rose" },
+    { k: "unread", label: "未读", n: counts.unread, tone: "rose" },
+    { k: "high_intent", label: "高意向", n: highIntentCount, tone: "emerald" },
+    { k: "needs_human", label: "人工接管", n: needsHumanCount, tone: "sky" },
+    { k: "due_soon", label: "即将超时", n: dueSoonCount, tone: "amber" },
+    { k: "unassigned", label: "未分配", n: counts.unassigned, tone: "amber" },
+    { k: "handled", label: "已处理", n: counts.handled },
+  ];
+  const toneClass = (
+    active: boolean,
+    tone?: "rose" | "emerald" | "amber" | "sky",
+  ) => {
+    if (active) return "bg-primary text-primary-foreground border-primary";
+    switch (tone) {
+      case "rose":
+        return "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100";
+      case "emerald":
+        return "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100";
+      case "amber":
+        return "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100";
+      case "sky":
+        return "bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100";
+      default:
+        return "bg-background text-foreground/80 border-border hover:bg-muted";
+    }
+  };
+  return (
+    <div className="px-2.5 py-2 border-b bg-muted/20 shrink-0 flex flex-wrap items-center gap-1.5">
+      {chips.map((c) => {
+        const active = view === c.k;
+        return (
+          <button
+            key={c.k}
+            onClick={() => onChange(c.k)}
+            className={cn(
+              "inline-flex items-center gap-1 h-7 px-2.5 rounded-full border text-[11px] transition-colors",
+              toneClass(active, c.tone),
+            )}
+          >
+            <span>{c.label}</span>
+            {c.n > 0 && (
+              <span
+                className={cn(
+                  "text-[10px] px-1 rounded-full",
+                  active
+                    ? "bg-primary-foreground/20 text-primary-foreground"
+                    : "bg-black/5 text-current",
+                )}
+              >
+                {c.n}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function relTime(iso: string) {
   const t = new Date(iso).getTime();
   const diff = Date.now() - t;
