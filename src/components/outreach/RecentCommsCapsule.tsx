@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Inbox, Sparkles, ArrowRight, MailPlus } from "lucide-react";
+import { Inbox, Sparkles, ArrowRight, MailPlus, Send } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import {
   STATUS_LABEL,
   type Thread,
 } from "@/lib/inbox-store";
+import { useLatestActivityFor } from "@/lib/activity-store";
 
 interface Props {
   targetKind: "enterprise" | "contact";
@@ -55,6 +56,68 @@ function threadOneLine(t: Thread) {
 
 export function RecentCommsCapsule({ targetKind, targetId }: Props) {
   const t = useLatestThreadFor(targetKind, targetId);
+  const latestActivity = useLatestActivityFor(targetKind, targetId);
+  // 若最近一次活动是"我方外联但对方尚未回复"，优先展示外联摘要，
+  // 与外联任务列表口径保持一致（PR-2：公司页数据源切至 activity）。
+  const showOutreach =
+    !!latestActivity &&
+    latestActivity.kind === "outreach" &&
+    (!t || new Date(latestActivity.occurredAt).getTime() > new Date(t.lastAt).getTime());
+
+  if (showOutreach && latestActivity) {
+    const a = latestActivity;
+    const channelLabel =
+      a.channel === "email" ? "邮件" : a.channel === "phone" ? "短信" : "社媒";
+    const statusText =
+      a.status === "success"
+        ? "已送达 · 等待回复"
+        : a.status === "in_progress"
+          ? "触达中"
+          : a.status === "failed"
+            ? "触达失败"
+            : "已发出";
+    return (
+      <Card className="p-4 bg-gradient-to-r from-sky-500/5 to-transparent border-sky-500/20">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            <div className="h-9 w-9 rounded-md bg-sky-500/10 flex items-center justify-center shrink-0">
+              <Send className="h-4 w-4 text-sky-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-medium">最近外联</span>
+                <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-5">
+                  {channelLabel}
+                </Badge>
+                <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-5">
+                  {statusText}
+                </Badge>
+              </div>
+              <div className="mt-2 text-sm text-foreground/85 line-clamp-1">
+                <span className="inline-flex items-center gap-1 mr-2 text-xs px-1.5 py-0.5 rounded border bg-slate-50 text-slate-600 border-slate-200">
+                  你发出
+                </span>
+                {a.summary || "（无摘要）"}
+              </div>
+              <div className="mt-2 text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
+                {a.senderEmail && <span>发件 {a.senderEmail}</span>}
+                <span>· 发送 {formatDateTime(a.occurredAt)}</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button asChild size="sm" variant="outline" className="gap-1.5">
+              <Link to="/outreach/reach">
+                查看任务
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
   if (!t) {
     return (
       <Card className="p-4 flex items-center justify-between gap-4 bg-muted/30 border-dashed">
