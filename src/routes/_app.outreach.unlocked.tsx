@@ -11,16 +11,38 @@ import {
   User,
   Eye,
   EyeOff,
+  CalendarDays,
+  X,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Tabs,
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,13 +59,11 @@ import { cn } from "@/lib/utils";
 import { ReachButton } from "@/components/ReachButton";
 import {
   useUnlockedContacts,
-  groupByEnterprise,
-  groupByDay,
-  CONTACT_TYPE_LABEL,
   type ContactType,
   type UnlockedContact,
 } from "@/lib/unlocked-contacts";
 import { isSuppressed } from "@/lib/suppressions-store";
+import type { DateRange } from "react-day-picker";
 
 export const Route = createFileRoute("/_app/outreach/unlocked")({
   head: () => ({
@@ -59,10 +79,8 @@ export const Route = createFileRoute("/_app/outreach/unlocked")({
   component: UnlockedPage,
 });
 
-type TypeFilter = "all" | ContactType;
+type ChannelFilter = "all" | "email" | "sms" | "social" | "whatsapp";
 type OwnerFilter = "all" | "enterprise" | "person";
-type TimeFilter = "all" | "7d" | "30d";
-type GroupMode = "enterprise" | "day" | "flat";
 
 const REVEAL_LIMIT = 10;
 
@@ -84,16 +102,50 @@ function maskContact(t: ContactType, v: string): string {
   return `${v.slice(0, 2)}${"*".repeat(Math.max(3, v.length - 3))}${v.slice(-1)}`;
 }
 
-function typeIcon(t: ContactType) {
-  if (t === "email") return <Mail className="h-3.5 w-3.5" />;
-  if (t === "phone") return <Phone className="h-3.5 w-3.5" />;
+/** 显示分类：邮件 / 电话 / WhatsApp / 社媒 */
+type DisplayKind = "email" | "phone" | "whatsapp" | "social";
+
+function toDisplayKind(c: UnlockedContact): DisplayKind {
+  if (c.contact_type === "email") return "email";
+  if (c.contact_type === "phone") return "phone";
+  return c.platform === "WhatsApp" ? "whatsapp" : "social";
+}
+
+const KIND_LABEL: Record<DisplayKind, string> = {
+  email: "邮件",
+  phone: "电话",
+  whatsapp: "WhatsApp",
+  social: "社媒",
+};
+
+function kindIcon(k: DisplayKind) {
+  if (k === "email") return <Mail className="h-3.5 w-3.5" />;
+  if (k === "phone") return <Phone className="h-3.5 w-3.5" />;
   return <MessageSquare className="h-3.5 w-3.5" />;
 }
 
-function typeTone(t: ContactType) {
-  if (t === "email") return "bg-sky-50 text-sky-700 border-sky-200";
-  if (t === "phone") return "bg-violet-50 text-violet-700 border-violet-200";
+function kindTone(k: DisplayKind) {
+  if (k === "email") return "bg-sky-50 text-sky-700 border-sky-200";
+  if (k === "phone") return "bg-violet-50 text-violet-700 border-violet-200";
+  if (k === "whatsapp") return "bg-emerald-50 text-emerald-700 border-emerald-200";
   return "bg-amber-50 text-amber-700 border-amber-200";
+}
+
+function matchChannel(c: UnlockedContact, ch: ChannelFilter): boolean {
+  if (ch === "all") return true;
+  const k = toDisplayKind(c);
+  if (ch === "email") return k === "email";
+  if (ch === "sms") return k === "phone";
+  if (ch === "whatsapp") return k === "whatsapp";
+  return k === "social";
+}
+
+function fmtDate(d?: Date) {
+  if (!d) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function ContactRow({
@@ -114,65 +166,83 @@ function ContactRow({
       : c.owner_type === "enterprise"
         ? `/outreach/enterprise/${c.owner_id}`
         : undefined;
-
   const channel =
     c.contact_type === "email"
       ? "email"
       : c.contact_type === "phone"
         ? "phone"
         : "social";
+  const kind = toDisplayKind(c);
 
   return (
-    <div className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-muted/40 transition-colors">
-      <span
-        className={cn(
-          "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium",
-          typeTone(c.contact_type),
-        )}
-      >
-        {typeIcon(c.contact_type)}
-        {CONTACT_TYPE_LABEL[c.contact_type]}
-        {c.platform ? ` · ${c.platform}` : ""}
-      </span>
-      <span className="font-mono text-xs text-foreground tracking-wide truncate min-w-0 flex-1">
-        {revealed ? c.contact_value : maskContact(c.contact_type, c.contact_value)}
-      </span>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="shrink-0 inline-flex h-6 w-6 items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-        aria-label={revealed ? "隐藏明文" : "查看明文"}
-        title={revealed ? "隐藏明文" : "查看明文"}
-      >
-        {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-      </button>
-      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground shrink-0">
-        {c.owner_type === "enterprise" ? (
-          <Building2 className="h-3 w-3" />
-        ) : (
-          <User className="h-3 w-3" />
-        )}
-        {parentLink ? (
-          <Link
-            to={parentLink}
-            className="hover:text-primary hover:underline underline-offset-2"
+    <TableRow>
+      <TableCell className="py-2">
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium",
+            kindTone(kind),
+          )}
+        >
+          {kindIcon(kind)}
+          {KIND_LABEL[kind]}
+        </span>
+      </TableCell>
+      <TableCell className="py-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="font-mono text-xs text-foreground tracking-wide truncate">
+            {revealed ? c.contact_value : maskContact(c.contact_type, c.contact_value)}
+          </span>
+          <button
+            type="button"
+            onClick={onToggle}
+            className="shrink-0 inline-flex h-6 w-6 items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={revealed ? "隐藏明文" : "查看明文"}
+            title={revealed ? "隐藏明文" : "查看明文"}
           >
-            {c.owner_name}
-          </Link>
-        ) : (
-          <span>{c.owner_name}</span>
-        )}
-        {c.owner_type === "person" && c.parent_ref && (
-          <span className="text-muted-foreground/70">· {c.parent_ref.name}</span>
-        )}
-      </span>
-      <span className="text-[11px] text-muted-foreground tabular-nums shrink-0 w-32 text-right">
+            {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+          </button>
+        </div>
+      </TableCell>
+      <TableCell className="py-2">
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px]",
+            c.owner_type === "enterprise"
+              ? "border-primary/30 bg-primary/5 text-primary"
+              : "border-slate-200 bg-slate-50 text-slate-700",
+          )}
+        >
+          {c.owner_type === "enterprise" ? (
+            <Building2 className="h-3 w-3" />
+          ) : (
+            <User className="h-3 w-3" />
+          )}
+          {c.owner_type === "enterprise" ? "企业" : "人物"}
+        </span>
+      </TableCell>
+      <TableCell className="py-2">
+        <div className="flex flex-col min-w-0">
+          {parentLink ? (
+            <Link
+              to={parentLink}
+              className="text-sm text-foreground hover:text-primary hover:underline underline-offset-2 truncate"
+            >
+              {c.owner_name}
+            </Link>
+          ) : (
+            <span className="text-sm text-foreground truncate">{c.owner_name}</span>
+          )}
+          {c.owner_type === "person" && c.parent_ref && (
+            <span className="text-[11px] text-muted-foreground truncate">
+              {c.parent_ref.name}
+            </span>
+          )}
+        </div>
+      </TableCell>
+      <TableCell className="py-2 whitespace-nowrap text-xs text-muted-foreground tabular-nums">
         {formatDateTime(new Date(c.unlock_time).toISOString())}
-      </span>
-      <span className="text-[11px] text-rose-600 font-medium tabular-nums shrink-0 w-14 text-right">
-        -{c.unlock_cost}
-      </span>
-      <div className="shrink-0">
+      </TableCell>
+      <TableCell className="py-2 text-right">
         {suppressed ? (
           <span className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] text-rose-700">
             <Ban className="h-3 w-3" />
@@ -189,18 +259,17 @@ function ContactRow({
             detail={c.contact_value}
           />
         )}
-      </div>
-    </div>
+      </TableCell>
+    </TableRow>
   );
 }
 
 function UnlockedPage() {
   const all = useUnlockedContacts();
   const [q, setQ] = useState("");
-  const [type, setType] = useState<TypeFilter>("all");
+  const [channel, setChannel] = useState<ChannelFilter>("all");
   const [owner, setOwner] = useState<OwnerFilter>("all");
-  const [time, setTime] = useState<TimeFilter>("all");
-  const [group, setGroup] = useState<GroupMode>("enterprise");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
@@ -242,20 +311,23 @@ function UnlockedPage() {
 
   const filtered = useMemo(() => {
     const kw = q.trim().toLowerCase();
-    const now = Date.now();
-    const windowMs =
-      time === "7d" ? 7 * 864e5 : time === "30d" ? 30 * 864e5 : Infinity;
+    const from = dateRange?.from ? new Date(dateRange.from).setHours(0, 0, 0, 0) : -Infinity;
+    const to = dateRange?.to
+      ? new Date(dateRange.to).setHours(23, 59, 59, 999)
+      : dateRange?.from
+        ? new Date(dateRange.from).setHours(23, 59, 59, 999)
+        : Infinity;
     return all.filter((c) => {
-      if (type !== "all" && c.contact_type !== type) return false;
+      if (!matchChannel(c, channel)) return false;
       if (owner !== "all" && c.owner_type !== owner) return false;
-      if (now - c.unlock_time > windowMs) return false;
+      if (c.unlock_time < from || c.unlock_time > to) return false;
       if (kw) {
         const hay = `${c.owner_name} ${c.contact_value} ${c.parent_ref?.name ?? ""} ${c.platform ?? ""}`.toLowerCase();
         if (!hay.includes(kw)) return false;
       }
       return true;
     });
-  }, [all, q, type, owner, time]);
+  }, [all, q, channel, owner, dateRange]);
 
   const stats = useMemo(() => {
     const cost = filtered.reduce((s, c) => s + c.unlock_cost, 0);
@@ -267,11 +339,11 @@ function UnlockedPage() {
     return { count: filtered.length, cost, enterprises };
   }, [filtered]);
 
-  const groups = useMemo(() => {
-    if (group === "enterprise") return groupByEnterprise(filtered);
-    if (group === "day") return groupByDay(filtered);
-    return [{ key: "all", name: "全部", items: filtered, totalCost: stats.cost }];
-  }, [filtered, group, stats.cost]);
+  const dateLabel = dateRange?.from
+    ? dateRange.to && dateRange.to.getTime() !== dateRange.from.getTime()
+      ? `${fmtDate(dateRange.from)} ~ ${fmtDate(dateRange.to)}`
+      : fmtDate(dateRange.from)
+    : "解锁时间";
 
   return (
     <div className="p-6 space-y-4">
@@ -328,49 +400,62 @@ function UnlockedPage() {
               className="pl-8 h-9"
             />
           </div>
-          <Tabs value={type} onValueChange={(v) => setType(v as TypeFilter)}>
-            <TabsList className="h-9">
-              <TabsTrigger value="all">全部渠道</TabsTrigger>
-              <TabsTrigger value="email">邮箱</TabsTrigger>
-              <TabsTrigger value="phone">电话</TabsTrigger>
-              <TabsTrigger value="social_media">社媒</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <Select value={channel} onValueChange={(v) => setChannel(v as ChannelFilter)}>
+            <SelectTrigger className="h-9 w-[140px]">
+              <SelectValue placeholder="全部渠道" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部渠道</SelectItem>
+              <SelectItem value="email">邮件</SelectItem>
+              <SelectItem value="sms">短信</SelectItem>
+              <SelectItem value="social">社媒</SelectItem>
+              <SelectItem value="whatsapp">WhatsApp</SelectItem>
+            </SelectContent>
+          </Select>
           <Tabs value={owner} onValueChange={(v) => setOwner(v as OwnerFilter)}>
             <TabsList className="h-9">
               <TabsTrigger value="all">全部归属</TabsTrigger>
               <TabsTrigger value="enterprise">企业</TabsTrigger>
-              <TabsTrigger value="person">联系人</TabsTrigger>
+              <TabsTrigger value="person">人物</TabsTrigger>
             </TabsList>
           </Tabs>
-          <Tabs value={time} onValueChange={(v) => setTime(v as TimeFilter)}>
-            <TabsList className="h-9">
-              <TabsTrigger value="all">全部时间</TabsTrigger>
-              <TabsTrigger value="7d">近 7 天</TabsTrigger>
-              <TabsTrigger value="30d">近 30 天</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
-            <span>分组：</span>
-            {(
-              [
-                ["enterprise", "按企业"],
-                ["day", "按时间"],
-                ["flat", "平铺"],
-              ] as [GroupMode, string][]
-            ).map(([k, label]) => (
+          <Popover>
+            <PopoverTrigger asChild>
               <Button
-                key={k}
-                type="button"
+                variant="outline"
                 size="sm"
-                variant={group === k ? "default" : "outline"}
-                className="h-7 px-2.5 text-xs"
-                onClick={() => setGroup(k)}
+                className={cn(
+                  "h-9 gap-2 font-normal",
+                  !dateRange?.from && "text-muted-foreground",
+                )}
               >
-                {label}
+                <CalendarDays className="h-4 w-4" />
+                {dateLabel}
+                {dateRange?.from && (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDateRange(undefined);
+                    }}
+                    className="ml-1 rounded-sm p-0.5 hover:bg-muted"
+                    aria-label="清除日期"
+                  >
+                    <X className="h-3 w-3" />
+                  </span>
+                )}
               </Button>
-            ))}
-          </div>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-auto p-0">
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={2}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
         <div className="text-xs text-muted-foreground">
           共 <span className="font-medium text-foreground">{stats.count}</span> 条 · 覆盖{" "}
@@ -388,36 +473,33 @@ function UnlockedPage() {
           </div>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {groups.map((g) => (
-            <Card key={g.key} className="overflow-hidden">
-              <div className="flex items-center gap-3 px-4 py-2.5 border-b bg-muted/30">
-                <div className="font-medium text-sm text-foreground flex items-center gap-2">
-                  {group === "enterprise" && <Building2 className="h-4 w-4 text-primary" />}
-                  {g.name}
-                </div>
-                <Badge variant="secondary" className="text-[11px]">
-                  {g.items.length} 条
-                </Badge>
-                <div className="ml-auto text-[11px] text-rose-600 tabular-nums font-medium">
-                  -{g.totalCost} 积分
-                </div>
-              </div>
-              <div className="divide-y">
-                {g.items.map((c) => (
+        <Card className="overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[110px]">类型</TableHead>
+                <TableHead>联系方式</TableHead>
+                <TableHead className="w-[100px]">归属类型</TableHead>
+                <TableHead>归属对象</TableHead>
+                <TableHead className="w-[160px]">解锁时间</TableHead>
+                <TableHead className="w-[120px] text-right">操作</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((c) => {
+                const key = `${c.owner_id}:${c.contact_type}:${c.contact_value}`;
+                return (
                   <ContactRow
-                    key={`${c.owner_id}:${c.contact_type}:${c.contact_value}`}
+                    key={key}
                     c={c}
-                    revealed={revealed.has(`${c.owner_id}:${c.contact_type}:${c.contact_value}`)}
-                    onToggle={() =>
-                      toggleReveal(`${c.owner_id}:${c.contact_type}:${c.contact_value}`)
-                    }
+                    revealed={revealed.has(key)}
+                    onToggle={() => toggleReveal(key)}
                   />
-                ))}
-              </div>
-            </Card>
-          ))}
-        </div>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </Card>
       )}
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
