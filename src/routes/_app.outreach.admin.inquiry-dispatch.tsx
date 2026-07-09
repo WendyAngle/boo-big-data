@@ -469,11 +469,20 @@ function InboxRoutingAdmin() {
                       : assigned >= 10
                         ? "text-amber-600"
                         : "text-muted-foreground";
+                  const stats = memberStubStats(m.id);
+                  const remaining = Math.max(0, CAPACITY_LIMIT - assigned);
+                  const capTone =
+                    remaining === 0
+                      ? "text-rose-600"
+                      : remaining <= 5
+                        ? "text-amber-600"
+                        : "text-emerald-600";
                   return (
                     <div
                       key={m.id}
-                      className="flex items-center gap-2 text-sm border rounded-md px-2.5 py-1.5"
+                      className="border rounded-md px-2.5 py-1.5 space-y-1"
                     >
+                      <div className="flex items-center gap-2 text-sm">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span
@@ -516,12 +525,41 @@ function InboxRoutingAdmin() {
                           <div><b>未读</b>：其中含未读消息的会话数</div>
                         </TooltipContent>
                       </Tooltip>
+                      </div>
+                      <div className="flex items-center gap-3 pl-4 text-[11px] text-muted-foreground tabular-nums">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className={`inline-flex items-center gap-1 cursor-help ${capTone}`}>
+                              <Gauge className="h-3 w-3" />余量 {remaining}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="text-xs max-w-[220px]">
+                            可接单容量 = 上限 {CAPACITY_LIMIT} − 当前在办 {assigned}
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex items-center gap-1 cursor-help">
+                              <Timer className="h-3 w-3" />平均 {stats.avgMin}分
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="text-xs">近 7 天平均回复时长</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex items-center gap-1 cursor-help">
+                              <CheckCircle2 className="h-3 w-3" />本周 {stats.weekDone}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="text-xs">本周已处理完成的会话数</TooltipContent>
+                        </Tooltip>
+                      </div>
                     </div>
                   );
                 })}
               </div>
               <div className="mt-3 text-[11px] text-muted-foreground">
-                成员列表复用系统员工，编辑请前往「员工管理」。左侧圆点：🟢 ≤10 / 🟠 ≥10 / 🔴 ≥20。
+                成员列表复用系统员工，编辑请前往「员工管理」。负载圆点：🟢 ≤10 / 🟠 ≥10 / 🔴 ≥20（在办会话数）。
               </div>
             </div>
           </Card>
