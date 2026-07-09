@@ -1022,7 +1022,26 @@ function ThreadDetail({
               ))}
             </div>
           </div>
-          <ActionBar thread={thread} />
+          <div className="flex items-center gap-1.5">
+            {onToggleScorePanel && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1 hidden lg:inline-flex"
+                onClick={onToggleScorePanel}
+                title={scorePanelOpen ? "收起 AI 意向评分" : "展开 AI 意向评分"}
+              >
+                {scorePanelOpen ? (
+                  <PanelRightClose className="h-3.5 w-3.5" />
+                ) : (
+                  <PanelRightOpen className="h-3.5 w-3.5" />
+                )}
+                <TargetIcon className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs">AI 意向</span>
+              </Button>
+            )}
+            <ActionBar thread={thread} />
+          </div>
         </div>
       </div>
 
