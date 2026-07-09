@@ -606,7 +606,10 @@ export function useThreads(): Thread[] {
   useMetaVersion();
   const entries = useLedger();
   const all = [...buildThreads(entries), ...getDemoSocialThreads()];
-  return sortByUrgency(all);
+  // 询盘与回复模块只呈现"已有客户回复"的会话——即包含至少一条 inbound 消息。
+  // 仅发出、尚未收到回复的触达在「触达」模块跟进，不进入询盘视图。
+  const withReply = all.filter((t) => t.meta.inboundMessages.length > 0);
+  return sortByUrgency(withReply);
 }
 
 export function useThread(id: string): Thread | undefined {
@@ -615,7 +618,8 @@ export function useThread(id: string): Thread | undefined {
 }
 
 export function getThreadsSnapshot(): Thread[] {
-  return sortByUrgency([...buildThreads(getAllLedger()), ...getDemoSocialThreads()]);
+  const all = [...buildThreads(getAllLedger()), ...getDemoSocialThreads()];
+  return sortByUrgency(all.filter((t) => t.meta.inboundMessages.length > 0));
 }
 
 /**
