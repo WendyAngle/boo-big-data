@@ -425,9 +425,6 @@ function ReachPage() {
                 {statusTab !== "pending" && statusTab !== "in_progress" && statusTab !== "failed" && (
                   <TableHead className="w-[110px]">回复</TableHead>
                 )}
-                {statusTab !== "success" && statusTab !== "in_progress" && (
-                  <TableHead className="w-[160px] text-right">操作</TableHead>
-                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -485,20 +482,6 @@ function ReachPage() {
                   {statusTab !== "pending" && statusTab !== "in_progress" && statusTab !== "failed" && (
                     <TableCell className="text-xs">
                       <ReplyCell reach={r} thread={threadByKey.get(threadKeyFor(r) ?? "") ?? null} />
-                    </TableCell>
-                  )}
-                  {statusTab !== "success" && statusTab !== "in_progress" && (
-                    <TableCell className="text-right">
-                      <ActionCell
-                        row={r}
-                        onTrigger={() =>
-                          setConfirm({ kind: "trigger", id: r.id, target: r.targetName })
-                        }
-                        onRetry={() =>
-                          setConfirm({ kind: "retry", id: r.id, target: r.targetName })
-                        }
-                        retryable={isRetryableFailReason(r.failReason)}
-                      />
                     </TableCell>
                   )}
                 </TableRow>
