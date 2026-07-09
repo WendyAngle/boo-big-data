@@ -12,9 +12,11 @@ import {
   Eye,
   EyeOff,
   CalendarDays,
+  Calendar as CalendarIcon,
   X,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -144,6 +146,16 @@ function fmtDate(d?: Date) {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+function dateKeyOf(ts: number): string {
+  const d = new Date(ts);
+  return fmtDate(d);
+}
+
+function weekdayCN(dateStr: string) {
+  const d = new Date(dateStr);
+  return ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][d.getDay()];
 }
 
 type ContactGroup = {
@@ -382,28 +394,42 @@ function UnlockedPage() {
       : fmtDate(dateRange.from)
     : "解锁时间";
 
-  const groups = useMemo(() => {
-    const map = new Map<string, ContactGroup>();
+  const groupedByDate = useMemo(() => {
+    // First bucket contacts by date, then aggregate by owner within each day
+    const byDate = new Map<string, UnlockedContact[]>();
     for (const c of filtered) {
-      const k = `${c.owner_type}:${c.owner_id}`;
-      let g = map.get(k);
-      if (!g) {
-        g = {
-          key: k,
-          owner_type: c.owner_type,
-          owner_id: c.owner_id,
-          owner_name: c.owner_name,
-          parent_ref: c.parent_ref,
-          contacts: [],
-          latestUnlock: 0,
-        };
-        map.set(k, g);
-      }
-      g.contacts.push(c);
-      if (!g.parent_ref && c.parent_ref) g.parent_ref = c.parent_ref;
-      if (c.unlock_time > g.latestUnlock) g.latestUnlock = c.unlock_time;
+      const k = dateKeyOf(c.unlock_time);
+      if (!byDate.has(k)) byDate.set(k, []);
+      byDate.get(k)!.push(c);
     }
-    return Array.from(map.values()).sort((a, b) => b.latestUnlock - a.latestUnlock);
+    const out: { dateKey: string; count: number; groups: ContactGroup[] }[] = [];
+    for (const [dateKey, list] of byDate.entries()) {
+      const map = new Map<string, ContactGroup>();
+      for (const c of list) {
+        const k = `${c.owner_type}:${c.owner_id}`;
+        let g = map.get(k);
+        if (!g) {
+          g = {
+            key: `${dateKey}:${k}`,
+            owner_type: c.owner_type,
+            owner_id: c.owner_id,
+            owner_name: c.owner_name,
+            parent_ref: c.parent_ref,
+            contacts: [],
+            latestUnlock: 0,
+          };
+          map.set(k, g);
+        }
+        g.contacts.push(c);
+        if (!g.parent_ref && c.parent_ref) g.parent_ref = c.parent_ref;
+        if (c.unlock_time > g.latestUnlock) g.latestUnlock = c.unlock_time;
+      }
+      const groups = Array.from(map.values()).sort(
+        (a, b) => b.latestUnlock - a.latestUnlock,
+      );
+      out.push({ dateKey, count: list.length, groups });
+    }
+    return out.sort((a, b) => (a.dateKey < b.dateKey ? 1 : -1));
   }, [filtered]);
 
   return (
@@ -532,14 +558,37 @@ function UnlockedPage() {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          {groups.map((g) => (
-            <GroupCard
-              key={g.key}
-              g={g}
-              revealed={revealed}
-              onToggle={toggleReveal}
-            />
+        <div className="space-y-6">
+          {groupedByDate.map(({ dateKey, count, groups }) => (
+            <div key={dateKey} className="space-y-3">
+              <div className="flex items-center gap-3 sticky top-0 z-10 bg-background/95 backdrop-blur py-1">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                    <CalendarIcon className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold">{dateKey}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {weekdayCN(dateKey)}
+                    </div>
+                  </div>
+                </div>
+                <Badge variant="secondary" className="text-xs">
+                  {count} 条记录
+                </Badge>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {groups.map((g) => (
+                  <GroupCard
+                    key={g.key}
+                    g={g}
+                    revealed={revealed}
+                    onToggle={toggleReveal}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
