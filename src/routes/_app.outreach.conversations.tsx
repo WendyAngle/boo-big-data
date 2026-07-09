@@ -1035,6 +1035,20 @@ function ThreadDetail({
                   <Repeat className="h-3 w-3 mr-1" /> 已加入跟进序列
                 </Badge>
               )}
+              {thread.meta.humanTakeover && (
+                <Badge
+                  variant="outline"
+                  className="text-[11px] bg-sky-50 text-sky-700 border-sky-200"
+                  title={
+                    thread.meta.humanTakeover.reason
+                      ? `原因：${thread.meta.humanTakeover.reason}`
+                      : undefined
+                  }
+                >
+                  <Hand className="h-3 w-3 mr-1" />
+                  已人工接管 · {thread.meta.humanTakeover.byName}
+                </Badge>
+              )}
               {thread.meta.tags.map((t) => (
                 <Badge key={t} variant="outline" className="text-[11px]">
                   {t}
