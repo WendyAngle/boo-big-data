@@ -1251,6 +1251,46 @@ const DEMO_SEEDS: DemoSeed[] = [
     hoursAgo: 1,
     aiIntent: "quote",
   },
+  // -------- 非高意向样本：让"高意向"过滤不再等于"全部" --------
+  {
+    id: "demo:em:4",
+    channel: "email",
+    targetKind: "contact",
+    targetName: "Pierre Dubois",
+    parentRef: { id: "demo-ent-8", name: "Lyon Distribution" },
+    counterparty: "p.dubois@lyondistrib.fr",
+    lastInbound:
+      "I'm out of the office until August 5 with limited access to email. For urgent matters please contact my colleague marie@lyondistrib.fr.",
+    lastInboundZh:
+      "8 月 5 日前休假，邮件回复延迟。紧急事宜请联系同事 marie@lyondistrib.fr。",
+    hoursAgo: 7,
+    aiIntent: "ooo",
+  },
+  {
+    id: "demo:em:5",
+    channel: "email",
+    targetKind: "enterprise",
+    targetName: "Copenhagen Wholesale",
+    counterparty: "sourcing@cphwholesale.dk",
+    lastInbound:
+      "Thanks for reaching out. We've already committed to another supplier for this category — no need to follow up further.",
+    lastInboundZh:
+      "感谢来信，此类目我们已与其他供应商合作，无需再跟进。",
+    hoursAgo: 14,
+    aiIntent: "reject",
+  },
+  {
+    id: "demo:wa:3",
+    channel: "whatsapp",
+    targetKind: "contact",
+    targetName: "Ken Watanabe",
+    parentRef: { id: "demo-ent-9", name: "Tokyo Retail" },
+    counterparty: "+81801122334",
+    lastInbound: "Got it, thanks.",
+    lastInboundZh: "收到，谢谢。",
+    hoursAgo: 4,
+    // 低信号确认，AI 未打意向标签
+  },
 ];
 
 export function getDemoSocialThreads(): Thread[] {
