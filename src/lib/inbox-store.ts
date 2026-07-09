@@ -673,7 +673,8 @@ export interface InboxCounts {
   unread: number;
   pending: number;
   waiting: number;
-  handled: number;
+  won: number;
+  lost: number;
   snoozed: number;
   suppressed: number;
   hasReply: number;
@@ -689,7 +690,8 @@ export function useInboxCounts(): InboxCounts {
     unread: 0,
     pending: 0,
     waiting: 0,
-    handled: 0,
+    won: 0,
+    lost: 0,
     snoozed: 0,
     suppressed: 0,
     hasReply: 0,
