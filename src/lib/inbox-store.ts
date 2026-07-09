@@ -952,6 +952,7 @@ interface DemoSeed {
   parentRef?: { id: string; name: string };
   counterparty: string;
   lastInbound: string;
+  lastInboundZh?: string;
   hoursAgo: number;
   /** 剩余客服窗口小时数（覆盖默认计算） */
   windowLeftHours?: number | null;
@@ -969,6 +970,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     parentRef: { id: "demo-ent-1", name: "Bosch GmbH" },
     counterparty: "+491701234567",
     lastInbound: "Hi, could you send the pricing PDF for SKU-A?",
+    lastInboundZh: "你好，可否发一份 SKU-A 的报价 PDF 给我？",
     hoursAgo: 2,
     aiIntent: "quote",
     tags: ["高意向"],
@@ -980,6 +982,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     targetName: "Rakuten Global",
     counterparty: "+81901234567",
     lastInbound: "こんにちは、サンプル送付は可能ですか？",
+    lastInboundZh: "你好，请问可以寄样品吗？",
     hoursAgo: 26,
     windowLeftHours: null, // 窗口已过期
     aiIntent: "interested",
@@ -993,6 +996,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     parentRef: { id: "demo-ent-2", name: "TechnoPolymer LLC" },
     counterparty: "@ivanp",
     lastInbound: "Interested, please share catalog.",
+    lastInboundZh: "有兴趣，请把产品目录发给我。",
     hoursAgo: 5,
     aiIntent: "interested",
   },
@@ -1004,6 +1008,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     parentRef: { id: "demo-ent-3", name: "Grupo Andino" },
     counterparty: "psid:1234567890",
     lastInbound: "¿Cuál es el precio FOB Shanghai?",
+    lastInboundZh: "FOB 上海的价格是多少？",
     hoursAgo: 10,
     aiIntent: "quote",
   },
@@ -1014,6 +1019,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     targetName: "@sofia_home",
     counterparty: "openid:tt_9876",
     lastInbound: "Do you ship to US?",
+    lastInboundZh: "你们发货到美国吗？",
     hoursAgo: 30,
     aiIntent: "interested",
     assigneeId: "u_wang",
@@ -1037,6 +1043,7 @@ export function getDemoSocialThreads(): Thread[] {
         fromName: s.targetName,
         fromAddress: s.counterparty,
         content: s.lastInbound,
+        contentZh: s.lastInboundZh && !isChinese(s.lastInbound) ? s.lastInboundZh : undefined,
       });
       meta.aiIntent = s.aiIntent;
       meta.unread = 1;
