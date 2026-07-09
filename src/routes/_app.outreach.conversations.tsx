@@ -891,9 +891,11 @@ function ThreadDetail({
       const res = await generateAiContent({
         data: {
           channel: "email",
-          scene: `跟进回复。对方姓名：${thread.parentRef?.name ?? thread.targetName}。对方最新原话：${
-            lastInbound?.content ?? "(尚无对方回复)"
-          }`,
+          scene: "跟进客户回复邮件",
+          extra: [
+            `对方姓名：${thread.parentRef?.name ?? thread.targetName}`,
+            `对方最新原话：${(lastInbound?.content ?? "(尚无对方回复)").slice(0, 400)}`,
+          ].join("\n"),
           tone: "friendly",
           language: "en",
           sampleEnterprise: thread.targetName,
