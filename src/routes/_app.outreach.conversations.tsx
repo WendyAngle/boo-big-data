@@ -105,6 +105,8 @@ import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
 import { getAllLedger } from "@/lib/credits-ledger";
+import { IntentScorePanel } from "@/components/outreach/IntentScorePanel";
+import { Target as TargetIcon, PanelRightClose, PanelRightOpen } from "lucide-react";
 
 /** 邮件场景的快捷回复模板（Phase 1 hardcoded） */
 const EMAIL_QUICK_REPLIES: { id: string; name: string; body: string }[] = [
@@ -258,6 +260,7 @@ function InboxPage() {
   // 从企业/联系人详情等入口带 tid 直接进入时，默认使用 “全部” 视图，
   // 避免出现「右侧展示了会话，中间列表却提示"该视图下暂无会话"」的错位。
   const view: ViewKey = search.view ?? "all";
+  const [scorePanelOpen, setScorePanelOpen] = useState(true);
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
   const group = search.group ?? "all";
@@ -470,23 +473,32 @@ function InboxPage() {
         </div>
 
         {/* 右栏：会话详情 */}
-        <div className="flex-1 min-w-0 overflow-y-auto bg-background">
-          {current ? (
-            <ThreadDetail
-              thread={current}
-              autoAi={search.action === "ai"}
-              onConsumeAction={() =>
-                navigate({
-                  to: "/outreach/conversations",
-                  search: { ...search, action: undefined },
-                  replace: true,
-                })
-              }
-            />
-          ) : (
-            <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-              选择左侧一个会话查看详情
-            </div>
+        <div className="flex-1 min-w-0 flex bg-background">
+          <div className="flex-1 min-w-0 overflow-y-auto">
+            {current ? (
+              <ThreadDetail
+                thread={current}
+                autoAi={search.action === "ai"}
+                onConsumeAction={() =>
+                  navigate({
+                    to: "/outreach/conversations",
+                    search: { ...search, action: undefined },
+                    replace: true,
+                  })
+                }
+                scorePanelOpen={scorePanelOpen}
+                onToggleScorePanel={() => setScorePanelOpen((v) => !v)}
+              />
+            ) : (
+              <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                选择左侧一个会话查看详情
+              </div>
+            )}
+          </div>
+          {current && scorePanelOpen && (
+            <aside className="hidden lg:flex w-[300px] xl:w-[320px] shrink-0 border-l bg-muted/10 flex-col min-h-0">
+              <IntentScorePanel thread={current} />
+            </aside>
           )}
         </div>
       </div>
@@ -822,10 +834,14 @@ function ThreadDetail({
   thread,
   autoAi,
   onConsumeAction,
+  scorePanelOpen,
+  onToggleScorePanel,
 }: {
   thread: Thread;
   autoAi?: boolean;
   onConsumeAction?: () => void;
+  scorePanelOpen?: boolean;
+  onToggleScorePanel?: () => void;
 }) {
   const [reply, setReply] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
@@ -1006,7 +1022,26 @@ function ThreadDetail({
               ))}
             </div>
           </div>
-          <ActionBar thread={thread} />
+          <div className="flex items-center gap-1.5">
+            {onToggleScorePanel && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1 hidden lg:inline-flex"
+                onClick={onToggleScorePanel}
+                title={scorePanelOpen ? "收起 AI 意向评分" : "展开 AI 意向评分"}
+              >
+                {scorePanelOpen ? (
+                  <PanelRightClose className="h-3.5 w-3.5" />
+                ) : (
+                  <PanelRightOpen className="h-3.5 w-3.5" />
+                )}
+                <TargetIcon className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs">AI 意向</span>
+              </Button>
+            )}
+            <ActionBar thread={thread} />
+          </div>
         </div>
       </div>
 
