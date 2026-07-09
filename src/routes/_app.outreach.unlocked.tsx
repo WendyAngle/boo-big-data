@@ -312,13 +312,12 @@ function UnlockedPage() {
   }, [all, q, channel, owner, dateRange]);
 
   const stats = useMemo(() => {
-    const cost = filtered.reduce((s, c) => s + c.unlock_cost, 0);
     const enterprises = new Set(
       filtered.map((c) =>
         c.owner_type === "enterprise" ? c.owner_id : c.parent_ref?.id ?? c.owner_id,
       ),
     ).size;
-    return { count: filtered.length, cost, enterprises };
+    return { count: filtered.length, enterprises };
   }, [filtered]);
 
   const dateLabel = dateRange?.from
@@ -348,7 +347,7 @@ function UnlockedPage() {
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-bold tracking-wide">解锁记录</h1>
             <p className="text-white/90 text-sm mt-1">
-              汇总您已解锁的企业与联系人联系方式，可按渠道 / 归属 / 时间筛选，永久解锁的字段可直接复用发起触达，不会再次扣费。
+              集中查看您已解锁的企业与人物联系方式，支持按渠道、归属和解锁时间快速检索。
             </p>
           </div>
           <div className="hidden md:flex items-stretch gap-3">
@@ -359,13 +358,6 @@ function UnlockedPage() {
             <div className="rounded-xl bg-white/15 backdrop-blur-sm px-4 py-3 ring-1 ring-white/25 min-w-[110px]">
               <div className="text-[11px] text-white/80">覆盖企业</div>
               <div className="text-xl font-bold tabular-nums">{stats.enterprises}</div>
-            </div>
-            <div className="rounded-xl bg-white/15 backdrop-blur-sm px-4 py-3 ring-1 ring-white/25 min-w-[110px]">
-              <div className="text-[11px] text-white/80">累计消耗</div>
-              <div className="text-xl font-bold tabular-nums">
-                {stats.cost}
-                <span className="text-xs font-normal opacity-80"> 积分</span>
-              </div>
             </div>
           </div>
         </div>
@@ -441,8 +433,7 @@ function UnlockedPage() {
         </div>
         <div className="text-xs text-muted-foreground">
           共 <span className="font-medium text-foreground">{stats.count}</span> 条 · 覆盖{" "}
-          <span className="font-medium text-foreground">{stats.enterprises}</span> 家企业 · 累计消耗{" "}
-          <span className="font-medium text-rose-600">{stats.cost}</span> 积分
+          <span className="font-medium text-foreground">{stats.enterprises}</span> 家企业
         </div>
       </Card>
 
