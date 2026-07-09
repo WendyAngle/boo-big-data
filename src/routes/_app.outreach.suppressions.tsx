@@ -466,7 +466,6 @@ function AddOneDialog({
 const REMOVE_REASONS = [
   { value: "误操作加入", desc: "被错误加入退订名单，需要恢复" },
   { value: "客户主动恢复", desc: "客户来信/来电确认希望恢复接收" },
-  { value: "测试数据清理", desc: "清理测试环境产生的记录" },
   { value: "其他", desc: "其他情况，请在备注中说明" },
 ] as const;
 
