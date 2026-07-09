@@ -439,32 +439,19 @@ function UnlockedPage() {
           </div>
         </Card>
       ) : (
-        <Card className="overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[110px]">类型</TableHead>
-                <TableHead>联系方式</TableHead>
-                <TableHead className="w-[100px]">归属类型</TableHead>
-                <TableHead>归属对象</TableHead>
-                <TableHead className="w-[160px]">解锁时间</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((c) => {
-                const key = `${c.owner_id}:${c.contact_type}:${c.contact_value}`;
-                return (
-                  <ContactRow
-                    key={key}
-                    c={c}
-                    revealed={revealed.has(key)}
-                    onToggle={() => toggleReveal(key)}
-                  />
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {filtered.map((c) => {
+            const key = `${c.owner_id}:${c.contact_type}:${c.contact_value}`;
+            return (
+              <ContactCard
+                key={key}
+                c={c}
+                revealed={revealed.has(key)}
+                onToggle={() => toggleReveal(key)}
+              />
+            );
+          })}
+        </div>
       )}
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
