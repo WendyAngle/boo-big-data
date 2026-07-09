@@ -495,7 +495,7 @@ function UnlockedPage() {
 
       <Card className="p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[220px] max-w-md">
+          <div className="relative w-[280px]">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="搜索企业 / 联系人 / 邮箱 / 电话 / 社媒"
@@ -504,25 +504,6 @@ function UnlockedPage() {
               className="pl-8 h-9"
             />
           </div>
-          <Select value={channel} onValueChange={(v) => setChannel(v as ChannelFilter)}>
-            <SelectTrigger className="h-9 w-[140px]">
-              <SelectValue placeholder="全部渠道" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部渠道</SelectItem>
-              <SelectItem value="email">邮件</SelectItem>
-              <SelectItem value="sms">短信</SelectItem>
-              <SelectItem value="social">社媒</SelectItem>
-              <SelectItem value="whatsapp">WhatsApp</SelectItem>
-            </SelectContent>
-          </Select>
-          <Tabs value={owner} onValueChange={(v) => setOwner(v as OwnerFilter)}>
-            <TabsList className="h-9">
-              <TabsTrigger value="all">全部归属</TabsTrigger>
-              <TabsTrigger value="enterprise">企业</TabsTrigger>
-              <TabsTrigger value="person">人物</TabsTrigger>
-            </TabsList>
-          </Tabs>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -560,14 +541,26 @@ function UnlockedPage() {
               />
             </PopoverContent>
           </Popover>
-        </div>
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="text-xs text-muted-foreground">
-            共 <span className="font-medium text-foreground">{stats.count}</span> 条 ·{" "}
-            <span className="font-medium text-foreground">{stats.enterprises}</span> 家企业 ·{" "}
-            <span className="font-medium text-foreground">{stats.persons}</span> 位人物
-          </div>
-          <div className="flex items-center gap-2">
+          <Select value={channel} onValueChange={(v) => setChannel(v as ChannelFilter)}>
+            <SelectTrigger className="h-9 w-[140px]">
+              <SelectValue placeholder="全部渠道" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部渠道</SelectItem>
+              <SelectItem value="email">邮件</SelectItem>
+              <SelectItem value="sms">短信</SelectItem>
+              <SelectItem value="social">社媒</SelectItem>
+              <SelectItem value="whatsapp">WhatsApp</SelectItem>
+            </SelectContent>
+          </Select>
+          <Tabs value={owner} onValueChange={(v) => setOwner(v as OwnerFilter)}>
+            <TabsList className="h-9">
+              <TabsTrigger value="all">全部归属</TabsTrigger>
+              <TabsTrigger value="enterprise">企业</TabsTrigger>
+              <TabsTrigger value="person">人物</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <div className="ml-auto flex items-center gap-2">
             <span className="text-xs text-muted-foreground">展示方式</span>
             <Tabs
               value={aggregate}
