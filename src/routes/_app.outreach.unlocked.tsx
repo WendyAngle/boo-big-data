@@ -243,6 +243,12 @@ function GroupCard({
       ? `/outreach/enterprise/${enterpriseRef.id}`
       : undefined
     : `/outreach/enterprise/${g.owner_id}`;
+  const personLink = (() => {
+    if (!isPerson) return undefined;
+    const [entId, idxStr] = g.owner_id.split(":");
+    if (!entId || !idxStr) return undefined;
+    return { entId, idx: idxStr };
+  })();
 
   return (
     <Card className="p-4 flex flex-col gap-3 hover:shadow-md hover:border-primary/30 transition-all">
@@ -300,14 +306,26 @@ function GroupCard({
         })}
       </div>
 
-      {!isPerson && enterpriseLink && (
+      {(enterpriseLink || personLink) && (
         <div className="flex items-center justify-end text-[11px]">
-          <Link
-            to={enterpriseLink}
-            className="text-primary hover:underline underline-offset-2"
-          >
-            查看企业 →
-          </Link>
+          {isPerson && personLink ? (
+            <Link
+              to="/outreach/enterprise/$id/contact/$idx"
+              params={{ id: personLink.entId, idx: personLink.idx }}
+              className="text-primary hover:underline underline-offset-2"
+            >
+              查看人物 →
+            </Link>
+          ) : (
+            !isPerson && enterpriseLink && (
+              <Link
+                to={enterpriseLink}
+                className="text-primary hover:underline underline-offset-2"
+              >
+                查看企业 →
+              </Link>
+            )
+          )}
         </div>
       )}
     </Card>
