@@ -460,16 +460,32 @@ function InboxPage() {
                 <SelectItem value="snoozed">稍后处理（{counts.snoozed}）</SelectItem>
                 <SelectItem value="won">已成交（{counts.won}）</SelectItem>
                 <SelectItem value="lost">已流失（{counts.lost}）</SelectItem>
-                <SelectItem value="suppressed">已抑制（{counts.suppressed}）</SelectItem>
+                {counts.suppressed > 0 && (
+                  <SelectItem value="suppressed">已抑制（{counts.suppressed}）</SelectItem>
+                )}
               </SelectGroup>
               <SelectGroup>
                 <SelectLabel>智能视图</SelectLabel>
-                <SelectItem value="unread">未读（{counts.unread}）</SelectItem>
-                <SelectItem value="high_intent">高意向（{intentCounts.high}）</SelectItem>
-                <SelectItem value="needs_human">人工接管（{intentCounts.needsHuman}）</SelectItem>
-                <SelectItem value="due_soon">即将超时（{smartCounts.dueSoon}）</SelectItem>
-                <SelectItem value="mine">我的全部（{smartCounts.mine}）</SelectItem>
-                <SelectItem value="my_todo">我的待办（{smartCounts.myTodo}）</SelectItem>
+                {counts.unread > 0 && (
+                  <SelectItem value="unread">未读（{counts.unread}）</SelectItem>
+                )}
+                {intentCounts.high > 0 && (
+                  <SelectItem value="high_intent">高意向（{intentCounts.high}）</SelectItem>
+                )}
+                {intentCounts.needsHuman > 0 && (
+                  <SelectItem value="needs_human">人工接管（{intentCounts.needsHuman}）</SelectItem>
+                )}
+                {smartCounts.dueSoon > 0 && (
+                  <SelectItem value="due_soon">即将超时（{smartCounts.dueSoon}）</SelectItem>
+                )}
+                {smartCounts.myTodo > 0 ? (
+                  <SelectItem value="my_todo">我的待办（{smartCounts.myTodo}）</SelectItem>
+                ) : smartCounts.mine > 0 ? (
+                  <SelectItem value="mine">我负责的（{smartCounts.mine}）</SelectItem>
+                ) : null}
+                {smartCounts.myTodo > 0 && smartCounts.mine > smartCounts.myTodo && (
+                  <SelectItem value="mine">我负责的（{smartCounts.mine}）</SelectItem>
+                )}
               </SelectGroup>
             </SelectContent>
           </Select>

@@ -225,7 +225,7 @@ export interface Thread {
 /* -------------------- Storage -------------------- */
 
 const META_KEY = "boo:inbox:meta:v1";
-const SEED_FLAG = "boo:inbox:seed:v4";
+const SEED_FLAG = "boo:inbox:seed:v6";
 /** Phase 1 演示：当前登录员工，需与 conversations.tsx 中的 CURRENT_TEAM_USER_ID 保持一致 */
 const DEMO_CURRENT_USER = "u_zhang";
 
@@ -527,7 +527,7 @@ function seedInboundIfNeeded(entries: LedgerEntry[]) {
   // 演示数据：把前若干条"待跟进"会话分派给当前员工，避免"我的待办"视图为空
   let assigned = 0;
   for (const r of entries) {
-    if (assigned >= 3) break;
+    if (assigned >= 5) break;
     const key = threadKey(r);
     if (!key) continue;
     const m = metaStore[key];
@@ -539,6 +539,71 @@ function seedInboundIfNeeded(entries: LedgerEntry[]) {
     m.assignee = memberById(DEMO_CURRENT_USER)?.name;
     assigned++;
     changed = true;
+  }
+  // 演示数据：分派若干条给其他成员，体现多员工分布
+  const otherMembers = TEAM_MEMBERS.filter((m) => m.id !== DEMO_CURRENT_USER);
+  let otherAssigned = 0;
+  for (const r of entries) {
+    if (otherAssigned >= 4) break;
+    const key = threadKey(r);
+    if (!key) continue;
+    const m = metaStore[key];
+    if (!m) continue;
+    if (m.status !== "pending") continue;
+    if (m.assigneeId) continue;
+    if (m.inboundMessages.length === 0) continue;
+    const pick = otherMembers[otherAssigned % otherMembers.length];
+    m.assigneeId = pick.id;
+    m.assignee = pick.name;
+    otherAssigned++;
+    changed = true;
+  }
+  // 演示数据：生命周期多样化 —— 等待回复 / 已成交 / 已流失 / 已抑制 各若干条，
+  // 让"询盘与回复"的状态筛选每项都有真实数据可看。
+  const lifecyclePlan: { status: ThreadStatus; count: number; clearUnread?: boolean }[] = [
+    { status: "waiting_reply", count: 2 },
+    { status: "won", count: 2, clearUnread: true },
+    { status: "lost", count: 1, clearUnread: true },
+    { status: "suppressed", count: 1, clearUnread: true },
+    { status: "snoozed", count: 1 },
+  ];
+  for (const plan of lifecyclePlan) {
+    let n = 0;
+    for (const r of entries) {
+      if (n >= plan.count) break;
+      const key = threadKey(r);
+      if (!key) continue;
+      const m = metaStore[key];
+      if (!m) continue;
+      if (m.status !== "pending") continue;
+      if (m.inboundMessages.length === 0) continue;
+      // 等待回复：追加一条我方回复，模拟已回复对方
+      if (plan.status === "waiting_reply") {
+        const last = m.inboundMessages[m.inboundMessages.length - 1];
+        const replyAt = new Date(
+          new Date(last.createdAt).getTime() + 30 * 60_000,
+        ).toISOString();
+        m.extraMessages.push({
+          id: makeId("ob_seed"),
+          direction: "outbound",
+          createdAt: replyAt,
+          fromName: "你",
+          fromAddress: r.senderEmail || "",
+          subject: r.subject ? `Re: ${r.subject}` : undefined,
+          content:
+            "Thanks for your message — we've forwarded the details to our sales team and will follow up shortly with pricing & availability.",
+        });
+        m.updatedAt = replyAt;
+        m.unread = 0;
+      }
+      if (plan.status === "snoozed") {
+        m.snoozeUntil = new Date(Date.now() + 2 * 24 * 3600_000).toISOString();
+      }
+      m.status = plan.status;
+      if (plan.clearUnread) m.unread = 0;
+      n++;
+      changed = true;
+    }
   }
   if (changed) writeMeta(metaStore);
   window.localStorage.setItem(SEED_FLAG, "1");
