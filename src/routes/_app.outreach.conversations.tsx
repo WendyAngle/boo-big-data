@@ -1415,22 +1415,6 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
   return (
     <div className="flex items-center gap-1 shrink-0">
       <AssignMenu thread={thread} />
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={() => {
-          toggleStar(thread.id);
-        }}
-        aria-label="加星"
-      >
-        <Star
-          className={cn(
-            "h-4 w-4",
-            thread.meta.starred ? "fill-amber-400 text-amber-400" : "",
-          )}
-        />
-      </Button>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -1500,47 +1484,43 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
         </DropdownMenu>
       )}
 
-      <Button
-        variant={thread.meta.humanTakeover ? "default" : "outline"}
-        size="sm"
-        className={cn(
-          "gap-1 h-8",
-          thread.meta.humanTakeover &&
-            "bg-sky-500 hover:bg-sky-600 text-white border-sky-500",
-        )}
+      {/* 模式：人工接管 — 紧凑 toggle */}
+      <button
+        type="button"
         onClick={() => {
           const on = !thread.meta.humanTakeover;
           setHumanTakeover(thread.id, on);
           toast.success(
-            on
-              ? "已切换为人工接管，跟进序列已暂停"
-              : "已撤销人工接管，恢复自动跟进",
+            on ? "已切换为人工接管，跟进序列已暂停" : "已撤销人工接管，恢复自动跟进",
           );
         }}
         title={
           thread.meta.humanTakeover
-            ? "撤销人工接管，交回自动流程"
-            : "由我接管该会话，暂停自动跟进"
+            ? "人工接管中 · 点击撤销"
+            : "切换为人工接管（暂停自动跟进）"
         }
+        className={cn(
+          "ml-1 inline-flex items-center gap-1 h-8 px-2 rounded-md border text-xs transition-colors",
+          thread.meta.humanTakeover
+            ? "bg-sky-500 border-sky-500 text-white hover:bg-sky-600"
+            : "border-border text-muted-foreground hover:bg-muted",
+        )}
       >
         <Hand className="h-3.5 w-3.5" />
-        {thread.meta.humanTakeover ? "撤销接管" : "人工接管"}
-      </Button>
-
-      <Button
-        variant="outline"
-        size="sm"
-        className="gap-1 h-8"
-        onClick={() => {
-          enrollCadence(thread.id, !thread.meta.cadenceEnrolled);
-          toast.success(
-            thread.meta.cadenceEnrolled ? "已退出跟进序列" : "已加入 3/7/14 天跟进序列",
-          );
-        }}
-      >
-        <Repeat className="h-3.5 w-3.5" />
-        {thread.meta.cadenceEnrolled ? "退出序列" : "加入序列"}
-      </Button>
+        <span
+          className={cn(
+            "h-3 w-6 rounded-full relative transition-colors",
+            thread.meta.humanTakeover ? "bg-white/40" : "bg-muted-foreground/30",
+          )}
+        >
+          <span
+            className={cn(
+              "absolute top-0.5 h-2 w-2 rounded-full bg-white transition-all",
+              thread.meta.humanTakeover ? "left-3.5" : "left-0.5",
+            )}
+          />
+        </span>
+      </button>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -1549,6 +1529,34 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuItem
+            onClick={() => {
+              toggleStar(thread.id);
+              toast.success(thread.meta.starred ? "已取消加星" : "已加星");
+            }}
+          >
+            <Star
+              className={cn(
+                "h-3.5 w-3.5 mr-2",
+                thread.meta.starred ? "fill-amber-400 text-amber-400" : "",
+              )}
+            />
+            {thread.meta.starred ? "取消加星" : "加星"}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              enrollCadence(thread.id, !thread.meta.cadenceEnrolled);
+              toast.success(
+                thread.meta.cadenceEnrolled
+                  ? "已退出跟进序列"
+                  : "已加入 3/7/14 天跟进序列",
+              );
+            }}
+          >
+            <Repeat className="h-3.5 w-3.5 mr-2" />
+            {thread.meta.cadenceEnrolled ? "退出跟进序列" : "加入跟进序列"}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuLabel>标签 / 分类</DropdownMenuLabel>
           <div className="px-2 py-1.5 flex items-center gap-1">
             <Input
