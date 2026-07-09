@@ -969,8 +969,8 @@ function ThreadDetail({
               </Link>
             )}
         </div>
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="min-w-0 flex-1 basis-full xl:basis-auto">
             <div className="text-base font-semibold truncate">
               {thread.messages[0]?.subject || "(无主题)"}
             </div>
@@ -1022,7 +1022,7 @@ function ThreadDetail({
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap shrink-0">
             {onToggleScorePanel && (
               <Button
                 variant="outline"
