@@ -145,6 +145,8 @@ const searchSchema = z.object({
       "mine",
       "my_todo",
       "due_soon",
+      "high_intent",
+      "needs_human",
     ])
     .optional(),
   ch: z
@@ -203,6 +205,8 @@ const VIEW_LABEL: Record<ViewKey, string> = {
   hasReply: "有回复",
   noReply: "未回复",
   all: "全部",
+  high_intent: "高意向",
+  needs_human: "人工接管",
 };
 function viewLabel(v: ViewKey) {
   return VIEW_LABEL[v] ?? "全部";
