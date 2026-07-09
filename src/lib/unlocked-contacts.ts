@@ -4,7 +4,7 @@ import {
   type LedgerEntry,
   type TargetKind,
 } from "@/lib/credits-ledger";
-import { findEnterprise } from "@/data/enterprises";
+import { findEnterprise, type Enterprise, type EnterpriseContact } from "@/data/enterprises";
 
 /**
  * 解锁记录 · 派生自 credits-ledger 中 kind==="view" 且字段为
@@ -63,35 +63,115 @@ function resolveParentRef(
   return ent ? { id: ent.id, name: ent.name } : undefined;
 }
 
+/** 从 targetId 解析出企业与联系人（contact 目标） */
+function resolveTarget(
+  targetKind: TargetKind,
+  targetId: string,
+): { enterprise?: Enterprise; contact?: EnterpriseContact } {
+  if (targetKind === "enterprise") {
+    return { enterprise: findEnterprise(targetId) };
+  }
+  const [entId, idxStr] = targetId.split(":");
+  const enterprise = entId ? findEnterprise(entId) : undefined;
+  const idx = Number(idxStr);
+  const contact =
+    enterprise && Number.isFinite(idx) ? enterprise.contacts[idx] : undefined;
+  return { enterprise, contact };
+}
+
+/** 归一化联系方式明文：优先取企业/联系人真实值，兜底用 ledger 中的 detail */
+function realContactValue(
+  ct: ContactType,
+  platform: string | undefined,
+  targetKind: TargetKind,
+  targetId: string,
+  fallback?: string,
+): string | undefined {
+  const { enterprise, contact } = resolveTarget(targetKind, targetId);
+  if (ct === "email") {
+    return contact?.email ?? enterprise?.email ?? fallback;
+  }
+  if (ct === "phone") {
+    if (platform === "WhatsApp") {
+      return (
+        contact?.whatsapp ??
+        contact?.phone ??
+        enterprise?.whatsapp ??
+        enterprise?.phone ??
+        fallback
+      );
+    }
+    return contact?.phone ?? enterprise?.phone ?? fallback;
+  }
+  // social_media：ledger 中 detail 通常已是 handle/URL，可直接使用
+  return fallback;
+}
+
+interface Derived {
+  ct: ContactType;
+  value: string;
+  platform?: string;
+}
+
+/** 由一条 reach 推导它解锁了哪个联系方式 */
+function reachToDerived(e: LedgerEntry): Derived | null {
+  if (!e.channel) return null;
+  if (e.channel === "email") {
+    const v = realContactValue("email", undefined, e.targetKind, e.targetId, e.detail);
+    return v ? { ct: "email", value: v } : null;
+  }
+  if (e.channel === "phone") {
+    const v = realContactValue("phone", undefined, e.targetKind, e.targetId, e.detail);
+    return v ? { ct: "phone", value: v } : null;
+  }
+  // social
+  if (e.platform === "WhatsApp") {
+    const v = realContactValue("phone", "WhatsApp", e.targetKind, e.targetId, e.detail);
+    return v ? { ct: "social_media", value: v, platform: "WhatsApp" } : null;
+  }
+  const handle = (e.detail ?? "").trim();
+  if (!handle) return null;
+  return { ct: "social_media", value: handle, platform: inferPlatform(handle, e.platform) };
+}
+
+/** 由一条 view 推导它解锁了哪个联系方式 */
+function viewToDerived(e: LedgerEntry): Derived | null {
+  const ct = e.field ? toContactType(e.field) : null;
+  if (!ct) return null;
+  const fallback = (e.detail ?? "").trim() || undefined;
+  if (ct === "social_media") {
+    if (!fallback) return null;
+    return { ct, value: fallback, platform: inferPlatform(fallback, e.platform) };
+  }
+  const v = realContactValue(ct, undefined, e.targetKind, e.targetId, fallback);
+  return v ? { ct, value: v } : null;
+}
+
 export function deriveUnlockedContacts(entries: LedgerEntry[]): UnlockedContact[] {
-  // 时间正序遍历，保留首次解锁；用 map 去重
+  // 时间正序：view + reach 均视为解锁来源；相同联系方式仅保留最早
   const sorted = [...entries]
-    .filter((e) => e.kind === "view" && e.field && e.detail)
+    .filter((e) => e.kind === "view" || e.kind === "reach")
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const map = new Map<string, UnlockedContact>();
   for (const e of sorted) {
-    const ct = toContactType(e.field as string);
-    if (!ct) continue;
-    const value = (e.detail as string).trim();
-    if (!value) continue;
-    const key = `${e.targetKind}:${e.targetId}:${ct}:${value}`;
+    const d = e.kind === "reach" ? reachToDerived(e) : viewToDerived(e);
+    if (!d) continue;
+    const key = `${e.targetKind}:${e.targetId}:${d.ct}:${d.value}`;
     if (map.has(key)) continue;
-    const platform = ct === "social_media" ? inferPlatform(value, e.platform) : undefined;
     map.set(key, {
       id: e.id,
-      contact_type: ct,
-      contact_value: value,
+      contact_type: d.ct,
+      contact_value: d.value,
       owner_type: toOwnerType(e.targetKind),
       owner_id: e.targetId,
       owner_name: e.targetName,
       parent_ref: resolveParentRef(e.targetKind, e.targetId, e.parentRef),
-      platform,
+      platform: d.platform,
       unlock_time: new Date(e.createdAt).getTime(),
-      unlock_cost: e.cost,
+      unlock_cost: e.kind === "view" ? e.cost : 0,
       is_unlocked: true,
     });
   }
-  // 展示按解锁时间倒序
   return [...map.values()].sort((a, b) => b.unlock_time - a.unlock_time);
 }
 
