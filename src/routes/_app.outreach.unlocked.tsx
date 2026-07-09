@@ -209,6 +209,9 @@ function ContactRow({
       <div className="flex-1 min-w-0 flex items-center gap-1">
         <ContactValue value={display} />
       </div>
+      <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
+        {formatDateTime(new Date(c.unlock_time).toISOString())}
+      </span>
       <button
         type="button"
         onClick={onToggle}
@@ -295,17 +298,16 @@ function GroupCard({
         })}
       </div>
 
-      <div className="flex items-center justify-between text-[11px] text-muted-foreground tabular-nums">
-        <span>最近解锁 {formatDateTime(new Date(g.latestUnlock).toISOString())}</span>
-        {!isPerson && enterpriseLink && (
+      {!isPerson && enterpriseLink && (
+        <div className="flex items-center justify-end text-[11px]">
           <Link
             to={enterpriseLink}
             className="text-primary hover:underline underline-offset-2"
           >
             查看企业 →
           </Link>
-        )}
-      </div>
+        </div>
+      )}
     </Card>
   );
 }
