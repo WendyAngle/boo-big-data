@@ -36,14 +36,6 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -148,7 +140,7 @@ function fmtDate(d?: Date) {
   return `${y}-${m}-${day}`;
 }
 
-function ContactRow({
+function ContactCard({
   c,
   revealed,
   onToggle,
@@ -157,26 +149,18 @@ function ContactRow({
   revealed: boolean;
   onToggle: () => void;
 }) {
-  const suppressed =
-    (c.contact_type === "email" && isSuppressed("email", c.contact_value)) ||
-    (c.contact_type === "phone" && isSuppressed("phone", c.contact_value));
-  const parentLink =
-    c.owner_type === "person" && c.parent_ref
-      ? `/outreach/enterprise/${c.parent_ref.id}`
-      : c.owner_type === "enterprise"
-        ? `/outreach/enterprise/${c.owner_id}`
-        : undefined;
-  const channel =
-    c.contact_type === "email"
-      ? "email"
-      : c.contact_type === "phone"
-        ? "phone"
-        : "social";
   const kind = toDisplayKind(c);
+  const isPerson = c.owner_type === "person";
+  const enterpriseRef = isPerson ? c.parent_ref : undefined;
+  const enterpriseLink = isPerson
+    ? enterpriseRef
+      ? `/outreach/enterprise/${enterpriseRef.id}`
+      : undefined
+    : `/outreach/enterprise/${c.owner_id}`;
 
   return (
-    <TableRow>
-      <TableCell className="py-2">
+    <Card className="p-4 flex flex-col gap-3 hover:shadow-md hover:border-primary/30 transition-all">
+      <div className="flex items-center justify-between gap-2">
         <span
           className={cn(
             "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium",
@@ -186,63 +170,72 @@ function ContactRow({
           {kindIcon(kind)}
           {KIND_LABEL[kind]}
         </span>
-      </TableCell>
-      <TableCell className="py-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="font-mono text-xs text-foreground tracking-wide truncate">
-            {revealed ? c.contact_value : maskContact(c.contact_type, c.contact_value)}
-          </span>
-          <button
-            type="button"
-            onClick={onToggle}
-            className="shrink-0 inline-flex h-6 w-6 items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-            aria-label={revealed ? "隐藏明文" : "查看明文"}
-            title={revealed ? "隐藏明文" : "查看明文"}
-          >
-            {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-          </button>
-        </div>
-      </TableCell>
-      <TableCell className="py-2">
         <span
           className={cn(
             "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px]",
-            c.owner_type === "enterprise"
-              ? "border-primary/30 bg-primary/5 text-primary"
-              : "border-slate-200 bg-slate-50 text-slate-700",
+            isPerson
+              ? "border-slate-200 bg-slate-50 text-slate-700"
+              : "border-primary/30 bg-primary/5 text-primary",
           )}
         >
-          {c.owner_type === "enterprise" ? (
-            <Building2 className="h-3 w-3" />
-          ) : (
-            <User className="h-3 w-3" />
-          )}
-          {c.owner_type === "enterprise" ? "企业" : "人物"}
+          {isPerson ? <User className="h-3 w-3" /> : <Building2 className="h-3 w-3" />}
+          {isPerson ? "人物" : "企业"}
         </span>
-      </TableCell>
-      <TableCell className="py-2">
-        <div className="flex flex-col min-w-0">
-          {parentLink ? (
-            <Link
-              to={parentLink}
-              className="text-sm text-foreground hover:text-primary hover:underline underline-offset-2 truncate"
-            >
-              {c.owner_name}
-            </Link>
+      </div>
+
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="font-mono text-sm text-foreground tracking-wide truncate">
+          {revealed ? c.contact_value : maskContact(c.contact_type, c.contact_value)}
+        </span>
+        <button
+          type="button"
+          onClick={onToggle}
+          className="shrink-0 inline-flex h-6 w-6 items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+          aria-label={revealed ? "隐藏明文" : "查看明文"}
+          title={revealed ? "隐藏明文" : "查看明文"}
+        >
+          {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+        </button>
+      </div>
+
+      <div className="border-t pt-2 space-y-1 min-w-0">
+        <div className="flex items-center gap-1.5 text-sm text-foreground min-w-0">
+          {isPerson ? (
+            <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           ) : (
-            <span className="text-sm text-foreground truncate">{c.owner_name}</span>
+            <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           )}
-          {c.owner_type === "person" && c.parent_ref && (
-            <span className="text-[11px] text-muted-foreground truncate">
-              {c.parent_ref.name}
-            </span>
-          )}
+          <span className="truncate font-medium">{c.owner_name}</span>
         </div>
-      </TableCell>
-      <TableCell className="py-2 whitespace-nowrap text-xs text-muted-foreground tabular-nums">
-        {formatDateTime(new Date(c.unlock_time).toISOString())}
-      </TableCell>
-    </TableRow>
+        {isPerson && (
+          <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground min-w-0 pl-5">
+            <Building2 className="h-3 w-3 shrink-0" />
+            {enterpriseRef && enterpriseLink ? (
+              <Link
+                to={enterpriseLink}
+                className="truncate hover:text-primary hover:underline underline-offset-2"
+              >
+                {enterpriseRef.name}
+              </Link>
+            ) : (
+              <span className="truncate italic">未关联企业</span>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between text-[11px] text-muted-foreground tabular-nums">
+        <span>解锁于 {formatDateTime(new Date(c.unlock_time).toISOString())}</span>
+        {!isPerson && enterpriseLink && (
+          <Link
+            to={enterpriseLink}
+            className="text-primary hover:underline underline-offset-2"
+          >
+            查看企业 →
+          </Link>
+        )}
+      </div>
+    </Card>
   );
 }
 
@@ -446,32 +439,19 @@ function UnlockedPage() {
           </div>
         </Card>
       ) : (
-        <Card className="overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[110px]">类型</TableHead>
-                <TableHead>联系方式</TableHead>
-                <TableHead className="w-[100px]">归属类型</TableHead>
-                <TableHead>归属对象</TableHead>
-                <TableHead className="w-[160px]">解锁时间</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((c) => {
-                const key = `${c.owner_id}:${c.contact_type}:${c.contact_value}`;
-                return (
-                  <ContactRow
-                    key={key}
-                    c={c}
-                    revealed={revealed.has(key)}
-                    onToggle={() => toggleReveal(key)}
-                  />
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {filtered.map((c) => {
+            const key = `${c.owner_id}:${c.contact_type}:${c.contact_value}`;
+            return (
+              <ContactCard
+                key={key}
+                c={c}
+                revealed={revealed.has(key)}
+                onToggle={() => toggleReveal(key)}
+              />
+            );
+          })}
+        </div>
       )}
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
