@@ -105,6 +105,8 @@ import { generateAiContent } from "@/lib/api/ai-compose.functions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getApprovedSmsTemplates } from "@/lib/sms-templates-store";
 import { getAllLedger } from "@/lib/credits-ledger";
+import { IntentScorePanel } from "@/components/outreach/IntentScorePanel";
+import { Target as TargetIcon, PanelRightClose, PanelRightOpen } from "lucide-react";
 
 /** 邮件场景的快捷回复模板（Phase 1 hardcoded） */
 const EMAIL_QUICK_REPLIES: { id: string; name: string; body: string }[] = [
@@ -470,23 +472,32 @@ function InboxPage() {
         </div>
 
         {/* 右栏：会话详情 */}
-        <div className="flex-1 min-w-0 overflow-y-auto bg-background">
-          {current ? (
-            <ThreadDetail
-              thread={current}
-              autoAi={search.action === "ai"}
-              onConsumeAction={() =>
-                navigate({
-                  to: "/outreach/conversations",
-                  search: { ...search, action: undefined },
-                  replace: true,
-                })
-              }
-            />
-          ) : (
-            <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-              选择左侧一个会话查看详情
-            </div>
+        <div className="flex-1 min-w-0 flex bg-background">
+          <div className="flex-1 min-w-0 overflow-y-auto">
+            {current ? (
+              <ThreadDetail
+                thread={current}
+                autoAi={search.action === "ai"}
+                onConsumeAction={() =>
+                  navigate({
+                    to: "/outreach/conversations",
+                    search: { ...search, action: undefined },
+                    replace: true,
+                  })
+                }
+                scorePanelOpen={scorePanelOpen}
+                onToggleScorePanel={() => setScorePanelOpen((v) => !v)}
+              />
+            ) : (
+              <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                选择左侧一个会话查看详情
+              </div>
+            )}
+          </div>
+          {current && scorePanelOpen && (
+            <aside className="hidden lg:flex w-[300px] xl:w-[320px] shrink-0 border-l bg-muted/10 flex-col min-h-0">
+              <IntentScorePanel thread={current} />
+            </aside>
           )}
         </div>
       </div>
