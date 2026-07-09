@@ -138,23 +138,6 @@ function SuppressionsPage() {
               系统会在收到退订请求、投诉、STOP 关键字或硬退信时自动加入。名单中的地址将被后续所有触达任务跳过。
             </p>
           </div>
-          <div className="flex gap-2 shrink-0">
-            <Button
-              variant="outline"
-              onClick={() => setImportOpen(true)}
-              className="bg-white/15 border-white/40 text-white hover:bg-white/25 hover:text-white backdrop-blur-sm"
-            >
-              <Upload className="h-4 w-4" />
-              批量导入
-            </Button>
-            <Button
-              onClick={() => setAddOpen(true)}
-              className="bg-white text-primary hover:bg-white/90"
-            >
-              <Plus className="h-4 w-4" />
-              手动添加
-            </Button>
-          </div>
         </div>
       </section>
 
@@ -246,6 +229,19 @@ function SuppressionsPage() {
               className="pl-8 h-8"
             />
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8"
+            onClick={() => setImportOpen(true)}
+          >
+            <Upload className="h-3.5 w-3.5" />
+            批量导入
+          </Button>
+          <Button size="sm" className="h-8" onClick={() => setAddOpen(true)}>
+            <Plus className="h-3.5 w-3.5" />
+            手动添加
+          </Button>
         </div>
         <Table>
           <TableHeader>
