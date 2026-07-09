@@ -78,6 +78,7 @@ import {
   toggleStar,
   enrollCadence,
   suppressThread,
+  setHumanTakeover,
   addTag,
   addTaskForThread,
   updateIntent,
