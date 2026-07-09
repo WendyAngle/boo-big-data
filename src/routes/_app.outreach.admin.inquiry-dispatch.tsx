@@ -274,12 +274,30 @@ function InboxRoutingAdmin() {
   return (
     <TooltipProvider delayDuration={200}>
     <div className="p-6 space-y-6 max-w-6xl">
-      <div>
-        <h1 className="text-2xl font-semibold">询盘分派</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          按目标类型内置两个分组：企业分组、人物分组。全部会话人工分配，不做自动派单。
-        </p>
-      </div>
+      <section className="relative overflow-hidden rounded-2xl ring-1 ring-border">
+        <div
+          className="absolute inset-0"
+          style={{ background: "var(--gradient-hero)" }}
+        />
+        <div
+          className="absolute inset-0 opacity-30 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(circle at 80% 30%, rgba(255,255,255,0.45) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(255,255,255,0.25) 0%, transparent 45%)",
+          }}
+        />
+        <div className="relative px-8 py-10 flex items-center gap-5 text-white">
+          <div className="h-14 w-14 rounded-2xl bg-white/25 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/30">
+            <Users className="h-7 w-7" />
+          </div>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold tracking-wide">询盘分派</h1>
+            <p className="text-white/90 text-sm mt-1">
+              按目标类型内置两个分组：企业分组、人物分组。全部会话人工分配，不做自动派单。
+            </p>
+          </div>
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {config.map((g) => (
