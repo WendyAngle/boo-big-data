@@ -352,7 +352,7 @@ function InboxPage() {
       );
     }
     return list;
-  }, [threads, view, q, ch]);
+  }, [threads, view, q, ch, intent]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   void group;
 
