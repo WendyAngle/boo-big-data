@@ -242,24 +242,6 @@ function ContactRow({
       <TableCell className="py-2 whitespace-nowrap text-xs text-muted-foreground tabular-nums">
         {formatDateTime(new Date(c.unlock_time).toISOString())}
       </TableCell>
-      <TableCell className="py-2 text-right">
-        {suppressed ? (
-          <span className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] text-rose-700">
-            <Ban className="h-3 w-3" />
-            已退订
-          </span>
-        ) : (
-          <ReachButton
-            targetKind={c.owner_type === "enterprise" ? "enterprise" : "contact"}
-            targetId={c.owner_id}
-            targetName={c.owner_name}
-            parentRef={c.parent_ref}
-            channel={channel}
-            platform={c.platform}
-            detail={c.contact_value}
-          />
-        )}
-      </TableCell>
     </TableRow>
   );
 }
@@ -482,7 +464,6 @@ function UnlockedPage() {
                 <TableHead className="w-[100px]">归属类型</TableHead>
                 <TableHead>归属对象</TableHead>
                 <TableHead className="w-[160px]">解锁时间</TableHead>
-                <TableHead className="w-[120px] text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
