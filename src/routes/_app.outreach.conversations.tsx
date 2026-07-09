@@ -453,19 +453,25 @@ function InboxPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">状态：全部（{counts.all}）</SelectItem>
-              <SelectItem value="pending">待回复（{counts.pending}）</SelectItem>
-              <SelectItem value="unread">未读（{counts.unread}）</SelectItem>
-              <SelectItem value="high_intent">高意向（{intentCounts.high}）</SelectItem>
-              <SelectItem value="needs_human">人工接管（{intentCounts.needsHuman}）</SelectItem>
-              <SelectItem value="due_soon">即将超时（{smartCounts.dueSoon}）</SelectItem>
-              <SelectItem value="unassigned">未分配（{counts.unassigned}）</SelectItem>
-              <SelectItem value="mine">我的全部（{smartCounts.mine}）</SelectItem>
-              <SelectItem value="my_todo">我的待办（{smartCounts.myTodo}）</SelectItem>
-              <SelectItem value="snoozed">稍后处理</SelectItem>
-              <SelectItem value="handled">已处理（{counts.handled}）</SelectItem>
-              <SelectItem value="suppressed">已抑制</SelectItem>
-              <SelectItem value="hasReply">有回复</SelectItem>
-              <SelectItem value="noReply">未回复</SelectItem>
+              <SelectGroup>
+                <SelectLabel>生命周期</SelectLabel>
+                <SelectItem value="pending">待回复（{counts.pending}）</SelectItem>
+                <SelectItem value="waiting">等待回复（{counts.waiting}）</SelectItem>
+                <SelectItem value="snoozed">稍后处理（{counts.snoozed}）</SelectItem>
+                <SelectItem value="won">已成交（{counts.won}）</SelectItem>
+                <SelectItem value="lost">已流失（{counts.lost}）</SelectItem>
+                <SelectItem value="suppressed">已抑制（{counts.suppressed}）</SelectItem>
+              </SelectGroup>
+              <SelectGroup>
+                <SelectLabel>智能视图</SelectLabel>
+                <SelectItem value="unread">未读（{counts.unread}）</SelectItem>
+                <SelectItem value="high_intent">高意向（{intentCounts.high}）</SelectItem>
+                <SelectItem value="needs_human">人工接管（{intentCounts.needsHuman}）</SelectItem>
+                <SelectItem value="due_soon">即将超时（{smartCounts.dueSoon}）</SelectItem>
+                <SelectItem value="unassigned">未分配（{counts.unassigned}）</SelectItem>
+                <SelectItem value="mine">我的全部（{smartCounts.mine}）</SelectItem>
+                <SelectItem value="my_todo">我的待办（{smartCounts.myTodo}）</SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
         </div>
