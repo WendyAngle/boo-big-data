@@ -1580,6 +1580,33 @@ function __ActionBarImpl({ thread }: { thread: Thread }) {
       </Button>
 
       <Button
+        variant={thread.meta.humanTakeover ? "default" : "outline"}
+        size="sm"
+        className={cn(
+          "gap-1 h-8",
+          thread.meta.humanTakeover &&
+            "bg-sky-500 hover:bg-sky-600 text-white border-sky-500",
+        )}
+        onClick={() => {
+          const on = !thread.meta.humanTakeover;
+          setHumanTakeover(thread.id, on);
+          toast.success(
+            on
+              ? "已切换为人工接管，跟进序列已暂停"
+              : "已撤销人工接管，恢复自动跟进",
+          );
+        }}
+        title={
+          thread.meta.humanTakeover
+            ? "撤销人工接管，交回自动流程"
+            : "由我接管该会话，暂停自动跟进"
+        }
+      >
+        <Hand className="h-3.5 w-3.5" />
+        {thread.meta.humanTakeover ? "撤销接管" : "人工接管"}
+      </Button>
+
+      <Button
         variant="outline"
         size="sm"
         className="gap-1 h-8"
