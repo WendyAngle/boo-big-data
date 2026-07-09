@@ -1139,9 +1139,9 @@ const DEMO_SEEDS: DemoSeed[] = [
     counterparty: "+81901234567",
     lastInbound: "こんにちは、サンプル送付は可能ですか？",
     lastInboundZh: "你好，请问可以寄样品吗？",
-    hoursAgo: 26,
+    hoursAgo: 3,
     windowLeftHours: null, // 窗口已过期
-    aiIntent: "interested",
+    aiIntent: "ooo",
     assigneeId: "u_li",
   },
   {
@@ -1176,7 +1176,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     counterparty: "openid:tt_9876",
     lastInbound: "Do you ship to US?",
     lastInboundZh: "你们发货到美国吗？",
-    hoursAgo: 30,
+    hoursAgo: 2,
     aiIntent: "interested",
     assigneeId: "u_wang",
   },
@@ -1222,7 +1222,7 @@ const DEMO_SEEDS: DemoSeed[] = [
       "Please share the updated catalog in PDF. We are planning an order before end of Q3.",
     lastInboundZh:
       "请发送最新的 PDF 产品目录。我们计划在三季度末前下单。",
-    hoursAgo: 32,
+    hoursAgo: 6,
     aiIntent: "interested",
   },
   // -------- SMS replies (2) --------
@@ -1248,7 +1248,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     counterparty: "+393471234567",
     lastInbound: "Ok grazie, invia proforma per 200 pezzi SKU-C.",
     lastInboundZh: "好的，谢谢，请发送 200 件 SKU-C 的形式发票。",
-    hoursAgo: 12,
+    hoursAgo: 1,
     aiIntent: "quote",
   },
 ];
