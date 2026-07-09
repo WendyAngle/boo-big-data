@@ -743,9 +743,11 @@ function ThreadRow({
               {relTime(thread.lastAt)}
             </span>
           </div>
-          <div className="mt-0.5 text-xs text-muted-foreground truncate">
-            {last?.subject || "(无主题)"}
-          </div>
+          {last?.subject && (
+            <div className="mt-0.5 text-xs text-muted-foreground truncate">
+              {last.subject}
+            </div>
+          )}
           <div className="mt-1 text-xs text-foreground/70 line-clamp-2">
             <span
               className={cn(
@@ -993,9 +995,11 @@ function ThreadDetail({
         </div>
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="min-w-0 flex-1 basis-full xl:basis-auto">
-            <div className="text-base font-semibold truncate">
-              {thread.messages[0]?.subject || "(无主题)"}
-            </div>
+            {thread.messages[0]?.subject && (
+              <div className="text-base font-semibold truncate">
+                {thread.messages[0].subject}
+              </div>
+            )}
             <div className="mt-1 flex items-center gap-1.5 flex-wrap">
               <Badge variant="outline" className="text-[11px]">
                 {STATUS_LABEL[thread.meta.status]}
