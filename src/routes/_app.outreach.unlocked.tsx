@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   KeyRound,
@@ -9,6 +9,8 @@ import {
   Ban,
   Building2,
   User,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,6 +21,17 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import { formatDateTime } from "@/lib/format-date";
 import { cn } from "@/lib/utils";
 import { ReachButton } from "@/components/ReachButton";
@@ -51,6 +64,26 @@ type OwnerFilter = "all" | "enterprise" | "person";
 type TimeFilter = "all" | "7d" | "30d";
 type GroupMode = "enterprise" | "day" | "flat";
 
+const REVEAL_LIMIT = 10;
+
+function maskContact(t: ContactType, v: string): string {
+  if (t === "email") {
+    const [name, domain] = v.split("@");
+    if (!domain) return v;
+    const head = name.slice(0, 1);
+    return `${head}${"*".repeat(Math.max(3, name.length - 1))}@${domain}`;
+  }
+  if (t === "phone") {
+    const digits = v.replace(/\D/g, "");
+    if (digits.length <= 4) return v;
+    const head = v.slice(0, Math.min(3, v.length - 4));
+    const tail = v.slice(-4);
+    return `${head}${"*".repeat(Math.max(4, v.length - head.length - tail.length))}${tail}`;
+  }
+  if (v.length <= 3) return v;
+  return `${v.slice(0, 2)}${"*".repeat(Math.max(3, v.length - 3))}${v.slice(-1)}`;
+}
+
 function typeIcon(t: ContactType) {
   if (t === "email") return <Mail className="h-3.5 w-3.5" />;
   if (t === "phone") return <Phone className="h-3.5 w-3.5" />;
@@ -63,7 +96,15 @@ function typeTone(t: ContactType) {
   return "bg-amber-50 text-amber-700 border-amber-200";
 }
 
-function ContactRow({ c }: { c: UnlockedContact }) {
+function ContactRow({
+  c,
+  revealed,
+  onToggle,
+}: {
+  c: UnlockedContact;
+  revealed: boolean;
+  onToggle: () => void;
+}) {
   const suppressed =
     (c.contact_type === "email" && isSuppressed("email", c.contact_value)) ||
     (c.contact_type === "phone" && isSuppressed("phone", c.contact_value));
@@ -94,8 +135,17 @@ function ContactRow({ c }: { c: UnlockedContact }) {
         {c.platform ? ` · ${c.platform}` : ""}
       </span>
       <span className="font-mono text-xs text-foreground tracking-wide truncate min-w-0 flex-1">
-        {c.contact_value}
+        {revealed ? c.contact_value : maskContact(c.contact_type, c.contact_value)}
       </span>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="shrink-0 inline-flex h-6 w-6 items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+        aria-label={revealed ? "隐藏明文" : "查看明文"}
+        title={revealed ? "隐藏明文" : "查看明文"}
+      >
+        {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+      </button>
       <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground shrink-0">
         {c.owner_type === "enterprise" ? (
           <Building2 className="h-3 w-3" />
@@ -151,6 +201,44 @@ function UnlockedPage() {
   const [owner, setOwner] = useState<OwnerFilter>("all");
   const [time, setTime] = useState<TimeFilter>("all");
   const [group, setGroup] = useState<GroupMode>("enterprise");
+  const [revealed, setRevealed] = useState<Set<string>>(new Set());
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingKey, setPendingKey] = useState<string | null>(null);
+  const [bulkAcked, setBulkAcked] = useState(false);
+
+  const toggleReveal = useCallback(
+    (key: string) => {
+      setRevealed((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) {
+          next.delete(key);
+          return next;
+        }
+        if (!bulkAcked && next.size >= REVEAL_LIMIT) {
+          setPendingKey(key);
+          setConfirmOpen(true);
+          return prev;
+        }
+        next.add(key);
+        return next;
+      });
+    },
+    [bulkAcked],
+  );
+
+  const confirmReveal = () => {
+    setBulkAcked(true);
+    setConfirmOpen(false);
+    if (pendingKey) {
+      setRevealed((prev) => {
+        const next = new Set(prev);
+        next.add(pendingKey);
+        return next;
+      });
+      setPendingKey(null);
+    }
+    toast.info("已开启本次会话的批量明示，请注意防止截屏泄露");
+  };
 
   const filtered = useMemo(() => {
     const kw = q.trim().toLowerCase();
@@ -317,13 +405,39 @@ function UnlockedPage() {
               </div>
               <div className="divide-y">
                 {g.items.map((c) => (
-                  <ContactRow key={`${c.owner_id}:${c.contact_type}:${c.contact_value}`} c={c} />
+                  <ContactRow
+                    key={`${c.owner_id}:${c.contact_type}:${c.contact_value}`}
+                    c={c}
+                    revealed={revealed.has(`${c.owner_id}:${c.contact_type}:${c.contact_value}`)}
+                    onToggle={() =>
+                      toggleReveal(`${c.owner_id}:${c.contact_type}:${c.contact_value}`)
+                    }
+                  />
                 ))}
               </div>
             </Card>
           ))}
         </div>
       )}
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>连续揭示超过 {REVEAL_LIMIT} 条</AlertDialogTitle>
+            <AlertDialogDescription>
+              为防止截屏泄露联系方式，请确认继续以明文展示。确认后本次会话内将不再提示。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingKey(null)}>
+              取消
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmReveal}>
+              我已知晓，继续
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
