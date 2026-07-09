@@ -162,6 +162,8 @@ const searchSchema = z.object({
   group: z.enum(["all", "enterprise", "contact"]).optional(),
   tid: z.string().optional(),
   q: z.string().optional(),
+  /** 意向档位过滤：高/中/低/全部（左侧列表顶部 Tab） */
+  intent: z.enum(["all", "high", "mid", "low"]).optional(),
   // 从"最新沟通"胶囊中的"AI 回复"进入时，自动生成一条 AI 草稿。
   action: z.enum(["ai"]).optional(),
 });
@@ -253,8 +255,13 @@ function InboxPage() {
   const intentCounts = useMemo(() => {
     let high = 0;
     let needsHuman = 0;
+    let mid = 0;
+    let low = 0;
     for (const t of threads) {
-      if (scoreIntent(t).band === "high") high++;
+      const band = scoreIntent(t).band;
+      if (band === "high") high++;
+      else if (band === "mid") mid++;
+      else low++;
       if (!t.meta.humanTakeover) {
         const sla = slaInfo(t);
         if (
@@ -267,11 +274,12 @@ function InboxPage() {
         }
       }
     }
-    return { high, needsHuman };
+    return { high, mid, low, needsHuman };
   }, [threads]);
   // 从企业/联系人详情等入口带 tid 直接进入时，默认使用 “全部” 视图，
   // 避免出现「右侧展示了会话，中间列表却提示"该视图下暂无会话"」的错位。
   const view: ViewKey = search.view ?? "all";
+  const intent = search.intent ?? "all";
   const [scorePanelOpen, setScorePanelOpen] = useState(true);
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
@@ -281,6 +289,8 @@ function InboxPage() {
     let list = threads;
     if (ch !== "all") list = list.filter((t) => t.channel === ch);
     if (group !== "all") list = list.filter((t) => threadGroup(t) === group);
+    if (intent !== "all")
+      list = list.filter((t) => scoreIntent(t).band === intent);
     if (view === "unread") list = list.filter((t) => t.meta.unread > 0);
     else if (view === "pending")
       list = list.filter((t) => t.meta.status === "pending");
@@ -342,7 +352,7 @@ function InboxPage() {
       );
     }
     return list;
-  }, [threads, view, q, ch]);
+  }, [threads, view, q, ch, intent]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   void group;
 
@@ -467,9 +477,6 @@ function InboxPage() {
                 {counts.unread > 0 && (
                   <SelectItem value="unread">未读（{counts.unread}）</SelectItem>
                 )}
-                {intentCounts.high > 0 && (
-                  <SelectItem value="high_intent">高意向（{intentCounts.high}）</SelectItem>
-                )}
                 {intentCounts.needsHuman > 0 && (
                   <SelectItem value="needs_human">人工接管（{intentCounts.needsHuman}）</SelectItem>
                 )}
@@ -501,6 +508,41 @@ function InboxPage() {
       <div className="flex-1 flex min-h-0">
         {/* 中栏：会话列表 */}
         <div className="w-[320px] xl:w-[380px] shrink-0 border-r flex flex-col min-h-0">
+          {/* 意向档位 Tab：全部 / 高 / 中 / 低 —— 与右侧 AI 意向评分同源 */}
+          <div className="px-2 pt-2 pb-1.5 border-b shrink-0 flex items-center gap-1">
+            {(
+              [
+                { key: "all", label: "全部", count: counts.all, dot: "bg-muted-foreground/40", active: "bg-foreground text-background" },
+                { key: "high", label: "高意向", count: intentCounts.high, dot: "bg-emerald-500", active: "bg-emerald-500 text-white" },
+                { key: "mid", label: "中意向", count: intentCounts.mid, dot: "bg-sky-500", active: "bg-sky-500 text-white" },
+                { key: "low", label: "低意向", count: intentCounts.low, dot: "bg-slate-400", active: "bg-slate-500 text-white" },
+              ] as const
+            ).map((tab) => {
+              const isActive = intent === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() =>
+                    goto({
+                      intent: tab.key === "all" ? undefined : tab.key,
+                      tid: undefined,
+                    })
+                  }
+                  className={cn(
+                    "flex-1 h-7 rounded-md text-[11px] inline-flex items-center justify-center gap-1 transition-colors border",
+                    isActive
+                      ? `${tab.active} border-transparent`
+                      : "bg-background text-muted-foreground border-border hover:bg-muted/60",
+                  )}
+                >
+                  {!isActive && <span className={cn("h-1.5 w-1.5 rounded-full", tab.dot)} />}
+                  <span>{tab.label}</span>
+                  <span className="tabular-nums opacity-90">{tab.count}</span>
+                </button>
+              );
+            })}
+          </div>
           {/* 结果条：显示当前筛选与匹配数量 */}
           <div className="px-3 py-2 border-b bg-muted/20 shrink-0 flex items-center justify-between text-[11px] text-muted-foreground">
             <span>
@@ -510,10 +552,10 @@ function InboxPage() {
               </span>
               条会话
             </span>
-            {(view !== "all" || ch !== "all" || group !== "all" || q) && (
+            {(view !== "all" || ch !== "all" || group !== "all" || q || intent !== "all") && (
               <button
                 onClick={() =>
-                  goto({ view: "all", ch: "all", group: "all", q: "", tid: undefined })
+                  goto({ view: "all", ch: "all", group: "all", q: "", intent: undefined, tid: undefined })
                 }
                 className="text-primary hover:underline"
               >
