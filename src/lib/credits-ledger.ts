@@ -230,7 +230,7 @@ export interface LedgerEntry {
 }
 
 const LEDGER_KEY = "boo:ledger:v2";
-const LEDGER_SEED_FLAG = "boo:ledger:v12:seeded";
+const LEDGER_SEED_FLAG = "boo:ledger:v13:seeded";
 const REVEAL_KEY = "boo:reveal:v1";
 const UNLOCK_KEY = "boo:unlocked:v1";
 
