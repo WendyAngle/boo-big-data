@@ -18,6 +18,9 @@ import {
   Music2,
   AlertTriangle,
   ArrowRight,
+  Timer,
+  CheckCircle2,
+  Gauge,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -93,6 +96,18 @@ function loadDotClass(assigned: number) {
   if (assigned >= 20) return "bg-rose-500";
   if (assigned >= 10) return "bg-amber-500";
   return "bg-emerald-500";
+}
+
+/** 每个成员的容量上限（Phase 1 mock：与"负载红线"一致，可后续做成分组可配置） */
+const CAPACITY_LIMIT = 20;
+
+/** 基于 id 生成稳定的伪演示指标（平均响应分钟数、本周已处理会话数） */
+function memberStubStats(id: string) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  const avgMin = 12 + (h % 34); // 12–45 分钟
+  const weekDone = 8 + ((h >> 5) % 20); // 8–27 条
+  return { avgMin, weekDone };
 }
 
 function formatLeft(ms: number) {
