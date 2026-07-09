@@ -468,7 +468,6 @@ function InboxPage() {
                 <SelectItem value="high_intent">高意向（{intentCounts.high}）</SelectItem>
                 <SelectItem value="needs_human">人工接管（{intentCounts.needsHuman}）</SelectItem>
                 <SelectItem value="due_soon">即将超时（{smartCounts.dueSoon}）</SelectItem>
-                <SelectItem value="unassigned">未分配（{counts.unassigned}）</SelectItem>
                 <SelectItem value="mine">我的全部（{smartCounts.mine}）</SelectItem>
                 <SelectItem value="my_todo">我的待办（{smartCounts.myTodo}）</SelectItem>
               </SelectGroup>
