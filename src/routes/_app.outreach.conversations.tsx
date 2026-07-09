@@ -260,6 +260,7 @@ function InboxPage() {
   // 从企业/联系人详情等入口带 tid 直接进入时，默认使用 “全部” 视图，
   // 避免出现「右侧展示了会话，中间列表却提示"该视图下暂无会话"」的错位。
   const view: ViewKey = search.view ?? "all";
+  const [scorePanelOpen, setScorePanelOpen] = useState(true);
   const q = search.q ?? "";
   const ch = search.ch ?? "all";
   const group = search.group ?? "all";
