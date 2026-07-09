@@ -535,10 +535,10 @@ function UnlockedPageInner() {
 
       <Card className="p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative w-[320px]">
+          <div className="relative w-[360px]">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="搜索企业 / 联系人 / 邮箱 / 电话 / 社媒"
+              placeholder="搜索企业 / 联系人 / 邮箱 / 电话"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               className="pl-8 h-9"
