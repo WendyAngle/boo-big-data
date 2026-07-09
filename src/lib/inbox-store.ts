@@ -1028,6 +1028,77 @@ const DEMO_SEEDS: DemoSeed[] = [
     aiIntent: "interested",
     assigneeId: "u_wang",
   },
+  // -------- Email replies (3) --------
+  {
+    id: "demo:em:1",
+    channel: "email",
+    targetKind: "contact",
+    targetName: "James Carter",
+    parentRef: { id: "demo-ent-4", name: "Carter & Sons Ltd." },
+    counterparty: "james.carter@carterandsons.co.uk",
+    lastInbound:
+      "Thanks for the quotation. Could you confirm MOQ for SKU-B and the lead time if we order 5,000 pcs? We'd also need CE certificates.",
+    lastInboundZh:
+      "感谢报价。请确认 SKU-B 的起订量，以及订购 5,000 件的交期。我们同时需要 CE 认证文件。",
+    hoursAgo: 4,
+    aiIntent: "quote",
+    tags: ["高意向", "待报价"],
+  },
+  {
+    id: "demo:em:2",
+    channel: "email",
+    targetKind: "enterprise",
+    targetName: "Nordic Retail AB",
+    counterparty: "purchasing@nordicretail.se",
+    lastInbound:
+      "Hello, we received your samples last week. Quality looks good. Please send the FOB Shanghai price list and payment terms for a trial order.",
+    lastInboundZh:
+      "你好，上周已收到样品，品质不错。请发送 FOB 上海价格表及首单付款条件。",
+    hoursAgo: 20,
+    aiIntent: "interested",
+    assigneeId: "u_li",
+    tags: ["试单"],
+  },
+  {
+    id: "demo:em:3",
+    channel: "email",
+    targetKind: "contact",
+    targetName: "Ahmed Al-Farsi",
+    parentRef: { id: "demo-ent-5", name: "Gulf Trading Co." },
+    counterparty: "ahmed@gulftrading.ae",
+    lastInbound:
+      "Please share the updated catalog in PDF. We are planning an order before end of Q3.",
+    lastInboundZh:
+      "请发送最新的 PDF 产品目录。我们计划在三季度末前下单。",
+    hoursAgo: 32,
+    aiIntent: "interested",
+  },
+  // -------- SMS replies (2) --------
+  {
+    id: "demo:sms:1",
+    channel: "sms",
+    targetKind: "contact",
+    targetName: "David Kim",
+    parentRef: { id: "demo-ent-6", name: "Kim Electronics" },
+    counterparty: "+8210123456789",
+    lastInbound: "Received. Please call me tomorrow 10am KST to discuss pricing.",
+    lastInboundZh: "已收到，请明早 10 点（韩国时间）致电洽谈价格。",
+    hoursAgo: 3,
+    aiIntent: "quote",
+    tags: ["待回电"],
+  },
+  {
+    id: "demo:sms:2",
+    channel: "sms",
+    targetKind: "contact",
+    targetName: "Laura Bianchi",
+    parentRef: { id: "demo-ent-7", name: "Milano Home" },
+    counterparty: "+393471234567",
+    lastInbound: "Ok grazie, invia proforma per 200 pezzi SKU-C.",
+    lastInboundZh: "好的，谢谢，请发送 200 件 SKU-C 的形式发票。",
+    hoursAgo: 12,
+    aiIntent: "quote",
+  },
 ];
 
 export function getDemoSocialThreads(): Thread[] {
