@@ -147,6 +147,8 @@ export interface ThreadMessage {
   subject?: string;
   content: string;
   aiGenerated?: boolean;
+  /** 对方回复的中文译文（仅 inbound 且原文非中文时提供） */
+  contentZh?: string;
   /** outbound 关联的 ledger id */
   ledgerId?: string;
   /** outbound 送达事件（模拟） */
@@ -306,59 +308,115 @@ function ensureMeta(threadId: string, createdAt: string): ThreadMeta {
 
 /* -------------------- Reply seed data -------------------- */
 
-const INTENT_TEMPLATES: Array<{ intent: AiIntent; bodies: string[] }> = [
+type ReplyBody = { body: string; zh?: string };
+
+/** 若原文本身是中文，则不再重复提供 zh 译文 */
+function isChinese(s: string) {
+  return /[\u4e00-\u9fa5]/.test(s);
+}
+
+const INTENT_TEMPLATES: Array<{ intent: AiIntent; bodies: ReplyBody[] }> = [
   {
     intent: "interested",
     bodies: [
-      "Thanks for reaching out — this actually aligns with what we're evaluating this quarter. Could you share a short deck and pricing tiers?",
-      "很感兴趣，方便本周内做个 30 分钟的电话会吗？也请把资料一并发一下。",
-      "Sounds interesting. Please loop in our procurement lead — cc'd. What are the typical MOQs?",
+      {
+        body: "Thanks for reaching out — this actually aligns with what we're evaluating this quarter. Could you share a short deck and pricing tiers?",
+        zh: "感谢来信 —— 这与我们本季度正在评估的方向正好吻合。可否发一份简短的资料和分档报价？",
+      },
+      { body: "很感兴趣，方便本周内做个 30 分钟的电话会吗？也请把资料一并发一下。" },
+      {
+        body: "Sounds interesting. Please loop in our procurement lead — cc'd. What are the typical MOQs?",
+        zh: "看起来不错。已将我们的采购负责人加入抄送，请一并沟通。你们通常的最小起订量是多少？",
+      },
     ],
   },
   {
     intent: "quote",
     bodies: [
-      "Could you send a formal quote for 5,000 units, delivered CIF Rotterdam? Also, lead time please.",
-      "麻烦按 20HQ 报个 FOB 深圳的价，含目录里 SKU-A 和 SKU-C，谢谢。",
+      {
+        body: "Could you send a formal quote for 5,000 units, delivered CIF Rotterdam? Also, lead time please.",
+        zh: "请就 5,000 件、CIF 鹿特丹交付方式提供正式报价，同时请告知交货周期。",
+      },
+      { body: "麻烦按 20HQ 报个 FOB 深圳的价，含目录里 SKU-A 和 SKU-C，谢谢。" },
     ],
   },
   {
     intent: "ooo",
     bodies: [
-      "I'm out of office until Monday with limited email access. For urgent matters please contact my colleague.",
-      "我正在休假，将于下周一回复邮件，紧急事项请联系同事 David。",
+      {
+        body: "I'm out of office until Monday with limited email access. For urgent matters please contact my colleague.",
+        zh: "我正在休假，下周一才会回来，期间邮件查看有限。如有紧急事项，请联系我的同事。",
+      },
+      { body: "我正在休假，将于下周一回复邮件，紧急事项请联系同事 David。" },
     ],
   },
   {
     intent: "reject",
     bodies: [
-      "Thanks but we already work with an existing supplier and are not looking to switch this year.",
-      "感谢来信，我们暂无相关采购计划，祝好。",
+      {
+        body: "Thanks but we already work with an existing supplier and are not looking to switch this year.",
+        zh: "感谢来信，我们已有长期合作的供应商，今年暂不打算更换，祝好。",
+      },
+      { body: "感谢来信，我们暂无相关采购计划，祝好。" },
     ],
   },
   {
     intent: "unsubscribe",
-    bodies: ["Please remove me from your list. Thanks."],
+    bodies: [{ body: "Please remove me from your list. Thanks.", zh: "请将我从你们的邮件列表中移除，谢谢。" }],
   },
   {
     intent: "complaint",
     bodies: [
-      "This is the third email this week — please stop contacting us or I will report as spam.",
+      {
+        body: "This is the third email this week — please stop contacting us or I will report as spam.",
+        zh: "这已经是本周的第三封邮件 —— 请停止联系我们，否则我将把邮件举报为垃圾邮件。",
+      },
     ],
   },
 ];
 
 /** SMS 场景下的短回复模板（比邮件更简短，含 STOP 关键字） */
-const SMS_INTENT_TEMPLATES: Array<{ intent: AiIntent; bodies: string[] }> = [
-  { intent: "interested", bodies: ["Interested — send details please.", "有兴趣，请发资料到我邮箱。", "Ok, share your catalog."] },
-  { intent: "quote", bodies: ["Send price for 5k units.", "报个 FOB 深圳的价"] },
-  { intent: "ooo", bodies: ["On leave, back Mon.", "在休假，下周一联系"] },
-  { intent: "reject", bodies: ["No thanks.", "暂无采购计划"] },
-  { intent: "unsubscribe", bodies: ["STOP", "退订"] },
-  { intent: "complaint", bodies: ["Stop texting me!"] },
+const SMS_INTENT_TEMPLATES: Array<{ intent: AiIntent; bodies: ReplyBody[] }> = [
+  {
+    intent: "interested",
+    bodies: [
+      { body: "Interested — send details please.", zh: "有兴趣，请把详细资料发给我。" },
+      { body: "有兴趣，请发资料到我邮箱。" },
+      { body: "Ok, share your catalog.", zh: "好的，把你们的产品目录发过来。" },
+    ],
+  },
+  {
+    intent: "quote",
+    bodies: [
+      { body: "Send price for 5k units.", zh: "请报 5,000 件的价格。" },
+      { body: "报个 FOB 深圳的价" },
+    ],
+  },
+  {
+    intent: "ooo",
+    bodies: [
+      { body: "On leave, back Mon.", zh: "正在休假，下周一回。" },
+      { body: "在休假，下周一联系" },
+    ],
+  },
+  {
+    intent: "reject",
+    bodies: [
+      { body: "No thanks.", zh: "不需要，谢谢。" },
+      { body: "暂无采购计划" },
+    ],
+  },
+  {
+    intent: "unsubscribe",
+    bodies: [
+      { body: "STOP", zh: "退订" },
+      { body: "退订" },
+    ],
+  },
+  { intent: "complaint", bodies: [{ body: "Stop texting me!", zh: "不要再给我发短信了！" }] },
 ];
 
-function pickSmsIntent(seed: number): { intent: AiIntent; body: string } {
+function pickSmsIntent(seed: number): { intent: AiIntent; body: string; zh?: string } {
   // SMS 权重：意向 20% / 询价 15% / OOO 10% / 拒绝 30% / 退订 20% / 投诉 5%
   const w = [20, 35, 45, 75, 95, 100];
   const kind = ["interested", "quote", "ooo", "reject", "unsubscribe", "complaint"] as const;
@@ -366,11 +424,11 @@ function pickSmsIntent(seed: number): { intent: AiIntent; body: string } {
   const idx = w.findIndex((x) => p < x);
   const intent = kind[Math.max(0, idx)];
   const tpl = SMS_INTENT_TEMPLATES.find((t) => t.intent === intent)!;
-  const body = tpl.bodies[seed % tpl.bodies.length];
-  return { intent, body };
+  const pick = tpl.bodies[seed % tpl.bodies.length];
+  return { intent, body: pick.body, zh: pick.zh };
 }
 
-function pickIntent(seed: number): { intent: AiIntent; body: string } {
+function pickIntent(seed: number): { intent: AiIntent; body: string; zh?: string } {
   // 权重：意向 30% / 询价 25% / OOO 15% / 拒绝 20% / 退订 7% / 投诉 3%
   const w = [30, 55, 70, 90, 97, 100];
   const kind = ["interested", "quote", "ooo", "reject", "unsubscribe", "complaint"] as const;
@@ -378,8 +436,8 @@ function pickIntent(seed: number): { intent: AiIntent; body: string } {
   const idx = w.findIndex((x) => p < x);
   const intent = kind[Math.max(0, idx)];
   const tpl = INTENT_TEMPLATES.find((t) => t.intent === intent)!;
-  const body = tpl.bodies[seed % tpl.bodies.length];
-  return { intent, body };
+  const pick = tpl.bodies[seed % tpl.bodies.length];
+  return { intent, body: pick.body, zh: pick.zh };
 }
 
 /** 首次访问收件箱时，对已有邮件触达按 ~40% 概率补上一条对方回复 */
@@ -397,7 +455,7 @@ function seedInboundIfNeeded(entries: LedgerEntry[]) {
     // SMS 回复率更低（~25%），邮件 ~40%
     const threshold = isSms ? 25 : 40;
     if (h % 100 < threshold) {
-      const { intent, body } = isSms ? pickSmsIntent(h) : pickIntent(h);
+      const { intent, body, zh } = isSms ? pickSmsIntent(h) : pickIntent(h);
       // 回复时间：发送后 4~72 小时
       const sentAt = new Date(r.createdAt).getTime();
       const delayH = 4 + (h % 68);
@@ -413,6 +471,7 @@ function seedInboundIfNeeded(entries: LedgerEntry[]) {
         fromAddress: r.detail || "",
         subject: r.subject ? `Re: ${r.subject}` : undefined,
         content: body,
+        contentZh: zh && !isChinese(body) ? zh : undefined,
       });
       m.aiIntent = intent;
       m.unread = 1;
@@ -893,6 +952,7 @@ interface DemoSeed {
   parentRef?: { id: string; name: string };
   counterparty: string;
   lastInbound: string;
+  lastInboundZh?: string;
   hoursAgo: number;
   /** 剩余客服窗口小时数（覆盖默认计算） */
   windowLeftHours?: number | null;
@@ -910,6 +970,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     parentRef: { id: "demo-ent-1", name: "Bosch GmbH" },
     counterparty: "+491701234567",
     lastInbound: "Hi, could you send the pricing PDF for SKU-A?",
+    lastInboundZh: "你好，可否发一份 SKU-A 的报价 PDF 给我？",
     hoursAgo: 2,
     aiIntent: "quote",
     tags: ["高意向"],
@@ -921,6 +982,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     targetName: "Rakuten Global",
     counterparty: "+81901234567",
     lastInbound: "こんにちは、サンプル送付は可能ですか？",
+    lastInboundZh: "你好，请问可以寄样品吗？",
     hoursAgo: 26,
     windowLeftHours: null, // 窗口已过期
     aiIntent: "interested",
@@ -934,6 +996,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     parentRef: { id: "demo-ent-2", name: "TechnoPolymer LLC" },
     counterparty: "@ivanp",
     lastInbound: "Interested, please share catalog.",
+    lastInboundZh: "有兴趣，请把产品目录发给我。",
     hoursAgo: 5,
     aiIntent: "interested",
   },
@@ -945,6 +1008,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     parentRef: { id: "demo-ent-3", name: "Grupo Andino" },
     counterparty: "psid:1234567890",
     lastInbound: "¿Cuál es el precio FOB Shanghai?",
+    lastInboundZh: "FOB 上海的价格是多少？",
     hoursAgo: 10,
     aiIntent: "quote",
   },
@@ -955,6 +1019,7 @@ const DEMO_SEEDS: DemoSeed[] = [
     targetName: "@sofia_home",
     counterparty: "openid:tt_9876",
     lastInbound: "Do you ship to US?",
+    lastInboundZh: "你们发货到美国吗？",
     hoursAgo: 30,
     aiIntent: "interested",
     assigneeId: "u_wang",
@@ -978,6 +1043,7 @@ export function getDemoSocialThreads(): Thread[] {
         fromName: s.targetName,
         fromAddress: s.counterparty,
         content: s.lastInbound,
+        contentZh: s.lastInboundZh && !isChinese(s.lastInbound) ? s.lastInboundZh : undefined,
       });
       meta.aiIntent = s.aiIntent;
       meta.unread = 1;

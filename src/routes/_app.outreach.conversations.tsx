@@ -1116,6 +1116,15 @@ function ThreadDetail({
               <div className="mt-2 rounded-md border bg-card p-3 text-sm whitespace-pre-wrap leading-relaxed">
                 {m.content}
               </div>
+              {m.direction === "inbound" && m.contentZh && (
+                <div className="mt-1.5 rounded-md border border-dashed border-sky-200 bg-sky-50/60 p-3 text-sm whitespace-pre-wrap leading-relaxed text-sky-900">
+                  <div className="mb-1 text-[11px] font-medium text-sky-700 inline-flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    中文译文（AI 自动翻译）
+                  </div>
+                  {m.contentZh}
+                </div>
+              )}
             </div>
           </div>
         ))}
