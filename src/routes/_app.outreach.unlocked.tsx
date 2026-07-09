@@ -14,6 +14,7 @@ import {
   CalendarDays,
   Calendar as CalendarIcon,
   X,
+  Info,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -313,6 +314,35 @@ function GroupCard({
 }
 
 function UnlockedPage() {
+  return <UnlockedPageInner />;
+}
+
+function StatTile({ label, value, hint }: { label: string; value: number; hint: string }) {
+  return (
+    <div className="rounded-xl bg-white/15 backdrop-blur-sm px-4 py-3 ring-1 ring-white/25 min-w-[110px]">
+      <div className="flex items-center gap-1 text-[11px] text-white/80">
+        <span>{label}</span>
+        <Tooltip delayDuration={150}>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={`${label}统计口径说明`}
+              className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-white/70 hover:text-white transition-colors"
+            >
+              <Info className="h-3 w-3" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" align="start" className="max-w-[260px] text-xs leading-relaxed">
+            {hint}
+          </TooltipContent>
+        </Tooltip>
+      </div>
+      <div className="text-xl font-bold tabular-nums">{value}</div>
+    </div>
+  );
+}
+
+function UnlockedPageInner() {
   const all = useUnlockedContacts();
   const [q, setQ] = useState("");
   const [channel, setChannel] = useState<ChannelFilter>("all");
@@ -479,18 +509,21 @@ function UnlockedPage() {
             </p>
           </div>
           <div className="hidden md:flex items-stretch gap-3">
-            <div className="rounded-xl bg-white/15 backdrop-blur-sm px-4 py-3 ring-1 ring-white/25 min-w-[110px]">
-              <div className="text-[11px] text-white/80">已解锁</div>
-              <div className="text-xl font-bold tabular-nums">{stats.count}</div>
-            </div>
-            <div className="rounded-xl bg-white/15 backdrop-blur-sm px-4 py-3 ring-1 ring-white/25 min-w-[110px]">
-              <div className="text-[11px] text-white/80">企业</div>
-              <div className="text-xl font-bold tabular-nums">{stats.enterprises}</div>
-            </div>
-            <div className="rounded-xl bg-white/15 backdrop-blur-sm px-4 py-3 ring-1 ring-white/25 min-w-[110px]">
-              <div className="text-[11px] text-white/80">人物</div>
-              <div className="text-xl font-bold tabular-nums">{stats.persons}</div>
-            </div>
+            <StatTile
+              label="已解锁"
+              value={stats.count}
+              hint="按「联系方式条数」计。同一对象的手机、邮箱、社媒各计 1 条，因此通常大于企业与人物之和。"
+            />
+            <StatTile
+              label="企业"
+              value={stats.enterprises}
+              hint="去重后的企业数。含直接解锁的企业，以及所解锁人物所归属的企业。"
+            />
+            <StatTile
+              label="人物"
+              value={stats.persons}
+              hint="去重后的人物数。仅统计人物类型的解锁对象，不含企业本身。"
+            />
           </div>
         </div>
       </section>
