@@ -310,7 +310,12 @@ function UnlockedPage() {
         c.owner_type === "enterprise" ? c.owner_id : c.parent_ref?.id ?? c.owner_id,
       ),
     ).size;
-    return { count: filtered.length, enterprises };
+    const persons = new Set(
+      filtered
+        .filter((c) => c.owner_type === "person")
+        .map((c) => c.owner_id),
+    ).size;
+    return { count: filtered.length, enterprises, persons };
   }, [filtered]);
 
   const dateLabel = dateRange?.from
@@ -349,8 +354,12 @@ function UnlockedPage() {
               <div className="text-xl font-bold tabular-nums">{stats.count}</div>
             </div>
             <div className="rounded-xl bg-white/15 backdrop-blur-sm px-4 py-3 ring-1 ring-white/25 min-w-[110px]">
-              <div className="text-[11px] text-white/80">覆盖企业</div>
+              <div className="text-[11px] text-white/80">企业</div>
               <div className="text-xl font-bold tabular-nums">{stats.enterprises}</div>
+            </div>
+            <div className="rounded-xl bg-white/15 backdrop-blur-sm px-4 py-3 ring-1 ring-white/25 min-w-[110px]">
+              <div className="text-[11px] text-white/80">人物</div>
+              <div className="text-xl font-bold tabular-nums">{stats.persons}</div>
             </div>
           </div>
         </div>
@@ -425,8 +434,9 @@ function UnlockedPage() {
           </Popover>
         </div>
         <div className="text-xs text-muted-foreground">
-          共 <span className="font-medium text-foreground">{stats.count}</span> 条 · 覆盖{" "}
-          <span className="font-medium text-foreground">{stats.enterprises}</span> 家企业
+          共 <span className="font-medium text-foreground">{stats.count}</span> 条 ·{" "}
+          <span className="font-medium text-foreground">{stats.enterprises}</span> 家企业 ·{" "}
+          <span className="font-medium text-foreground">{stats.persons}</span> 位人物
         </div>
       </Card>
 
