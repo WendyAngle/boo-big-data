@@ -397,7 +397,7 @@ function FavoritesPage() {
           <div>
             <h1 className="text-xl font-bold">收藏中心</h1>
             <p className="text-white/85 text-sm mt-0.5">
-              集中查看您收藏的企业与关联人物，便于回查与持续跟进
+              你主动加星的企业、联系人与商品，长期保留、便于持续跟进（与足迹不同：足迹为浏览记录，自动生成）
             </p>
           </div>
           <div className="ml-auto hidden md:flex items-center gap-6 text-sm">
