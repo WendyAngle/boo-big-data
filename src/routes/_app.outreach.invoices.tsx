@@ -334,12 +334,10 @@ function InvoicesPage() {
                         </Button>
                       </div>
                     ) : r.status === "pending" ? (
-                      <Button size="sm" variant="outline" className="h-7" onClick={() => {
-                        markIssued(r.id);
-                        toast.success("发票已开具（演示）", { icon: <Check className="h-4 w-4" /> });
-                      }}>
-                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> 标记已开
-                      </Button>
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        开票中，预计 1–3 个工作日
+                      </span>
                     ) : (
                       <span className="text-xs text-rose-600">{r.rejectReason ?? "信息有误"}</span>
                     )}
