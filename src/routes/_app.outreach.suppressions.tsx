@@ -569,15 +569,3 @@ function RemoveDialog({
     </Dialog>
   );
 }
-
-function ImportDialog({
-  open,
-  onOpenChange,
-  defaultKind,
-}: {
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-  defaultKind: SuppressionKind;
-}) {
-  return null;
-}
