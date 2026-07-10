@@ -328,6 +328,17 @@ export function approveSmsTemplate(id: string) {
   emit();
 }
 
+/** 将 pending 模板标记为未通过 */
+export function rejectSmsTemplate(id: string, reason: string) {
+  store = store.map((t) =>
+    t.id === id && t.status === "pending"
+      ? { ...t, status: "rejected", updatedAt: new Date().toISOString().slice(0, 10), rejectReason: reason }
+      : t,
+  );
+  write(store);
+  emit();
+}
+
 /** 把模板 {{变量}} 语法转换为撰写框使用的 {变量} 语法 */
 export function toComposeSyntax(tpl: string): string {
   return tpl.replace(/\{\{\s*([^}]+?)\s*\}\}/g, "{$1}");
