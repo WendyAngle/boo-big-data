@@ -28,6 +28,7 @@ export interface AdminInvoice {
   bankAccount?: string;
   address?: string;
   phone?: string;
+  status: AdminStatus;
   submittedAt: string;
   reviewedAt?: string;
   reviewedBy?: string;
