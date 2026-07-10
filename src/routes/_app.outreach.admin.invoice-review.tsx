@@ -236,10 +236,10 @@ function InvoiceReviewPage() {
         <Card className="p-0 overflow-hidden">
           {/* Tabs */}
           <div className="flex items-center gap-1 border-b border-border px-5 pt-3 flex-wrap">
-            <TabBtn active={tab === "all"} onClick={() => setTab("all")}>全部 <Count n={list.length} /></TabBtn>
             <TabBtn active={tab === "pending_review"} onClick={() => setTab("pending_review")}>
               <Clock className="h-3.5 w-3.5 mr-1 inline" />待审核 <Count n={list.filter((r) => r.status === "pending_review").length} />
             </TabBtn>
+            <TabBtn active={tab === "all"} onClick={() => setTab("all")}>全部 <Count n={list.length} /></TabBtn>
             <TabBtn active={tab === "processing"} onClick={() => setTab("processing")}>
               <Loader2 className="h-3.5 w-3.5 mr-1 inline" />开票中 <Count n={list.filter((r) => r.status === "processing").length} />
             </TabBtn>
