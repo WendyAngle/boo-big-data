@@ -22,6 +22,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -64,10 +65,10 @@ function SmsTemplatesPage() {
   const list = useSmsTemplates();
   const applications = useSmsApplications();
   const filings = useSmsFilings();
-  const [topTab, setTopTab] = useState<"library" | "applications">("library");
   const [libStatuses, setLibStatuses] = useState<Set<Status>>(() => new Set<Status>(["approved", "pending", "rejected"]));
   const [libSearch, setLibSearch] = useState("");
   const [libChannel, setLibChannel] = useState<"all" | Tpl["channel"]>("all");
+  const [libSource, setLibSource] = useState<"all" | "system" | "user">("all");
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Tpl | null>(null);
   const [previewing, setPreviewing] = useState<Tpl | null>(null);
@@ -93,9 +94,12 @@ function SmsTemplatesPage() {
     expiring: filings.filter((f) => f.status === "approved" && f.expireAt && daysUntil(f.expireAt) <= 30).length,
   };
 
+  const isSystem = (t: Tpl) => t.submittedBy === "SysM" || t.submittedBy === "系统";
   const filtered = list.filter((t) => {
     if (!libStatuses.has(t.status)) return false;
     if (libChannel !== "all" && t.channel !== libChannel) return false;
+    if (libSource === "system" && !isSystem(t)) return false;
+    if (libSource === "user" && isSystem(t)) return false;
     if (libSearch.trim()) {
       const q = libSearch.trim().toLowerCase();
       if (!t.name.toLowerCase().includes(q) && !t.content.toLowerCase().includes(q)) return false;
@@ -140,7 +144,7 @@ function SmsTemplatesPage() {
           <div className="grid grid-cols-4 gap-6 text-white shrink-0">
             <MetricBlock label="模板总数" value={counts.all} suffix="个" />
             <MetricBlock label="已通过" value={counts.approved} suffix="个" />
-            <MetricBlock label="待审申请" value={appCounts.submitted} suffix="个" warn={appCounts.submitted > 0} />
+            <MetricBlock label="待审核" value={counts.pending} suffix="个" warn={counts.pending > 0} />
             <MetricBlock label="即将过期" value={filingCounts.expiring} suffix="条" warn={filingCounts.expiring > 0} hint="30 天内到期报备" />
           </div>
         </div>
@@ -148,36 +152,6 @@ function SmsTemplatesPage() {
 
       <ProcessGuideCard />
 
-      <div className="flex items-center justify-between gap-2 border-b">
-        <div className="flex items-center gap-1">
-          {(
-            [
-              { k: "library", label: "模板库", n: counts.all },
-              { k: "applications", label: "用户申请", n: appCounts.submitted, warn: appCounts.submitted > 0 },
-            ] as const
-          ).map((t) => (
-            <button
-              key={t.k}
-              onClick={() => setTopTab(t.k)}
-              className={cn(
-                "px-4 py-2 text-sm border-b-2 -mb-px transition-colors flex items-center gap-1.5",
-                topTab === t.k ? "border-primary text-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {t.label}
-              <Badge variant="outline" className={cn("h-5 px-1.5 text-[10px] tabular-nums", "warn" in t && t.warn && "bg-amber-50 text-amber-700 border-amber-200")}>{t.n}</Badge>
-            </button>
-          ))}
-        </div>
-        {topTab === "library" && (
-          <Button size="sm" onClick={() => setAddOpen(true)}>
-            <Plus className="h-4 w-4" />
-            新建模板
-          </Button>
-        )}
-      </div>
-
-      {topTab === "library" && (
       <Card className="p-0 overflow-hidden">
         <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-2 flex-wrap">
           <Input
@@ -193,6 +167,14 @@ function SmsTemplatesPage() {
               <SelectItem value="marketing">营销</SelectItem>
               <SelectItem value="notification">通知</SelectItem>
               <SelectItem value="otp">验证码</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={libSource} onValueChange={(v) => setLibSource(v as typeof libSource)}>
+            <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部来源</SelectItem>
+              <SelectItem value="system">系统内置</SelectItem>
+              <SelectItem value="user">用户创建</SelectItem>
             </SelectContent>
           </Select>
           <div className="flex items-center gap-1 ml-1">
@@ -222,122 +204,128 @@ function SmsTemplatesPage() {
               );
             })}
           </div>
-          <span className="text-xs text-muted-foreground ml-auto">共 {filtered.length} 条</span>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">共 {filtered.length} 条</span>
+            <Button size="sm" onClick={() => setAddOpen(true)}>
+              <Plus className="h-4 w-4" />
+              新建模板
+            </Button>
+          </div>
         </div>
-        <div className="divide-y">
-          {filtered.length === 0 && (
-            <div className="p-8 text-center text-sm text-muted-foreground">无匹配模板</div>
-          )}
-          {filtered.map((t) => (
-            <div key={t.id} className="p-4 flex gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium">{t.name}</span>
-                  <StatusBadge status={t.status} />
-                  <Badge variant="outline" className="text-[10px]">
-                    {t.channel === "otp" ? "验证码" : t.channel === "marketing" ? "营销" : "通知"}
-                  </Badge>
-                  <Badge variant="outline" className="text-[10px]">
-                    {t.locale}
-                  </Badge>
-                  <FilingSummaryBadge templateId={t.id} />
-                </div>
-                <div className="mt-2 text-sm text-foreground/80 bg-muted/50 rounded p-2 font-mono whitespace-pre-wrap">
-                  {t.content}
-                </div>
-                <div className="mt-2 text-[11px] text-muted-foreground flex items-center gap-3 flex-wrap">
-                  <span>提交人：{t.submittedBy}</span>
-                  {t.reviewer && <span>审核：{t.reviewer}</span>}
-                  <span>更新：{t.updatedAt}</span>
-                  {t.rejectReason && (
-                    <span className="text-rose-600">拒因：{t.rejectReason}</span>
-                  )}
-                </div>
-                <FilingMatrix template={t} onPick={(ch) => setFilingCtx({ tpl: t, channel: ch })} />
-              </div>
-              <div className="flex flex-col gap-1 shrink-0 w-28">
-                <Button
-                  size="sm"
-                  className="bg-primary text-primary-foreground"
-                  onClick={() => setManagingTplId(t.id)}
-                >
-                  <Settings2 className="h-3.5 w-3.5" />
-                  报备管理
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    navigator.clipboard?.writeText(t.content);
-                    toast.success("已复制模板内容");
-                  }}
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                  复制
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPreviewing(t)}
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  预览
-                </Button>
-                {t.status === "rejected" && (
-                  <Button
-                    size="sm"
-                    className="bg-primary text-primary-foreground"
-                    onClick={() => setEditing(t)}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                    修改重提
-                  </Button>
+        <TooltipProvider delayDuration={200}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/30 text-[11px] text-muted-foreground">
+                <tr className="text-left">
+                  <th className="px-4 py-2 font-medium w-[22%]">模板名称</th>
+                  <th className="px-3 py-2 font-medium w-[8%]">渠道类型</th>
+                  <th className="px-3 py-2 font-medium">模板内容</th>
+                  <th className="px-3 py-2 font-medium w-[9%]">内审状态</th>
+                  <th className="px-3 py-2 font-medium w-[24%]">渠道报备</th>
+                  <th className="px-3 py-2 font-medium w-[15%] text-right">操作</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="p-10 text-center text-sm text-muted-foreground">
+                      无匹配模板
+                    </td>
+                  </tr>
                 )}
-                {t.status === "pending" && (
-                  <>
-                    <Button
-                      size="sm"
-                      className="bg-emerald-600 text-white hover:bg-emerald-700"
-                      onClick={() => {
-                        approveSmsTemplate(t.id);
-                        toast.success("已审核通过");
-                      }}
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      审核
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditing(t)}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                      修改
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700"
-                      onClick={() => {
-                        withdrawSmsTemplate(t.id);
-                        toast.success("已撤回");
-                      }}
-                    >
-                      <Undo2 className="h-3.5 w-3.5" />
-                      撤回
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+                {filtered.map((t) => {
+                  const system = isSystem(t);
+                  return (
+                    <tr key={t.id} className="align-top hover:bg-muted/20">
+                      <td className="px-4 py-3">
+                        <div className="font-medium truncate">{t.name}</div>
+                        <div className="mt-1 flex items-center gap-1 flex-wrap">
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-[10px]",
+                              system
+                                ? "bg-sky-50 text-sky-700 border-sky-200"
+                                : "bg-violet-50 text-violet-700 border-violet-200",
+                            )}
+                          >
+                            {system ? "系统内置" : "用户创建"}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px]">{t.locale}</Badge>
+                        </div>
+                        <div className="mt-1 text-[11px] text-muted-foreground">
+                          {t.submittedBy} · {t.updatedAt}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <Badge variant="outline" className="text-[10px]">
+                          {t.channel === "otp" ? "验证码" : t.channel === "marketing" ? "营销" : "通知"}
+                        </Badge>
+                      </td>
+                      <td className="px-3 py-3">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="text-xs text-foreground/80 line-clamp-2 font-mono cursor-help max-w-[28rem]">
+                              {t.content}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-md whitespace-pre-wrap font-mono text-xs leading-relaxed">
+                            {t.content}
+                          </TooltipContent>
+                        </Tooltip>
+                        {t.rejectReason && (
+                          <div className="mt-1 text-[11px] text-rose-600">拒因：{t.rejectReason}</div>
+                        )}
+                      </td>
+                      <td className="px-3 py-3">
+                        <StatusBadge status={t.status} />
+                      </td>
+                      <td className="px-3 py-3">
+                        <FilingMatrix template={t} onPick={(ch) => setFilingCtx({ tpl: t, channel: ch })} />
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-1 justify-end flex-wrap">
+                          <IconAction title="报备" onClick={() => setManagingTplId(t.id)}>
+                            <Settings2 className="h-3.5 w-3.5" />
+                          </IconAction>
+                          <IconAction title="复制" onClick={() => {
+                            navigator.clipboard?.writeText(t.content);
+                            toast.success("已复制模板内容");
+                          }}>
+                            <Copy className="h-3.5 w-3.5" />
+                          </IconAction>
+                          <IconAction title="编辑" onClick={() => setEditing(t)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </IconAction>
+                          <IconAction title="预览" onClick={() => setPreviewing(t)}>
+                            <Eye className="h-3.5 w-3.5" />
+                          </IconAction>
+                          {t.status === "pending" ? (
+                            <IconAction
+                              title="审核通过"
+                              className="text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                              onClick={() => {
+                                approveSmsTemplate(t.id);
+                                toast.success("已审核通过");
+                              }}
+                            >
+                              <ShieldCheck className="h-3.5 w-3.5" />
+                            </IconAction>
+                          ) : (
+                            <IconAction title="已审核" disabled>
+                              <ShieldCheck className="h-3.5 w-3.5 opacity-40" />
+                            </IconAction>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </TooltipProvider>
       </Card>
-      )}
-
-      {topTab === "applications" && (
-        <ApplicationsPanel apps={applications} onReview={setReviewingApp} />
-      )}
 
       <NewTplDialog open={addOpen} onOpenChange={setAddOpen} onSubmit={submitNew} />
       <NewTplDialog
@@ -355,7 +343,6 @@ function SmsTemplatesPage() {
         app={reviewingApp}
         onOpenChange={(o) => !o && setReviewingApp(null)}
         onApproved={(newId) => {
-          setTopTab("library");
           setManagingTplId(newId);
         }}
       />
@@ -365,6 +352,33 @@ function SmsTemplatesPage() {
         onPick={(ch) => managingTpl && setFilingCtx({ tpl: managingTpl, channel: ch })}
       />
     </div>
+  );
+}
+
+function IconAction({
+  children,
+  title,
+  onClick,
+  disabled,
+  className,
+}: {
+  children: React.ReactNode;
+  title: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      title={title}
+      disabled={disabled}
+      onClick={onClick}
+      className={cn("h-7 w-7 p-0", className)}
+    >
+      {children}
+    </Button>
   );
 }
 
