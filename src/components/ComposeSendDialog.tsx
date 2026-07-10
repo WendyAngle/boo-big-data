@@ -7,6 +7,7 @@ import {
   Loader2,
   Eye,
   Trash2,
+  ShieldOff,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
