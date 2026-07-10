@@ -748,9 +748,9 @@ function ProcessGuideCard() {
       {open && (
         <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-[12px]">
           {[
-            { n: 1, title: "创建模板", desc: "内部运营直接新建（自动通过），或从『用户申请』通过后自动入库。" },
-            { n: 2, title: "渠道报备", desc: "在模板行点击『报备管理』，为 CMCC / 联通 / 电信 / WhatsApp / SMPP 分别登记外部审核结果。" },
-            { n: 3, title: "用户可用", desc: "已通过 + 已完成对应渠道报备的模板，终端用户即可选用群发。" },
+            { n: 1, title: "创建 / 入库", desc: "系统内置由平台运营新建；用户创建来自终端提交，两者入库后统一进入『待审核』。" },
+            { n: 2, title: "内审 · 报备", desc: "在操作列点击『审核』确认通过或驳回；同时可在『报备』中为各渠道分别登记外部审核结果。" },
+            { n: 3, title: "用户可用", desc: "内审已通过 + 对应渠道报备通过后，终端用户即可选用群发；系统内置模板允许后续修改，用户创建的仅限查看。" },
           ].map((s) => (
             <div key={s.n} className="rounded-md border bg-muted/30 p-2">
               <div className="flex items-center gap-1.5 font-medium text-foreground">
