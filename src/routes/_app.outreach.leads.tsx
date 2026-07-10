@@ -944,6 +944,19 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
       )}
 
       {visibleLeads.length > 0 && (
+        <>
+        {view === "new" && (fb.liked.length + fb.ignored.length) > 0 && (
+          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-2 text-xs text-emerald-800">
+            <Sparkles className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span>
+              已根据您最近 <b className="tabular-nums">{fb.liked.length}</b> 次收藏
+              {fb.ignored.length > 0 && (
+                <> 与 <b className="tabular-nums">{fb.ignored.length}</b> 次忽略</>
+              )}
+              ，同类企业已上调 / 下调排序权重。
+            </span>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {visibleLeads.map((l) => (
             <LeadCard
@@ -959,6 +972,7 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
             />
           ))}
         </div>
+        </>
       )}
       <AiQuotaPacksDialog
         open={packsOpen}
