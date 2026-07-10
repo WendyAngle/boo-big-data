@@ -710,6 +710,115 @@ function NewTplDialog({
   );
 }
 
+function ProcessGuideCard() {
+  const [open, setOpen] = useState(true);
+  return (
+    <Card className="p-3">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between text-sm"
+      >
+        <span className="flex items-center gap-2 font-medium">
+          <ShieldCheck className="h-4 w-4 text-primary" />
+          流程指引：新建 / 通过申请 → 渠道报备 → 用户可用
+        </span>
+        {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+      </button>
+      {open && (
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-[12px]">
+          {[
+            { n: 1, title: "创建模板", desc: "内部运营直接新建（自动通过），或从『用户申请』通过后自动入库。" },
+            { n: 2, title: "渠道报备", desc: "在模板行点击『报备管理』，为 CMCC / 联通 / 电信 / WhatsApp / SMPP 分别登记外部审核结果。" },
+            { n: 3, title: "用户可用", desc: "已通过 + 已完成对应渠道报备的模板，终端用户即可选用群发。" },
+          ].map((s) => (
+            <div key={s.n} className="rounded-md border bg-muted/30 p-2">
+              <div className="flex items-center gap-1.5 font-medium text-foreground">
+                <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground text-[11px] flex items-center justify-center">{s.n}</span>
+                {s.title}
+              </div>
+              <div className="mt-1 text-muted-foreground leading-relaxed">{s.desc}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function FilingSummaryBadge({ templateId }: { templateId: string }) {
+  const s = getFilingSummary(templateId);
+  const total = FILING_CHANNELS.length;
+  const done = s.approved;
+  const cls = done === 0
+    ? "bg-rose-50 text-rose-700 border-rose-200"
+    : done < total
+      ? "bg-amber-50 text-amber-700 border-amber-200"
+      : "bg-emerald-50 text-emerald-700 border-emerald-200";
+  return (
+    <Badge variant="outline" className={cn("text-[10px] gap-1", cls)} title="已通过渠道数 / 全部渠道数">
+      <Radio className="h-3 w-3" /> 报备 {done}/{total}
+      {s.expiring > 0 && <span className="ml-1 text-orange-600">· {s.expiring} 即将到期</span>}
+    </Badge>
+  );
+}
+
+function FilingManagerDialog({ template, onOpenChange, onPick }: {
+  template: Tpl | null;
+  onOpenChange: (o: boolean) => void;
+  onPick: (ch: FilingChannel) => void;
+}) {
+  if (!template) return null;
+  const map = getFilingsByTemplate(template.id);
+  return (
+    <Dialog open={!!template} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Radio className="h-4 w-4 text-primary" /> 报备管理 · {template.name}
+          </DialogTitle>
+          <DialogDescription>
+            对每个渠道分别登记外部审核结果；点击『登记 / 更新』填写外部编号与到期时间，点击『续报』将记录重置为待审核。
+          </DialogDescription>
+        </DialogHeader>
+        <div className="divide-y border rounded-md">
+          {FILING_CHANNELS.map((c) => {
+            const rec = map[c.key];
+            const st: FilingStatus = rec?.status ?? "none";
+            const expiring = rec?.status === "approved" && rec.expireAt && daysUntil(rec.expireAt) <= 30;
+            return (
+              <div key={c.key} className="flex items-center gap-3 p-3">
+                <div className="w-24 shrink-0 text-sm font-medium">{c.label}</div>
+                <Badge variant="outline" className={cn("text-[10px]", FILING_STATUS_CLASS[st])}>
+                  {FILING_STATUS_LABEL[st]}
+                </Badge>
+                <div className="flex-1 text-[11px] text-muted-foreground truncate">
+                  {rec?.externalId && <span className="mr-2">编号 {rec.externalId}</span>}
+                  {rec?.expireAt && <span className={cn("mr-2", expiring && "text-orange-600")}>到期 {rec.expireAt}</span>}
+                  {rec?.comment && <span>· {rec.comment}</span>}
+                  {!rec && <span>未登记</span>}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {(st === "approved" || st === "expired") && (
+                    <Button size="sm" variant="outline" onClick={() => { renewFiling(template.id, c.key); toast.success("已提交续报"); }}>
+                      <RefreshCw className="h-3.5 w-3.5" /> 续报
+                    </Button>
+                  )}
+                  <Button size="sm" onClick={() => onPick(c.key)}>
+                    <Pencil className="h-3.5 w-3.5" /> 登记 / 更新
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>关闭</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /** 列表行独立的预览弹窗（ST-03 只读预览） */
 function PreviewDialog({
   template,
