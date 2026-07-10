@@ -68,28 +68,31 @@ const COUNTRY_PAIRS: { name: string; code: string; provinces: string[] }[] = [
   { name: "france", code: "FR", provinces: ["ile-de-france", "occitanie"] },
 ];
 const CITIES = ["middletown", "shanghai", "tokyo", "munich", "london", "guadalajara", "singapore", "paris"];
-const NAMES = [
-  "Aurora Holdings",
-  "Northwind Group",
-  "Skyline Education",
-  "BlueWave Logistics",
-  "Helios Capital",
-  "Greenfield Manufacturing",
-  "Bright Future Media",
-  "Crystal Retail",
-  "Pioneer Robotics",
-  "Summit Healthcare",
-  "Quantum Labs",
-  "Pacific Trading Co.",
-  "Maple Leaf Foods",
-  "Vertex Analytics",
-  "Harbor Shipping",
-  "Echo Marketing",
-  "Stellar University",
-  "Mosaic Studios",
-  "Atlas Engineering",
-  "Lighthouse Ventures",
+// 企业名与行业强绑定，避免出现「Summit Healthcare → marketing」这种硬伤。
+// 国家仍随机，但业务标签保持语义一致。
+const NAMED_ENTITIES: { name: string; industry: string }[] = [
+  { name: "Aurora Holdings", industry: "financial services" },
+  { name: "Northwind Group", industry: "financial services" },
+  { name: "Skyline Education", industry: "higher education" },
+  { name: "BlueWave Logistics", industry: "logistics" },
+  { name: "Helios Capital", industry: "financial services" },
+  { name: "Greenfield Manufacturing", industry: "manufacturing" },
+  { name: "Bright Future Media", industry: "marketing and advertising" },
+  { name: "Crystal Retail", industry: "retail" },
+  { name: "Pioneer Robotics", industry: "manufacturing" },
+  { name: "Summit Healthcare", industry: "healthcare" },
+  { name: "Quantum Labs", industry: "information technology" },
+  { name: "Pacific Trading Co.", industry: "retail" },
+  { name: "Maple Leaf Foods", industry: "manufacturing" },
+  { name: "Vertex Analytics", industry: "information technology" },
+  { name: "Harbor Shipping", industry: "logistics" },
+  { name: "Echo Marketing", industry: "marketing and advertising" },
+  { name: "Stellar University", industry: "higher education" },
+  { name: "Mosaic Studios", industry: "marketing and advertising" },
+  { name: "Atlas Engineering", industry: "manufacturing" },
+  { name: "Lighthouse Ventures", industry: "financial services" },
 ];
+const NAMES = NAMED_ENTITIES.map((e) => e.name);
 const ALIAS_SUFFIXES = [
   "国际",
   "集团",
@@ -180,7 +183,8 @@ export const ENTERPRISES: Enterprise[] = Array.from({ length: 60 }).map((_, i) =
   const cp = COUNTRY_PAIRS[i % COUNTRY_PAIRS.length];
   const province = cp.provinces[i % cp.provinces.length];
   const city = CITIES[i % CITIES.length];
-  const baseName = `${NAMES[i % NAMES.length]}${i >= NAMES.length ? ` ${Math.floor(i / NAMES.length) + 1}` : ""}`;
+  const entity = NAMED_ENTITIES[i % NAMED_ENTITIES.length];
+  const baseName = `${entity.name}${i >= NAMED_ENTITIES.length ? ` ${Math.floor(i / NAMED_ENTITIES.length) + 1}` : ""}`;
   const s = slug(baseName);
   const m = ((i * 11) % 12) + 1;
   const d = ((i * 7) % 27) + 1;
@@ -212,7 +216,7 @@ export const ENTERPRISES: Enterprise[] = Array.from({ length: 60 }).map((_, i) =
     id: `E${String(2026000 + i + 1).padStart(7, "0")}`,
     name: baseName,
     alias: makeAlias(baseName, i),
-    industry: missingIndustry ? "" : INDUSTRIES[i % INDUSTRIES.length],
+    industry: missingIndustry ? "" : entity.industry,
     country: missingCountry ? "" : cp.name,
     countryCode: missingCountry ? "" : cp.code,
     province,
