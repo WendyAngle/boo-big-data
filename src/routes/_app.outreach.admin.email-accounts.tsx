@@ -509,11 +509,6 @@ function EmailAccountsPage() {
 }
 
 // ---------- Small components ----------
-function KpiCard({ label, value, tone }: { label: string; value: number; tone?: "good" | "warn" }) {
-  void tone; void label; void value;
-  return null;
-}
-
 function MetricBlock({ label, value, suffix, hint, warn }: {
   label: string; value: string | number; suffix?: string; hint?: string; warn?: boolean;
 }) {
@@ -527,23 +522,6 @@ function MetricBlock({ label, value, suffix, hint, warn }: {
         <div className={cn("mt-0.5 text-[11px]", warn ? "text-amber-200" : "text-white/70")}>{hint}</div>
       )}
     </div>
-  );
-}
-
-function _unused_KpiCard({ label, value, tone }: { label: string; value: number; tone?: "good" | "warn" }) {
-  return (
-    <Card className="p-4">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div
-        className={cn(
-          "mt-1 text-2xl font-semibold",
-          tone === "good" && "text-emerald-600",
-          tone === "warn" && "text-amber-600",
-        )}
-      >
-        {value}
-      </div>
-    </Card>
   );
 }
 
