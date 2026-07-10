@@ -241,3 +241,61 @@ function RuleCard({
     </div>
   );
 }
+
+function PolicySection() {
+  const items = [
+    {
+      tone: "emerald" as const,
+      icon: <Undo2 className="h-4 w-4" />,
+      title: "触达失败自动退还",
+      desc: "邮件被邮箱服务商硬退回、短信下发失败、WhatsApp 号码未注册等失败场景，24 小时内系统自动退还对应积分；成功送达后不退。",
+    },
+    {
+      tone: "sky" as const,
+      icon: <Gift className="h-4 w-4" />,
+      title: "AI 推荐每日免费额度",
+      desc: "每个自然日提供 5 次免费 AI 推荐生成，次日 00:00 自动重置；超出后按 AI 推荐单价扣减积分，不占用触达/解锁额度。",
+    },
+    {
+      tone: "amber" as const,
+      icon: <ShieldAlert className="h-4 w-4" />,
+      title: "积分不足兜底策略",
+      desc: "积分余额不足以支付本次操作时，系统会阻止发起并弹出充值引导；不支持欠费、不允许透支。批量操作仅按可支付部分执行，其余保留在草稿。",
+    },
+  ];
+  return (
+    <section className="space-y-2.5">
+      <div className="flex items-center gap-2">
+        <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-muted text-muted-foreground">
+          <Info className="h-3.5 w-3.5" />
+        </span>
+        <h3 className="text-sm font-semibold">补充规则</h3>
+        <span className="text-xs text-muted-foreground">· 退款、免费额度与兜底策略</span>
+      </div>
+      <div className="space-y-2">
+        {items.map((r) => (
+          <div
+            key={r.title}
+            className="rounded-xl ring-1 ring-border p-3.5 hover:ring-primary/30 hover:bg-muted/30 transition-colors"
+          >
+            <div className="flex items-center gap-2.5">
+              <span
+                className={
+                  r.tone === "emerald"
+                    ? "inline-flex h-8 w-8 rounded-lg ring-1 items-center justify-center bg-emerald-50 text-emerald-700 ring-emerald-200"
+                    : r.tone === "sky"
+                      ? "inline-flex h-8 w-8 rounded-lg ring-1 items-center justify-center bg-sky-50 text-sky-700 ring-sky-200"
+                      : "inline-flex h-8 w-8 rounded-lg ring-1 items-center justify-center bg-amber-50 text-amber-700 ring-amber-200"
+                }
+              >
+                {r.icon}
+              </span>
+              <div className="font-medium text-sm">{r.title}</div>
+            </div>
+            <p className="mt-2 pl-[42px] text-xs text-muted-foreground leading-relaxed">{r.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
