@@ -22,6 +22,7 @@ import { Route as AppOutreachSearchRouteImport } from './routes/_app.outreach.se
 import { Route as AppOutreachRechargeRouteImport } from './routes/_app.outreach.recharge'
 import { Route as AppOutreachReachEmptyRouteImport } from './routes/_app.outreach.reach-empty'
 import { Route as AppOutreachReachRouteImport } from './routes/_app.outreach.reach'
+import { Route as AppOutreachMyProfileRouteImport } from './routes/_app.outreach.my-profile'
 import { Route as AppOutreachMailboxesRouteImport } from './routes/_app.outreach.mailboxes'
 import { Route as AppOutreachLeadsRouteImport } from './routes/_app.outreach.leads'
 import { Route as AppOutreachInvoicesRouteImport } from './routes/_app.outreach.invoices'
@@ -116,6 +117,11 @@ const AppOutreachReachEmptyRoute = AppOutreachReachEmptyRouteImport.update({
 const AppOutreachReachRoute = AppOutreachReachRouteImport.update({
   id: '/outreach/reach',
   path: '/outreach/reach',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOutreachMyProfileRoute = AppOutreachMyProfileRouteImport.update({
+  id: '/outreach/my-profile',
+  path: '/outreach/my-profile',
   getParentRoute: () => AppRoute,
 } as any)
 const AppOutreachMailboxesRoute = AppOutreachMailboxesRouteImport.update({
@@ -306,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/outreach/invoices': typeof AppOutreachInvoicesRoute
   '/outreach/leads': typeof AppOutreachLeadsRoute
   '/outreach/mailboxes': typeof AppOutreachMailboxesRoute
+  '/outreach/my-profile': typeof AppOutreachMyProfileRoute
   '/outreach/reach': typeof AppOutreachReachRoute
   '/outreach/reach-empty': typeof AppOutreachReachEmptyRoute
   '/outreach/recharge': typeof AppOutreachRechargeRoute
@@ -350,6 +357,7 @@ export interface FileRoutesByTo {
   '/outreach/invoices': typeof AppOutreachInvoicesRoute
   '/outreach/leads': typeof AppOutreachLeadsRoute
   '/outreach/mailboxes': typeof AppOutreachMailboxesRoute
+  '/outreach/my-profile': typeof AppOutreachMyProfileRoute
   '/outreach/reach': typeof AppOutreachReachRoute
   '/outreach/reach-empty': typeof AppOutreachReachEmptyRoute
   '/outreach/recharge': typeof AppOutreachRechargeRoute
@@ -396,6 +404,7 @@ export interface FileRoutesById {
   '/_app/outreach/invoices': typeof AppOutreachInvoicesRoute
   '/_app/outreach/leads': typeof AppOutreachLeadsRoute
   '/_app/outreach/mailboxes': typeof AppOutreachMailboxesRoute
+  '/_app/outreach/my-profile': typeof AppOutreachMyProfileRoute
   '/_app/outreach/reach': typeof AppOutreachReachRoute
   '/_app/outreach/reach-empty': typeof AppOutreachReachEmptyRoute
   '/_app/outreach/recharge': typeof AppOutreachRechargeRoute
@@ -443,6 +452,7 @@ export interface FileRouteTypes {
     | '/outreach/invoices'
     | '/outreach/leads'
     | '/outreach/mailboxes'
+    | '/outreach/my-profile'
     | '/outreach/reach'
     | '/outreach/reach-empty'
     | '/outreach/recharge'
@@ -487,6 +497,7 @@ export interface FileRouteTypes {
     | '/outreach/invoices'
     | '/outreach/leads'
     | '/outreach/mailboxes'
+    | '/outreach/my-profile'
     | '/outreach/reach'
     | '/outreach/reach-empty'
     | '/outreach/recharge'
@@ -532,6 +543,7 @@ export interface FileRouteTypes {
     | '/_app/outreach/invoices'
     | '/_app/outreach/leads'
     | '/_app/outreach/mailboxes'
+    | '/_app/outreach/my-profile'
     | '/_app/outreach/reach'
     | '/_app/outreach/reach-empty'
     | '/_app/outreach/recharge'
@@ -658,6 +670,13 @@ declare module '@tanstack/react-router' {
       path: '/outreach/reach'
       fullPath: '/outreach/reach'
       preLoaderRoute: typeof AppOutreachReachRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/outreach/my-profile': {
+      id: '/_app/outreach/my-profile'
+      path: '/outreach/my-profile'
+      fullPath: '/outreach/my-profile'
+      preLoaderRoute: typeof AppOutreachMyProfileRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/outreach/mailboxes': {
@@ -927,6 +946,7 @@ interface AppRouteChildren {
   AppOutreachInvoicesRoute: typeof AppOutreachInvoicesRoute
   AppOutreachLeadsRoute: typeof AppOutreachLeadsRoute
   AppOutreachMailboxesRoute: typeof AppOutreachMailboxesRoute
+  AppOutreachMyProfileRoute: typeof AppOutreachMyProfileRoute
   AppOutreachReachRoute: typeof AppOutreachReachRoute
   AppOutreachReachEmptyRoute: typeof AppOutreachReachEmptyRoute
   AppOutreachRechargeRoute: typeof AppOutreachRechargeRoute
@@ -969,6 +989,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachInvoicesRoute: AppOutreachInvoicesRoute,
   AppOutreachLeadsRoute: AppOutreachLeadsRoute,
   AppOutreachMailboxesRoute: AppOutreachMailboxesRoute,
+  AppOutreachMyProfileRoute: AppOutreachMyProfileRoute,
   AppOutreachReachRoute: AppOutreachReachRoute,
   AppOutreachReachEmptyRoute: AppOutreachReachEmptyRoute,
   AppOutreachRechargeRoute: AppOutreachRechargeRoute,

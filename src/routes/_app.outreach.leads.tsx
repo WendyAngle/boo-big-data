@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Sparkles,
   Lightbulb,
@@ -122,13 +122,8 @@ export const Route = createFileRoute("/_app/outreach/leads")({
 });
 
 function LeadsPage() {
-  const location = useLocation();
-  const [tab, setTab] = useState<"ai" | "search" | "profile">(
-    location.hash === "profile" ? "profile" : "ai",
-  );
-  useEffect(() => {
-    if (location.hash === "profile") setTab("profile");
-  }, [location.hash]);
+  const navigate = useNavigate();
+  const [tab, setTab] = useState<"ai" | "search">("ai");
 
   return (
     <div className="p-8 space-y-6">
@@ -171,19 +166,13 @@ function LeadsPage() {
           <TabsTrigger value="search" className="gap-1.5 px-4">
             <Search className="h-4 w-4" /> 主动搜索
           </TabsTrigger>
-          <TabsTrigger value="profile" className="gap-1.5 px-4">
-            <Target className="h-4 w-4" /> 我的企业画像
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="ai" className="mt-5">
-          <AiTab onGoProfile={() => setTab("profile")} />
+          <AiTab onGoProfile={() => navigate({ to: "/outreach/my-profile" })} />
         </TabsContent>
         <TabsContent value="search" className="mt-5">
           <SearchTab />
-        </TabsContent>
-        <TabsContent value="profile" className="mt-5">
-          <ProfileTab />
         </TabsContent>
       </Tabs>
     </div>
@@ -1561,7 +1550,7 @@ const COUNTRY_CN: Record<string, string> = {
 const SCALE_OPTIONS = ["1-50", "51-200", "201-1000", "1000+"];
 const REVENUE_OPTIONS = ["<500 万", "500 万 - 5000 万", "5000 万 - 5 亿", ">5 亿"];
 
-function ProfileTab() {
+export function ProfileTab() {
   const current = useLeadProfile();
   const [draft, setDraft] = useState<LeadProfile>(current);
   const completeness = profileCompleteness(draft);

@@ -80,7 +80,7 @@ export function AccountMenu() {
           <div className="p-1">
             <MenuItem
               icon={<Target className="h-4 w-4" />}
-              label="我的企业画像"
+              label="我的画像"
               trailing={
                 <span className="text-[11px] text-muted-foreground">
                   {completeness}%
@@ -88,7 +88,7 @@ export function AccountMenu() {
               }
               onClick={() => {
                 setOpen(false);
-                navigate({ to: "/outreach/leads", hash: "profile" });
+                navigate({ to: "/outreach/my-profile" });
               }}
             />
             <MenuItem
