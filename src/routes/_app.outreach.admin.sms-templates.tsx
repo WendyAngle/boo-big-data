@@ -110,7 +110,7 @@ function SmsTemplatesPage() {
       if (!t.name.toLowerCase().includes(q) && !t.content.toLowerCase().includes(q)) return false;
     }
     return true;
-  });
+  }).slice().sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
 
   useEffect(() => {
     setPage(1);
