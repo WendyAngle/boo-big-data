@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Ban, Mail, Phone, Plus, Search, Trash2, Upload } from "lucide-react";
+import { Ban, Mail, Phone, Plus, Search, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,7 +67,6 @@ function SuppressionsPage() {
   const [tab, setTab] = useState<SuppressionKind>("email");
   const [q, setQ] = useState("");
   const [addOpen, setAddOpen] = useState(false);
-  const [importOpen, setImportOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [removeTargets, setRemoveTargets] = useState<string[] | null>(null);
 
@@ -225,15 +224,6 @@ function SuppressionsPage() {
           <Button
             variant="outline"
             size="sm"
-            className="h-8"
-            onClick={() => setImportOpen(true)}
-          >
-            <Upload className="h-3.5 w-3.5" />
-            批量导入
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
             className="h-8 text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:text-muted-foreground disabled:border-border"
             disabled={selectedInView.length === 0}
             onClick={() => setRemoveTargets(selectedInView.map((r) => r.id))}
@@ -306,7 +296,6 @@ function SuppressionsPage() {
       </Card>
 
       <AddOneDialog open={addOpen} onOpenChange={setAddOpen} defaultKind={tab} />
-      <ImportDialog open={importOpen} onOpenChange={setImportOpen} defaultKind={tab} />
       <RemoveDialog
         ids={removeTargets}
         items={list}
