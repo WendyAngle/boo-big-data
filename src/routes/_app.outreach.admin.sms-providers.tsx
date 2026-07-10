@@ -234,21 +234,42 @@ function SmsProvidersPage() {
   return (
     <TooltipProvider delayDuration={200}>
     <div className="p-6 space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold flex items-center gap-2">
-            <ServerCog className="h-5 w-5 text-primary" />
-            短信服务商
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            由平台统一对接多家国际/国内短信服务商，按国家、渠道类型与健康度自动分流。
-            业务人员发短信时无需关心服务商归属。
-          </p>
+      {/* Hero */}
+      <section
+        className="relative overflow-hidden rounded-2xl p-6 lg:p-7 text-white"
+        style={{ background: "var(--gradient-hero)" }}
+      >
+        <div className="absolute -right-10 -bottom-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+          <div className="flex items-start gap-4">
+            <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <ServerCog className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">短信服务商</h1>
+              <p className="text-white/85 text-sm mt-0.5 max-w-2xl">
+                由平台统一对接多家国际/国内短信服务商，按国家、渠道类型与健康度自动分流。业务人员发短信时无需关心服务商归属。
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 gap-6 text-white shrink-0">
+            <MetricBlock label="总服务商" value={summary.total} suffix="家" />
+            <MetricBlock label="启用中" value={summary.active} suffix="家" />
+            <MetricBlock
+              label="平均送达率"
+              value={(summary.avg * 100).toFixed(1) + "%"}
+              warn={summary.avg <= 0.95}
+              hint={summary.avg > 0.95 ? "健康" : "低于 95%"}
+            />
+            <MetricBlock
+              label="异常/降级"
+              value={summary.degraded}
+              suffix="家"
+              warn={summary.degraded > 0}
+            />
+          </div>
         </div>
-        <Button onClick={openCreate} className="shrink-0">
-          <Plus className="h-4 w-4" /> 新增服务商
-        </Button>
-      </div>
+      </section>
 
       <Card className="p-4 space-y-2 border-primary/20 bg-primary/[0.03]">
         <div className="flex items-center gap-2 text-sm font-medium">
@@ -266,19 +287,11 @@ function SmsProvidersPage() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-4 gap-3">
-        <StatCard label="总服务商" value={summary.total.toString()} />
-        <StatCard label="启用中" value={summary.active.toString()} />
-        <StatCard
-          label="平均送达率"
-          value={(summary.avg * 100).toFixed(1) + "%"}
-          tone={summary.avg > 0.95 ? "good" : "warn"}
-        />
-        <StatCard
-          label="异常/降级"
-          value={summary.degraded.toString()}
-          tone={summary.degraded > 0 ? "warn" : "good"}
-        />
+      {/* 操作区 */}
+      <div className="flex items-center justify-start gap-2">
+        <Button onClick={openCreate}>
+          <Plus className="h-4 w-4" /> 新增服务商
+        </Button>
       </div>
 
       <Card className="p-0 overflow-hidden">
@@ -641,6 +654,26 @@ function StatCard({
 }
 
 function HealthBadge({ health }: { health: Health }) {
+  return _renderHealth(health);
+}
+
+function MetricBlock({ label, value, suffix, hint, warn }: {
+  label: string; value: string | number; suffix?: string; hint?: string; warn?: boolean;
+}) {
+  return (
+    <div>
+      <div className="text-xs text-white/75">{label}</div>
+      <div className="mt-1 text-2xl font-bold tabular-nums">
+        {value}{suffix && <span className="text-sm font-medium text-white/80 ml-1">{suffix}</span>}
+      </div>
+      {hint && (
+        <div className={cn("mt-0.5 text-[11px]", warn ? "text-amber-200" : "text-white/70")}>{hint}</div>
+      )}
+    </div>
+  );
+}
+
+function _renderHealth(health: Health) {
   if (health === "healthy")
     return (
       <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
