@@ -47,16 +47,6 @@ export interface Enterprise {
   products: string[];
 }
 
-const INDUSTRIES = [
-  "higher education",
-  "marketing and advertising",
-  "information technology",
-  "financial services",
-  "manufacturing",
-  "retail",
-  "logistics",
-  "healthcare",
-];
 const COUNTRY_PAIRS: { name: string; code: string; provinces: string[] }[] = [
   { name: "united states", code: "US", provinces: ["connecticut", "california", "texas", "new york"] },
   { name: "china", code: "CN", provinces: ["广东", "浙江", "江苏", "上海"] },
