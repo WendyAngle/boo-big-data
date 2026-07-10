@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ShieldCheck, ChevronDown, Users, UserCog, Coins, Send, FolderTree, Box, Wallet, Layers, Receipt, FileText, Search, LayoutDashboard, Inbox, KeyRound } from "lucide-react";
 import { AccountMenu } from "@/components/account/AccountMenu";
@@ -107,6 +107,8 @@ const menu: Root[] = [
 export function AppSidebar() {
   const { location } = useRouterState();
   const badge = useSidebarBadge();
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
   const [open, setOpen] = useState<Record<string, boolean>>({
     出海大数据平台: true,
     客户发现: true,
@@ -199,7 +201,7 @@ export function AppSidebar() {
                                 >
                                   {CI && <CI className="h-3.5 w-3.5" />}
                                   <span>{c.label}</span>
-                                  {c.to === "/outreach/conversations" && badge.unread > 0 && (
+                                  {hydrated && c.to === "/outreach/conversations" && badge.unread > 0 && (
                                     <span className="ml-auto inline-flex items-center justify-center rounded-full bg-rose-500 text-white text-[10px] leading-none h-4 min-w-4 px-1">
                                       {badge.unread > 99 ? "99+" : badge.unread}
                                     </span>
