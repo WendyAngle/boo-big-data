@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { FileText, Plus, CheckCircle2, Clock, XCircle, Copy, Pencil, Undo2, Eye, Sparkles, AlertTriangle, Send, Radio, ShieldCheck, ThumbsUp, ThumbsDown } from "lucide-react";
+import { FileText, Plus, CheckCircle2, Clock, XCircle, Copy, Pencil, Undo2, Eye, Sparkles, AlertTriangle, Send, Radio, ShieldCheck, ThumbsUp, ThumbsDown, ChevronDown, ChevronUp, RefreshCw, Settings2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,8 @@ import {
   approveApplication,
   rejectApplication,
   getFilingsByTemplate,
+  getFilingSummary,
+  renewFiling,
   FILING_CHANNELS,
   type FilingChannel,
   type FilingStatus,
