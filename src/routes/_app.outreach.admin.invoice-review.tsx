@@ -15,9 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter,
-} from "@/components/ui/sheet";
-import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -542,17 +539,17 @@ function ReviewSheet({ record, onOpenChange, onApprove, onReject }: {
   if (!record) return null;
   const readOnly = record.status !== "pending_review";
   return (
-    <Sheet open={!!record} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-[560px] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
+    <Dialog open={!!record} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-3 border-b shrink-0">
+          <DialogTitle className="flex items-center gap-2">
             <FileCheck2 className="h-5 w-5 text-primary" />
             发票申请详情
-          </SheetTitle>
-          <SheetDescription className="font-mono">{record.applyNo}</SheetDescription>
-        </SheetHeader>
+          </DialogTitle>
+          <DialogDescription className="font-mono">{record.applyNo}</DialogDescription>
+        </DialogHeader>
 
-        <div className="mt-5 space-y-5 pb-24">
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <div className="flex items-center gap-3">
             <StatusBadge status={record.status} />
             <span className="text-xs text-muted-foreground">提交于 {fmt(record.submittedAt)}</span>
@@ -633,7 +630,7 @@ function ReviewSheet({ record, onOpenChange, onApprove, onReject }: {
         </div>
 
         {!readOnly && (
-          <SheetFooter className="sticky bottom-0 bg-background pt-3 border-t gap-2">
+          <DialogFooter className="px-6 py-3 border-t shrink-0 gap-2">
             {!rejectMode ? (
               <>
                 <Button variant="outline" className="border-rose-300 text-rose-600 hover:bg-rose-50" onClick={() => setRejectMode(true)}>
@@ -651,10 +648,10 @@ function ReviewSheet({ record, onOpenChange, onApprove, onReject }: {
                 </Button>
               </>
             )}
-          </SheetFooter>
+          </DialogFooter>
         )}
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
 
