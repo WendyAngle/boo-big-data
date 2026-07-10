@@ -88,7 +88,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 
 export const Route = createFileRoute("/_app/outreach/billing")({
-  head: () => ({ meta: [{ title: "出海大数据平台 · 账单 | Boo数据平台" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 · 消费明细 | Boo数据平台" }] }),
   validateSearch: (s) =>
     z
       .object({
@@ -326,7 +326,7 @@ function BillingPage() {
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <span>出海大数据平台</span>
         <ChevronRight className="h-3.5 w-3.5" />
-        <span className="text-foreground font-medium">账单</span>
+        <span className="text-foreground font-medium">消费明细</span>
       </div>
 
       <section
