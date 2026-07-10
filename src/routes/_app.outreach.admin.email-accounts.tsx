@@ -182,28 +182,33 @@ function EmailAccountsPage() {
   return (
     <TooltipProvider delayDuration={200}>
       <div className="p-6 space-y-4">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold flex items-center gap-2">
-              <Mailbox className="h-5 w-5 text-primary" />
-              邮件账号
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1 max-w-3xl">
-              管理各邮件服务商下的可分配发信身份，并将其分配给企业租户使用。
-              与「邮件服务商」（通道健康度）、「系统管理 → 发信邮箱」（租户员工可见的邮箱）互相独立、上下游联动。
-            </p>
+        {/* Hero */}
+        <section
+          className="relative overflow-hidden rounded-2xl p-6 lg:p-7 text-white"
+          style={{ background: "var(--gradient-hero)" }}
+        >
+          <div className="absolute -right-10 -bottom-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <Mailbox className="h-6 w-6" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold">邮件账号</h1>
+                <p className="text-white/85 text-sm mt-0.5 max-w-3xl">
+                  管理各邮件服务商下的可分配发信身份，并将其分配给企业租户使用。与「邮件服务商」（通道健康度）、「系统管理 → 发信邮箱」（租户员工可见的邮箱）互相独立、上下游联动。
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-5 gap-6 text-white shrink-0">
+              <MetricBlock label="账号总数" value={kpi.total} suffix="个" />
+              <MetricBlock label="空闲可分配" value={kpi.available} suffix="个" />
+              <MetricBlock label="已分配" value={kpi.assigned} suffix="个" />
+              <MetricBlock label="待验证" value={kpi.pendingVerify} suffix="个" warn={kpi.pendingVerify > 0} />
+              <MetricBlock label="暂停" value={kpi.suspended} suffix="个" warn={kpi.suspended > 0} />
+            </div>
           </div>
-        </div>
-
-        {/* KPI */}
-        <div className="grid grid-cols-5 gap-3">
-          <KpiCard label="账号总数" value={kpi.total} />
-          <KpiCard label="空闲可分配" value={kpi.available} tone="good" />
-          <KpiCard label="已分配" value={kpi.assigned} />
-          <KpiCard label="待验证" value={kpi.pendingVerify} tone={kpi.pendingVerify > 0 ? "warn" : undefined} />
-          <KpiCard label="暂停" value={kpi.suspended} tone={kpi.suspended > 0 ? "warn" : undefined} />
-        </div>
+        </section>
 
         {/* Filters */}
         <Card className="p-3">
