@@ -20,6 +20,9 @@ import {
   Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetFooter,
 } from "@/components/ui/sheet";
 import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
@@ -664,14 +667,14 @@ function ProfilesSheet({ open, onOpenChange, profiles }: { open: boolean; onOpen
   }, [open]);
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-primary" /> 发票抬头管理
-          </SheetTitle>
-          <SheetDescription>维护企业 / 个人抬头，开票时一键选用</SheetDescription>
-        </SheetHeader>
+          </DialogTitle>
+          <DialogDescription>维护企业 / 个人抬头，开票时一键选用</DialogDescription>
+        </DialogHeader>
 
         {mode === "list" ? (
           <div className="mt-6 space-y-3">
@@ -729,8 +732,8 @@ function ProfilesSheet({ open, onOpenChange, profiles }: { open: boolean; onOpen
             }}
           />
         )}
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
 
