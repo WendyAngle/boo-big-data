@@ -27,6 +27,7 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { ListPagination } from "@/components/ListPagination";
 import {
   seedAdminInvoicesIfEmpty,
   useAdminInvoices,
@@ -98,6 +99,8 @@ function InvoiceReviewPage() {
   const [voiding, setVoiding] = useState<AdminInvoice | null>(null);
   const [replacing, setReplacing] = useState<AdminInvoice | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const stats = useMemo(() => {
     const now = Date.now();
@@ -138,6 +141,15 @@ function InvoiceReviewPage() {
   }, [list, tab, titleFilter, taxFilter, kw]);
 
   const selectableIds = filtered.filter((r) => r.status === "pending_review").map((r) => r.id);
+
+  useEffect(() => {
+    setPage(1);
+  }, [tab, kw, titleFilter, taxFilter]);
+
+  const pageData = useMemo(
+    () => filtered.slice((page - 1) * pageSize, page * pageSize),
+    [filtered, page],
+  );
   const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selected.has(id));
   const someSelected = selectableIds.some((id) => selected.has(id));
 
@@ -315,7 +327,7 @@ function InvoiceReviewPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((r) => (
+                {pageData.map((r) => (
                   <RowView
                     key={r.id}
                     row={r}
