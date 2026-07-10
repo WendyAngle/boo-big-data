@@ -414,22 +414,28 @@ function MetricBlock({ label, value, suffix, hint, warn }: {
 }
 
 function _renderStatus(status: Status) {
-  if (status === "approved")
-    return (
-      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
-        <CheckCircle2 className="h-3 w-3" /> 已通过
-      </Badge>
-    );
-  if (status === "pending")
-    return (
-      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 gap-1">
-        <Clock className="h-3 w-3" /> 待审核
-      </Badge>
-    );
+  const map = {
+    approved: { label: "已通过", cls: "bg-emerald-50 text-emerald-700 border-emerald-200", Icon: CheckCircle2 },
+    pending:  { label: "待审核", cls: "bg-amber-50 text-amber-700 border-amber-200",       Icon: Clock },
+    rejected: { label: "未通过", cls: "bg-rose-50 text-rose-700 border-rose-200",          Icon: XCircle },
+  } as const;
+  const { label, cls, Icon } = map[status];
   return (
-    <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 gap-1">
-      <XCircle className="h-3 w-3" /> 未通过
-    </Badge>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          role="img"
+          aria-label={label}
+          className={cn(
+            "inline-flex h-6 w-6 items-center justify-center rounded-full border",
+            cls,
+          )}
+        >
+          <Icon className="h-3.5 w-3.5" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top">{label}</TooltipContent>
+    </Tooltip>
   );
 }
 
