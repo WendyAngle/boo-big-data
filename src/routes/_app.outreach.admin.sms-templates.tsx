@@ -64,13 +64,17 @@ function SmsTemplatesPage() {
   const list = useSmsTemplates();
   const applications = useSmsApplications();
   const filings = useSmsFilings();
-  const [tab, setTab] = useState<"all" | Status>("all");
-  const [topTab, setTopTab] = useState<"library" | "applications" | "filings">("library");
+  const [topTab, setTopTab] = useState<"library" | "applications">("library");
+  const [libStatuses, setLibStatuses] = useState<Set<Status>>(() => new Set<Status>(["approved", "pending", "rejected"]));
+  const [libSearch, setLibSearch] = useState("");
+  const [libChannel, setLibChannel] = useState<"all" | Tpl["channel"]>("all");
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Tpl | null>(null);
   const [previewing, setPreviewing] = useState<Tpl | null>(null);
   const [filingCtx, setFilingCtx] = useState<{ tpl: Tpl; channel: FilingChannel } | null>(null);
   const [reviewingApp, setReviewingApp] = useState<TemplateApplication | null>(null);
+  const [managingTplId, setManagingTplId] = useState<string | null>(null);
+  const managingTpl = managingTplId ? list.find((x) => x.id === managingTplId) ?? null : null;
 
   const counts = {
     all: list.length,
@@ -89,7 +93,15 @@ function SmsTemplatesPage() {
     expiring: filings.filter((f) => f.status === "approved" && f.expireAt && daysUntil(f.expireAt) <= 30).length,
   };
 
-  const filtered = tab === "all" ? list : list.filter((t) => t.status === tab);
+  const filtered = list.filter((t) => {
+    if (!libStatuses.has(t.status)) return false;
+    if (libChannel !== "all" && t.channel !== libChannel) return false;
+    if (libSearch.trim()) {
+      const q = libSearch.trim().toLowerCase();
+      if (!t.name.toLowerCase().includes(q) && !t.content.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
 
   function submitNew(t: Omit<Tpl, "id" | "status" | "updatedAt" | "submittedBy">) {
     addSmsTemplate(t);
