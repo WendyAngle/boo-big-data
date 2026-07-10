@@ -97,17 +97,34 @@ function SmsRoutingPage() {
   return (
     <TooltipProvider delayDuration={200}>
     <div className="p-6 space-y-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold flex items-center gap-2">
-            <RouteIcon className="h-5 w-5 text-primary" />
-            短信路由策略
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            按「目的国家 × 渠道类型」匹配规则，选择主服务商，主服务商送达率跌破阈值或不可用时自动 Failover。
-            规则按优先级从上至下匹配，首个命中即生效。
-          </p>
+      {/* Hero */}
+      <section
+        className="relative overflow-hidden rounded-2xl p-6 lg:p-7 text-white"
+        style={{ background: "var(--gradient-hero)" }}
+      >
+        <div className="absolute -right-10 -bottom-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+          <div className="flex items-start gap-4">
+            <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <RouteIcon className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">短信路由策略</h1>
+              <p className="text-white/85 text-sm mt-0.5 max-w-2xl">
+                按「目的国家 × 渠道类型」匹配规则，选择主服务商，主服务商送达率跌破阈值或不可用时自动 Failover。规则按优先级从上至下匹配，首个命中即生效。
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-6 text-white shrink-0">
+            <MetricBlock label="路由规则" value={rules.length} suffix="条" />
+            <MetricBlock label="启用中" value={rules.filter((r) => r.enabled).length} suffix="条" />
+            <MetricBlock label="覆盖渠道" value={new Set(rules.map((r) => r.match.channel)).size} suffix="类" />
+          </div>
         </div>
+      </section>
+
+      {/* 操作区 */}
+      <div className="flex items-center justify-start gap-2">
         <Button
           onClick={() =>
             toast.info("演示环境：规则编辑器待接入", { description: "生产环境将支持完整可视化编辑与仿真回放" })
@@ -211,5 +228,18 @@ function SmsRoutingPage() {
       </Card>
     </div>
     </TooltipProvider>
+  );
+}
+
+function MetricBlock({ label, value, suffix }: {
+  label: string; value: string | number; suffix?: string;
+}) {
+  return (
+    <div>
+      <div className="text-xs text-white/75">{label}</div>
+      <div className="mt-1 text-2xl font-bold tabular-nums">
+        {value}{suffix && <span className="text-sm font-medium text-white/80 ml-1">{suffix}</span>}
+      </div>
+    </div>
   );
 }
