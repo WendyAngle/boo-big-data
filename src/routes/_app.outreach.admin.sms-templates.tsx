@@ -281,7 +281,7 @@ function SmsTemplatesPage() {
                         <StatusBadge status={t.status} />
                       </td>
                       <td className="px-3 py-3">
-                        <FilingMatrix template={t} onPick={(ch) => setFilingCtx({ tpl: t, channel: ch })} inline />
+                        <FilingMatrix template={t} onPick={(ch) => setFilingCtx({ tpl: t, channel: ch })} />
                       </td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-1 justify-end flex-wrap">
