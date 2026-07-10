@@ -239,7 +239,6 @@ function InvoiceReviewPage() {
             <TabBtn active={tab === "pending_review"} onClick={() => setTab("pending_review")}>
               <Clock className="h-3.5 w-3.5 mr-1 inline" />待审核 <Count n={list.filter((r) => r.status === "pending_review").length} />
             </TabBtn>
-            <TabBtn active={tab === "all"} onClick={() => setTab("all")}>全部 <Count n={list.length} /></TabBtn>
             <TabBtn active={tab === "processing"} onClick={() => setTab("processing")}>
               <Loader2 className="h-3.5 w-3.5 mr-1 inline" />开票中 <Count n={list.filter((r) => r.status === "processing").length} />
             </TabBtn>
@@ -252,6 +251,7 @@ function InvoiceReviewPage() {
             <TabBtn active={tab === "voided"} onClick={() => setTab("voided")}>
               <Ban className="h-3.5 w-3.5 mr-1 inline" />已作废/换开 <Count n={list.filter((r) => r.status === "voided" || r.status === "replaced").length} />
             </TabBtn>
+            <TabBtn active={tab === "all"} onClick={() => setTab("all")}>全部 <Count n={list.length} /></TabBtn>
           </div>
 
           {/* Filter bar */}
