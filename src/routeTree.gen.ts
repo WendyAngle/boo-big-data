@@ -25,6 +25,7 @@ import { Route as AppOutreachReachRouteImport } from './routes/_app.outreach.rea
 import { Route as AppOutreachMailboxesRouteImport } from './routes/_app.outreach.mailboxes'
 import { Route as AppOutreachLeadsRouteImport } from './routes/_app.outreach.leads'
 import { Route as AppOutreachInvoicesRouteImport } from './routes/_app.outreach.invoices'
+import { Route as AppOutreachInquiryDispatchRouteImport } from './routes/_app.outreach.inquiry-dispatch'
 import { Route as AppOutreachFootprintsEmptyRouteImport } from './routes/_app.outreach.footprints-empty'
 import { Route as AppOutreachFootprintsRouteImport } from './routes/_app.outreach.footprints'
 import { Route as AppOutreachFavoritesEmptyRouteImport } from './routes/_app.outreach.favorites-empty'
@@ -48,7 +49,6 @@ import { Route as AppOutreachAdminSmsTemplatesRouteImport } from './routes/_app.
 import { Route as AppOutreachAdminSmsRoutingRouteImport } from './routes/_app.outreach.admin.sms-routing'
 import { Route as AppOutreachAdminSmsProvidersRouteImport } from './routes/_app.outreach.admin.sms-providers'
 import { Route as AppOutreachAdminInvoiceReviewRouteImport } from './routes/_app.outreach.admin.invoice-review'
-import { Route as AppOutreachAdminInquiryDispatchRouteImport } from './routes/_app.outreach.admin.inquiry-dispatch'
 import { Route as AppOutreachAdminEmailProvidersRouteImport } from './routes/_app.outreach.admin.email-providers'
 import { Route as AppOutreachAdminEmailAccountsRouteImport } from './routes/_app.outreach.admin.email-accounts'
 import { Route as AppOutreachEnterpriseIdIndexRouteImport } from './routes/_app.outreach.enterprise.$id.index'
@@ -133,6 +133,12 @@ const AppOutreachInvoicesRoute = AppOutreachInvoicesRouteImport.update({
   path: '/outreach/invoices',
   getParentRoute: () => AppRoute,
 } as any)
+const AppOutreachInquiryDispatchRoute =
+  AppOutreachInquiryDispatchRouteImport.update({
+    id: '/outreach/inquiry-dispatch',
+    path: '/outreach/inquiry-dispatch',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppOutreachFootprintsEmptyRoute =
   AppOutreachFootprintsEmptyRouteImport.update({
     id: '/outreach/footprints-empty',
@@ -260,12 +266,6 @@ const AppOutreachAdminInvoiceReviewRoute =
     path: '/outreach/admin/invoice-review',
     getParentRoute: () => AppRoute,
   } as any)
-const AppOutreachAdminInquiryDispatchRoute =
-  AppOutreachAdminInquiryDispatchRouteImport.update({
-    id: '/outreach/admin/inquiry-dispatch',
-    path: '/outreach/admin/inquiry-dispatch',
-    getParentRoute: () => AppRoute,
-  } as any)
 const AppOutreachAdminEmailProvidersRoute =
   AppOutreachAdminEmailProvidersRouteImport.update({
     id: '/outreach/admin/email-providers',
@@ -302,6 +302,7 @@ export interface FileRoutesByFullPath {
   '/outreach/favorites-empty': typeof AppOutreachFavoritesEmptyRoute
   '/outreach/footprints': typeof AppOutreachFootprintsRoute
   '/outreach/footprints-empty': typeof AppOutreachFootprintsEmptyRoute
+  '/outreach/inquiry-dispatch': typeof AppOutreachInquiryDispatchRoute
   '/outreach/invoices': typeof AppOutreachInvoicesRoute
   '/outreach/leads': typeof AppOutreachLeadsRoute
   '/outreach/mailboxes': typeof AppOutreachMailboxesRoute
@@ -318,7 +319,6 @@ export interface FileRoutesByFullPath {
   '/points/': typeof AppPointsIndexRoute
   '/outreach/admin/email-accounts': typeof AppOutreachAdminEmailAccountsRoute
   '/outreach/admin/email-providers': typeof AppOutreachAdminEmailProvidersRoute
-  '/outreach/admin/inquiry-dispatch': typeof AppOutreachAdminInquiryDispatchRoute
   '/outreach/admin/invoice-review': typeof AppOutreachAdminInvoiceReviewRoute
   '/outreach/admin/sms-providers': typeof AppOutreachAdminSmsProvidersRoute
   '/outreach/admin/sms-routing': typeof AppOutreachAdminSmsRoutingRoute
@@ -346,6 +346,7 @@ export interface FileRoutesByTo {
   '/outreach/favorites-empty': typeof AppOutreachFavoritesEmptyRoute
   '/outreach/footprints': typeof AppOutreachFootprintsRoute
   '/outreach/footprints-empty': typeof AppOutreachFootprintsEmptyRoute
+  '/outreach/inquiry-dispatch': typeof AppOutreachInquiryDispatchRoute
   '/outreach/invoices': typeof AppOutreachInvoicesRoute
   '/outreach/leads': typeof AppOutreachLeadsRoute
   '/outreach/mailboxes': typeof AppOutreachMailboxesRoute
@@ -362,7 +363,6 @@ export interface FileRoutesByTo {
   '/points': typeof AppPointsIndexRoute
   '/outreach/admin/email-accounts': typeof AppOutreachAdminEmailAccountsRoute
   '/outreach/admin/email-providers': typeof AppOutreachAdminEmailProvidersRoute
-  '/outreach/admin/inquiry-dispatch': typeof AppOutreachAdminInquiryDispatchRoute
   '/outreach/admin/invoice-review': typeof AppOutreachAdminInvoiceReviewRoute
   '/outreach/admin/sms-providers': typeof AppOutreachAdminSmsProvidersRoute
   '/outreach/admin/sms-routing': typeof AppOutreachAdminSmsRoutingRoute
@@ -392,6 +392,7 @@ export interface FileRoutesById {
   '/_app/outreach/favorites-empty': typeof AppOutreachFavoritesEmptyRoute
   '/_app/outreach/footprints': typeof AppOutreachFootprintsRoute
   '/_app/outreach/footprints-empty': typeof AppOutreachFootprintsEmptyRoute
+  '/_app/outreach/inquiry-dispatch': typeof AppOutreachInquiryDispatchRoute
   '/_app/outreach/invoices': typeof AppOutreachInvoicesRoute
   '/_app/outreach/leads': typeof AppOutreachLeadsRoute
   '/_app/outreach/mailboxes': typeof AppOutreachMailboxesRoute
@@ -408,7 +409,6 @@ export interface FileRoutesById {
   '/_app/points/': typeof AppPointsIndexRoute
   '/_app/outreach/admin/email-accounts': typeof AppOutreachAdminEmailAccountsRoute
   '/_app/outreach/admin/email-providers': typeof AppOutreachAdminEmailProvidersRoute
-  '/_app/outreach/admin/inquiry-dispatch': typeof AppOutreachAdminInquiryDispatchRoute
   '/_app/outreach/admin/invoice-review': typeof AppOutreachAdminInvoiceReviewRoute
   '/_app/outreach/admin/sms-providers': typeof AppOutreachAdminSmsProvidersRoute
   '/_app/outreach/admin/sms-routing': typeof AppOutreachAdminSmsRoutingRoute
@@ -439,6 +439,7 @@ export interface FileRouteTypes {
     | '/outreach/favorites-empty'
     | '/outreach/footprints'
     | '/outreach/footprints-empty'
+    | '/outreach/inquiry-dispatch'
     | '/outreach/invoices'
     | '/outreach/leads'
     | '/outreach/mailboxes'
@@ -455,7 +456,6 @@ export interface FileRouteTypes {
     | '/points/'
     | '/outreach/admin/email-accounts'
     | '/outreach/admin/email-providers'
-    | '/outreach/admin/inquiry-dispatch'
     | '/outreach/admin/invoice-review'
     | '/outreach/admin/sms-providers'
     | '/outreach/admin/sms-routing'
@@ -483,6 +483,7 @@ export interface FileRouteTypes {
     | '/outreach/favorites-empty'
     | '/outreach/footprints'
     | '/outreach/footprints-empty'
+    | '/outreach/inquiry-dispatch'
     | '/outreach/invoices'
     | '/outreach/leads'
     | '/outreach/mailboxes'
@@ -499,7 +500,6 @@ export interface FileRouteTypes {
     | '/points'
     | '/outreach/admin/email-accounts'
     | '/outreach/admin/email-providers'
-    | '/outreach/admin/inquiry-dispatch'
     | '/outreach/admin/invoice-review'
     | '/outreach/admin/sms-providers'
     | '/outreach/admin/sms-routing'
@@ -528,6 +528,7 @@ export interface FileRouteTypes {
     | '/_app/outreach/favorites-empty'
     | '/_app/outreach/footprints'
     | '/_app/outreach/footprints-empty'
+    | '/_app/outreach/inquiry-dispatch'
     | '/_app/outreach/invoices'
     | '/_app/outreach/leads'
     | '/_app/outreach/mailboxes'
@@ -544,7 +545,6 @@ export interface FileRouteTypes {
     | '/_app/points/'
     | '/_app/outreach/admin/email-accounts'
     | '/_app/outreach/admin/email-providers'
-    | '/_app/outreach/admin/inquiry-dispatch'
     | '/_app/outreach/admin/invoice-review'
     | '/_app/outreach/admin/sms-providers'
     | '/_app/outreach/admin/sms-routing'
@@ -679,6 +679,13 @@ declare module '@tanstack/react-router' {
       path: '/outreach/invoices'
       fullPath: '/outreach/invoices'
       preLoaderRoute: typeof AppOutreachInvoicesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/outreach/inquiry-dispatch': {
+      id: '/_app/outreach/inquiry-dispatch'
+      path: '/outreach/inquiry-dispatch'
+      fullPath: '/outreach/inquiry-dispatch'
+      preLoaderRoute: typeof AppOutreachInquiryDispatchRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/outreach/footprints-empty': {
@@ -842,13 +849,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachAdminInvoiceReviewRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/outreach/admin/inquiry-dispatch': {
-      id: '/_app/outreach/admin/inquiry-dispatch'
-      path: '/outreach/admin/inquiry-dispatch'
-      fullPath: '/outreach/admin/inquiry-dispatch'
-      preLoaderRoute: typeof AppOutreachAdminInquiryDispatchRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/outreach/admin/email-providers': {
       id: '/_app/outreach/admin/email-providers'
       path: '/outreach/admin/email-providers'
@@ -923,6 +923,7 @@ interface AppRouteChildren {
   AppOutreachFavoritesEmptyRoute: typeof AppOutreachFavoritesEmptyRoute
   AppOutreachFootprintsRoute: typeof AppOutreachFootprintsRoute
   AppOutreachFootprintsEmptyRoute: typeof AppOutreachFootprintsEmptyRoute
+  AppOutreachInquiryDispatchRoute: typeof AppOutreachInquiryDispatchRoute
   AppOutreachInvoicesRoute: typeof AppOutreachInvoicesRoute
   AppOutreachLeadsRoute: typeof AppOutreachLeadsRoute
   AppOutreachMailboxesRoute: typeof AppOutreachMailboxesRoute
@@ -939,7 +940,6 @@ interface AppRouteChildren {
   AppPointsIndexRoute: typeof AppPointsIndexRoute
   AppOutreachAdminEmailAccountsRoute: typeof AppOutreachAdminEmailAccountsRoute
   AppOutreachAdminEmailProvidersRoute: typeof AppOutreachAdminEmailProvidersRoute
-  AppOutreachAdminInquiryDispatchRoute: typeof AppOutreachAdminInquiryDispatchRoute
   AppOutreachAdminInvoiceReviewRoute: typeof AppOutreachAdminInvoiceReviewRoute
   AppOutreachAdminSmsProvidersRoute: typeof AppOutreachAdminSmsProvidersRoute
   AppOutreachAdminSmsRoutingRoute: typeof AppOutreachAdminSmsRoutingRoute
@@ -965,6 +965,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachFavoritesEmptyRoute: AppOutreachFavoritesEmptyRoute,
   AppOutreachFootprintsRoute: AppOutreachFootprintsRoute,
   AppOutreachFootprintsEmptyRoute: AppOutreachFootprintsEmptyRoute,
+  AppOutreachInquiryDispatchRoute: AppOutreachInquiryDispatchRoute,
   AppOutreachInvoicesRoute: AppOutreachInvoicesRoute,
   AppOutreachLeadsRoute: AppOutreachLeadsRoute,
   AppOutreachMailboxesRoute: AppOutreachMailboxesRoute,
@@ -981,7 +982,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppPointsIndexRoute: AppPointsIndexRoute,
   AppOutreachAdminEmailAccountsRoute: AppOutreachAdminEmailAccountsRoute,
   AppOutreachAdminEmailProvidersRoute: AppOutreachAdminEmailProvidersRoute,
-  AppOutreachAdminInquiryDispatchRoute: AppOutreachAdminInquiryDispatchRoute,
   AppOutreachAdminInvoiceReviewRoute: AppOutreachAdminInvoiceReviewRoute,
   AppOutreachAdminSmsProvidersRoute: AppOutreachAdminSmsProvidersRoute,
   AppOutreachAdminSmsRoutingRoute: AppOutreachAdminSmsRoutingRoute,
@@ -1004,13 +1004,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
