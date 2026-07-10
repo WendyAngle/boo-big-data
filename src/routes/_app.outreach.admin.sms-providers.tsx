@@ -9,6 +9,8 @@ import {
   ShieldOff,
   Info,
   RotateCcw,
+  Plus,
+  Pencil,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +26,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -152,6 +172,8 @@ function formatCostOriginal(cost: Provider["cost"]) {
 
 function SmsProvidersPage() {
   const [list, setList] = useState<Provider[]>(SEED);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editing, setEditing] = useState<Provider | null>(null);
 
   const summary = useMemo(() => {
     const active = list.filter((p) => p.enabled);
@@ -192,18 +214,40 @@ function SmsProvidersPage() {
     toast.success("已重置为观察态，30 分钟内不参与路由，稳定后可手动启用");
   }
 
+  function openCreate() {
+    setEditing(null);
+    setEditorOpen(true);
+  }
+  function openEdit(p: Provider) {
+    setEditing(p);
+    setEditorOpen(true);
+  }
+  function handleSave(next: Provider) {
+    setList((s) => {
+      const exists = s.some((x) => x.id === next.id);
+      return exists ? s.map((x) => (x.id === next.id ? next : x)) : [...s, next];
+    });
+    setEditorOpen(false);
+    toast.success(editing ? "已更新服务商配置" : "已新增服务商，默认置为观察态");
+  }
+
   return (
     <TooltipProvider delayDuration={200}>
     <div className="p-6 space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold flex items-center gap-2">
-          <ServerCog className="h-5 w-5 text-primary" />
-          短信服务商
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          由平台统一对接多家国际/国内短信服务商，按国家、渠道类型与健康度自动分流。
-          业务人员发短信时无需关心服务商归属。
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold flex items-center gap-2">
+            <ServerCog className="h-5 w-5 text-primary" />
+            短信服务商
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            由平台统一对接多家国际/国内短信服务商，按国家、渠道类型与健康度自动分流。
+            业务人员发短信时无需关心服务商归属。
+          </p>
+        </div>
+        <Button onClick={openCreate} className="shrink-0">
+          <Plus className="h-4 w-4" /> 新增服务商
+        </Button>
       </div>
 
       <Card className="p-4 space-y-2 border-primary/20 bg-primary/[0.03]">
@@ -255,7 +299,7 @@ function SmsProvidersPage() {
                 单价
                 <span className="text-[10px] font-normal text-muted-foreground ml-1">(USD)</span>
               </TableHead>
-              <TableHead className="text-right">启用</TableHead>
+              <TableHead className="text-right">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -362,6 +406,14 @@ function SmsProvidersPage() {
                         观察中
                       </Badge>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-[11px]"
+                      onClick={() => openEdit(p)}
+                    >
+                      <Pencil className="h-3 w-3" /> 编辑
+                    </Button>
                     <Switch
                       checked={effectiveEnabled}
                       disabled={isDown || p.health === "paused"}
@@ -384,8 +436,166 @@ function SmsProvidersPage() {
         </div>
       </Card>
     </div>
+    <ProviderEditor
+      open={editorOpen}
+      onOpenChange={setEditorOpen}
+      editing={editing}
+      onSave={handleSave}
+    />
     </TooltipProvider>
   );
+}
+
+function ProviderEditor({
+  open,
+  onOpenChange,
+  editing,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  editing: Provider | null;
+  onSave: (p: Provider) => void;
+}) {
+  const isEdit = !!editing;
+  const [form, setForm] = useState<Provider>(() => makeDraft(editing));
+  useMemo(() => {
+    if (open) setForm(makeDraft(editing));
+  }, [open, editing]);
+
+  const set = <K extends keyof Provider>(k: K, v: Provider[K]) =>
+    setForm((s) => ({ ...s, [k]: v }));
+
+  function toggleChannel(v: "marketing" | "otp" | "notification") {
+    set(
+      "channels",
+      form.channels.includes(v)
+        ? (form.channels.filter((x) => x !== v) as Provider["channels"])
+        : ([...form.channels, v] as Provider["channels"]),
+    );
+  }
+
+  function submit() {
+    if (!form.name.trim() || !form.vendor.trim()) {
+      toast.error("请填写服务商名称与厂商");
+      return;
+    }
+    if (form.channels.length === 0) {
+      toast.error("至少选择一种支持渠道");
+      return;
+    }
+    if (form.tps <= 0) {
+      toast.error("TPS 需大于 0");
+      return;
+    }
+    onSave(form);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? "编辑短信服务商" : "新增短信服务商"}</DialogTitle>
+          <DialogDescription>
+            仅平台管理员可见。新增服务商默认为「观察态」，通过健康度评估后再启用。
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-4 py-2">
+          <Field label="名称" required>
+            <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="如：Twilio 主账号" />
+          </Field>
+          <Field label="厂商" required>
+            <Input value={form.vendor} onChange={(e) => set("vendor", e.target.value)} placeholder="Twilio / Vonage / Aliyun" />
+          </Field>
+          <Field label="覆盖区域" hint="用逗号分隔，如 US, EU, APAC">
+            <Input
+              value={form.regions.join(", ")}
+              onChange={(e) => set("regions", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))}
+              placeholder="全球"
+            />
+          </Field>
+          <Field label="支持渠道" required>
+            <div className="flex items-center gap-4 h-9">
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox checked={form.channels.includes("otp")} onCheckedChange={() => toggleChannel("otp")} />
+                验证码
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox checked={form.channels.includes("marketing")} onCheckedChange={() => toggleChannel("marketing")} />
+                营销
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox checked={form.channels.includes("notification")} onCheckedChange={() => toggleChannel("notification")} />
+                通知
+              </label>
+            </div>
+          </Field>
+          <Field label="TPS（条/秒）" required>
+            <Input
+              type="number"
+              min={0}
+              value={form.tps}
+              onChange={(e) => set("tps", Number(e.target.value) || 0)}
+            />
+          </Field>
+          <Field label="计价币种">
+            <Select value={form.cost.currency} onValueChange={(v) => set("cost", { ...form.cost, currency: v as "USD" | "CNY" })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="CNY">CNY</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="单价（每段）">
+            <Input
+              type="number"
+              min={0}
+              step={0.0001}
+              value={form.cost.perSegment}
+              onChange={(e) => set("cost", { ...form.cost, perSegment: Number(e.target.value) || 0 })}
+            />
+          </Field>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+          <Button onClick={submit}>{isEdit ? "保存修改" : "创建服务商"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs">
+        {label}
+        {required && <span className="text-rose-500 ml-0.5">*</span>}
+      </Label>
+      {children}
+      {hint && <div className="text-[11px] text-muted-foreground">{hint}</div>}
+    </div>
+  );
+}
+
+function makeDraft(editing: Provider | null): Provider {
+  if (editing) return { ...editing, regions: [...editing.regions], channels: [...editing.channels], cost: { ...editing.cost } };
+  return {
+    id: `prov-${Date.now().toString(36)}`,
+    name: "",
+    vendor: "",
+    regions: ["全球"],
+    channels: ["notification"],
+    enabled: false,
+    health: "paused",
+    deliveryRate: 0,
+    respMs: 0,
+    tps: 50,
+    quotaUsed: 0,
+    cost: { currency: "USD", perSegment: 0.005 },
+    lastCheck: "刚刚",
+  };
 }
 
 function RuleCell({ tone, label, rule }: { tone: "ok" | "warn" | "err" | "fatal"; label: string; rule: string }) {
