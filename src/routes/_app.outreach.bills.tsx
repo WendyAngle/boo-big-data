@@ -178,13 +178,14 @@ function genDate(seed: number) {
 
 const ALL_BILLS: BillDetail[] = Array.from({ length: 220 }, (_, i) => {
   const seed = hash(`bill-${i}`);
-  const hs = HS_CODES[seed % HS_CODES.length];
+  const item = HS_ITEMS[seed % HS_ITEMS.length];
+  const hs = item.hs;
+  const desc = item.descs[(seed >> 7) % item.descs.length];
   const exp =
     seed % 9 === 0
       ? null // 偶发缺失出口企业 (与原型截图一致)
       : EXPORTER_COMPANIES[(seed >> 3) % EXPORTER_COMPANIES.length];
   const imp = IMPORTER_COMPANIES[(seed >> 5) % IMPORTER_COMPANIES.length];
-  const desc = PRODUCT_DESCS[(seed >> 7) % PRODUCT_DESCS.length];
   const fp = PORTS_FROM[(seed >> 9) % PORTS_FROM.length];
   const tp = PORTS_TO[(seed >> 11) % PORTS_TO.length];
   const weight = 5 + ((seed >> 4) % 480);
