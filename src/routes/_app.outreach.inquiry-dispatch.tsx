@@ -56,7 +56,7 @@ import {
   type Thread,
 } from "@/lib/inbox-store";
 
-export const Route = createFileRoute("/_app/outreach/admin/inquiry-dispatch")({
+export const Route = createFileRoute("/_app/outreach/inquiry-dispatch")({
   head: () => ({ meta: [{ title: "询盘分派 | Boo数据平台" }] }),
   component: InboxRoutingAdmin,
 });
