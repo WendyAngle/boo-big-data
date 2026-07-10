@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Ban, Mail, Phone, Plus, Search, Trash2, Upload } from "lucide-react";
+import { Ban, Mail, Phone, Plus, Search, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,7 +67,6 @@ function SuppressionsPage() {
   const [tab, setTab] = useState<SuppressionKind>("email");
   const [q, setQ] = useState("");
   const [addOpen, setAddOpen] = useState(false);
-  const [importOpen, setImportOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [removeTargets, setRemoveTargets] = useState<string[] | null>(null);
 
@@ -225,15 +224,6 @@ function SuppressionsPage() {
           <Button
             variant="outline"
             size="sm"
-            className="h-8"
-            onClick={() => setImportOpen(true)}
-          >
-            <Upload className="h-3.5 w-3.5" />
-            批量导入
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
             className="h-8 text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:text-muted-foreground disabled:border-border"
             disabled={selectedInView.length === 0}
             onClick={() => setRemoveTargets(selectedInView.map((r) => r.id))}
@@ -306,7 +296,6 @@ function SuppressionsPage() {
       </Card>
 
       <AddOneDialog open={addOpen} onOpenChange={setAddOpen} defaultKind={tab} />
-      <ImportDialog open={importOpen} onOpenChange={setImportOpen} defaultKind={tab} />
       <RemoveDialog
         ids={removeTargets}
         items={list}
@@ -575,78 +564,6 @@ function RemoveDialog({
           >
             确认移除
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function ImportDialog({
-  open,
-  onOpenChange,
-  defaultKind,
-}: {
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-  defaultKind: SuppressionKind;
-}) {
-  const [kind, setKind] = useState<SuppressionKind>(defaultKind);
-  const [text, setText] = useState("");
-
-  function submit() {
-    const lines = text
-      .split(/[\s,;\n]+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (lines.length === 0) {
-      toast.error("请粘贴要导入的地址");
-      return;
-    }
-    lines.forEach((v) => addSuppression(kind, v, "批量导入", "CSV"));
-    toast.success(`已导入 ${lines.length} 条`);
-    setText("");
-    onOpenChange(false);
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>批量导入退订名单</DialogTitle>
-          <DialogDescription>
-            每行一个地址，或用逗号/分号分隔。系统会自动去重。
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-2 items-center">
-            <label className="text-sm">类型</label>
-            <Select value={kind} onValueChange={(v) => setKind(v as SuppressionKind)}>
-              <SelectTrigger className="col-span-2 h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="email">邮箱</SelectItem>
-                <SelectItem value="phone">手机号</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={
-              kind === "email"
-                ? "user1@example.com\nuser2@example.com"
-                : "+8613800001111\n+8613900002222"
-            }
-            rows={8}
-            className="font-mono text-xs"
-          />
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            取消
-          </Button>
-          <Button onClick={submit}>确认导入</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
