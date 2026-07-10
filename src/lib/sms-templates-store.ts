@@ -3,6 +3,48 @@ import { useSyncExternalStore } from "react";
 export type SmsTplStatus = "approved" | "pending" | "rejected";
 export type SmsTplChannel = "marketing" | "otp" | "notification";
 
+/** 外部渠道（运营商 / OTT）——用于报备记录 */
+export type FilingChannel = "cmcc" | "unicom" | "telecom" | "whatsapp" | "twilio";
+export const FILING_CHANNELS: { key: FilingChannel; label: string }[] = [
+  { key: "cmcc", label: "移动" },
+  { key: "unicom", label: "联通" },
+  { key: "telecom", label: "电信" },
+  { key: "whatsapp", label: "WhatsApp" },
+  { key: "twilio", label: "Twilio" },
+];
+
+export type FilingStatus = "none" | "submitted" | "approved" | "rejected" | "expired";
+
+export interface TemplateFiling {
+  templateId: string;
+  channel: FilingChannel;
+  status: FilingStatus;
+  externalId?: string;    // 运营商回执号
+  submittedAt?: string;
+  approvedAt?: string;
+  expireAt?: string;
+  comment?: string;       // 拒因 / 备注
+  operator?: string;      // 登记人
+}
+
+/** 终端用户提交的自定义模板申请（内部运营审核） */
+export type AppStatus = "submitted" | "approved" | "rejected";
+export interface TemplateApplication {
+  id: string;
+  name: string;
+  channel: SmsTplChannel;
+  locale: string;
+  content: string;
+  scenario?: string;        // 使用场景说明
+  status: AppStatus;
+  submittedBy: string;
+  submittedAt: string;
+  reviewer?: string;
+  reviewedAt?: string;
+  rejectReason?: string;
+  generatedTemplateId?: string; // 通过后生成的模板 id
+}
+
 export interface SmsTemplate {
   id: string;
   name: string;
@@ -17,6 +59,8 @@ export interface SmsTemplate {
 }
 
 const KEY = "boo:sms-templates:v1";
+const KEY_FILINGS = "boo:sms-filings:v1";
+const KEY_APPS = "boo:sms-applications:v1";
 
 const SEED: SmsTemplate[] = [
   {
@@ -109,7 +153,40 @@ function write(list: SmsTemplate[]) {
   } catch {}
 }
 
+const SEED_FILINGS: TemplateFiling[] = [
+  { templateId: "t1", channel: "twilio", status: "approved", externalId: "HX8f21…", submittedAt: "2026-06-25", approvedAt: "2026-06-27", expireAt: "2027-06-27", operator: "合规组" },
+  { templateId: "t1", channel: "whatsapp", status: "submitted", submittedAt: "2026-07-05", operator: "合规组" },
+  { templateId: "t2", channel: "cmcc", status: "approved", externalId: "CM202607010881", submittedAt: "2026-06-28", approvedAt: "2026-07-01", expireAt: "2027-07-01", operator: "合规组" },
+  { templateId: "t2", channel: "unicom", status: "rejected", submittedAt: "2026-06-28", comment: "话术含金融词，需替换", operator: "合规组" },
+  { templateId: "t3", channel: "cmcc", status: "approved", externalId: "CM202606201122", approvedAt: "2026-06-22", expireAt: "2027-06-22", operator: "系统" },
+  { templateId: "t4", channel: "cmcc", status: "approved", externalId: "CM_OTP_09", approvedAt: "2026-06-10", expireAt: "2027-06-10", operator: "系统" },
+];
+const SEED_APPS: TemplateApplication[] = [
+  { id: "a1", name: "客户回访 · 家居行业", channel: "marketing", locale: "zh-CN", content: "{{联系人名}}您好，我是{{我的公司}}的{{我的姓名}}，想跟进一下上次的家居采购需求，方便时可回复邮箱。回复T退订。", scenario: "针对家居行业老客户复购", status: "submitted", submittedBy: "李经理", submittedAt: "2026-07-08" },
+  { id: "a2", name: "展会邀约 EN", channel: "marketing", locale: "en-US", content: "Hi {{联系人名}}, we'll exhibit at Canton Fair booth 5C-12. Coffee? -- {{我的姓名}}. Reply STOP to opt out.", scenario: "广交会前批量邀约", status: "submitted", submittedBy: "王销售", submittedAt: "2026-07-09" },
+  { id: "a3", name: "促销活动 · 无退订", channel: "marketing", locale: "zh-CN", content: "全场 8 折起，速抢！", scenario: "夏季促销", status: "rejected", submittedBy: "张销售", submittedAt: "2026-07-04", reviewer: "合规组", reviewedAt: "2026-07-05", rejectReason: "缺少退订提示（STOP/退订/TD）" },
+];
+
+function readList<T>(key: string, seed: T[]): T[] {
+  if (typeof window === "undefined") return seed;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (raw) {
+      const j = JSON.parse(raw);
+      if (Array.isArray(j)) return j as T[];
+    }
+  } catch {}
+  window.localStorage.setItem(key, JSON.stringify(seed));
+  return seed;
+}
+function writeList<T>(key: string, list: T[]) {
+  if (typeof window === "undefined") return;
+  try { window.localStorage.setItem(key, JSON.stringify(list)); } catch {}
+}
+
 let store: SmsTemplate[] = read();
+let filings: TemplateFiling[] = readList<TemplateFiling>(KEY_FILINGS, SEED_FILINGS);
+let apps: TemplateApplication[] = readList<TemplateApplication>(KEY_APPS, SEED_APPS);
 let version = 0;
 const listeners = new Set<() => void>();
 const emit = () => {
@@ -134,6 +211,61 @@ if (typeof window !== "undefined") {
 export function useSmsTemplates(): SmsTemplate[] {
   useSyncExternalStore(subscribe, getVersion, getVersion);
   return store;
+}
+
+export function useSmsFilings(): TemplateFiling[] {
+  useSyncExternalStore(subscribe, getVersion, getVersion);
+  return filings;
+}
+
+export function useSmsApplications(): TemplateApplication[] {
+  useSyncExternalStore(subscribe, getVersion, getVersion);
+  return apps;
+}
+
+export function getFilingsByTemplate(templateId: string): Record<FilingChannel, TemplateFiling | undefined> {
+  const m: Record<string, TemplateFiling> = {};
+  filings.filter((f) => f.templateId === templateId).forEach((f) => { m[f.channel] = f; });
+  return m as Record<FilingChannel, TemplateFiling | undefined>;
+}
+
+/** 登记 / 更新一条渠道报备 */
+export function upsertFiling(rec: TemplateFiling) {
+  const idx = filings.findIndex((f) => f.templateId === rec.templateId && f.channel === rec.channel);
+  if (idx >= 0) filings = filings.map((f, i) => (i === idx ? rec : f));
+  else filings = [...filings, rec];
+  writeList(KEY_FILINGS, filings);
+  emit();
+}
+
+/** 审核用户申请：通过后自动生成一条 approved 模板 */
+export function approveApplication(id: string, reviewer = "合规组") {
+  const app = apps.find((a) => a.id === id);
+  if (!app) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const newTpl: SmsTemplate = {
+    id: `t_${Date.now().toString(36)}`,
+    name: app.name,
+    channel: app.channel,
+    locale: app.locale,
+    content: app.content,
+    status: "approved",
+    updatedAt: today,
+    submittedBy: app.submittedBy,
+    reviewer,
+  };
+  store = [newTpl, ...store];
+  write(store);
+  apps = apps.map((a) => a.id === id ? { ...a, status: "approved", reviewer, reviewedAt: today, generatedTemplateId: newTpl.id } : a);
+  writeList(KEY_APPS, apps);
+  emit();
+}
+
+export function rejectApplication(id: string, reason: string, reviewer = "合规组") {
+  const today = new Date().toISOString().slice(0, 10);
+  apps = apps.map((a) => a.id === id ? { ...a, status: "rejected", rejectReason: reason, reviewer, reviewedAt: today } : a);
+  writeList(KEY_APPS, apps);
+  emit();
 }
 
 export function getApprovedSmsTemplates(): SmsTemplate[] {
