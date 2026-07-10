@@ -263,7 +263,7 @@ function EmailAccountsPage() {
         </Card>
 
         {/* Actions above the list */}
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-start gap-2">
           <Button variant="outline" onClick={() => setSummaryOpen(true)}>
             <Users className="h-4 w-4" /> 按租户汇总
           </Button>
