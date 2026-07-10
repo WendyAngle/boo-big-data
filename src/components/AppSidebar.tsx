@@ -97,6 +97,7 @@ const menu: Root[] = [
           { label: "短信服务商", to: "/outreach/admin/sms-providers" },
           { label: "短信路由", to: "/outreach/admin/sms-routing" },
           { label: "短信模板", to: "/outreach/admin/sms-templates" },
+          { label: "发票审核", to: "/outreach/admin/invoice-review" },
         ],
       },
     ],
