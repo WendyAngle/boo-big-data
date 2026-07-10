@@ -194,10 +194,10 @@ function SmsTemplatesPage() {
           <Select value={libStatus} onValueChange={(v) => setLibStatus(v as Status | "all")}>
             <SelectTrigger className="h-8 w-36"><SelectValue placeholder="状态" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">全部状态 · {counts.approved + counts.pending + counts.rejected}</SelectItem>
-              <SelectItem value="approved">已通过 · {counts.approved}</SelectItem>
-              <SelectItem value="pending">待审核 · {counts.pending}</SelectItem>
-              <SelectItem value="rejected">未通过 · {counts.rejected}</SelectItem>
+              <SelectItem value="all">全部状态</SelectItem>
+              <SelectItem value="approved">已通过</SelectItem>
+              <SelectItem value="pending">待审核</SelectItem>
+              <SelectItem value="rejected">未通过</SelectItem>
             </SelectContent>
           </Select>
           <div className="ml-auto flex items-center gap-2">
