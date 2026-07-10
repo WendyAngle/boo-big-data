@@ -299,17 +299,13 @@ function SmsTemplatesPage() {
                           <IconAction title="预览" onClick={() => setPreviewing(t)}>
                             <Eye className="h-3.5 w-3.5" />
                           </IconAction>
-                          {t.status === "pending" ? (
+                          {t.status === "pending" && (
                             <IconAction
                               title="审核"
                               className="text-primary hover:bg-primary/10"
                               onClick={() => setAuditingTpl(t)}
                             >
                               <ShieldCheck className="h-3.5 w-3.5" />
-                            </IconAction>
-                          ) : (
-                            <IconAction title="已审核" disabled>
-                              <ShieldCheck className="h-3.5 w-3.5 opacity-40" />
                             </IconAction>
                           )}
                         </div>
