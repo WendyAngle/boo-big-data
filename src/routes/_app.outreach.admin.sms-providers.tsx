@@ -654,6 +654,26 @@ function StatCard({
 }
 
 function HealthBadge({ health }: { health: Health }) {
+  return _renderHealth(health);
+}
+
+function MetricBlock({ label, value, suffix, hint, warn }: {
+  label: string; value: string | number; suffix?: string; hint?: string; warn?: boolean;
+}) {
+  return (
+    <div>
+      <div className="text-xs text-white/75">{label}</div>
+      <div className="mt-1 text-2xl font-bold tabular-nums">
+        {value}{suffix && <span className="text-sm font-medium text-white/80 ml-1">{suffix}</span>}
+      </div>
+      {hint && (
+        <div className={cn("mt-0.5 text-[11px]", warn ? "text-amber-200" : "text-white/70")}>{hint}</div>
+      )}
+    </div>
+  );
+}
+
+function _renderHealth(health: Health) {
   if (health === "healthy")
     return (
       <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
