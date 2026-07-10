@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ListPagination } from "@/components/ListPagination";
 import { createFileRoute } from "@tanstack/react-router";
 import { Route as RouteIcon, ArrowRight, Plus, Trash2, GripVertical, HelpCircle, Pencil, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -100,6 +101,16 @@ function SmsRoutingPage() {
   const [rules, setRules] = useState<Rule[]>(SEED);
   const [editing, setEditing] = useState<Rule | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const pageRules = useMemo(
+    () => rules.slice((page - 1) * pageSize, page * pageSize),
+    [rules, page],
+  );
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(rules.length / pageSize));
+    if (page > maxPage) setPage(maxPage);
+  }, [rules.length, page]);
 
   function toggle(id: string) {
     setRules((s) => s.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)));
@@ -202,7 +213,7 @@ function SmsRoutingPage() {
           </div>
           <div className="col-span-1 text-right">操作</div>
         </div>
-        {rules.map((r) => (
+        {pageRules.map((r) => (
           <div
             key={r.id}
             className="grid grid-cols-12 gap-2 items-center px-4 py-3 border-t"
@@ -269,6 +280,11 @@ function SmsRoutingPage() {
             </div>
           </div>
         ))}
+        {rules.length > 0 && (
+          <div className="px-4 py-3 border-t">
+            <ListPagination page={page} pageSize={pageSize} total={rules.length} onPageChange={setPage} />
+          </div>
+        )}
       </Card>
 
       <Card className="p-4 space-y-2 bg-sky-50/60 border-sky-200">
