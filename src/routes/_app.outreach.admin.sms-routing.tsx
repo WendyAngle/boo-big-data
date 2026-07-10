@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Route as RouteIcon, ArrowRight, Plus, Trash2, GripVertical, HelpCircle } from "lucide-react";
+import { Route as RouteIcon, ArrowRight, Plus, Trash2, GripVertical, HelpCircle, Pencil, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/outreach/admin/sms-routing")({
@@ -83,8 +87,19 @@ const SEED: Rule[] = [
   },
 ];
 
+const PROVIDERS = ["Twilio 主账号", "Sinch A2P", "Vonage 备用", "阿里云国际站", "Infobip"];
+const COUNTRIES = ["US/CA", "EU", "APAC", "LATAM", "MEA", "全球"];
+const CHANNELS: Array<{ value: Rule["match"]["channel"]; label: string }> = [
+  { value: "marketing", label: "营销" },
+  { value: "notification", label: "通知" },
+  { value: "otp", label: "验证码" },
+  { value: "any", label: "全部渠道" },
+];
+
 function SmsRoutingPage() {
   const [rules, setRules] = useState<Rule[]>(SEED);
+  const [editing, setEditing] = useState<Rule | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   function toggle(id: string) {
     setRules((s) => s.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)));
@@ -92,6 +107,43 @@ function SmsRoutingPage() {
   function remove(id: string) {
     setRules((s) => s.filter((r) => r.id !== id));
     toast.success("已删除规则");
+  }
+  function openNew() {
+    setEditing({
+      id: "",
+      name: "",
+      match: { country: "US/CA", channel: "marketing" },
+      primary: PROVIDERS[0],
+      failover: [],
+      minDeliveryRate: 0.95,
+      respectQuietHours: true,
+      enabled: true,
+      priority: rules.length + 1,
+    });
+    setEditorOpen(true);
+  }
+  function openEdit(r: Rule) {
+    setEditing({ ...r, failover: [...r.failover] });
+    setEditorOpen(true);
+  }
+  function save(next: Rule) {
+    if (!next.name.trim()) {
+      toast.error("请填写规则名");
+      return;
+    }
+    if (next.failover.includes(next.primary)) {
+      toast.error("Failover 服务商不能与主服务商相同");
+      return;
+    }
+    setRules((s) => {
+      if (!next.id) {
+        return [...s, { ...next, id: `r${Date.now()}` }];
+      }
+      return s.map((r) => (r.id === next.id ? next : r));
+    });
+    setEditorOpen(false);
+    setEditing(null);
+    toast.success(next.id ? "规则已更新" : "规则已新增");
   }
 
   return (
@@ -125,11 +177,7 @@ function SmsRoutingPage() {
 
       {/* 操作区 */}
       <div className="flex items-center justify-start gap-2">
-        <Button
-          onClick={() =>
-            toast.info("演示环境：规则编辑器待接入", { description: "生产环境将支持完整可视化编辑与仿真回放" })
-          }
-        >
+        <Button onClick={openNew}>
           <Plus className="h-4 w-4" />
           新增规则
         </Button>
@@ -205,6 +253,14 @@ function SmsRoutingPage() {
               <Button
                 variant="ghost"
                 size="icon"
+                className="h-7 w-7"
+                onClick={() => openEdit(r)}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-7 w-7 text-rose-600"
                 onClick={() => remove(r.id)}
               >
@@ -226,9 +282,176 @@ function SmsRoutingPage() {
           <li>写入 <code>sms_messages.provider_id</code> 与 <code>route_reason</code> 供审计。</li>
         </ol>
       </Card>
+
+      <RuleEditor
+        open={editorOpen}
+        rule={editing}
+        onOpenChange={(v) => { setEditorOpen(v); if (!v) setEditing(null); }}
+        onSave={save}
+      />
     </div>
     </TooltipProvider>
   );
+}
+
+function RuleEditor({
+  open, rule, onOpenChange, onSave,
+}: {
+  open: boolean;
+  rule: Rule | null;
+  onOpenChange: (v: boolean) => void;
+  onSave: (r: Rule) => void;
+}) {
+  if (!rule) return null;
+  const isNew = !rule.id;
+
+  function patch(p: Partial<Rule>) {
+    onSave; // no-op reference
+    setDraft({ ...draft, ...p });
+  }
+  const [draft, setDraft] = useState<Rule>(rule);
+  // reset when opening with a different rule
+  useResetDraft(rule, open, setDraft);
+
+  function toggleFailover(name: string) {
+    setDraft((d) => ({
+      ...d,
+      failover: d.failover.includes(name)
+        ? d.failover.filter((n) => n !== name)
+        : [...d.failover, name],
+    }));
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader>
+          <DialogTitle>{isNew ? "新增路由规则" : "编辑路由规则"}</DialogTitle>
+          <DialogDescription>
+            按「目的国家 × 渠道类型」匹配，命中后按主 → Failover 顺序发送。
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label>规则名</Label>
+            <Input
+              value={draft.name}
+              onChange={(e) => patch({ name: e.target.value })}
+              placeholder="例如：北美 · 营销"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>目的国家 / 地区</Label>
+              <Select value={draft.match.country} onValueChange={(v) => patch({ match: { ...draft.match, country: v } })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>渠道类型</Label>
+              <Select
+                value={draft.match.channel}
+                onValueChange={(v) => patch({ match: { ...draft.match, channel: v as Rule["match"]["channel"] } })}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CHANNELS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>主服务商</Label>
+            <Select value={draft.primary} onValueChange={(v) => patch({ primary: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {PROVIDERS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Failover 服务商链路 <span className="text-xs text-muted-foreground font-normal">（按点击顺序生效）</span></Label>
+            {draft.failover.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap p-2 rounded-md bg-muted/40">
+                {draft.failover.map((f, i) => (
+                  <Badge key={f} variant="outline" className="gap-1">
+                    {i + 1}. {f}
+                    <button onClick={() => toggleFailover(f)} className="hover:text-rose-600">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-1.5">
+              {PROVIDERS.filter((p) => p !== draft.primary && !draft.failover.includes(p)).map((p) => (
+                <Button key={p} size="sm" variant="outline" className="h-7" onClick={() => toggleFailover(p)}>
+                  <Plus className="h-3 w-3" />{p}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>最低送达率 (%)</Label>
+              <Input
+                type="number" min={0} max={100} step={1}
+                value={Math.round(draft.minDeliveryRate * 100)}
+                onChange={(e) => patch({ minDeliveryRate: Math.max(0, Math.min(100, Number(e.target.value) || 0)) / 100 })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>优先级</Label>
+              <Input
+                type="number" min={1} step={1}
+                value={draft.priority}
+                onChange={(e) => patch({ priority: Math.max(1, Number(e.target.value) || 1) })}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <div className="text-sm font-medium">遵守收件人本地静默时段</div>
+              <div className="text-xs text-muted-foreground">08:00–21:00 之外的消息将排队至次日窗口</div>
+            </div>
+            <Switch checked={draft.respectQuietHours} onCheckedChange={(v) => patch({ respectQuietHours: v })} />
+          </div>
+
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div>
+              <div className="text-sm font-medium">启用此规则</div>
+              <div className="text-xs text-muted-foreground">停用后不参与匹配</div>
+            </div>
+            <Switch checked={draft.enabled} onCheckedChange={(v) => patch({ enabled: v })} />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+          <Button onClick={() => onSave(draft)}>{isNew ? "创建规则" : "保存修改"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function useResetDraft(rule: Rule, open: boolean, set: (r: Rule) => void) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [key, setKey] = useState("");
+  const nextKey = `${rule.id}|${open}`;
+  if (key !== nextKey) {
+    setKey(nextKey);
+    set(rule);
+  }
 }
 
 function MetricBlock({ label, value, suffix }: {
