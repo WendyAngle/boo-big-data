@@ -14,6 +14,7 @@ import {
   Loader2,
   Receipt,
   ChevronRight,
+  HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ import {
   type RechargePackage,
 } from "@/lib/credits-balance";
 import { useLedger, recordRecharge } from "@/lib/credits-ledger";
+import { RulesSheet } from "@/components/billing/RulesSheet";
 
 type FromSource = "billing" | "leads" | "reach" | "home";
 type Intent = "lowBalance" | "expiring" | undefined;
@@ -207,6 +209,15 @@ function RechargePage() {
             <p className="mt-2 text-white/85 text-sm">
               充值后积分有效期顺延 365 天，演示环境不会发起真实支付。
             </p>
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => setRulesOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 text-white text-xs px-2.5 py-1 backdrop-blur-sm transition-colors"
+              >
+                <HelpCircle className="h-3 w-3" /> 计费说明（各操作扣分、失败退款、免费额度）
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-6 text-white">
             <div>
