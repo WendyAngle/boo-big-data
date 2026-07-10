@@ -640,7 +640,7 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
     markLeadIgnored(l.enterprise.id);
     setLeads((cur) => cur.filter((x) => x.enterprise.id !== l.enterprise.id));
     toast("已标记为不感兴趣", {
-      description: `${l.enterprise.name} 将不再出现在推荐流中`,
+      description: `${l.enterprise.name} 将不再推荐，同行业 / 同国家权重已下调`,
       action: {
         label: "撤销",
         onClick: () => {
