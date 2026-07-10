@@ -37,7 +37,7 @@ export interface InvoiceRequest {
 
 const PROFILES_KEY = "boo:invoice:profiles:v1";
 const REQUESTS_KEY = "boo:invoice:requests:v1";
-const SEED_FLAG = "boo:invoice:v1:seeded";
+const SEED_FLAG = "boo:invoice:v2:seeded";
 
 function read<T>(k: string): T[] {
   if (typeof window === "undefined") return [];
@@ -80,6 +80,9 @@ function fmtInvoiceNo(d = new Date()) {
 export function seedInvoicesIfEmpty() {
   if (typeof window === "undefined") return;
   if (window.localStorage.getItem(SEED_FLAG)) return;
+  // Reset legacy v1 mock data so new status semantics take effect
+  requests = [];
+  write(REQUESTS_KEY, requests);
   if (profiles.length === 0) {
     profiles = [{
       id: makeId("p"), type: "company",
@@ -96,7 +99,36 @@ export function seedInvoicesIfEmpty() {
   }
   if (requests.length === 0) {
     const now = Date.now();
+    const company = {
+      titleType: "company" as const,
+      title: "上海博欧数据科技有限公司",
+      taxNo: "91310000MA1FL12K9X",
+      content: "信息技术服务费",
+      email: "finance@boodata.cn",
+    };
     requests = [
+      {
+        id: makeId("inv"),
+        invoiceNo: fmtInvoiceNo(new Date(now - 86400000 * 62)),
+        createdAt: new Date(now - 86400000 * 62).toISOString(),
+        issuedAt: new Date(now - 86400000 * 60).toISOString(),
+        orderNos: ["R20260415101233"],
+        amount: 1200,
+        taxType: "normal",
+        status: "issued",
+        ...company,
+      },
+      {
+        id: makeId("inv"),
+        invoiceNo: fmtInvoiceNo(new Date(now - 86400000 * 35)),
+        createdAt: new Date(now - 86400000 * 35).toISOString(),
+        issuedAt: new Date(now - 86400000 * 33).toISOString(),
+        orderNos: ["R20260512143355", "R20260518090812"],
+        amount: 900,
+        taxType: "special",
+        status: "issued",
+        ...company,
+      },
       {
         id: makeId("inv"),
         invoiceNo: fmtInvoiceNo(new Date(now - 86400000 * 18)),
@@ -104,26 +136,18 @@ export function seedInvoicesIfEmpty() {
         issuedAt: new Date(now - 86400000 * 17).toISOString(),
         orderNos: ["R20260601093012"],
         amount: 600,
-        titleType: "company",
-        title: "上海博欧数据科技有限公司",
-        taxNo: "91310000MA1FL12K9X",
         taxType: "normal",
-        content: "信息技术服务费",
-        email: "finance@boodata.cn",
         status: "issued",
+        ...company,
       },
       {
         id: makeId("inv"),
-        createdAt: new Date(now - 86400000 * 2).toISOString(),
+        createdAt: new Date(now - 86400000 * 1).toISOString(),
         orderNos: ["R20260616154433"],
         amount: 300,
-        titleType: "company",
-        title: "上海博欧数据科技有限公司",
-        taxNo: "91310000MA1FL12K9X",
         taxType: "special",
-        content: "信息技术服务费",
-        email: "finance@boodata.cn",
         status: "pending",
+        ...company,
       },
     ];
     write(REQUESTS_KEY, requests);
@@ -216,6 +240,12 @@ export function markIssued(id: string) {
       ? { ...r, status: "issued", invoiceNo: r.invoiceNo ?? fmtInvoiceNo(), issuedAt: new Date().toISOString() }
       : r,
   );
+  write(REQUESTS_KEY, requests);
+  emit();
+}
+
+export function cancelInvoiceRequest(id: string) {
+  requests = requests.filter((r) => r.id !== id);
   write(REQUESTS_KEY, requests);
   emit();
 }
