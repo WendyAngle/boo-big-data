@@ -215,6 +215,15 @@ export function ComposeSendDialog({
   }
 
   const previewRecipient = recipients[Math.min(previewIdx, recipients.length - 1)];
+
+  // 退订预检：Dialog 打开即计算，用于顶部非阻塞横幅
+  const suppressedRecipients = useMemo(
+    () => {
+      const kind = isEmail ? "email" : "phone";
+      return recipients.filter((r) => isSuppressed(kind, r.address));
+    },
+    [recipients, isEmail],
+  );
   const previewSubject = previewRecipient
     ? renderTemplate(subject, previewRecipient.ctx)
     : "";
