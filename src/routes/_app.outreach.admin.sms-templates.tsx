@@ -732,6 +732,90 @@ function NewTplDialog({
 }
 
 function ProcessGuideCard() {
+  return _processGuideInner();
+}
+
+function AuditTplDialog({ template, onOpenChange }: {
+  template: Tpl | null;
+  onOpenChange: (o: boolean) => void;
+}) {
+  const [decision, setDecision] = useState<"approve" | "reject">("approve");
+  const [reason, setReason] = useState("");
+  useEffect(() => {
+    if (template) { setDecision("approve"); setReason(""); }
+  }, [template?.id]);
+  if (!template) return null;
+  const submit = () => {
+    if (decision === "approve") {
+      approveSmsTemplate(template.id);
+      toast.success("已审核通过");
+    } else {
+      if (!reason.trim()) { toast.error("请填写驳回原因"); return; }
+      rejectSmsTemplate(template.id, reason.trim());
+      toast.success("已驳回该模板");
+    }
+    onOpenChange(false);
+  };
+  return (
+    <Dialog open={!!template} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-primary" /> 审核模板 · {template.name}
+          </DialogTitle>
+          <DialogDescription>请确认审核结论。通过后模板即可用于对应渠道发送；驳回请填写原因供提交人整改。</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="rounded-md border bg-muted/30 p-3 text-xs font-mono whitespace-pre-wrap max-h-40 overflow-auto">
+            {template.content}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setDecision("approve")}
+              className={cn(
+                "flex-1 rounded-md border px-3 py-2 text-sm flex items-center justify-center gap-2 transition",
+                decision === "approve"
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                  : "text-muted-foreground hover:bg-muted/50",
+              )}
+            >
+              <ThumbsUp className="h-4 w-4" /> 通过
+            </button>
+            <button
+              type="button"
+              onClick={() => setDecision("reject")}
+              className={cn(
+                "flex-1 rounded-md border px-3 py-2 text-sm flex items-center justify-center gap-2 transition",
+                decision === "reject"
+                  ? "border-rose-300 bg-rose-50 text-rose-700"
+                  : "text-muted-foreground hover:bg-muted/50",
+              )}
+            >
+              <ThumbsDown className="h-4 w-4" /> 驳回
+            </button>
+          </div>
+          {decision === "reject" && (
+            <Textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="请输入驳回原因，例如：缺少退订提示 / 含违禁词 …"
+              rows={3}
+            />
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+          <Button onClick={submit} className={decision === "reject" ? "bg-rose-600 hover:bg-rose-700" : ""}>
+            确认{decision === "approve" ? "通过" : "驳回"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function _processGuideInner() {
   const [open, setOpen] = useState(true);
   return (
     <Card className="p-3">
