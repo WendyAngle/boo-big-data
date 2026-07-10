@@ -9,6 +9,9 @@ import {
   MessageSquare,
   MessageCircle,
   Sparkles,
+  Undo2,
+  Gift,
+  ShieldAlert,
 } from "lucide-react";
 import {
   COST_VIEW_EMAIL,
@@ -162,6 +165,7 @@ export function RulesSheet({
             hint="每次调用 AI 生成按次扣费，与后续发送分别计费。"
             rules={AI_RULES}
           />
+          <PolicySection />
         </div>
 
         <div className="mx-6 mb-6 mt-1 rounded-lg bg-muted/50 px-3 py-2.5 text-xs text-muted-foreground leading-relaxed shrink-0 whitespace-nowrap">
