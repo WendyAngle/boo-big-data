@@ -78,17 +78,35 @@ function SmsTemplatesPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
-            短信模板
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            营销类模板需通过合规审批后方可用于批量发送；验证码/通知类模板走独立审批流程。
-            模板必须包含退订提示（STOP / 退订 / TD 等）。
-          </p>
+      {/* Hero */}
+      <section
+        className="relative overflow-hidden rounded-2xl p-6 lg:p-7 text-white"
+        style={{ background: "var(--gradient-hero)" }}
+      >
+        <div className="absolute -right-10 -bottom-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+          <div className="flex items-start gap-4">
+            <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <FileText className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">短信模板</h1>
+              <p className="text-white/85 text-sm mt-0.5 max-w-2xl">
+                营销类模板需通过合规审批后方可用于批量发送；验证码/通知类模板走独立审批流程。模板必须包含退订提示（STOP / 退订 / TD 等）。
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 gap-6 text-white shrink-0">
+            <MetricBlock label="模板总数" value={counts.all} suffix="个" />
+            <MetricBlock label="已通过" value={counts.approved} suffix="个" />
+            <MetricBlock label="待审核" value={counts.pending} suffix="个" warn={counts.pending > 0} />
+            <MetricBlock label="未通过" value={counts.rejected} suffix="个" warn={counts.rejected > 0} />
+          </div>
         </div>
+      </section>
+
+      {/* 操作区 */}
+      <div className="flex items-center justify-start gap-2">
         <Button onClick={() => setAddOpen(true)}>
           <Plus className="h-4 w-4" />
           新建模板
@@ -224,6 +242,26 @@ function SmsTemplatesPage() {
 }
 
 function StatusBadge({ status }: { status: Status }) {
+  return _renderStatus(status);
+}
+
+function MetricBlock({ label, value, suffix, hint, warn }: {
+  label: string; value: string | number; suffix?: string; hint?: string; warn?: boolean;
+}) {
+  return (
+    <div>
+      <div className="text-xs text-white/75">{label}</div>
+      <div className="mt-1 text-2xl font-bold tabular-nums">
+        {value}{suffix && <span className="text-sm font-medium text-white/80 ml-1">{suffix}</span>}
+      </div>
+      {hint && (
+        <div className={cn("mt-0.5 text-[11px]", warn ? "text-amber-200" : "text-white/70")}>{hint}</div>
+      )}
+    </div>
+  );
+}
+
+function _renderStatus(status: Status) {
   if (status === "approved")
     return (
       <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
