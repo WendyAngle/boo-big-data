@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { KeyRound, LogOut, ChevronUp, Phone, Target } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
+import { KeyRound, LogOut, ChevronUp, Phone, Target, Coins } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useLeadProfile, profileCompleteness } from "@/lib/lead-profile";
+import { useCreditBalance } from "@/lib/credits-balance";
 import {
   Popover,
   PopoverContent,
@@ -18,9 +19,24 @@ export function AccountMenu() {
   const navigate = useNavigate();
   const profile = useLeadProfile();
   const completeness = profileCompleteness(profile);
+  const { balance } = useCreditBalance();
 
   return (
     <>
+      <Link
+        to="/outreach/recharge"
+        className="mb-1 flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-50 to-amber-100/60 hover:from-amber-100 hover:to-amber-100 ring-1 ring-amber-200/70 transition-colors group"
+        aria-label={`当前积分余额 ${balance}，点击去充值`}
+      >
+        <Coins className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+        <span className="text-[11px] text-amber-800/80 leading-none">积分</span>
+        <span className="text-sm font-semibold text-amber-900 tabular-nums leading-none">
+          {balance.toLocaleString()}
+        </span>
+        <span className="ml-auto text-[11px] text-amber-700 opacity-0 group-hover:opacity-100 transition-opacity">
+          去充值 →
+        </span>
+      </Link>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
