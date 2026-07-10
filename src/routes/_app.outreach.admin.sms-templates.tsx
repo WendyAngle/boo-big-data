@@ -146,14 +146,14 @@ function SmsTemplatesPage() {
         </div>
       </section>
 
-      {/* 顶部 Tab：模板库 / 用户申请 / 报备记录 */}
+      <ProcessGuideCard />
+
       <div className="flex items-center justify-between gap-2 border-b">
         <div className="flex items-center gap-1">
           {(
             [
               { k: "library", label: "模板库", n: counts.all },
               { k: "applications", label: "用户申请", n: appCounts.submitted, warn: appCounts.submitted > 0 },
-              { k: "filings", label: "渠道报备", n: filingCounts.approved },
             ] as const
           ).map((t) => (
             <button
@@ -179,33 +179,55 @@ function SmsTemplatesPage() {
 
       {topTab === "library" && (
       <Card className="p-0 overflow-hidden">
-        <div className="flex items-center gap-1 border-b bg-muted/40 px-4 py-2">
-          {(
-            [
-              { k: "all", label: "全部" },
-              { k: "approved", label: "已通过" },
-              { k: "pending", label: "待审核" },
-              { k: "rejected", label: "未通过" },
-            ] as const
-          ).map((t) => (
-            <button
-              key={t.k}
-              onClick={() => setTab(t.k)}
-              className={cn(
-                "px-3 py-1.5 rounded-md text-sm transition-colors",
-                tab === t.k
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted",
-              )}
-            >
-              {t.label}
-              <span className="ml-1 text-[10px] opacity-70">
-                ({counts[t.k as keyof typeof counts]})
-              </span>
-            </button>
-          ))}
+        <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-2 flex-wrap">
+          <Input
+            value={libSearch}
+            onChange={(e) => setLibSearch(e.target.value)}
+            placeholder="搜索模板名称 / 内容"
+            className="h-8 w-56"
+          />
+          <Select value={libChannel} onValueChange={(v) => setLibChannel(v as typeof libChannel)}>
+            <SelectTrigger className="h-8 w-36"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部渠道类型</SelectItem>
+              <SelectItem value="marketing">营销</SelectItem>
+              <SelectItem value="notification">通知</SelectItem>
+              <SelectItem value="otp">验证码</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-1 ml-1">
+            <span className="text-[11px] text-muted-foreground mr-1">状态：</span>
+            {([
+              { k: "approved" as Status, label: "已通过", n: counts.approved, cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+              { k: "pending" as Status, label: "待审核", n: counts.pending, cls: "bg-amber-50 text-amber-700 border-amber-200" },
+              { k: "rejected" as Status, label: "未通过", n: counts.rejected, cls: "bg-rose-50 text-rose-700 border-rose-200" },
+            ]).map((s) => {
+              const active = libStatuses.has(s.k);
+              return (
+                <button
+                  key={s.k}
+                  onClick={() => {
+                    const next = new Set(libStatuses);
+                    if (next.has(s.k)) next.delete(s.k); else next.add(s.k);
+                    if (next.size === 0) next.add(s.k);
+                    setLibStatuses(next);
+                  }}
+                  className={cn(
+                    "text-[11px] px-2 py-0.5 rounded-full border transition-opacity",
+                    active ? s.cls : "bg-muted/40 text-muted-foreground border-border opacity-70",
+                  )}
+                >
+                  {s.label} · {s.n}
+                </button>
+              );
+            })}
+          </div>
+          <span className="text-xs text-muted-foreground ml-auto">共 {filtered.length} 条</span>
         </div>
         <div className="divide-y">
+          {filtered.length === 0 && (
+            <div className="p-8 text-center text-sm text-muted-foreground">无匹配模板</div>
+          )}
           {filtered.map((t) => (
             <div key={t.id} className="p-4 flex gap-4">
               <div className="flex-1 min-w-0">
@@ -218,6 +240,7 @@ function SmsTemplatesPage() {
                   <Badge variant="outline" className="text-[10px]">
                     {t.locale}
                   </Badge>
+                  {t.status === "approved" && <FilingSummaryBadge templateId={t.id} />}
                 </div>
                 <div className="mt-2 text-sm text-foreground/80 bg-muted/50 rounded p-2 font-mono whitespace-pre-wrap">
                   {t.content}
@@ -234,7 +257,17 @@ function SmsTemplatesPage() {
                   <FilingMatrix template={t} onPick={(ch) => setFilingCtx({ tpl: t, channel: ch })} />
                 )}
               </div>
-              <div className="flex flex-col gap-1 shrink-0 w-24">
+              <div className="flex flex-col gap-1 shrink-0 w-28">
+                {t.status === "approved" && (
+                  <Button
+                    size="sm"
+                    className="bg-primary text-primary-foreground"
+                    onClick={() => setManagingTplId(t.id)}
+                  >
+                    <Settings2 className="h-3.5 w-3.5" />
+                    报备管理
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -310,10 +343,6 @@ function SmsTemplatesPage() {
         <ApplicationsPanel apps={applications} onReview={setReviewingApp} />
       )}
 
-      {topTab === "filings" && (
-        <FilingsPanel filings={filings} templates={list} onEdit={(tpl, ch) => setFilingCtx({ tpl, channel: ch })} />
-      )}
-
       <NewTplDialog open={addOpen} onOpenChange={setAddOpen} onSubmit={submitNew} />
       <NewTplDialog
         open={!!editing}
@@ -326,7 +355,19 @@ function SmsTemplatesPage() {
         onOpenChange={(o) => !o && setPreviewing(null)}
       />
       <FilingDialog ctx={filingCtx} onOpenChange={(o) => !o && setFilingCtx(null)} />
-      <ReviewAppDialog app={reviewingApp} onOpenChange={(o) => !o && setReviewingApp(null)} />
+      <ReviewAppDialog
+        app={reviewingApp}
+        onOpenChange={(o) => !o && setReviewingApp(null)}
+        onApproved={(newId) => {
+          setTopTab("library");
+          setManagingTplId(newId);
+        }}
+      />
+      <FilingManagerDialog
+        template={managingTpl}
+        onOpenChange={(o) => !o && setManagingTplId(null)}
+        onPick={(ch) => managingTpl && setFilingCtx({ tpl: managingTpl, channel: ch })}
+      />
     </div>
   );
 }
