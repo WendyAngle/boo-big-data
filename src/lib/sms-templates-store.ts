@@ -241,7 +241,7 @@ export function upsertFiling(rec: TemplateFiling) {
 /** 审核用户申请：通过后自动生成一条 approved 模板 */
 export function approveApplication(id: string, reviewer = "合规组") {
   const app = apps.find((a) => a.id === id);
-  if (!app) return;
+  if (!app) return undefined;
   const today = new Date().toISOString().slice(0, 10);
   const newTpl: SmsTemplate = {
     id: `t_${Date.now().toString(36)}`,
@@ -259,6 +259,7 @@ export function approveApplication(id: string, reviewer = "合规组") {
   apps = apps.map((a) => a.id === id ? { ...a, status: "approved", reviewer, reviewedAt: today, generatedTemplateId: newTpl.id } : a);
   writeList(KEY_APPS, apps);
   emit();
+  return newTpl.id;
 }
 
 export function rejectApplication(id: string, reason: string, reviewer = "合规组") {
@@ -329,4 +330,46 @@ export function approveSmsTemplate(id: string) {
 /** 把模板 {{变量}} 语法转换为撰写框使用的 {变量} 语法 */
 export function toComposeSyntax(tpl: string): string {
   return tpl.replace(/\{\{\s*([^}]+?)\s*\}\}/g, "{$1}");
+}
+
+/** 一键续报：把 approved/expired 记录重置为 submitted，更新时间戳 */
+export function renewFiling(templateId: string, channel: FilingChannel) {
+  const today = new Date().toISOString().slice(0, 10);
+  const idx = filings.findIndex((f) => f.templateId === templateId && f.channel === channel);
+  if (idx < 0) return;
+  const prev = filings[idx];
+  filings = filings.map((f, i) => i === idx ? {
+    ...f,
+    status: "submitted",
+    submittedAt: today,
+    approvedAt: undefined,
+    expireAt: undefined,
+    comment: prev.comment,
+    operator: "合规组",
+  } as TemplateFiling : f);
+  writeList(KEY_FILINGS, filings);
+  emit();
+}
+
+/** 汇总某模板在 5 个渠道的报备状态数量 */
+export function getFilingSummary(templateId: string): {
+  approved: number; submitted: number; rejected: number; expired: number; missing: number; expiring: number;
+} {
+  const map = getFilingsByTemplate(templateId);
+  let approved = 0, submitted = 0, rejected = 0, expired = 0, missing = 0, expiring = 0;
+  for (const c of FILING_CHANNELS) {
+    const rec = map[c.key];
+    if (!rec) { missing++; continue; }
+    if (rec.status === "approved") {
+      approved++;
+      if (rec.expireAt) {
+        const d = Math.ceil((new Date(rec.expireAt).getTime() - Date.now()) / 86400000);
+        if (d <= 30) expiring++;
+      }
+    } else if (rec.status === "submitted") submitted++;
+    else if (rec.status === "rejected") rejected++;
+    else if (rec.status === "expired") expired++;
+    else missing++;
+  }
+  return { approved, submitted, rejected, expired, missing, expiring };
 }
