@@ -479,14 +479,14 @@ function ApplyInvoiceSheet({
       email,
     });
     window.setTimeout(() => {
-      markIssued(req.id);
       setSubmitting(false);
       onOpenChange(false);
-      toast.success("发票已开具（演示）", {
-        description: `共 ¥ ${amount.toLocaleString()} · 已发送至 ${email}`,
+      toast.success("开票申请已提交", {
+        description: `共 ¥ ${amount.toLocaleString()} · 预计 1–3 工作日出票并发送至 ${email}`,
         icon: <Check className="h-4 w-4" />,
       });
-    }, 1200);
+    }, 800);
+    void req;
   }
 
   return (
