@@ -1,4 +1,5 @@
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { ListPagination } from "@/components/ListPagination";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Mailbox,
@@ -144,6 +145,16 @@ function EmailAccountsPage() {
       return true;
     });
   }, [accounts, q, providerFilter, statusFilter, tenantFilter, verifyFilter]);
+
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  useEffect(() => {
+    setPage(1);
+  }, [q, providerFilter, statusFilter, tenantFilter, verifyFilter]);
+  const pageData = useMemo(
+    () => filtered.slice((page - 1) * pageSize, page * pageSize),
+    [filtered, page],
+  );
 
   const kpi = useMemo(() => {
     const total = accounts.length;
@@ -328,7 +339,7 @@ function EmailAccountsPage() {
                   </TableCell>
                 </TableRow>
               )}
-              {filtered.map((a) => {
+              {pageData.map((a) => {
                 const revoked = a.status === "revoked";
                 const revokeChk = canRevoke(a);
                 return (
@@ -470,6 +481,11 @@ function EmailAccountsPage() {
             </TableBody>
           </Table>
         </Card>
+        {filtered.length > 0 && (
+          <div className="px-1">
+            <ListPagination page={page} pageSize={pageSize} total={filtered.length} onPageChange={setPage} />
+          </div>
+        )}
 
         <Card className="p-3 bg-muted/40 border-muted text-xs text-muted-foreground flex items-start gap-2">
           <Info className="h-3.5 w-3.5 mt-0.5" />
