@@ -31,6 +31,7 @@ import {
   updateSmsTemplate,
   withdrawSmsTemplate,
   approveSmsTemplate,
+  rejectSmsTemplate,
   type SmsTemplate as Tpl,
   type SmsTplStatus as Status,
   useSmsFilings,
