@@ -139,7 +139,7 @@ function InvoicesPage() {
               <FileText className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">发票中心</h1>
+              <h1 className="text-xl font-bold">发票管理</h1>
               <p className="text-white/85 text-sm mt-0.5">
                 为已完成的充值订单申请发票、管理抬头与下载历史发票
               </p>

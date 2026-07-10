@@ -340,7 +340,7 @@ function BillingPage() {
           <div className="flex-1">
             <h1 className="text-xl font-bold">消费明细</h1>
             <p className="text-white/85 text-sm mt-0.5">
-              按次记录信息查看、触达发送、AI 生成等积分消耗；充值订单请见「账户充值」，开票请见「发票中心」
+              按次记录信息查看、触达发送、AI 生成等积分消耗；充值订单请见「账户充值」，开票请见「发票管理」
             </p>
           </div>
           <div className="flex items-stretch gap-4">
@@ -404,7 +404,7 @@ function BillingPage() {
           >
             <Link to="/outreach/invoices">
               <Receipt className="h-3.5 w-3.5 mr-1.5" />
-              发票中心
+              发票管理
             </Link>
           </Button>
           <Button
