@@ -240,7 +240,7 @@ function SmsTemplatesPage() {
                   <Badge variant="outline" className="text-[10px]">
                     {t.locale}
                   </Badge>
-                  {t.status === "approved" && <FilingSummaryBadge templateId={t.id} />}
+                  <FilingSummaryBadge templateId={t.id} />
                 </div>
                 <div className="mt-2 text-sm text-foreground/80 bg-muted/50 rounded p-2 font-mono whitespace-pre-wrap">
                   {t.content}
@@ -253,21 +253,17 @@ function SmsTemplatesPage() {
                     <span className="text-rose-600">拒因：{t.rejectReason}</span>
                   )}
                 </div>
-                {t.status === "approved" && (
-                  <FilingMatrix template={t} onPick={(ch) => setFilingCtx({ tpl: t, channel: ch })} />
-                )}
+                <FilingMatrix template={t} onPick={(ch) => setFilingCtx({ tpl: t, channel: ch })} />
               </div>
               <div className="flex flex-col gap-1 shrink-0 w-28">
-                {t.status === "approved" && (
-                  <Button
-                    size="sm"
-                    className="bg-primary text-primary-foreground"
-                    onClick={() => setManagingTplId(t.id)}
-                  >
-                    <Settings2 className="h-3.5 w-3.5" />
-                    报备管理
-                  </Button>
-                )}
+                <Button
+                  size="sm"
+                  className="bg-primary text-primary-foreground"
+                  onClick={() => setManagingTplId(t.id)}
+                >
+                  <Settings2 className="h-3.5 w-3.5" />
+                  报备管理
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -304,11 +300,11 @@ function SmsTemplatesPage() {
                       className="bg-emerald-600 text-white hover:bg-emerald-700"
                       onClick={() => {
                         approveSmsTemplate(t.id);
-                        toast.success("已标记为通过");
+                        toast.success("已审核通过");
                       }}
                     >
                       <CheckCircle2 className="h-3.5 w-3.5" />
-                      标记通过
+                      审核
                     </Button>
                     <Button
                       variant="outline"
