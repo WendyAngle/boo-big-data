@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { KeyRound, LogOut, ChevronUp, Phone } from "lucide-react";
+import { KeyRound, LogOut, ChevronUp, Phone, Target } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { useLeadProfile, profileCompleteness } from "@/lib/lead-profile";
 import {
   Popover,
   PopoverContent,
@@ -13,6 +15,9 @@ export function AccountMenu() {
   const user = useCurrentUser();
   const [open, setOpen] = useState(false);
   const [pwdOpen, setPwdOpen] = useState(false);
+  const navigate = useNavigate();
+  const profile = useLeadProfile();
+  const completeness = profileCompleteness(profile);
 
   return (
     <>
@@ -58,6 +63,19 @@ export function AccountMenu() {
           </div>
           <div className="p-1">
             <MenuItem
+              icon={<Target className="h-4 w-4" />}
+              label="我的企业画像"
+              trailing={
+                <span className="text-[11px] text-muted-foreground">
+                  {completeness}%
+                </span>
+              }
+              onClick={() => {
+                setOpen(false);
+                navigate({ to: "/outreach/leads", hash: "profile" });
+              }}
+            />
+            <MenuItem
               icon={<KeyRound className="h-4 w-4" />}
               label="修改密码"
               onClick={() => {
@@ -87,11 +105,13 @@ function MenuItem({
   label,
   onClick,
   danger,
+  trailing,
 }: {
   icon: React.ReactNode;
   label: string;
   onClick: () => void;
   danger?: boolean;
+  trailing?: React.ReactNode;
 }) {
   return (
     <button
@@ -105,7 +125,8 @@ function MenuItem({
       }
     >
       {icon}
-      <span>{label}</span>
+      <span className="flex-1 text-left">{label}</span>
+      {trailing}
     </button>
   );
 }
