@@ -77,6 +77,7 @@ function SmsTemplatesPage() {
   const [reviewingApp, setReviewingApp] = useState<TemplateApplication | null>(null);
   const [managingTplId, setManagingTplId] = useState<string | null>(null);
   const managingTpl = managingTplId ? list.find((x) => x.id === managingTplId) ?? null : null;
+  const [auditingTpl, setAuditingTpl] = useState<Tpl | null>(null);
 
   const counts = {
     all: list.length,
@@ -218,18 +219,19 @@ function SmsTemplatesPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted/30 text-[11px] text-muted-foreground">
                 <tr className="text-left">
-                  <th className="px-4 py-2 font-medium w-[22%]">模板名称</th>
+                  <th className="px-4 py-2 font-medium w-[16%]">模板名称</th>
+                  <th className="px-3 py-2 font-medium w-[10%]">来源</th>
                   <th className="px-3 py-2 font-medium w-[8%]">渠道类型</th>
                   <th className="px-3 py-2 font-medium">模板内容</th>
                   <th className="px-3 py-2 font-medium w-[9%]">内审状态</th>
-                  <th className="px-3 py-2 font-medium w-[24%]">渠道报备</th>
-                  <th className="px-3 py-2 font-medium w-[15%] text-right">操作</th>
+                  <th className="px-3 py-2 font-medium w-[22%]">渠道报备</th>
+                  <th className="px-3 py-2 font-medium w-[14%] text-right">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="p-10 text-center text-sm text-muted-foreground">
+                    <td colSpan={7} className="p-10 text-center text-sm text-muted-foreground">
                       无匹配模板
                     </td>
                   </tr>
@@ -239,24 +241,27 @@ function SmsTemplatesPage() {
                   return (
                     <tr key={t.id} className="align-top hover:bg-muted/20">
                       <td className="px-4 py-3">
-                        <div className="font-medium truncate">{t.name}</div>
-                        <div className="mt-1 flex items-center gap-1 flex-wrap">
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "text-[10px]",
-                              system
-                                ? "bg-sky-50 text-sky-700 border-sky-200"
-                                : "bg-violet-50 text-violet-700 border-violet-200",
-                            )}
-                          >
-                            {system ? "系统内置" : "用户创建"}
-                          </Badge>
+                        <div className="font-medium">{t.name}</div>
+                        <div className="mt-1">
                           <Badge variant="outline" className="text-[10px]">{t.locale}</Badge>
                         </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-[10px]",
+                            system
+                              ? "bg-sky-50 text-sky-700 border-sky-200"
+                              : "bg-violet-50 text-violet-700 border-violet-200",
+                          )}
+                        >
+                          {system ? "系统内置" : "用户创建"}
+                        </Badge>
                         <div className="mt-1 text-[11px] text-muted-foreground">
-                          {t.submittedBy} · {t.updatedAt}
+                          {t.submittedBy}
                         </div>
+                        <div className="text-[11px] text-muted-foreground">{t.updatedAt}</div>
                       </td>
                       <td className="px-3 py-3">
                         <Badge variant="outline" className="text-[10px]">
@@ -295,20 +300,21 @@ function SmsTemplatesPage() {
                           }}>
                             <Copy className="h-3.5 w-3.5" />
                           </IconAction>
-                          <IconAction title="编辑" onClick={() => setEditing(t)}>
-                            <Pencil className="h-3.5 w-3.5" />
+                          <IconAction
+                            title={system ? "编辑" : "用户创建的模板不可修改"}
+                            disabled={!system}
+                            onClick={() => system && setEditing(t)}
+                          >
+                            <Pencil className={cn("h-3.5 w-3.5", !system && "opacity-40")} />
                           </IconAction>
                           <IconAction title="预览" onClick={() => setPreviewing(t)}>
                             <Eye className="h-3.5 w-3.5" />
                           </IconAction>
                           {t.status === "pending" ? (
                             <IconAction
-                              title="审核通过"
-                              className="text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-                              onClick={() => {
-                                approveSmsTemplate(t.id);
-                                toast.success("已审核通过");
-                              }}
+                              title="审核"
+                              className="text-primary hover:bg-primary/10"
+                              onClick={() => setAuditingTpl(t)}
                             >
                               <ShieldCheck className="h-3.5 w-3.5" />
                             </IconAction>
@@ -351,6 +357,10 @@ function SmsTemplatesPage() {
         template={managingTpl}
         onOpenChange={(o) => !o && setManagingTplId(null)}
         onPick={(ch) => managingTpl && setFilingCtx({ tpl: managingTpl, channel: ch })}
+      />
+      <AuditTplDialog
+        template={auditingTpl}
+        onOpenChange={(o) => !o && setAuditingTpl(null)}
       />
     </div>
   );
