@@ -9,6 +9,8 @@ import {
   ShieldOff,
   Info,
   RotateCcw,
+  Plus,
+  Pencil,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +26,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -162,6 +182,8 @@ function formatCostOriginal(cost: Provider["cost"]) {
 
 function EmailProvidersPage() {
   const [list, setList] = useState<Provider[]>(SEED);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editing, setEditing] = useState<Provider | null>(null);
 
   const summary = useMemo(() => {
     const active = list.filter((p) => p.enabled);
@@ -201,18 +223,40 @@ function EmailProvidersPage() {
     toast.success("已重置为观察态，30 分钟内不参与路由");
   }
 
+  function openCreate() {
+    setEditing(null);
+    setEditorOpen(true);
+  }
+  function openEdit(p: Provider) {
+    setEditing(p);
+    setEditorOpen(true);
+  }
+  function handleSave(next: Provider) {
+    setList((s) => {
+      const exists = s.some((x) => x.id === next.id);
+      return exists ? s.map((x) => (x.id === next.id ? next : x)) : [...s, next];
+    });
+    setEditorOpen(false);
+    toast.success(editing ? "已更新服务商配置" : "已新增服务商，默认置为观察态");
+  }
+
   return (
     <TooltipProvider delayDuration={200}>
     <div className="p-6 space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold flex items-center gap-2">
-          <Mailbox className="h-5 w-5 text-primary" />
-          邮件服务商
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          平台侧统一对接的邮件发送通道（API/SMTP），按用途、区域与健康度自动分流。
-          企业租户在「发信邮箱」中配置的自建 SMTP 不在此列。
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold flex items-center gap-2">
+            <Mailbox className="h-5 w-5 text-primary" />
+            邮件服务商
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            平台侧统一对接的邮件发送通道（API/SMTP），按用途、区域与健康度自动分流。
+            企业租户在「发信邮箱」中配置的自建 SMTP 不在此列。
+          </p>
+        </div>
+        <Button onClick={openCreate} className="shrink-0">
+          <Plus className="h-4 w-4" /> 新增服务商
+        </Button>
       </div>
 
       <Card className="p-4 space-y-2 border-primary/20 bg-primary/[0.03]">
@@ -261,7 +305,7 @@ function EmailProvidersPage() {
                 单价
                 <span className="text-[10px] font-normal text-muted-foreground ml-1">(USD)</span>
               </TableHead>
-              <TableHead className="text-right">启用</TableHead>
+              <TableHead className="text-right">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -374,6 +418,14 @@ function EmailProvidersPage() {
                         观察中
                       </Badge>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-[11px]"
+                      onClick={() => openEdit(p)}
+                    >
+                      <Pencil className="h-3 w-3" /> 编辑
+                    </Button>
                     <Switch
                       checked={effectiveEnabled}
                       disabled={isDown || p.health === "paused"}
@@ -396,8 +448,174 @@ function EmailProvidersPage() {
         </div>
       </Card>
     </div>
+    <ProviderEditor
+      open={editorOpen}
+      onOpenChange={setEditorOpen}
+      editing={editing}
+      onSave={handleSave}
+    />
     </TooltipProvider>
   );
+}
+
+function ProviderEditor({
+  open,
+  onOpenChange,
+  editing,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  editing: Provider | null;
+  onSave: (p: Provider) => void;
+}) {
+  const isEdit = !!editing;
+  const [form, setForm] = useState<Provider>(() => makeDraft(editing));
+  // Reset draft whenever the dialog opens with a different target
+  useMemo(() => {
+    if (open) setForm(makeDraft(editing));
+  }, [open, editing]);
+
+  const set = <K extends keyof Provider>(k: K, v: Provider[K]) =>
+    setForm((s) => ({ ...s, [k]: v }));
+
+  function togglePurpose(v: "marketing" | "transactional") {
+    set(
+      "purpose",
+      form.purpose.includes(v)
+        ? (form.purpose.filter((x) => x !== v) as Provider["purpose"])
+        : ([...form.purpose, v] as Provider["purpose"]),
+    );
+  }
+
+  function submit() {
+    if (!form.name.trim() || !form.vendor.trim()) {
+      toast.error("请填写服务商名称与厂商");
+      return;
+    }
+    if (form.purpose.length === 0) {
+      toast.error("至少选择一种用途");
+      return;
+    }
+    if (form.dailyCap <= 0) {
+      toast.error("日额度需大于 0");
+      return;
+    }
+    onSave(form);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? "编辑邮件服务商" : "新增邮件服务商"}</DialogTitle>
+          <DialogDescription>
+            仅平台管理员可见。新增服务商默认为「观察态」，通过健康度评估后再启用。
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-4 py-2">
+          <Field label="名称" required>
+            <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="如：SendGrid 主账号" />
+          </Field>
+          <Field label="厂商" required>
+            <Input value={form.vendor} onChange={(e) => set("vendor", e.target.value)} placeholder="SendGrid / AWS / Mailgun" />
+          </Field>
+          <Field label="接入方式">
+            <Select value={form.kind} onValueChange={(v) => set("kind", v as Kind)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="api">API</SelectItem>
+                <SelectItem value="smtp">SMTP</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="覆盖区域" hint="用逗号分隔，如 US, EU, APAC">
+            <Input
+              value={form.regions.join(", ")}
+              onChange={(e) => set("regions", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))}
+              placeholder="全球"
+            />
+          </Field>
+          <Field label="用途" required>
+            <div className="flex items-center gap-4 h-9">
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox checked={form.purpose.includes("transactional")} onCheckedChange={() => togglePurpose("transactional")} />
+                事务
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox checked={form.purpose.includes("marketing")} onCheckedChange={() => togglePurpose("marketing")} />
+                营销
+              </label>
+            </div>
+          </Field>
+          <Field label="日额度（封/日）" required>
+            <Input
+              type="number"
+              min={0}
+              value={form.dailyCap}
+              onChange={(e) => set("dailyCap", Number(e.target.value) || 0)}
+            />
+          </Field>
+          <Field label="计价币种">
+            <Select value={form.cost.currency} onValueChange={(v) => set("cost", { ...form.cost, currency: v as "USD" | "CNY" })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="CNY">CNY</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="单价（每千封）">
+            <Input
+              type="number"
+              min={0}
+              step={0.01}
+              value={form.cost.per1k}
+              onChange={(e) => set("cost", { ...form.cost, per1k: Number(e.target.value) || 0 })}
+            />
+          </Field>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+          <Button onClick={submit}>{isEdit ? "保存修改" : "创建服务商"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs">
+        {label}
+        {required && <span className="text-rose-500 ml-0.5">*</span>}
+      </Label>
+      {children}
+      {hint && <div className="text-[11px] text-muted-foreground">{hint}</div>}
+    </div>
+  );
+}
+
+function makeDraft(editing: Provider | null): Provider {
+  if (editing) return { ...editing, regions: [...editing.regions], purpose: [...editing.purpose], cost: { ...editing.cost } };
+  return {
+    id: `prov-${Date.now().toString(36)}`,
+    name: "",
+    vendor: "",
+    kind: "api",
+    regions: ["全球"],
+    purpose: ["transactional"],
+    enabled: false,
+    health: "paused",
+    deliveryRate: 0,
+    bounceRate: 0,
+    respMs: 0,
+    dailyCap: 100000,
+    quotaUsed: 0,
+    cost: { currency: "USD", per1k: 0.5 },
+    lastCheck: "刚刚",
+  };
 }
 
 function RuleCell({ tone, label, rule }: { tone: "ok" | "warn" | "err" | "fatal"; label: string; rule: string }) {
