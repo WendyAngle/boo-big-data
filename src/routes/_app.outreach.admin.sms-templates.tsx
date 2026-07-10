@@ -165,7 +165,7 @@ function SmsTemplatesPage() {
           <Select value={libChannel} onValueChange={(v) => setLibChannel(v as typeof libChannel)}>
             <SelectTrigger className="h-8 w-36"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">全部渠道类型</SelectItem>
+              <SelectItem value="all">全部模板类型</SelectItem>
               <SelectItem value="marketing">营销</SelectItem>
               <SelectItem value="notification">通知</SelectItem>
               <SelectItem value="otp">验证码</SelectItem>
@@ -221,7 +221,7 @@ function SmsTemplatesPage() {
                 <tr className="text-left">
                   <th className="px-4 py-2 font-medium w-[16%]">模板名称</th>
                   <th className="px-3 py-2 font-medium w-[10%]">来源</th>
-                  <th className="px-3 py-2 font-medium w-[8%]">渠道类型</th>
+                  <th className="px-3 py-2 font-medium w-[8%]">模板类型</th>
                   <th className="px-3 py-2 font-medium">模板内容</th>
                   <th className="px-3 py-2 font-medium w-[9%]">内审状态</th>
                   <th className="px-3 py-2 font-medium w-[22%]">渠道报备</th>
@@ -596,7 +596,7 @@ function NewTplDialog({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-muted-foreground">渠道类型</label>
+                <label className="text-xs text-muted-foreground">模板类型</label>
                 <Select value={channel} onValueChange={(v) => setChannel(v as Tpl["channel"])}>
                   <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -607,13 +607,21 @@ function NewTplDialog({
                 </Select>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">语言 / 地区</label>
-                <Select value={locale} onValueChange={setLocale}>
+                <label className="text-xs text-muted-foreground">
+                  语言
+                  {channel === "otp" && (
+                    <span className="ml-1 text-[10px] text-muted-foreground/70">（验证码模板无需区分）</span>
+                  )}
+                </label>
+                <Select
+                  value={channel === "otp" ? "zh-CN" : (locale === "multi" ? "zh-CN" : locale)}
+                  onValueChange={setLocale}
+                  disabled={channel === "otp"}
+                >
                   <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="zh-CN">中文</SelectItem>
                     <SelectItem value="en-US">英文</SelectItem>
-                    <SelectItem value="multi">多语言</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -630,8 +638,6 @@ function NewTplDialog({
                       onClick={() => {
                         const hint = locale === "en-US"
                           ? " Reply STOP to opt out."
-                          : locale === "multi"
-                          ? " 回复T退订 / Reply STOP to opt out."
                           : " 回复T退订";
                         const el = textareaRef.current;
                         const base = content.replace(/\s+$/, "");
