@@ -287,7 +287,7 @@ function SmsTemplatesPage() {
                         <FilingMatrix template={t} onPick={(ch) => setFilingCtx({ tpl: t, channel: ch })} />
                       </td>
                       <td className="px-3 py-3">
-                        <div className="flex items-center gap-1 justify-end flex-wrap">
+                        <div className="flex items-center gap-1 justify-end flex-nowrap whitespace-nowrap">
                           <IconAction title="报备" onClick={() => setManagingTplId(t.id)}>
                             <Settings2 className="h-3.5 w-3.5" />
                           </IconAction>
@@ -297,13 +297,11 @@ function SmsTemplatesPage() {
                           }}>
                             <Copy className="h-3.5 w-3.5" />
                           </IconAction>
-                          <IconAction
-                            title={system ? "编辑" : "用户创建的模板不可修改"}
-                            disabled={!system}
-                            onClick={() => system && setEditing(t)}
-                          >
-                            <Pencil className={cn("h-3.5 w-3.5", !system && "opacity-40")} />
-                          </IconAction>
+                          {system && (
+                            <IconAction title="编辑" onClick={() => setEditing(t)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </IconAction>
+                          )}
                           <IconAction title="预览" onClick={() => setPreviewing(t)}>
                             <Eye className="h-3.5 w-3.5" />
                           </IconAction>
