@@ -662,6 +662,7 @@ function RechargePage() {
           </div>
         </aside>
       </div>
+      <RulesSheet open={rulesOpen} onOpenChange={setRulesOpen} />
     </div>
   );
 }
