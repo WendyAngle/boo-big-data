@@ -4,7 +4,7 @@ import { z } from "zod";
 import {
   FileText, ChevronRight, Wallet, Plus, Building2, UserRound, Search, X,
   Download, Mail, Check, Loader2, AlertTriangle, Pencil, Trash2, Star, CheckCircle2,
-  Receipt, Send,
+  Receipt, Send, XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -36,7 +36,7 @@ import {
   deleteProfile,
   setDefaultProfile,
   createInvoiceRequest,
-  markIssued,
+  cancelInvoiceRequest,
   type InvoiceProfile,
   type InvoiceRequest,
   type InvoiceStatus,
@@ -227,7 +227,7 @@ function InvoicesPage() {
           </TabBtn>
           <TabBtn active={tab === "pending"} onClick={() => setTab("pending")}>
             <Loader2 className="h-3.5 w-3.5 mr-1 inline" />
-            待开票 <span className="ml-1 text-muted-foreground">{requests.filter((r) => r.status === "pending").length}</span>
+            开票中 <span className="ml-1 text-muted-foreground">{requests.filter((r) => r.status === "pending").length}</span>
           </TabBtn>
           <TabBtn active={tab === "issued"} onClick={() => setTab("issued")}>
             <CheckCircle2 className="h-3.5 w-3.5 mr-1 inline" />
@@ -322,6 +322,9 @@ function InvoicesPage() {
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={r.status} />
+                    {r.status === "pending" && (
+                      <div className="text-[11px] text-muted-foreground mt-0.5">预计 1–3 工作日</div>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     {r.status === "issued" ? (
@@ -334,10 +337,17 @@ function InvoicesPage() {
                         </Button>
                       </div>
                     ) : r.status === "pending" ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        开票中，预计 1–3 个工作日
-                      </span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-muted-foreground hover:text-rose-600"
+                        onClick={() => {
+                          cancelInvoiceRequest(r.id);
+                          toast.success("已撤销开票申请");
+                        }}
+                      >
+                        <XCircle className="h-3.5 w-3.5 mr-1" /> 撤销申请
+                      </Button>
                     ) : (
                       <span className="text-xs text-rose-600">{r.rejectReason ?? "信息有误"}</span>
                     )}
@@ -393,7 +403,7 @@ function StatusBadge({ status }: { status: InvoiceStatus }) {
   }
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium bg-amber-50 text-amber-700 border-amber-200">
-      <Loader2 className="h-3 w-3" /> 待开票
+      <Loader2 className="h-3 w-3" /> 开票中
     </span>
   );
 }
@@ -469,14 +479,14 @@ function ApplyInvoiceSheet({
       email,
     });
     window.setTimeout(() => {
-      markIssued(req.id);
       setSubmitting(false);
       onOpenChange(false);
-      toast.success("发票已开具（演示）", {
-        description: `共 ¥ ${amount.toLocaleString()} · 已发送至 ${email}`,
+      toast.success("开票申请已提交", {
+        description: `共 ¥ ${amount.toLocaleString()} · 预计 1–3 工作日出票并发送至 ${email}`,
         icon: <Check className="h-4 w-4" />,
       });
-    }, 1200);
+    }, 800);
+    void req;
   }
 
   return (
