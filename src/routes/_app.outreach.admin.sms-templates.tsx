@@ -674,3 +674,404 @@ function PreviewDialog({
     </Dialog>
   );
 }
+/* ============ Round 1: 渠道报备 & 用户申请 ============ */
+
+function daysUntil(iso: string): number {
+  const t = new Date(iso).getTime();
+  return Math.ceil((t - Date.now()) / 86400000);
+}
+
+const FILING_STATUS_LABEL: Record<FilingStatus, string> = {
+  none: "未报备",
+  submitted: "报备中",
+  approved: "已通过",
+  rejected: "已拒绝",
+  expired: "已过期",
+};
+const FILING_STATUS_CLASS: Record<FilingStatus, string> = {
+  none: "bg-muted text-muted-foreground border-border",
+  submitted: "bg-amber-50 text-amber-700 border-amber-200",
+  approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  rejected: "bg-rose-50 text-rose-700 border-rose-200",
+  expired: "bg-orange-50 text-orange-700 border-orange-200",
+};
+
+function FilingMatrix({ template, onPick }: { template: Tpl; onPick: (ch: FilingChannel) => void }) {
+  const map = getFilingsByTemplate(template.id);
+  return (
+    <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+        <Radio className="h-3 w-3" /> 渠道报备：
+      </span>
+      {FILING_CHANNELS.map((c) => {
+        const rec = map[c.key];
+        const st: FilingStatus = rec?.status ?? "none";
+        const isExpiring = rec?.status === "approved" && rec.expireAt && daysUntil(rec.expireAt) <= 30;
+        return (
+          <button
+            key={c.key}
+            onClick={() => onPick(c.key)}
+            className={cn(
+              "px-2 py-0.5 rounded-md border text-[10px] leading-none flex items-center gap-1 hover:opacity-80 transition-opacity",
+              FILING_STATUS_CLASS[st],
+              isExpiring && "ring-1 ring-orange-300",
+            )}
+            title={rec?.comment || FILING_STATUS_LABEL[st]}
+          >
+            <span>{c.label}</span>
+            <span className="opacity-70">·</span>
+            <span>{FILING_STATUS_LABEL[st]}</span>
+            {isExpiring && <AlertTriangle className="h-2.5 w-2.5" />}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ApplicationsPanel({ apps, onReview }: { apps: TemplateApplication[]; onReview: (a: TemplateApplication) => void }) {
+  const [tab, setTab] = useState<"submitted" | "approved" | "rejected" | "all">("submitted");
+  const filtered = tab === "all" ? apps : apps.filter((a) => a.status === tab);
+  return (
+    <Card className="p-0 overflow-hidden">
+      <div className="flex items-center gap-1 border-b bg-muted/40 px-4 py-2">
+        {([
+          { k: "submitted", label: "待审核" },
+          { k: "approved", label: "已通过" },
+          { k: "rejected", label: "已拒绝" },
+          { k: "all", label: "全部" },
+        ] as const).map((t) => (
+          <button
+            key={t.k}
+            onClick={() => setTab(t.k)}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-sm transition-colors",
+              tab === t.k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+            )}
+          >
+            {t.label}
+            <span className="ml-1 text-[10px] opacity-70">
+              ({apps.filter((a) => t.k === "all" ? true : a.status === t.k).length})
+            </span>
+          </button>
+        ))}
+      </div>
+      <div className="divide-y">
+        {filtered.length === 0 && (
+          <div className="p-8 text-center text-sm text-muted-foreground">暂无申请</div>
+        )}
+        {filtered.map((a) => (
+          <div key={a.id} className="p-4 flex gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-medium">{a.name}</span>
+                <AppStatusBadge status={a.status} />
+                <Badge variant="outline" className="text-[10px]">
+                  {a.channel === "otp" ? "验证码" : a.channel === "marketing" ? "营销" : "通知"}
+                </Badge>
+                <Badge variant="outline" className="text-[10px]">{a.locale}</Badge>
+              </div>
+              {a.scenario && (
+                <div className="mt-1.5 text-[11px] text-muted-foreground">
+                  <span className="font-medium">使用场景：</span>{a.scenario}
+                </div>
+              )}
+              <div className="mt-2 text-sm text-foreground/80 bg-muted/50 rounded p-2 font-mono whitespace-pre-wrap">
+                {a.content}
+              </div>
+              <div className="mt-2 text-[11px] text-muted-foreground flex items-center gap-3 flex-wrap">
+                <span>提交人：{a.submittedBy}</span>
+                <span>提交时间：{a.submittedAt}</span>
+                {a.reviewer && <span>审核：{a.reviewer} · {a.reviewedAt}</span>}
+                {a.rejectReason && <span className="text-rose-600">拒因：{a.rejectReason}</span>}
+              </div>
+            </div>
+            <div className="shrink-0 flex flex-col gap-1 w-24">
+              {a.status === "submitted" ? (
+                <Button size="sm" onClick={() => onReview(a)}>
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  审核
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => onReview(a)}>
+                  <Eye className="h-3.5 w-3.5" />
+                  详情
+                </Button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function AppStatusBadge({ status }: { status: TemplateApplication["status"] }) {
+  if (status === "approved")
+    return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1"><CheckCircle2 className="h-3 w-3" /> 已通过</Badge>;
+  if (status === "rejected")
+    return <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 gap-1"><XCircle className="h-3 w-3" /> 已拒绝</Badge>;
+  return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 gap-1"><Clock className="h-3 w-3" /> 待审核</Badge>;
+}
+
+function FilingsPanel({ filings, templates, onEdit }: {
+  filings: TemplateFiling[];
+  templates: Tpl[];
+  onEdit: (tpl: Tpl, ch: FilingChannel) => void;
+}) {
+  const tplMap = useMemo(() => Object.fromEntries(templates.map((t) => [t.id, t])), [templates]);
+  const [ch, setCh] = useState<FilingChannel | "all">("all");
+  const [st, setSt] = useState<FilingStatus | "all">("all");
+  const rows = filings
+    .filter((f) => (ch === "all" || f.channel === ch) && (st === "all" || f.status === st))
+    .sort((a, b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? ""));
+  return (
+    <Card className="p-0 overflow-hidden">
+      <div className="flex items-center gap-3 border-b bg-muted/40 px-4 py-2">
+        <Select value={ch} onValueChange={(v) => setCh(v as FilingChannel | "all")}>
+          <SelectTrigger className="h-8 w-40"><SelectValue placeholder="渠道" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部渠道</SelectItem>
+            {FILING_CHANNELS.map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={st} onValueChange={(v) => setSt(v as FilingStatus | "all")}>
+          <SelectTrigger className="h-8 w-40"><SelectValue placeholder="状态" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部状态</SelectItem>
+            {(Object.keys(FILING_STATUS_LABEL) as FilingStatus[]).filter((s) => s !== "none").map((s) => (
+              <SelectItem key={s} value={s}>{FILING_STATUS_LABEL[s]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <span className="text-xs text-muted-foreground ml-auto">共 {rows.length} 条</span>
+      </div>
+      <div className="divide-y">
+        {rows.length === 0 && (
+          <div className="p-8 text-center text-sm text-muted-foreground">暂无报备记录</div>
+        )}
+        {rows.map((f) => {
+          const tpl = tplMap[f.templateId];
+          const chLabel = FILING_CHANNELS.find((c) => c.key === f.channel)?.label ?? f.channel;
+          const expiring = f.status === "approved" && f.expireAt && daysUntil(f.expireAt) <= 30;
+          return (
+            <div key={`${f.templateId}-${f.channel}`} className="p-4 flex items-center gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-medium truncate">{tpl?.name ?? f.templateId}</span>
+                  <Badge variant="outline" className="text-[10px]">{chLabel}</Badge>
+                  <Badge variant="outline" className={cn("text-[10px]", FILING_STATUS_CLASS[f.status])}>
+                    {FILING_STATUS_LABEL[f.status]}
+                  </Badge>
+                  {expiring && (
+                    <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200 gap-1">
+                      <AlertTriangle className="h-3 w-3" /> {daysUntil(f.expireAt!)} 天内到期
+                    </Badge>
+                  )}
+                </div>
+                <div className="mt-1 text-[11px] text-muted-foreground flex items-center gap-3 flex-wrap">
+                  {f.externalId && <span>回执号：<code className="text-[11px]">{f.externalId}</code></span>}
+                  {f.submittedAt && <span>报备：{f.submittedAt}</span>}
+                  {f.approvedAt && <span>通过：{f.approvedAt}</span>}
+                  {f.expireAt && <span>到期：{f.expireAt}</span>}
+                  {f.operator && <span>登记人：{f.operator}</span>}
+                </div>
+                {f.comment && (
+                  <div className="mt-1 text-[11px] text-muted-foreground">备注：{f.comment}</div>
+                )}
+              </div>
+              <Button size="sm" variant="outline" onClick={() => tpl && onEdit(tpl, f.channel)}>
+                <Pencil className="h-3.5 w-3.5" />
+                编辑
+              </Button>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+function FilingDialog({ ctx, onOpenChange }: {
+  ctx: { tpl: Tpl; channel: FilingChannel } | null;
+  onOpenChange: (o: boolean) => void;
+}) {
+  const existing = ctx ? getFilingsByTemplate(ctx.tpl.id)[ctx.channel] : undefined;
+  const [status, setStatus] = useState<FilingStatus>("submitted");
+  const [externalId, setExternalId] = useState("");
+  const [submittedAt, setSubmittedAt] = useState("");
+  const [approvedAt, setApprovedAt] = useState("");
+  const [expireAt, setExpireAt] = useState("");
+  const [comment, setComment] = useState("");
+
+  useEffect(() => {
+    if (!ctx) return;
+    const today = new Date().toISOString().slice(0, 10);
+    setStatus(existing?.status && existing.status !== "none" ? existing.status : "submitted");
+    setExternalId(existing?.externalId ?? "");
+    setSubmittedAt(existing?.submittedAt ?? today);
+    setApprovedAt(existing?.approvedAt ?? "");
+    setExpireAt(existing?.expireAt ?? "");
+    setComment(existing?.comment ?? "");
+  }, [ctx?.tpl.id, ctx?.channel]);
+
+  if (!ctx) return null;
+  const chLabel = FILING_CHANNELS.find((c) => c.key === ctx.channel)?.label ?? ctx.channel;
+
+  function save() {
+    upsertFiling({
+      templateId: ctx!.tpl.id,
+      channel: ctx!.channel,
+      status,
+      externalId: externalId.trim() || undefined,
+      submittedAt: submittedAt || undefined,
+      approvedAt: approvedAt || undefined,
+      expireAt: expireAt || undefined,
+      comment: comment.trim() || undefined,
+      operator: "合规组",
+    });
+    toast.success(`已登记「${ctx!.tpl.name} · ${chLabel}」报备状态`);
+    onOpenChange(false);
+  }
+
+  return (
+    <Dialog open={!!ctx} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Radio className="h-4 w-4 text-primary" />
+            渠道报备登记 · {chLabel}
+          </DialogTitle>
+          <DialogDescription>
+            模板：<span className="font-medium text-foreground">{ctx.tpl.name}</span>。
+            在外部平台完成报备后，将回执信息登记到系统，用于送达前的合规校验与到期提醒。
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2">
+            <label className="text-xs text-muted-foreground">报备状态</label>
+            <Select value={status} onValueChange={(v) => setStatus(v as FilingStatus)}>
+              <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="submitted">报备中</SelectItem>
+                <SelectItem value="approved">已通过</SelectItem>
+                <SelectItem value="rejected">已拒绝</SelectItem>
+                <SelectItem value="expired">已过期</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2">
+            <label className="text-xs text-muted-foreground">外部回执号 / 模板ID</label>
+            <Input value={externalId} onChange={(e) => setExternalId(e.target.value)} className="mt-1" placeholder="如 CM202607010881 / HXxxxxx" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">报备日期</label>
+            <Input type="date" value={submittedAt} onChange={(e) => setSubmittedAt(e.target.value)} className="mt-1" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">通过日期</label>
+            <Input type="date" value={approvedAt} onChange={(e) => setApprovedAt(e.target.value)} className="mt-1" disabled={status !== "approved"} />
+          </div>
+          <div className="col-span-2">
+            <label className="text-xs text-muted-foreground">到期日期</label>
+            <Input type="date" value={expireAt} onChange={(e) => setExpireAt(e.target.value)} className="mt-1" disabled={status !== "approved"} />
+          </div>
+          <div className="col-span-2">
+            <label className="text-xs text-muted-foreground">备注 / 拒因</label>
+            <Textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2} className="mt-1" placeholder="被拒的具体原因、修改建议等" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+          <Button onClick={save}><Send className="h-3.5 w-3.5" />保存登记</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ReviewAppDialog({ app, onOpenChange }: {
+  app: TemplateApplication | null;
+  onOpenChange: (o: boolean) => void;
+}) {
+  const [reason, setReason] = useState("");
+  useEffect(() => { setReason(""); }, [app?.id]);
+  if (!app) return null;
+  const isReadonly = app.status !== "submitted";
+  const hasOptOut = /STOP|退订|TD/i.test(app.content);
+
+  function approve() {
+    approveApplication(app!.id);
+    toast.success(`已通过并生成模板「${app!.name}」`);
+    onOpenChange(false);
+  }
+  function reject() {
+    if (!reason.trim()) { toast.error("请填写拒绝原因"); return; }
+    rejectApplication(app!.id, reason.trim());
+    toast.success("已拒绝并通知提交人");
+    onOpenChange(false);
+  }
+
+  return (
+    <Dialog open={!!app} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            {isReadonly ? "申请详情" : "审核模板申请"}
+          </DialogTitle>
+          <DialogDescription>
+            提交人 {app.submittedBy} · {app.submittedAt}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <div className="text-xs text-muted-foreground mb-1">模板名称</div>
+            <div className="text-sm font-medium">{app.name}</div>
+          </div>
+          {app.scenario && (
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">使用场景</div>
+              <div className="text-sm">{app.scenario}</div>
+            </div>
+          )}
+          <div>
+            <div className="text-xs text-muted-foreground mb-1">模板内容</div>
+            <div className="rounded border bg-muted/40 p-2.5 text-xs font-mono whitespace-pre-wrap">{app.content}</div>
+          </div>
+          {app.channel === "marketing" && (
+            <div className={cn("text-[11px] flex items-center gap-1", hasOptOut ? "text-emerald-600" : "text-rose-600")}>
+              {hasOptOut ? <CheckCircle2 className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
+              {hasOptOut ? "含退订提示" : "缺少退订提示（STOP / 退订 / TD），建议拒绝"}
+            </div>
+          )}
+          {isReadonly && app.rejectReason && (
+            <div className="rounded border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700">拒因：{app.rejectReason}</div>
+          )}
+          {!isReadonly && (
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">拒绝原因（拒绝时必填）</div>
+              <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="例：缺少退订提示 / 含敏感词" />
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          {isReadonly ? (
+            <Button variant="outline" onClick={() => onOpenChange(false)}>关闭</Button>
+          ) : (
+            <>
+              <Button variant="outline" className="text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700" onClick={reject}>
+                <ThumbsDown className="h-3.5 w-3.5" />
+                拒绝
+              </Button>
+              <Button onClick={approve}>
+                <ThumbsUp className="h-3.5 w-3.5" />
+                通过并生成模板
+              </Button>
+            </>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
