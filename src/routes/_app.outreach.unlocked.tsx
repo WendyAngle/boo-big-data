@@ -533,19 +533,22 @@ function UnlockedPageInner() {
           </div>
           <div className="hidden md:flex items-stretch gap-3">
             <StatTile
-              label="已解锁"
+              label="解锁联系方式"
               value={stats.count}
-              hint="按「联系方式条数」计。同一对象的手机、邮箱、社媒各计 1 条，因此通常大于企业与人物之和。"
+              hint="累计解锁的联系方式条数（手机 / 邮箱 / 社媒各计 1 条），非去重企业数。"
+              unit="次"
             />
             <StatTile
-              label="企业"
+              label="解锁企业"
               value={stats.enterprises}
-              hint="去重后的企业数。含直接解锁的企业，以及所解锁人物所归属的企业。"
+              hint="去重后的企业数，同一企业多次解锁只计 1 家。"
+              unit="家"
             />
             <StatTile
-              label="人物"
+              label="解锁联系人"
               value={stats.persons}
-              hint="去重后的人物数。仅统计人物类型的解锁对象，不含企业本身。"
+              hint="去重后的联系人数，同一联系人多次解锁只计 1 位。"
+              unit="位"
             />
           </div>
         </div>
