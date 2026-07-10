@@ -13,7 +13,6 @@ import {
   ArrowRight,
   ExternalLink,
   EyeOff,
-  HelpCircle,
   Star,
   Trash2,
   Settings2,
