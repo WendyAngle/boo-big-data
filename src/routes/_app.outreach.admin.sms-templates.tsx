@@ -607,16 +607,10 @@ function NewTplDialog({
                 </Select>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">
-                  语言
-                  {channel === "otp" && (
-                    <span className="ml-1 text-[10px] text-muted-foreground/70">（验证码模板无需区分）</span>
-                  )}
-                </label>
+                <label className="text-xs text-muted-foreground">语言</label>
                 <Select
-                  value={channel === "otp" ? "zh-CN" : (locale === "multi" ? "zh-CN" : locale)}
+                  value={locale === "multi" ? "zh-CN" : locale}
                   onValueChange={setLocale}
-                  disabled={channel === "otp"}
                 >
                   <SelectTrigger className="mt-1 h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
