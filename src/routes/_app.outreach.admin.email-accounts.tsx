@@ -194,17 +194,6 @@ function EmailAccountsPage() {
               与「邮件服务商」（通道健康度）、「系统管理 → 发信邮箱」（租户员工可见的邮箱）互相独立、上下游联动。
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button variant="outline" onClick={() => setSummaryOpen(true)}>
-              <Users className="h-4 w-4" /> 按租户汇总
-            </Button>
-            <Button variant="outline" onClick={() => setImportOpen(true)}>
-              <Upload className="h-4 w-4" /> 批量导入
-            </Button>
-            <Button onClick={() => setCreateOpen(true)}>
-              <Plus className="h-4 w-4" /> 新增账号
-            </Button>
-          </div>
         </div>
 
         {/* KPI */}
@@ -272,6 +261,19 @@ function EmailAccountsPage() {
             />
           </div>
         </Card>
+
+        {/* Actions above the list */}
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="outline" onClick={() => setSummaryOpen(true)}>
+            <Users className="h-4 w-4" /> 按租户汇总
+          </Button>
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload className="h-4 w-4" /> 批量导入
+          </Button>
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4" /> 新增账号
+          </Button>
+        </div>
 
         {/* Batch bar */}
         {selected.size > 0 && (
