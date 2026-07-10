@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
 import {
   Sparkles,
   Lightbulb,
@@ -122,7 +122,13 @@ export const Route = createFileRoute("/_app/outreach/leads")({
 });
 
 function LeadsPage() {
-  const [tab, setTab] = useState<"ai" | "search" | "profile">("ai");
+  const location = useLocation();
+  const [tab, setTab] = useState<"ai" | "search" | "profile">(
+    location.hash === "profile" ? "profile" : "ai",
+  );
+  useEffect(() => {
+    if (location.hash === "profile") setTab("profile");
+  }, [location.hash]);
 
   return (
     <div className="p-8 space-y-6">
