@@ -31,6 +31,7 @@ import {
   updateSmsTemplate,
   withdrawSmsTemplate,
   approveSmsTemplate,
+  rejectSmsTemplate,
   type SmsTemplate as Tpl,
   type SmsTplStatus as Status,
   useSmsFilings,
@@ -76,6 +77,7 @@ function SmsTemplatesPage() {
   const [reviewingApp, setReviewingApp] = useState<TemplateApplication | null>(null);
   const [managingTplId, setManagingTplId] = useState<string | null>(null);
   const managingTpl = managingTplId ? list.find((x) => x.id === managingTplId) ?? null : null;
+  const [auditingTpl, setAuditingTpl] = useState<Tpl | null>(null);
 
   const counts = {
     all: list.length,
@@ -217,18 +219,19 @@ function SmsTemplatesPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted/30 text-[11px] text-muted-foreground">
                 <tr className="text-left">
-                  <th className="px-4 py-2 font-medium w-[22%]">模板名称</th>
+                  <th className="px-4 py-2 font-medium w-[16%]">模板名称</th>
+                  <th className="px-3 py-2 font-medium w-[10%]">来源</th>
                   <th className="px-3 py-2 font-medium w-[8%]">渠道类型</th>
                   <th className="px-3 py-2 font-medium">模板内容</th>
                   <th className="px-3 py-2 font-medium w-[9%]">内审状态</th>
-                  <th className="px-3 py-2 font-medium w-[24%]">渠道报备</th>
-                  <th className="px-3 py-2 font-medium w-[15%] text-right">操作</th>
+                  <th className="px-3 py-2 font-medium w-[22%]">渠道报备</th>
+                  <th className="px-3 py-2 font-medium w-[14%] text-right">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="p-10 text-center text-sm text-muted-foreground">
+                    <td colSpan={7} className="p-10 text-center text-sm text-muted-foreground">
                       无匹配模板
                     </td>
                   </tr>
@@ -238,24 +241,27 @@ function SmsTemplatesPage() {
                   return (
                     <tr key={t.id} className="align-top hover:bg-muted/20">
                       <td className="px-4 py-3">
-                        <div className="font-medium truncate">{t.name}</div>
-                        <div className="mt-1 flex items-center gap-1 flex-wrap">
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "text-[10px]",
-                              system
-                                ? "bg-sky-50 text-sky-700 border-sky-200"
-                                : "bg-violet-50 text-violet-700 border-violet-200",
-                            )}
-                          >
-                            {system ? "系统内置" : "用户创建"}
-                          </Badge>
+                        <div className="font-medium">{t.name}</div>
+                        <div className="mt-1">
                           <Badge variant="outline" className="text-[10px]">{t.locale}</Badge>
                         </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-[10px]",
+                            system
+                              ? "bg-sky-50 text-sky-700 border-sky-200"
+                              : "bg-violet-50 text-violet-700 border-violet-200",
+                          )}
+                        >
+                          {system ? "系统内置" : "用户创建"}
+                        </Badge>
                         <div className="mt-1 text-[11px] text-muted-foreground">
-                          {t.submittedBy} · {t.updatedAt}
+                          {t.submittedBy}
                         </div>
+                        <div className="text-[11px] text-muted-foreground">{t.updatedAt}</div>
                       </td>
                       <td className="px-3 py-3">
                         <Badge variant="outline" className="text-[10px]">
@@ -294,20 +300,21 @@ function SmsTemplatesPage() {
                           }}>
                             <Copy className="h-3.5 w-3.5" />
                           </IconAction>
-                          <IconAction title="编辑" onClick={() => setEditing(t)}>
-                            <Pencil className="h-3.5 w-3.5" />
+                          <IconAction
+                            title={system ? "编辑" : "用户创建的模板不可修改"}
+                            disabled={!system}
+                            onClick={() => system && setEditing(t)}
+                          >
+                            <Pencil className={cn("h-3.5 w-3.5", !system && "opacity-40")} />
                           </IconAction>
                           <IconAction title="预览" onClick={() => setPreviewing(t)}>
                             <Eye className="h-3.5 w-3.5" />
                           </IconAction>
                           {t.status === "pending" ? (
                             <IconAction
-                              title="审核通过"
-                              className="text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
-                              onClick={() => {
-                                approveSmsTemplate(t.id);
-                                toast.success("已审核通过");
-                              }}
+                              title="审核"
+                              className="text-primary hover:bg-primary/10"
+                              onClick={() => setAuditingTpl(t)}
                             >
                               <ShieldCheck className="h-3.5 w-3.5" />
                             </IconAction>
@@ -350,6 +357,10 @@ function SmsTemplatesPage() {
         template={managingTpl}
         onOpenChange={(o) => !o && setManagingTplId(null)}
         onPick={(ch) => managingTpl && setFilingCtx({ tpl: managingTpl, channel: ch })}
+      />
+      <AuditTplDialog
+        template={auditingTpl}
+        onOpenChange={(o) => !o && setAuditingTpl(null)}
       />
     </div>
   );
@@ -721,6 +732,90 @@ function NewTplDialog({
 }
 
 function ProcessGuideCard() {
+  return _processGuideInner();
+}
+
+function AuditTplDialog({ template, onOpenChange }: {
+  template: Tpl | null;
+  onOpenChange: (o: boolean) => void;
+}) {
+  const [decision, setDecision] = useState<"approve" | "reject">("approve");
+  const [reason, setReason] = useState("");
+  useEffect(() => {
+    if (template) { setDecision("approve"); setReason(""); }
+  }, [template?.id]);
+  if (!template) return null;
+  const submit = () => {
+    if (decision === "approve") {
+      approveSmsTemplate(template.id);
+      toast.success("已审核通过");
+    } else {
+      if (!reason.trim()) { toast.error("请填写驳回原因"); return; }
+      rejectSmsTemplate(template.id, reason.trim());
+      toast.success("已驳回该模板");
+    }
+    onOpenChange(false);
+  };
+  return (
+    <Dialog open={!!template} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-primary" /> 审核模板 · {template.name}
+          </DialogTitle>
+          <DialogDescription>请确认审核结论。通过后模板即可用于对应渠道发送；驳回请填写原因供提交人整改。</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="rounded-md border bg-muted/30 p-3 text-xs font-mono whitespace-pre-wrap max-h-40 overflow-auto">
+            {template.content}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setDecision("approve")}
+              className={cn(
+                "flex-1 rounded-md border px-3 py-2 text-sm flex items-center justify-center gap-2 transition",
+                decision === "approve"
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                  : "text-muted-foreground hover:bg-muted/50",
+              )}
+            >
+              <ThumbsUp className="h-4 w-4" /> 通过
+            </button>
+            <button
+              type="button"
+              onClick={() => setDecision("reject")}
+              className={cn(
+                "flex-1 rounded-md border px-3 py-2 text-sm flex items-center justify-center gap-2 transition",
+                decision === "reject"
+                  ? "border-rose-300 bg-rose-50 text-rose-700"
+                  : "text-muted-foreground hover:bg-muted/50",
+              )}
+            >
+              <ThumbsDown className="h-4 w-4" /> 驳回
+            </button>
+          </div>
+          {decision === "reject" && (
+            <Textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="请输入驳回原因，例如：缺少退订提示 / 含违禁词 …"
+              rows={3}
+            />
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+          <Button onClick={submit} className={decision === "reject" ? "bg-rose-600 hover:bg-rose-700" : ""}>
+            确认{decision === "approve" ? "通过" : "驳回"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function _processGuideInner() {
   const [open, setOpen] = useState(true);
   return (
     <Card className="p-3">
@@ -737,9 +832,9 @@ function ProcessGuideCard() {
       {open && (
         <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-[12px]">
           {[
-            { n: 1, title: "创建模板", desc: "内部运营直接新建（自动通过），或从『用户申请』通过后自动入库。" },
-            { n: 2, title: "渠道报备", desc: "在模板行点击『报备管理』，为 CMCC / 联通 / 电信 / WhatsApp / SMPP 分别登记外部审核结果。" },
-            { n: 3, title: "用户可用", desc: "已通过 + 已完成对应渠道报备的模板，终端用户即可选用群发。" },
+            { n: 1, title: "创建 / 入库", desc: "系统内置由平台运营新建；用户创建来自终端提交，两者入库后统一进入『待审核』。" },
+            { n: 2, title: "内审 · 报备", desc: "在操作列点击『审核』确认通过或驳回；同时可在『报备』中为各渠道分别登记外部审核结果。" },
+            { n: 3, title: "用户可用", desc: "内审已通过 + 对应渠道报备通过后，终端用户即可选用群发；系统内置模板允许后续修改，用户创建的仅限查看。" },
           ].map((s) => (
             <div key={s.n} className="rounded-md border bg-muted/30 p-2">
               <div className="flex items-center gap-1.5 font-medium text-foreground">
