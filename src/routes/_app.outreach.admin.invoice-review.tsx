@@ -286,20 +286,22 @@ function InvoiceReviewPage() {
             <div className="ml-auto text-sm text-muted-foreground">
               共 <span className="text-foreground font-semibold">{filtered.length}</span> 条
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                disabled={!someSelected}
-                onClick={handleBatchApprove}
-                className="h-9"
-              >
-                <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-                批量通过{someSelected ? ` (${Array.from(selected).filter((id) => selectableIds.includes(id)).length})` : ""}
-              </Button>
-              <Button size="sm" variant="outline" onClick={handleExport} className="h-9">
-                <Download className="h-3.5 w-3.5 mr-1.5" /> 导出台账
-              </Button>
-            </div>
+          </div>
+
+          {/* Action bar */}
+          <div className="px-5 py-3 flex items-center gap-2 border-b border-border">
+            <Button
+              size="sm"
+              disabled={!someSelected}
+              onClick={handleBatchApprove}
+              className="h-9"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+              批量通过{someSelected ? ` (${Array.from(selected).filter((id) => selectableIds.includes(id)).length})` : ""}
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleExport} className="h-9">
+              <Download className="h-3.5 w-3.5 mr-1.5" /> 导出台账
+            </Button>
           </div>
 
           {filtered.length === 0 ? (
