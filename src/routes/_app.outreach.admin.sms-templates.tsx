@@ -67,7 +67,7 @@ function SmsTemplatesPage() {
   const list = useSmsTemplates();
   const applications = useSmsApplications();
   const filings = useSmsFilings();
-  const [libStatuses, setLibStatuses] = useState<Set<Status>>(() => new Set<Status>(["approved", "pending", "rejected"]));
+  const [libStatus, setLibStatus] = useState<Status | "all">("all");
   const [libSearch, setLibSearch] = useState("");
   const [libChannel, setLibChannel] = useState<"all" | Tpl["channel"]>("all");
   const [libSource, setLibSource] = useState<"all" | "system" | "user">("all");
@@ -101,7 +101,7 @@ function SmsTemplatesPage() {
 
   const isSystem = (t: Tpl) => t.submittedBy === "SysM" || t.submittedBy === "系统";
   const filtered = list.filter((t) => {
-    if (!libStatuses.has(t.status)) return false;
+    if (libStatus !== "all" && t.status !== libStatus) return false;
     if (libChannel !== "all" && t.channel !== libChannel) return false;
     if (libSource === "system" && !isSystem(t)) return false;
     if (libSource === "user" && isSystem(t)) return false;
@@ -114,7 +114,7 @@ function SmsTemplatesPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [libStatuses, libChannel, libSource, libSearch]);
+  }, [libStatus, libChannel, libSource, libSearch]);
 
   const pageData = useMemo(
     () => filtered.slice((page - 1) * pageSize, page * pageSize),
@@ -191,33 +191,15 @@ function SmsTemplatesPage() {
               <SelectItem value="user">用户创建</SelectItem>
             </SelectContent>
           </Select>
-          <div className="flex items-center gap-1 ml-1">
-            <span className="text-[11px] text-muted-foreground mr-1">状态：</span>
-            {([
-              { k: "approved" as Status, label: "已通过", n: counts.approved, cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-              { k: "pending" as Status, label: "待审核", n: counts.pending, cls: "bg-amber-50 text-amber-700 border-amber-200" },
-              { k: "rejected" as Status, label: "未通过", n: counts.rejected, cls: "bg-rose-50 text-rose-700 border-rose-200" },
-            ]).map((s) => {
-              const active = libStatuses.has(s.k);
-              return (
-                <button
-                  key={s.k}
-                  onClick={() => {
-                    const next = new Set(libStatuses);
-                    if (next.has(s.k)) next.delete(s.k); else next.add(s.k);
-                    if (next.size === 0) next.add(s.k);
-                    setLibStatuses(next);
-                  }}
-                  className={cn(
-                    "text-[11px] px-2 py-0.5 rounded-full border transition-opacity",
-                    active ? s.cls : "bg-muted/40 text-muted-foreground border-border opacity-70",
-                  )}
-                >
-                  {s.label} · {s.n}
-                </button>
-              );
-            })}
-          </div>
+          <Select value={libStatus} onValueChange={(v) => setLibStatus(v as Status | "all")}>
+            <SelectTrigger className="h-8 w-36"><SelectValue placeholder="状态" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部状态 · {counts.approved + counts.pending + counts.rejected}</SelectItem>
+              <SelectItem value="approved">已通过 · {counts.approved}</SelectItem>
+              <SelectItem value="pending">待审核 · {counts.pending}</SelectItem>
+              <SelectItem value="rejected">未通过 · {counts.rejected}</SelectItem>
+            </SelectContent>
+          </Select>
           <div className="ml-auto flex items-center gap-2">
             <span className="text-xs text-muted-foreground">共 {filtered.length} 条</span>
             <Button size="sm" onClick={() => setAddOpen(true)}>
