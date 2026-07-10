@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { FileText, Plus, CheckCircle2, Clock, XCircle, Copy, Pencil, Undo2, Eye, Sparkles, AlertTriangle, Send, Radio, ShieldCheck, ThumbsUp, ThumbsDown } from "lucide-react";
+import { FileText, Plus, CheckCircle2, Clock, XCircle, Copy, Pencil, Undo2, Eye, Sparkles, AlertTriangle, Send, Radio, ShieldCheck, ThumbsUp, ThumbsDown, ChevronDown, ChevronUp, RefreshCw, Settings2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,8 @@ import {
   approveApplication,
   rejectApplication,
   getFilingsByTemplate,
+  getFilingSummary,
+  renewFiling,
   FILING_CHANNELS,
   type FilingChannel,
   type FilingStatus,
@@ -62,13 +64,17 @@ function SmsTemplatesPage() {
   const list = useSmsTemplates();
   const applications = useSmsApplications();
   const filings = useSmsFilings();
-  const [tab, setTab] = useState<"all" | Status>("all");
-  const [topTab, setTopTab] = useState<"library" | "applications" | "filings">("library");
+  const [topTab, setTopTab] = useState<"library" | "applications">("library");
+  const [libStatuses, setLibStatuses] = useState<Set<Status>>(() => new Set<Status>(["approved", "pending", "rejected"]));
+  const [libSearch, setLibSearch] = useState("");
+  const [libChannel, setLibChannel] = useState<"all" | Tpl["channel"]>("all");
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Tpl | null>(null);
   const [previewing, setPreviewing] = useState<Tpl | null>(null);
   const [filingCtx, setFilingCtx] = useState<{ tpl: Tpl; channel: FilingChannel } | null>(null);
   const [reviewingApp, setReviewingApp] = useState<TemplateApplication | null>(null);
+  const [managingTplId, setManagingTplId] = useState<string | null>(null);
+  const managingTpl = managingTplId ? list.find((x) => x.id === managingTplId) ?? null : null;
 
   const counts = {
     all: list.length,
@@ -87,7 +93,15 @@ function SmsTemplatesPage() {
     expiring: filings.filter((f) => f.status === "approved" && f.expireAt && daysUntil(f.expireAt) <= 30).length,
   };
 
-  const filtered = tab === "all" ? list : list.filter((t) => t.status === tab);
+  const filtered = list.filter((t) => {
+    if (!libStatuses.has(t.status)) return false;
+    if (libChannel !== "all" && t.channel !== libChannel) return false;
+    if (libSearch.trim()) {
+      const q = libSearch.trim().toLowerCase();
+      if (!t.name.toLowerCase().includes(q) && !t.content.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
 
   function submitNew(t: Omit<Tpl, "id" | "status" | "updatedAt" | "submittedBy">) {
     addSmsTemplate(t);
@@ -132,14 +146,14 @@ function SmsTemplatesPage() {
         </div>
       </section>
 
-      {/* 顶部 Tab：模板库 / 用户申请 / 报备记录 */}
+      <ProcessGuideCard />
+
       <div className="flex items-center justify-between gap-2 border-b">
         <div className="flex items-center gap-1">
           {(
             [
               { k: "library", label: "模板库", n: counts.all },
               { k: "applications", label: "用户申请", n: appCounts.submitted, warn: appCounts.submitted > 0 },
-              { k: "filings", label: "渠道报备", n: filingCounts.approved },
             ] as const
           ).map((t) => (
             <button
@@ -165,33 +179,55 @@ function SmsTemplatesPage() {
 
       {topTab === "library" && (
       <Card className="p-0 overflow-hidden">
-        <div className="flex items-center gap-1 border-b bg-muted/40 px-4 py-2">
-          {(
-            [
-              { k: "all", label: "全部" },
-              { k: "approved", label: "已通过" },
-              { k: "pending", label: "待审核" },
-              { k: "rejected", label: "未通过" },
-            ] as const
-          ).map((t) => (
-            <button
-              key={t.k}
-              onClick={() => setTab(t.k)}
-              className={cn(
-                "px-3 py-1.5 rounded-md text-sm transition-colors",
-                tab === t.k
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted",
-              )}
-            >
-              {t.label}
-              <span className="ml-1 text-[10px] opacity-70">
-                ({counts[t.k as keyof typeof counts]})
-              </span>
-            </button>
-          ))}
+        <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-2 flex-wrap">
+          <Input
+            value={libSearch}
+            onChange={(e) => setLibSearch(e.target.value)}
+            placeholder="搜索模板名称 / 内容"
+            className="h-8 w-56"
+          />
+          <Select value={libChannel} onValueChange={(v) => setLibChannel(v as typeof libChannel)}>
+            <SelectTrigger className="h-8 w-36"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部渠道类型</SelectItem>
+              <SelectItem value="marketing">营销</SelectItem>
+              <SelectItem value="notification">通知</SelectItem>
+              <SelectItem value="otp">验证码</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-1 ml-1">
+            <span className="text-[11px] text-muted-foreground mr-1">状态：</span>
+            {([
+              { k: "approved" as Status, label: "已通过", n: counts.approved, cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+              { k: "pending" as Status, label: "待审核", n: counts.pending, cls: "bg-amber-50 text-amber-700 border-amber-200" },
+              { k: "rejected" as Status, label: "未通过", n: counts.rejected, cls: "bg-rose-50 text-rose-700 border-rose-200" },
+            ]).map((s) => {
+              const active = libStatuses.has(s.k);
+              return (
+                <button
+                  key={s.k}
+                  onClick={() => {
+                    const next = new Set(libStatuses);
+                    if (next.has(s.k)) next.delete(s.k); else next.add(s.k);
+                    if (next.size === 0) next.add(s.k);
+                    setLibStatuses(next);
+                  }}
+                  className={cn(
+                    "text-[11px] px-2 py-0.5 rounded-full border transition-opacity",
+                    active ? s.cls : "bg-muted/40 text-muted-foreground border-border opacity-70",
+                  )}
+                >
+                  {s.label} · {s.n}
+                </button>
+              );
+            })}
+          </div>
+          <span className="text-xs text-muted-foreground ml-auto">共 {filtered.length} 条</span>
         </div>
         <div className="divide-y">
+          {filtered.length === 0 && (
+            <div className="p-8 text-center text-sm text-muted-foreground">无匹配模板</div>
+          )}
           {filtered.map((t) => (
             <div key={t.id} className="p-4 flex gap-4">
               <div className="flex-1 min-w-0">
@@ -204,6 +240,7 @@ function SmsTemplatesPage() {
                   <Badge variant="outline" className="text-[10px]">
                     {t.locale}
                   </Badge>
+                  {t.status === "approved" && <FilingSummaryBadge templateId={t.id} />}
                 </div>
                 <div className="mt-2 text-sm text-foreground/80 bg-muted/50 rounded p-2 font-mono whitespace-pre-wrap">
                   {t.content}
@@ -220,7 +257,17 @@ function SmsTemplatesPage() {
                   <FilingMatrix template={t} onPick={(ch) => setFilingCtx({ tpl: t, channel: ch })} />
                 )}
               </div>
-              <div className="flex flex-col gap-1 shrink-0 w-24">
+              <div className="flex flex-col gap-1 shrink-0 w-28">
+                {t.status === "approved" && (
+                  <Button
+                    size="sm"
+                    className="bg-primary text-primary-foreground"
+                    onClick={() => setManagingTplId(t.id)}
+                  >
+                    <Settings2 className="h-3.5 w-3.5" />
+                    报备管理
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -296,10 +343,6 @@ function SmsTemplatesPage() {
         <ApplicationsPanel apps={applications} onReview={setReviewingApp} />
       )}
 
-      {topTab === "filings" && (
-        <FilingsPanel filings={filings} templates={list} onEdit={(tpl, ch) => setFilingCtx({ tpl, channel: ch })} />
-      )}
-
       <NewTplDialog open={addOpen} onOpenChange={setAddOpen} onSubmit={submitNew} />
       <NewTplDialog
         open={!!editing}
@@ -312,7 +355,19 @@ function SmsTemplatesPage() {
         onOpenChange={(o) => !o && setPreviewing(null)}
       />
       <FilingDialog ctx={filingCtx} onOpenChange={(o) => !o && setFilingCtx(null)} />
-      <ReviewAppDialog app={reviewingApp} onOpenChange={(o) => !o && setReviewingApp(null)} />
+      <ReviewAppDialog
+        app={reviewingApp}
+        onOpenChange={(o) => !o && setReviewingApp(null)}
+        onApproved={(newId) => {
+          setTopTab("library");
+          setManagingTplId(newId);
+        }}
+      />
+      <FilingManagerDialog
+        template={managingTpl}
+        onOpenChange={(o) => !o && setManagingTplId(null)}
+        onPick={(ch) => managingTpl && setFilingCtx({ tpl: managingTpl, channel: ch })}
+      />
     </div>
   );
 }
@@ -649,6 +704,115 @@ function NewTplDialog({
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
           <Button onClick={submit}>{isEdit ? "重新提交审核" : "提交审核"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ProcessGuideCard() {
+  const [open, setOpen] = useState(true);
+  return (
+    <Card className="p-3">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between text-sm"
+      >
+        <span className="flex items-center gap-2 font-medium">
+          <ShieldCheck className="h-4 w-4 text-primary" />
+          流程指引：新建 / 通过申请 → 渠道报备 → 用户可用
+        </span>
+        {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+      </button>
+      {open && (
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-[12px]">
+          {[
+            { n: 1, title: "创建模板", desc: "内部运营直接新建（自动通过），或从『用户申请』通过后自动入库。" },
+            { n: 2, title: "渠道报备", desc: "在模板行点击『报备管理』，为 CMCC / 联通 / 电信 / WhatsApp / SMPP 分别登记外部审核结果。" },
+            { n: 3, title: "用户可用", desc: "已通过 + 已完成对应渠道报备的模板，终端用户即可选用群发。" },
+          ].map((s) => (
+            <div key={s.n} className="rounded-md border bg-muted/30 p-2">
+              <div className="flex items-center gap-1.5 font-medium text-foreground">
+                <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground text-[11px] flex items-center justify-center">{s.n}</span>
+                {s.title}
+              </div>
+              <div className="mt-1 text-muted-foreground leading-relaxed">{s.desc}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function FilingSummaryBadge({ templateId }: { templateId: string }) {
+  const s = getFilingSummary(templateId);
+  const total = FILING_CHANNELS.length;
+  const done = s.approved;
+  const cls = done === 0
+    ? "bg-rose-50 text-rose-700 border-rose-200"
+    : done < total
+      ? "bg-amber-50 text-amber-700 border-amber-200"
+      : "bg-emerald-50 text-emerald-700 border-emerald-200";
+  return (
+    <Badge variant="outline" className={cn("text-[10px] gap-1", cls)} title="已通过渠道数 / 全部渠道数">
+      <Radio className="h-3 w-3" /> 报备 {done}/{total}
+      {s.expiring > 0 && <span className="ml-1 text-orange-600">· {s.expiring} 即将到期</span>}
+    </Badge>
+  );
+}
+
+function FilingManagerDialog({ template, onOpenChange, onPick }: {
+  template: Tpl | null;
+  onOpenChange: (o: boolean) => void;
+  onPick: (ch: FilingChannel) => void;
+}) {
+  if (!template) return null;
+  const map = getFilingsByTemplate(template.id);
+  return (
+    <Dialog open={!!template} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Radio className="h-4 w-4 text-primary" /> 报备管理 · {template.name}
+          </DialogTitle>
+          <DialogDescription>
+            对每个渠道分别登记外部审核结果；点击『登记 / 更新』填写外部编号与到期时间，点击『续报』将记录重置为待审核。
+          </DialogDescription>
+        </DialogHeader>
+        <div className="divide-y border rounded-md">
+          {FILING_CHANNELS.map((c) => {
+            const rec = map[c.key];
+            const st: FilingStatus = rec?.status ?? "none";
+            const expiring = rec?.status === "approved" && rec.expireAt && daysUntil(rec.expireAt) <= 30;
+            return (
+              <div key={c.key} className="flex items-center gap-3 p-3">
+                <div className="w-24 shrink-0 text-sm font-medium">{c.label}</div>
+                <Badge variant="outline" className={cn("text-[10px]", FILING_STATUS_CLASS[st])}>
+                  {FILING_STATUS_LABEL[st]}
+                </Badge>
+                <div className="flex-1 text-[11px] text-muted-foreground truncate">
+                  {rec?.externalId && <span className="mr-2">编号 {rec.externalId}</span>}
+                  {rec?.expireAt && <span className={cn("mr-2", expiring && "text-orange-600")}>到期 {rec.expireAt}</span>}
+                  {rec?.comment && <span>· {rec.comment}</span>}
+                  {!rec && <span>未登记</span>}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {(st === "approved" || st === "expired") && (
+                    <Button size="sm" variant="outline" onClick={() => { renewFiling(template.id, c.key); toast.success("已提交续报"); }}>
+                      <RefreshCw className="h-3.5 w-3.5" /> 续报
+                    </Button>
+                  )}
+                  <Button size="sm" onClick={() => onPick(c.key)}>
+                    <Pencil className="h-3.5 w-3.5" /> 登记 / 更新
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>关闭</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -1027,9 +1191,10 @@ function FilingDialog({ ctx, onOpenChange }: {
   );
 }
 
-function ReviewAppDialog({ app, onOpenChange }: {
+function ReviewAppDialog({ app, onOpenChange, onApproved }: {
   app: TemplateApplication | null;
   onOpenChange: (o: boolean) => void;
+  onApproved?: (newTemplateId: string) => void;
 }) {
   const [reason, setReason] = useState("");
   useEffect(() => { setReason(""); }, [app?.id]);
@@ -1038,9 +1203,10 @@ function ReviewAppDialog({ app, onOpenChange }: {
   const hasOptOut = /STOP|退订|TD/i.test(app.content);
 
   function approve() {
-    approveApplication(app!.id);
-    toast.success(`已通过并生成模板「${app!.name}」`);
+    const newId = approveApplication(app!.id);
+    toast.success(`已通过并生成模板「${app!.name}」，请前往模板库完成渠道报备`);
     onOpenChange(false);
+    if (newId) onApproved?.(newId);
   }
   function reject() {
     if (!reason.trim()) { toast.error("请填写拒绝原因"); return; }
