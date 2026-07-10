@@ -225,13 +225,14 @@ function SmsTemplatesPage() {
                   <th className="px-3 py-2 font-medium">模板内容</th>
                   <th className="px-3 py-2 font-medium w-[9%]">内审状态</th>
                   <th className="px-3 py-2 font-medium w-[22%]">渠道报备</th>
+                  <th className="px-3 py-2 font-medium w-[10%]">创建时间</th>
                   <th className="px-3 py-2 font-medium w-[14%] text-right">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="p-10 text-center text-sm text-muted-foreground">
+                    <td colSpan={8} className="p-10 text-center text-sm text-muted-foreground">
                       无匹配模板
                     </td>
                   </tr>
@@ -255,10 +256,6 @@ function SmsTemplatesPage() {
                         >
                           {system ? "系统内置" : "用户创建"}
                         </Badge>
-                        <div className="mt-1 text-[11px] text-muted-foreground">
-                          {t.submittedBy}
-                        </div>
-                        <div className="text-[11px] text-muted-foreground">{t.updatedAt}</div>
                       </td>
                       <td className="px-3 py-3">
                         <Badge variant="outline" className="text-[10px]">
@@ -285,6 +282,9 @@ function SmsTemplatesPage() {
                       </td>
                       <td className="px-3 py-3">
                         <FilingMatrix template={t} onPick={(ch) => setFilingCtx({ tpl: t, channel: ch })} />
+                      </td>
+                      <td className="px-3 py-3 text-[12px] text-muted-foreground whitespace-nowrap">
+                        {t.updatedAt}
                       </td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-1 justify-end flex-nowrap whitespace-nowrap">
