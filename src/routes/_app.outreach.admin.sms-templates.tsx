@@ -253,6 +253,17 @@ function SmsTemplatesPage() {
                 {t.status === "pending" && (
                   <>
                     <Button
+                      size="sm"
+                      className="bg-emerald-600 text-white hover:bg-emerald-700"
+                      onClick={() => {
+                        approveSmsTemplate(t.id);
+                        toast.success("已标记为通过");
+                      }}
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      标记通过
+                    </Button>
+                    <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setEditing(t)}
