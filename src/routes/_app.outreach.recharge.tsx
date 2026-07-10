@@ -109,6 +109,7 @@ function RechargePage() {
     email: "",
   });
   const [paying, setPaying] = useState(false);
+  const [rulesOpen, setRulesOpen] = useState(false);
   const [lastOrder, setLastOrder] = useState<{ no: string; credits: number; price: number } | null>(
     null,
   );
