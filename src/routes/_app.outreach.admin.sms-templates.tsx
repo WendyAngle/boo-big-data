@@ -67,7 +67,7 @@ function SmsTemplatesPage() {
   const list = useSmsTemplates();
   const applications = useSmsApplications();
   const filings = useSmsFilings();
-  const [libStatuses, setLibStatuses] = useState<Set<Status>>(() => new Set<Status>(["approved", "pending", "rejected"]));
+  const [libStatus, setLibStatus] = useState<Status | "all">("all");
   const [libSearch, setLibSearch] = useState("");
   const [libChannel, setLibChannel] = useState<"all" | Tpl["channel"]>("all");
   const [libSource, setLibSource] = useState<"all" | "system" | "user">("all");
@@ -101,7 +101,7 @@ function SmsTemplatesPage() {
 
   const isSystem = (t: Tpl) => t.submittedBy === "SysM" || t.submittedBy === "系统";
   const filtered = list.filter((t) => {
-    if (!libStatuses.has(t.status)) return false;
+    if (libStatus !== "all" && t.status !== libStatus) return false;
     if (libChannel !== "all" && t.channel !== libChannel) return false;
     if (libSource === "system" && !isSystem(t)) return false;
     if (libSource === "user" && isSystem(t)) return false;
@@ -114,7 +114,7 @@ function SmsTemplatesPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [libStatuses, libChannel, libSource, libSearch]);
+  }, [libStatus, libChannel, libSource, libSearch]);
 
   const pageData = useMemo(
     () => filtered.slice((page - 1) * pageSize, page * pageSize),
