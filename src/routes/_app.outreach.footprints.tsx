@@ -13,7 +13,6 @@ import {
   ArrowRight,
   ExternalLink,
   EyeOff,
-  HelpCircle,
   Star,
   Trash2,
   Settings2,
@@ -457,37 +456,9 @@ function FootprintsPage() {
             <Footprints className="h-6 w-6" />
           </div>
           <div>
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-xl font-bold">足迹</h1>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label="足迹与收藏的区别"
-                    className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/15 hover:bg-white/25 text-white/90"
-                  >
-                    <HelpCircle className="h-3.5 w-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="max-w-xs">
-                  <div className="space-y-1.5 text-xs leading-relaxed">
-                    <div>
-                      <span className="font-semibold">足迹</span>
-                      ：系统自动记录的浏览轨迹，用于回溯与跟进。
-                    </div>
-                    <div>
-                      <span className="font-semibold">收藏</span>
-                      ：您主动标记的重点对象，长期保留、便于触达。
-                    </div>
-                    <div className="text-muted-foreground">
-                      在足迹卡片上点击 ☆ 可一键收藏。
-                    </div>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </div>
+            <h1 className="text-xl font-bold">足迹</h1>
             <p className="text-white/85 text-sm mt-0.5">
-              记录您在企业、商品与提单页面的浏览轨迹，便于回溯与快速跟进
+              系统自动记录你最近浏览的企业、商品与提单，用于回溯与跟进；在卡片上点击 ☆ 可加入收藏
             </p>
           </div>
           <div className="ml-auto hidden md:flex items-center gap-6 text-sm">
