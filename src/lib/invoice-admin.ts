@@ -52,7 +52,7 @@ export interface AdminRules {
 
 const K_INV = "boo:admin:invoices:v1";
 const K_RULES = "boo:admin:invoice-rules:v1";
-const K_SEED = "boo:admin:invoice-seed:v1";
+const K_SEED = "boo:admin:invoice-seed:v2";
 
 const DEFAULT_RULES: AdminRules = {
   minAmount: 100,
