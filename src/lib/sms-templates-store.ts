@@ -249,7 +249,8 @@ export function approveApplication(id: string, reviewer = "合规组") {
     channel: app.channel,
     locale: app.locale,
     content: app.content,
-    status: "approved",
+    // 用户申请通过后进入模板库待审核，等待平台管理员最终复核
+    status: "pending",
     updatedAt: today,
     submittedBy: app.submittedBy,
     reviewer,
