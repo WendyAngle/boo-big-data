@@ -7,6 +7,7 @@ import {
   Loader2,
   Eye,
   Trash2,
+  ShieldOff,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
@@ -214,6 +215,15 @@ export function ComposeSendDialog({
   }
 
   const previewRecipient = recipients[Math.min(previewIdx, recipients.length - 1)];
+
+  // 退订预检：Dialog 打开即计算，用于顶部非阻塞横幅
+  const suppressedRecipients = useMemo(
+    () => {
+      const kind = isEmail ? "email" : "phone";
+      return recipients.filter((r) => isSuppressed(kind, r.address));
+    },
+    [recipients, isEmail],
+  );
   const previewSubject = previewRecipient
     ? renderTemplate(subject, previewRecipient.ctx)
     : "";
@@ -422,6 +432,33 @@ export function ComposeSendDialog({
                 )
               )}
             </div>
+            {suppressedRecipients.length > 0 && (
+              <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                <div className="flex items-start gap-2">
+                  <ShieldOff className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-600" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium">
+                      本批次含 {suppressedRecipients.length} 个退订{isEmail ? "邮箱" : "手机号"}，发送时将自动跳过
+                    </div>
+                    <details className="mt-1">
+                      <summary className="cursor-pointer text-amber-800 hover:underline select-none">
+                        查看名单
+                      </summary>
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {suppressedRecipients.map((r) => (
+                          <span
+                            key={r.key}
+                            className="inline-flex items-center gap-1 rounded border border-amber-200 bg-white/70 px-1.5 py-0.5 font-mono text-[11px]"
+                          >
+                            {r.name} · {r.address}
+                          </span>
+                        ))}
+                      </div>
+                    </details>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="flex flex-wrap gap-1.5 rounded-md border bg-muted/30 p-2 max-h-28 overflow-y-auto">
               {recipients.map((r) => (
                 <span

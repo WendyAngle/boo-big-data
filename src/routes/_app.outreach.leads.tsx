@@ -640,7 +640,7 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
     markLeadIgnored(l.enterprise.id);
     setLeads((cur) => cur.filter((x) => x.enterprise.id !== l.enterprise.id));
     toast("已标记为不感兴趣", {
-      description: `${l.enterprise.name} 将不再出现在推荐流中`,
+      description: `${l.enterprise.name} 将不再推荐，同行业 / 同国家权重已下调`,
       action: {
         label: "撤销",
         onClick: () => {
@@ -670,9 +670,7 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
     setSeed(1);
     setFilteredOut(0);
     setView("new");
-    toast.success("推荐偏好已重置", {
-      description: "已清空浏览 / 收藏 / 忽略记录，可重新演示推荐效果",
-    });
+    toast.success("推荐偏好已重置");
   };
 
   // 已查看 / 已忽略 视图所用的企业列表（从 mock 库中查找）
@@ -738,14 +736,39 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
           <span>已收藏 <b className="tabular-nums">{fb.liked.length}</b></span>
           <span>已忽略 <b className="tabular-nums">{fb.ignored.length}</b></span>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleReset}
-          className="h-7 gap-1 border-amber-300 text-amber-900 hover:bg-amber-100"
-        >
-          <RotateCcw className="h-3.5 w-3.5" /> 重置推荐偏好
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1 border-amber-300 text-amber-900 hover:bg-amber-100"
+            >
+              <RotateCcw className="h-3.5 w-3.5" /> 重置推荐偏好
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>确认重置推荐偏好？</AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-2 text-sm">
+                  <div>此操作将清除以下推荐相关数据：</div>
+                  <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                    <li>已浏览记录（{fb.seen.length}）—— 用于去重</li>
+                    <li>收藏偏好（{fb.liked.length}）—— 用于同类加权</li>
+                    <li>永不再推标记（{fb.ignored.length}）—— 已忽略企业将重新参与匹配</li>
+                  </ul>
+                  <div className="text-xs pt-1 text-emerald-700">
+                    ✓ 不会影响：企业画像、收藏夹、触达历史与积分明细
+                  </div>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>取消</AlertDialogCancel>
+              <AlertDialogAction onClick={handleReset}>确认重置</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </Card>
 
       {/* 生成按钮 */}
@@ -921,6 +944,19 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
       )}
 
       {visibleLeads.length > 0 && (
+        <>
+        {view === "new" && (fb.liked.length + fb.ignored.length) > 0 && (
+          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-2 text-xs text-emerald-800">
+            <Sparkles className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+            <span>
+              已根据您最近 <b className="tabular-nums">{fb.liked.length}</b> 次收藏
+              {fb.ignored.length > 0 && (
+                <> 与 <b className="tabular-nums">{fb.ignored.length}</b> 次忽略</>
+              )}
+              ，同类企业已上调 / 下调排序权重。
+            </span>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {visibleLeads.map((l) => (
             <LeadCard
@@ -936,6 +972,7 @@ function AiTab({ onGoProfile }: { onGoProfile: () => void }) {
             />
           ))}
         </div>
+        </>
       )}
       <AiQuotaPacksDialog
         open={packsOpen}
