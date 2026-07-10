@@ -1082,9 +1082,10 @@ function FilingDialog({ ctx, onOpenChange }: {
   );
 }
 
-function ReviewAppDialog({ app, onOpenChange }: {
+function ReviewAppDialog({ app, onOpenChange, onApproved }: {
   app: TemplateApplication | null;
   onOpenChange: (o: boolean) => void;
+  onApproved?: (newTemplateId: string) => void;
 }) {
   const [reason, setReason] = useState("");
   useEffect(() => { setReason(""); }, [app?.id]);
@@ -1093,9 +1094,10 @@ function ReviewAppDialog({ app, onOpenChange }: {
   const hasOptOut = /STOP|退订|TD/i.test(app.content);
 
   function approve() {
-    approveApplication(app!.id);
-    toast.success(`已通过并生成模板「${app!.name}」`);
+    const newId = approveApplication(app!.id);
+    toast.success(`已通过并生成模板「${app!.name}」，请前往模板库完成渠道报备`);
     onOpenChange(false);
+    if (newId) onApproved?.(newId);
   }
   function reject() {
     if (!reason.trim()) { toast.error("请填写拒绝原因"); return; }
