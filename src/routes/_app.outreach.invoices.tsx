@@ -20,7 +20,7 @@ import {
   Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetFooter,
 } from "@/components/ui/sheet";
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -493,14 +493,14 @@ function ApplyInvoiceSheet({
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" /> 申请开票
-          </SheetTitle>
-          <SheetDescription>选择充值订单、抬头与发票类型，提交后由财务系统开具</SheetDescription>
-        </SheetHeader>
+          </DialogTitle>
+          <DialogDescription>选择充值订单、抬头与发票类型，提交后由财务系统开具</DialogDescription>
+        </DialogHeader>
 
         <div className="mt-6 space-y-6">
           {/* Step 1 选订单 */}
@@ -645,14 +645,14 @@ function ApplyInvoiceSheet({
           </div>
         </div>
 
-        <SheetFooter className="mt-6 gap-2 sm:gap-2">
+        <DialogFooter className="mt-6 gap-2 sm:gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
           <Button onClick={submit} disabled={submitting || selected.size === 0}>
             {submitting ? (<><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> 提交中…</>) : (<><Send className="h-4 w-4 mr-1.5" /> 提交申请</>)}
           </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
