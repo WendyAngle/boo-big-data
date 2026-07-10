@@ -278,7 +278,8 @@ export function addSmsTemplate(
   const rec: SmsTemplate = {
     ...t,
     id: `t_${Date.now().toString(36)}`,
-    status: "pending",
+    // 内部运营创建 = 自动通过（合规审核在渠道报备环节完成）
+    status: "approved",
     updatedAt: new Date().toISOString().slice(0, 10),
     submittedBy: "我",
   };
@@ -287,18 +288,17 @@ export function addSmsTemplate(
   emit();
 }
 
-/** 更新一个模板（仅 pending / rejected 可编辑；rejected 编辑后自动回到 pending） */
+/** 更新一个模板（内部运营编辑后直接保持通过状态；rejected 编辑后自动回到 approved） */
 export function updateSmsTemplate(
   id: string,
   patch: Partial<Pick<SmsTemplate, "name" | "channel" | "locale" | "content">>,
 ) {
   store = store.map((t) => {
     if (t.id !== id) return t;
-    if (t.status === "approved") return t;
     const next: SmsTemplate = {
       ...t,
       ...patch,
-      status: "pending",
+      status: "approved",
       updatedAt: new Date().toISOString().slice(0, 10),
       rejectReason: undefined,
     };
@@ -311,6 +311,17 @@ export function updateSmsTemplate(
 /** 撤回待审模板（仅 pending 可撤回，直接删除） */
 export function withdrawSmsTemplate(id: string) {
   store = store.filter((t) => !(t.id === id && t.status === "pending"));
+  write(store);
+  emit();
+}
+
+/** 将 pending 模板标记为通过（历史遗留数据快速处理） */
+export function approveSmsTemplate(id: string) {
+  store = store.map((t) =>
+    t.id === id && t.status === "pending"
+      ? { ...t, status: "approved", updatedAt: new Date().toISOString().slice(0, 10), rejectReason: undefined }
+      : t,
+  );
   write(store);
   emit();
 }
