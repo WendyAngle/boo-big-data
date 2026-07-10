@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Mailbox,
@@ -184,6 +184,16 @@ function EmailProvidersPage() {
   const [list, setList] = useState<Provider[]>(SEED);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<Provider | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const pageData = useMemo(
+    () => list.slice((page - 1) * pageSize, page * pageSize),
+    [list, page],
+  );
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(list.length / pageSize));
+    if (page > maxPage) setPage(maxPage);
+  }, [list.length, page]);
 
   const summary = useMemo(() => {
     const active = list.filter((p) => p.enabled);
@@ -322,7 +332,7 @@ function EmailProvidersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {list.map((p) => {
+            {pageData.map((p) => {
               const isDown = p.health === "down";
               const effectiveEnabled = isDown ? false : p.enabled;
               return (
@@ -451,6 +461,11 @@ function EmailProvidersPage() {
             })}
           </TableBody>
         </Table>
+        {list.length > 0 && (
+          <div className="px-4 py-3 border-t">
+            <ListPagination page={page} pageSize={pageSize} total={list.length} onPageChange={setPage} />
+          </div>
+        )}
       </Card>
 
       <Card className="p-4 flex items-start gap-3 bg-amber-50/60 border-amber-200">
