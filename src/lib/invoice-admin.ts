@@ -115,7 +115,7 @@ export function seedAdminInvoicesIfEmpty() {
   const mk = (
     daysAgo: number,
     status: AdminStatus,
-    tenant: { id: string; name: string; contact: string },
+    tenant: { id: string; name: string; contact: string; email?: string; bankName?: string; bankAccount?: string; address?: string; phone?: string },
     tt: AdminTitleType,
     tx: AdminTaxType,
     title: string,
@@ -140,12 +140,12 @@ export function seedAdminInvoicesIfEmpty() {
       orderNos,
       email:
         tt === "company"
-          ? `finance@${tenant.name.slice(0, 4).toLowerCase()}.cn`
+          ? (tenant.email ?? "finance@example.cn")
           : "user@qq.com",
-      bankName: tx === "special" ? "招商银行上海分行营业部" : undefined,
-      bankAccount: tx === "special" ? "1219 0780 1010 999" : undefined,
-      address: tx === "special" ? "上海市浦东新区世纪大道 100 号" : undefined,
-      phone: tx === "special" ? "021-5888 6666" : undefined,
+      bankName: tx === "special" ? (tenant.bankName ?? "招商银行上海分行营业部") : undefined,
+      bankAccount: tx === "special" ? (tenant.bankAccount ?? "1219 0780 1010 999") : undefined,
+      address: tx === "special" ? (tenant.address ?? "上海市浦东新区世纪大道 100 号") : undefined,
+      phone: tx === "special" ? (tenant.phone ?? "021-5888 6666") : undefined,
       submittedAt: submitted.toISOString(),
       status,
     };
@@ -153,11 +153,21 @@ export function seedAdminInvoicesIfEmpty() {
   };
 
   const T = [
-    { id: "t1", name: "上海博欧数据科技有限公司", contact: "莫文蔚 · 138****6688" },
-    { id: "t2", name: "杭州星联贸易有限公司", contact: "李嘉琪 · 139****2233" },
-    { id: "t3", name: "深圳锐锋科技有限公司", contact: "张伟 · 137****9911" },
-    { id: "t4", name: "广州云汇进出口有限公司", contact: "陈晓 · 133****1122" },
-    { id: "t5", name: "北京海联信息有限公司", contact: "王芳 · 136****7788" },
+    {
+      id: "t1",
+      name: "上海博欧数据科技有限公司",
+      contact: "莫文蔚 · 138****6688",
+      // 与「费用中心 → 发票管理」中默认抬头保持一致
+      email: "finance@boodata.cn",
+      bankName: "招商银行上海分行营业部",
+      bankAccount: "1219 0780 1010 999",
+      address: "上海市浦东新区世纪大道 100 号",
+      phone: "021-5888 6666",
+    },
+    { id: "t2", name: "杭州星联贸易有限公司", contact: "李嘉琪 · 139****2233", email: "finance@xinglian.cn" },
+    { id: "t3", name: "深圳锐锋科技有限公司", contact: "张伟 · 137****9911", email: "finance@ruifeng.cn" },
+    { id: "t4", name: "广州云汇进出口有限公司", contact: "陈晓 · 133****1122", email: "finance@yunhui.cn" },
+    { id: "t5", name: "北京海联信息有限公司", contact: "王芳 · 136****7788", email: "finance@hailian.cn" },
   ];
   const P = [
     { id: "p1", name: "刘敏 · 个人", contact: "刘敏 · 152****3344" },
@@ -195,7 +205,15 @@ export function seedAdminInvoicesIfEmpty() {
       const t = i % 2 === 0 ? T[0] : T[i % T.length];
       const tx: AdminTaxType = i % 3 === 0 ? "special" : "normal";
       const amt = 600 + (i * 300) % 3200;
-      return mk(d, "issued", t, "company", tx, t.name, "91310000MA1FL12K9X", amt, [`R2026${String(i).padStart(4, "0")}`], {
+      // 各租户对应的税号，避免所有已开票记录都挂到博欧头上
+      const tenantTaxNo: Record<string, string> = {
+        t1: "91310000MA1FL12K9X",
+        t2: "91330100MA2AB33K11",
+        t3: "91440300MA5EK99K88",
+        t4: "91440101MA9GH88W20",
+        t5: "91110108MA01ZZ99X0",
+      };
+      return mk(d, "issued", t, "company", tx, t.name, tenantTaxNo[t.id], amt, [`R2026${String(i).padStart(4, "0")}`], {
         ...rev(d + 0.05),
         ...iss(d - 1, fmtInvoiceNo(new Date(now - (d - 1) * day))),
       });
