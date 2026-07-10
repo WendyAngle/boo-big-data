@@ -125,12 +125,12 @@ const SEED: SmsTemplate[] = [
     channel: "marketing",
     locale: "en-US",
     content:
-      "Hey {{联系人名}}, just checking in on my last email — worth a quick call? --{{我的姓名}}",
+      "Hey {{联系人名}}, just checking in on my last email — worth a quick call? --{{我的姓名}} from {{我的公司}}. Reply STOP to opt out.",
     status: "rejected",
     updatedAt: "2026-07-05",
     submittedBy: "张销售",
     reviewer: "合规组",
-    rejectReason: "缺少退订说明（STOP/退订字样）",
+    rejectReason: "话术过于随意，未体现企业身份，建议使用正式称谓并明确来意",
   },
 ];
 
