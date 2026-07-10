@@ -204,7 +204,21 @@ function InvoiceReviewPage() {
                   集中受理租户开票申请、审核抬头、上传发票并回传给终端用户
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" className="h-8 bg-white text-primary hover:bg-white/90 font-medium" onClick={handleExport}>
+                  <Button
+                    size="sm"
+                    disabled={!someSelected}
+                    onClick={handleBatchApprove}
+                    className={
+                      someSelected
+                        ? "h-8 bg-white text-primary hover:bg-white/90 font-medium"
+                        : "h-8 bg-white/15 text-white/60 border border-white/20 cursor-not-allowed hover:bg-white/15"
+                    }
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                    批量通过{someSelected ? ` (${Array.from(selected).filter((id) => selectableIds.includes(id)).length})` : ""}
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={handleExport}
+                    className="h-8 bg-white/15 text-white border-white/20 hover:bg-white/25">
                     <Download className="h-3.5 w-3.5 mr-1.5" /> 导出台账
                   </Button>
                   <Button size="sm" variant="secondary" onClick={() => setRulesOpen(true)}
@@ -278,17 +292,6 @@ function InvoiceReviewPage() {
               共 <span className="text-foreground font-semibold">{filtered.length}</span> 条
             </div>
           </div>
-
-          {/* Batch bar */}
-          {someSelected && (
-            <div className="px-5 py-2 flex items-center gap-3 border-b border-border bg-primary/5">
-              <div className="text-sm">已选 <span className="font-semibold text-primary">{Array.from(selected).filter((id) => selectableIds.includes(id)).length}</span> 条待审核</div>
-              <Button size="sm" className="h-7" onClick={handleBatchApprove}>
-                <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> 批量通过
-              </Button>
-              <Button size="sm" variant="ghost" className="h-7" onClick={() => setSelected(new Set())}>取消选择</Button>
-            </div>
-          )}
 
           {filtered.length === 0 ? (
             <div className="p-16 flex flex-col items-center text-center gap-3">
