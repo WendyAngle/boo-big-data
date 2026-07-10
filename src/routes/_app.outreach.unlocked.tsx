@@ -336,7 +336,7 @@ function UnlockedPage() {
   return <UnlockedPageInner />;
 }
 
-function StatTile({ label, value, hint }: { label: string; value: number; hint: string }) {
+function StatTile({ label, value, hint, unit }: { label: string; value: number; hint: string; unit?: string }) {
   return (
     <div className="rounded-xl bg-white/15 backdrop-blur-sm px-4 py-3 ring-1 ring-white/25 min-w-[110px]">
       <div className="flex items-center gap-1 text-[11px] text-white/80">
@@ -356,7 +356,10 @@ function StatTile({ label, value, hint }: { label: string; value: number; hint: 
           </TooltipContent>
         </Tooltip>
       </div>
-      <div className="text-xl font-bold tabular-nums">{value}</div>
+      <div className="text-xl font-bold tabular-nums">
+        {value}
+        {unit && <span className="ml-1 text-xs font-medium text-white/80">{unit}</span>}
+      </div>
     </div>
   );
 }
