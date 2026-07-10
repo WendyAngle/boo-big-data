@@ -529,9 +529,34 @@ function NewTplDialog({
                 <label className="text-xs text-muted-foreground">
                   模板内容
                 </label>
-                <span className="text-[11px] text-muted-foreground tabular-nums">
-                  {content.length} 字符 · 预计 {Math.max(1, Math.ceil(content.length / 70))} 段
-                </span>
+                <div className="flex items-center gap-2">
+                  {!hasOptOut && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const hint = locale === "en-US"
+                          ? " Reply STOP to opt out."
+                          : locale === "multi"
+                          ? " 回复T退订 / Reply STOP to opt out."
+                          : " 回复T退订";
+                        const el = textareaRef.current;
+                        const base = content.replace(/\s+$/, "");
+                        const next = base + hint;
+                        setContent(next);
+                        requestAnimationFrame(() => {
+                          el?.focus();
+                          el?.setSelectionRange(next.length, next.length);
+                        });
+                      }}
+                      className="text-[11px] px-1.5 py-0.5 rounded border border-dashed border-rose-300 text-rose-600 hover:bg-rose-50"
+                    >
+                      + 退订提示
+                    </button>
+                  )}
+                  <span className="text-[11px] text-muted-foreground tabular-nums">
+                    {content.length} 字符 · 预计 {Math.max(1, Math.ceil(content.length / 70))} 段
+                  </span>
+                </div>
               </div>
               <Textarea
                 ref={textareaRef}
