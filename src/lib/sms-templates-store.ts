@@ -279,10 +279,10 @@ export function addSmsTemplate(
   const rec: SmsTemplate = {
     ...t,
     id: `t_${Date.now().toString(36)}`,
-    // 内部运营创建 = 自动通过（合规审核在渠道报备环节完成）
-    status: "approved",
+    // 平台内置：进入待审核队列，由平台管理员复核后可用
+    status: "pending",
     updatedAt: new Date().toISOString().slice(0, 10),
-    submittedBy: "我",
+    submittedBy: "SysM",
   };
   store = [rec, ...store];
   write(store);
@@ -299,7 +299,7 @@ export function updateSmsTemplate(
     const next: SmsTemplate = {
       ...t,
       ...patch,
-      status: "approved",
+      status: "pending",
       updatedAt: new Date().toISOString().slice(0, 10),
       rejectReason: undefined,
     };
