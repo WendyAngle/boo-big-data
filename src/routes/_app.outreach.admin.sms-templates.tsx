@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ListPagination } from "@/components/ListPagination";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -78,6 +79,8 @@ function SmsTemplatesPage() {
   const [managingTplId, setManagingTplId] = useState<string | null>(null);
   const managingTpl = managingTplId ? list.find((x) => x.id === managingTplId) ?? null : null;
   const [auditingTpl, setAuditingTpl] = useState<Tpl | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const counts = {
     all: list.length,
@@ -108,6 +111,15 @@ function SmsTemplatesPage() {
     }
     return true;
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [libStatuses, libChannel, libSource, libSearch]);
+
+  const pageData = useMemo(
+    () => filtered.slice((page - 1) * pageSize, page * pageSize),
+    [filtered, page],
+  );
 
   function submitNew(t: Omit<Tpl, "id" | "status" | "updatedAt" | "submittedBy">) {
     addSmsTemplate(t);
@@ -237,7 +249,7 @@ function SmsTemplatesPage() {
                     </td>
                   </tr>
                 )}
-                {filtered.map((t) => {
+                {pageData.map((t) => {
                   const system = isSystem(t);
                   return (
                     <tr key={t.id} className="align-top hover:bg-muted/20">
@@ -326,6 +338,16 @@ function SmsTemplatesPage() {
               </tbody>
             </table>
           </div>
+          {filtered.length > 0 && (
+            <div className="px-4 pb-4 pt-2 border-t">
+              <ListPagination
+                page={page}
+                pageSize={pageSize}
+                total={filtered.length}
+                onPageChange={setPage}
+              />
+            </div>
+          )}
         </TooltipProvider>
       </Card>
 
