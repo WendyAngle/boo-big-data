@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { FileText, Plus, CheckCircle2, Clock, XCircle, Copy, Pencil, Undo2, Eye, Sparkles, AlertTriangle } from "lucide-react";
+import { FileText, Plus, CheckCircle2, Clock, XCircle, Copy, Pencil, Undo2, Eye, Sparkles, AlertTriangle, Send, Radio, ShieldCheck, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,17 @@ import {
   withdrawSmsTemplate,
   type SmsTemplate as Tpl,
   type SmsTplStatus as Status,
+  useSmsFilings,
+  useSmsApplications,
+  upsertFiling,
+  approveApplication,
+  rejectApplication,
+  getFilingsByTemplate,
+  FILING_CHANNELS,
+  type FilingChannel,
+  type FilingStatus,
+  type TemplateFiling,
+  type TemplateApplication,
 } from "@/lib/sms-templates-store";
 
 export const Route = createFileRoute("/_app/outreach/admin/sms-templates")({
@@ -48,16 +59,31 @@ export const Route = createFileRoute("/_app/outreach/admin/sms-templates")({
 
 function SmsTemplatesPage() {
   const list = useSmsTemplates();
+  const applications = useSmsApplications();
+  const filings = useSmsFilings();
   const [tab, setTab] = useState<"all" | Status>("all");
+  const [topTab, setTopTab] = useState<"library" | "applications" | "filings">("library");
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Tpl | null>(null);
   const [previewing, setPreviewing] = useState<Tpl | null>(null);
+  const [filingCtx, setFilingCtx] = useState<{ tpl: Tpl; channel: FilingChannel } | null>(null);
+  const [reviewingApp, setReviewingApp] = useState<TemplateApplication | null>(null);
 
   const counts = {
     all: list.length,
     approved: list.filter((t) => t.status === "approved").length,
     pending: list.filter((t) => t.status === "pending").length,
     rejected: list.filter((t) => t.status === "rejected").length,
+  };
+  const appCounts = {
+    submitted: applications.filter((a) => a.status === "submitted").length,
+    total: applications.length,
+  };
+  const filingCounts = {
+    approved: filings.filter((f) => f.status === "approved").length,
+    submitted: filings.filter((f) => f.status === "submitted").length,
+    rejected: filings.filter((f) => f.status === "rejected").length,
+    expiring: filings.filter((f) => f.status === "approved" && f.expireAt && daysUntil(f.expireAt) <= 30).length,
   };
 
   const filtered = tab === "all" ? list : list.filter((t) => t.status === tab);
@@ -99,20 +125,44 @@ function SmsTemplatesPage() {
           <div className="grid grid-cols-4 gap-6 text-white shrink-0">
             <MetricBlock label="模板总数" value={counts.all} suffix="个" />
             <MetricBlock label="已通过" value={counts.approved} suffix="个" />
-            <MetricBlock label="待审核" value={counts.pending} suffix="个" warn={counts.pending > 0} />
-            <MetricBlock label="未通过" value={counts.rejected} suffix="个" warn={counts.rejected > 0} />
+            <MetricBlock label="待审申请" value={appCounts.submitted} suffix="个" warn={appCounts.submitted > 0} />
+            <MetricBlock label="即将过期" value={filingCounts.expiring} suffix="条" warn={filingCounts.expiring > 0} hint="30 天内到期报备" />
           </div>
         </div>
       </section>
 
-      {/* 操作区 */}
-      <div className="flex items-center justify-start gap-2">
-        <Button onClick={() => setAddOpen(true)}>
-          <Plus className="h-4 w-4" />
-          新建模板
-        </Button>
+      {/* 顶部 Tab：模板库 / 用户申请 / 报备记录 */}
+      <div className="flex items-center justify-between gap-2 border-b">
+        <div className="flex items-center gap-1">
+          {(
+            [
+              { k: "library", label: "模板库", n: counts.all },
+              { k: "applications", label: "用户申请", n: appCounts.submitted, warn: appCounts.submitted > 0 },
+              { k: "filings", label: "渠道报备", n: filingCounts.approved },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.k}
+              onClick={() => setTopTab(t.k)}
+              className={cn(
+                "px-4 py-2 text-sm border-b-2 -mb-px transition-colors flex items-center gap-1.5",
+                topTab === t.k ? "border-primary text-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t.label}
+              <Badge variant="outline" className={cn("h-5 px-1.5 text-[10px] tabular-nums", "warn" in t && t.warn && "bg-amber-50 text-amber-700 border-amber-200")}>{t.n}</Badge>
+            </button>
+          ))}
+        </div>
+        {topTab === "library" && (
+          <Button size="sm" onClick={() => setAddOpen(true)}>
+            <Plus className="h-4 w-4" />
+            新建模板
+          </Button>
+        )}
       </div>
 
+      {topTab === "library" && (
       <Card className="p-0 overflow-hidden">
         <div className="flex items-center gap-1 border-b bg-muted/40 px-4 py-2">
           {(
@@ -165,6 +215,9 @@ function SmsTemplatesPage() {
                     <span className="text-rose-600">拒因：{t.rejectReason}</span>
                   )}
                 </div>
+                {t.status === "approved" && (
+                  <FilingMatrix template={t} onPick={(ch) => setFilingCtx({ tpl: t, channel: ch })} />
+                )}
               </div>
               <div className="flex flex-col gap-1 shrink-0 w-24">
                 <Button
@@ -225,6 +278,15 @@ function SmsTemplatesPage() {
           ))}
         </div>
       </Card>
+      )}
+
+      {topTab === "applications" && (
+        <ApplicationsPanel apps={applications} onReview={setReviewingApp} />
+      )}
+
+      {topTab === "filings" && (
+        <FilingsPanel filings={filings} templates={list} onEdit={(tpl, ch) => setFilingCtx({ tpl, channel: ch })} />
+      )}
 
       <NewTplDialog open={addOpen} onOpenChange={setAddOpen} onSubmit={submitNew} />
       <NewTplDialog
@@ -237,6 +299,8 @@ function SmsTemplatesPage() {
         template={previewing}
         onOpenChange={(o) => !o && setPreviewing(null)}
       />
+      <FilingDialog ctx={filingCtx} onOpenChange={(o) => !o && setFilingCtx(null)} />
+      <ReviewAppDialog app={reviewingApp} onOpenChange={(o) => !o && setReviewingApp(null)} />
     </div>
   );
 }
