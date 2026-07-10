@@ -76,7 +76,7 @@ const menu: Root[] = [
       {
         label: "费用中心",
         children: [
-          { label: "账单明细", to: "/outreach/billing" },
+          { label: "消费明细", to: "/outreach/billing" },
           { label: "账户充值", to: "/outreach/recharge" },
           { label: "发票管理", to: "/outreach/invoices" },
         ],

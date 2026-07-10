@@ -338,9 +338,9 @@ function BillingPage() {
             <Receipt className="h-6 w-6" />
           </div>
           <div className="flex-1">
-            <h1 className="text-xl font-bold">账单</h1>
+            <h1 className="text-xl font-bold">消费明细</h1>
             <p className="text-white/85 text-sm mt-0.5">
-              统一查看信息查看、触达、退还、充值等积分流水
+              按次记录信息查看、触达发送、AI 生成等积分消耗；充值订单请见「账户充值」，开票请见「发票中心」
             </p>
           </div>
           <div className="flex items-stretch gap-4">
