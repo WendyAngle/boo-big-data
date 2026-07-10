@@ -303,16 +303,31 @@ function RuleEditor({
   onSave: (r: Rule) => void;
 }) {
   if (!rule) return null;
+  return (
+    <RuleEditorInner
+      key={`${rule.id || "new"}-${open ? "o" : "c"}`}
+      open={open}
+      rule={rule}
+      onOpenChange={onOpenChange}
+      onSave={onSave}
+    />
+  );
+}
+
+function RuleEditorInner({
+  open, rule, onOpenChange, onSave,
+}: {
+  open: boolean;
+  rule: Rule;
+  onOpenChange: (v: boolean) => void;
+  onSave: (r: Rule) => void;
+}) {
   const isNew = !rule.id;
+  const [draft, setDraft] = useState<Rule>(rule);
 
   function patch(p: Partial<Rule>) {
-    onSave; // no-op reference
-    setDraft({ ...draft, ...p });
+    setDraft((d) => ({ ...d, ...p }));
   }
-  const [draft, setDraft] = useState<Rule>(rule);
-  // reset when opening with a different rule
-  useResetDraft(rule, open, setDraft);
-
   function toggleFailover(name: string) {
     setDraft((d) => ({
       ...d,
@@ -442,16 +457,6 @@ function RuleEditor({
       </DialogContent>
     </Dialog>
   );
-}
-
-function useResetDraft(rule: Rule, open: boolean, set: (r: Rule) => void) {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [key, setKey] = useState("");
-  const nextKey = `${rule.id}|${open}`;
-  if (key !== nextKey) {
-    setKey(nextKey);
-    set(rule);
-  }
 }
 
 function MetricBlock({ label, value, suffix }: {
