@@ -242,9 +242,6 @@ function SmsTemplatesPage() {
                     <tr key={t.id} className="align-top hover:bg-muted/20">
                       <td className="px-4 py-3">
                         <div className="font-medium">{t.name}</div>
-                        <div className="mt-1">
-                          <Badge variant="outline" className="text-[10px]">{t.locale}</Badge>
-                        </div>
                       </td>
                       <td className="px-3 py-3">
                         <Badge
