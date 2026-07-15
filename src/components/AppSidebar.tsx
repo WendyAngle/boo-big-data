@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ShieldCheck, ChevronDown, Users, UserCog, Coins, Send, FolderTree, Box, Wallet, Layers, Receipt, FileText, Search, LayoutDashboard, Inbox, KeyRound } from "lucide-react";
+import { ShieldCheck, ChevronDown, Users, UserCog, Send, FolderTree, Box, Wallet, Layers, Receipt, FileText, Search, LayoutDashboard, Inbox, KeyRound } from "lucide-react";
 import { AccountMenu } from "@/components/account/AccountMenu";
 import { useSidebarBadge } from "@/lib/inbox-store";
 
@@ -9,41 +9,6 @@ type Group = { label: string; to?: string; children: Leaf[] };
 type Root = { label: string; icon: typeof ShieldCheck; children: Group[] };
 
 const menu: Root[] = [
-  {
-    label: "积分管理系统",
-    icon: Coins,
-    children: [
-      {
-        label: "首页",
-        to: "/points",
-        children: [],
-      },
-      {
-        label: "产品管理",
-        children: [
-          { label: "产品分类", to: "/points/products/categories", icon: FolderTree },
-          { label: "基础产品", to: "/points/products/basic", icon: Box },
-          { label: "充值产品", to: "/points/products/recharge", icon: Wallet },
-          { label: "套餐产品", to: "/points/products/bundles", icon: Layers },
-        ],
-      },
-      {
-        label: "应用管理",
-        to: "/points/apps",
-        children: [],
-      },
-      {
-        label: "企业管理",
-        to: "/points/tenants",
-        children: [],
-      },
-      {
-        label: "充值管理",
-        to: "/points/recharges",
-        children: [],
-      },
-    ],
-  },
   {
     label: "出海大数据平台",
     icon: Send,

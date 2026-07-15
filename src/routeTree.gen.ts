@@ -11,10 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
-import { Route as AppPointsIndexRouteImport } from './routes/_app.points.index'
 import { Route as AppOutreachIndexRouteImport } from './routes/_app.outreach.index'
-import { Route as AppPointsRechargesRouteImport } from './routes/_app.points.recharges'
-import { Route as AppPointsAppsRouteImport } from './routes/_app.points.apps'
 import { Route as AppOutreachUsersRouteImport } from './routes/_app.outreach.users'
 import { Route as AppOutreachUnlockedRouteImport } from './routes/_app.outreach.unlocked'
 import { Route as AppOutreachSuppressionsRouteImport } from './routes/_app.outreach.suppressions'
@@ -36,14 +33,8 @@ import { Route as AppOutreachConversationsRouteImport } from './routes/_app.outr
 import { Route as AppOutreachBillsRouteImport } from './routes/_app.outreach.bills'
 import { Route as AppOutreachBillingEmptyRouteImport } from './routes/_app.outreach.billing-empty'
 import { Route as AppOutreachBillingRouteImport } from './routes/_app.outreach.billing'
-import { Route as AppPointsTenantsIndexRouteImport } from './routes/_app.points.tenants.index'
 import { Route as AppOutreachProductsIndexRouteImport } from './routes/_app.outreach.products.index'
 import { Route as AppOutreachEnterpriseIndexRouteImport } from './routes/_app.outreach.enterprise.index'
-import { Route as AppPointsTenantsIdRouteImport } from './routes/_app.points.tenants.$id'
-import { Route as AppPointsProductsRechargeRouteImport } from './routes/_app.points.products.recharge'
-import { Route as AppPointsProductsCategoriesRouteImport } from './routes/_app.points.products.categories'
-import { Route as AppPointsProductsBundlesRouteImport } from './routes/_app.points.products.bundles'
-import { Route as AppPointsProductsBasicRouteImport } from './routes/_app.points.products.basic'
 import { Route as AppOutreachProductsHsRouteImport } from './routes/_app.outreach.products.$hs'
 import { Route as AppOutreachEnterpriseIdRouteImport } from './routes/_app.outreach.enterprise.$id'
 import { Route as AppOutreachAdminSmsTemplatesRouteImport } from './routes/_app.outreach.admin.sms-templates'
@@ -64,24 +55,9 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppPointsIndexRoute = AppPointsIndexRouteImport.update({
-  id: '/points/',
-  path: '/points/',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppOutreachIndexRoute = AppOutreachIndexRouteImport.update({
   id: '/outreach/',
   path: '/outreach/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPointsRechargesRoute = AppPointsRechargesRouteImport.update({
-  id: '/points/recharges',
-  path: '/points/recharges',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPointsAppsRoute = AppPointsAppsRouteImport.update({
-  id: '/points/apps',
-  path: '/points/apps',
   getParentRoute: () => AppRoute,
 } as any)
 const AppOutreachUsersRoute = AppOutreachUsersRouteImport.update({
@@ -193,11 +169,6 @@ const AppOutreachBillingRoute = AppOutreachBillingRouteImport.update({
   path: '/outreach/billing',
   getParentRoute: () => AppRoute,
 } as any)
-const AppPointsTenantsIndexRoute = AppPointsTenantsIndexRouteImport.update({
-  id: '/points/tenants/',
-  path: '/points/tenants/',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppOutreachProductsIndexRoute =
   AppOutreachProductsIndexRouteImport.update({
     id: '/outreach/products/',
@@ -210,34 +181,6 @@ const AppOutreachEnterpriseIndexRoute =
     path: '/',
     getParentRoute: () => AppOutreachEnterpriseRoute,
   } as any)
-const AppPointsTenantsIdRoute = AppPointsTenantsIdRouteImport.update({
-  id: '/points/tenants/$id',
-  path: '/points/tenants/$id',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPointsProductsRechargeRoute =
-  AppPointsProductsRechargeRouteImport.update({
-    id: '/points/products/recharge',
-    path: '/points/products/recharge',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppPointsProductsCategoriesRoute =
-  AppPointsProductsCategoriesRouteImport.update({
-    id: '/points/products/categories',
-    path: '/points/products/categories',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppPointsProductsBundlesRoute =
-  AppPointsProductsBundlesRouteImport.update({
-    id: '/points/products/bundles',
-    path: '/points/products/bundles',
-    getParentRoute: () => AppRoute,
-  } as any)
-const AppPointsProductsBasicRoute = AppPointsProductsBasicRouteImport.update({
-  id: '/points/products/basic',
-  path: '/points/products/basic',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppOutreachProductsHsRoute = AppOutreachProductsHsRouteImport.update({
   id: '/outreach/products/$hs',
   path: '/outreach/products/$hs',
@@ -320,10 +263,7 @@ export interface FileRoutesByFullPath {
   '/outreach/suppressions': typeof AppOutreachSuppressionsRoute
   '/outreach/unlocked': typeof AppOutreachUnlockedRoute
   '/outreach/users': typeof AppOutreachUsersRoute
-  '/points/apps': typeof AppPointsAppsRoute
-  '/points/recharges': typeof AppPointsRechargesRoute
   '/outreach/': typeof AppOutreachIndexRoute
-  '/points/': typeof AppPointsIndexRoute
   '/outreach/admin/email-accounts': typeof AppOutreachAdminEmailAccountsRoute
   '/outreach/admin/email-providers': typeof AppOutreachAdminEmailProvidersRoute
   '/outreach/admin/invoice-review': typeof AppOutreachAdminInvoiceReviewRoute
@@ -332,14 +272,8 @@ export interface FileRoutesByFullPath {
   '/outreach/admin/sms-templates': typeof AppOutreachAdminSmsTemplatesRoute
   '/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdRouteWithChildren
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
-  '/points/products/basic': typeof AppPointsProductsBasicRoute
-  '/points/products/bundles': typeof AppPointsProductsBundlesRoute
-  '/points/products/categories': typeof AppPointsProductsCategoriesRoute
-  '/points/products/recharge': typeof AppPointsProductsRechargeRoute
-  '/points/tenants/$id': typeof AppPointsTenantsIdRoute
   '/outreach/enterprise/': typeof AppOutreachEnterpriseIndexRoute
   '/outreach/products/': typeof AppOutreachProductsIndexRoute
-  '/points/tenants/': typeof AppPointsTenantsIndexRoute
   '/outreach/enterprise/$id/': typeof AppOutreachEnterpriseIdIndexRoute
   '/outreach/enterprise/$id/contact/$idx': typeof AppOutreachEnterpriseIdContactIdxRoute
 }
@@ -365,10 +299,7 @@ export interface FileRoutesByTo {
   '/outreach/suppressions': typeof AppOutreachSuppressionsRoute
   '/outreach/unlocked': typeof AppOutreachUnlockedRoute
   '/outreach/users': typeof AppOutreachUsersRoute
-  '/points/apps': typeof AppPointsAppsRoute
-  '/points/recharges': typeof AppPointsRechargesRoute
   '/outreach': typeof AppOutreachIndexRoute
-  '/points': typeof AppPointsIndexRoute
   '/outreach/admin/email-accounts': typeof AppOutreachAdminEmailAccountsRoute
   '/outreach/admin/email-providers': typeof AppOutreachAdminEmailProvidersRoute
   '/outreach/admin/invoice-review': typeof AppOutreachAdminInvoiceReviewRoute
@@ -376,14 +307,8 @@ export interface FileRoutesByTo {
   '/outreach/admin/sms-routing': typeof AppOutreachAdminSmsRoutingRoute
   '/outreach/admin/sms-templates': typeof AppOutreachAdminSmsTemplatesRoute
   '/outreach/products/$hs': typeof AppOutreachProductsHsRoute
-  '/points/products/basic': typeof AppPointsProductsBasicRoute
-  '/points/products/bundles': typeof AppPointsProductsBundlesRoute
-  '/points/products/categories': typeof AppPointsProductsCategoriesRoute
-  '/points/products/recharge': typeof AppPointsProductsRechargeRoute
-  '/points/tenants/$id': typeof AppPointsTenantsIdRoute
   '/outreach/enterprise': typeof AppOutreachEnterpriseIndexRoute
   '/outreach/products': typeof AppOutreachProductsIndexRoute
-  '/points/tenants': typeof AppPointsTenantsIndexRoute
   '/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdIndexRoute
   '/outreach/enterprise/$id/contact/$idx': typeof AppOutreachEnterpriseIdContactIdxRoute
 }
@@ -412,10 +337,7 @@ export interface FileRoutesById {
   '/_app/outreach/suppressions': typeof AppOutreachSuppressionsRoute
   '/_app/outreach/unlocked': typeof AppOutreachUnlockedRoute
   '/_app/outreach/users': typeof AppOutreachUsersRoute
-  '/_app/points/apps': typeof AppPointsAppsRoute
-  '/_app/points/recharges': typeof AppPointsRechargesRoute
   '/_app/outreach/': typeof AppOutreachIndexRoute
-  '/_app/points/': typeof AppPointsIndexRoute
   '/_app/outreach/admin/email-accounts': typeof AppOutreachAdminEmailAccountsRoute
   '/_app/outreach/admin/email-providers': typeof AppOutreachAdminEmailProvidersRoute
   '/_app/outreach/admin/invoice-review': typeof AppOutreachAdminInvoiceReviewRoute
@@ -424,14 +346,8 @@ export interface FileRoutesById {
   '/_app/outreach/admin/sms-templates': typeof AppOutreachAdminSmsTemplatesRoute
   '/_app/outreach/enterprise/$id': typeof AppOutreachEnterpriseIdRouteWithChildren
   '/_app/outreach/products/$hs': typeof AppOutreachProductsHsRoute
-  '/_app/points/products/basic': typeof AppPointsProductsBasicRoute
-  '/_app/points/products/bundles': typeof AppPointsProductsBundlesRoute
-  '/_app/points/products/categories': typeof AppPointsProductsCategoriesRoute
-  '/_app/points/products/recharge': typeof AppPointsProductsRechargeRoute
-  '/_app/points/tenants/$id': typeof AppPointsTenantsIdRoute
   '/_app/outreach/enterprise/': typeof AppOutreachEnterpriseIndexRoute
   '/_app/outreach/products/': typeof AppOutreachProductsIndexRoute
-  '/_app/points/tenants/': typeof AppPointsTenantsIndexRoute
   '/_app/outreach/enterprise/$id/': typeof AppOutreachEnterpriseIdIndexRoute
   '/_app/outreach/enterprise/$id/contact/$idx': typeof AppOutreachEnterpriseIdContactIdxRoute
 }
@@ -460,10 +376,7 @@ export interface FileRouteTypes {
     | '/outreach/suppressions'
     | '/outreach/unlocked'
     | '/outreach/users'
-    | '/points/apps'
-    | '/points/recharges'
     | '/outreach/'
-    | '/points/'
     | '/outreach/admin/email-accounts'
     | '/outreach/admin/email-providers'
     | '/outreach/admin/invoice-review'
@@ -472,14 +385,8 @@ export interface FileRouteTypes {
     | '/outreach/admin/sms-templates'
     | '/outreach/enterprise/$id'
     | '/outreach/products/$hs'
-    | '/points/products/basic'
-    | '/points/products/bundles'
-    | '/points/products/categories'
-    | '/points/products/recharge'
-    | '/points/tenants/$id'
     | '/outreach/enterprise/'
     | '/outreach/products/'
-    | '/points/tenants/'
     | '/outreach/enterprise/$id/'
     | '/outreach/enterprise/$id/contact/$idx'
   fileRoutesByTo: FileRoutesByTo
@@ -505,10 +412,7 @@ export interface FileRouteTypes {
     | '/outreach/suppressions'
     | '/outreach/unlocked'
     | '/outreach/users'
-    | '/points/apps'
-    | '/points/recharges'
     | '/outreach'
-    | '/points'
     | '/outreach/admin/email-accounts'
     | '/outreach/admin/email-providers'
     | '/outreach/admin/invoice-review'
@@ -516,14 +420,8 @@ export interface FileRouteTypes {
     | '/outreach/admin/sms-routing'
     | '/outreach/admin/sms-templates'
     | '/outreach/products/$hs'
-    | '/points/products/basic'
-    | '/points/products/bundles'
-    | '/points/products/categories'
-    | '/points/products/recharge'
-    | '/points/tenants/$id'
     | '/outreach/enterprise'
     | '/outreach/products'
-    | '/points/tenants'
     | '/outreach/enterprise/$id'
     | '/outreach/enterprise/$id/contact/$idx'
   id:
@@ -551,10 +449,7 @@ export interface FileRouteTypes {
     | '/_app/outreach/suppressions'
     | '/_app/outreach/unlocked'
     | '/_app/outreach/users'
-    | '/_app/points/apps'
-    | '/_app/points/recharges'
     | '/_app/outreach/'
-    | '/_app/points/'
     | '/_app/outreach/admin/email-accounts'
     | '/_app/outreach/admin/email-providers'
     | '/_app/outreach/admin/invoice-review'
@@ -563,14 +458,8 @@ export interface FileRouteTypes {
     | '/_app/outreach/admin/sms-templates'
     | '/_app/outreach/enterprise/$id'
     | '/_app/outreach/products/$hs'
-    | '/_app/points/products/basic'
-    | '/_app/points/products/bundles'
-    | '/_app/points/products/categories'
-    | '/_app/points/products/recharge'
-    | '/_app/points/tenants/$id'
     | '/_app/outreach/enterprise/'
     | '/_app/outreach/products/'
-    | '/_app/points/tenants/'
     | '/_app/outreach/enterprise/$id/'
     | '/_app/outreach/enterprise/$id/contact/$idx'
   fileRoutesById: FileRoutesById
@@ -595,32 +484,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/points/': {
-      id: '/_app/points/'
-      path: '/points'
-      fullPath: '/points/'
-      preLoaderRoute: typeof AppPointsIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/outreach/': {
       id: '/_app/outreach/'
       path: '/outreach'
       fullPath: '/outreach/'
       preLoaderRoute: typeof AppOutreachIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/points/recharges': {
-      id: '/_app/points/recharges'
-      path: '/points/recharges'
-      fullPath: '/points/recharges'
-      preLoaderRoute: typeof AppPointsRechargesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/points/apps': {
-      id: '/_app/points/apps'
-      path: '/points/apps'
-      fullPath: '/points/apps'
-      preLoaderRoute: typeof AppPointsAppsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/outreach/users': {
@@ -770,13 +638,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOutreachBillingRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/points/tenants/': {
-      id: '/_app/points/tenants/'
-      path: '/points/tenants'
-      fullPath: '/points/tenants/'
-      preLoaderRoute: typeof AppPointsTenantsIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/outreach/products/': {
       id: '/_app/outreach/products/'
       path: '/outreach/products'
@@ -790,41 +651,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/outreach/enterprise/'
       preLoaderRoute: typeof AppOutreachEnterpriseIndexRouteImport
       parentRoute: typeof AppOutreachEnterpriseRoute
-    }
-    '/_app/points/tenants/$id': {
-      id: '/_app/points/tenants/$id'
-      path: '/points/tenants/$id'
-      fullPath: '/points/tenants/$id'
-      preLoaderRoute: typeof AppPointsTenantsIdRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/points/products/recharge': {
-      id: '/_app/points/products/recharge'
-      path: '/points/products/recharge'
-      fullPath: '/points/products/recharge'
-      preLoaderRoute: typeof AppPointsProductsRechargeRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/points/products/categories': {
-      id: '/_app/points/products/categories'
-      path: '/points/products/categories'
-      fullPath: '/points/products/categories'
-      preLoaderRoute: typeof AppPointsProductsCategoriesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/points/products/bundles': {
-      id: '/_app/points/products/bundles'
-      path: '/points/products/bundles'
-      fullPath: '/points/products/bundles'
-      preLoaderRoute: typeof AppPointsProductsBundlesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/points/products/basic': {
-      id: '/_app/points/products/basic'
-      path: '/points/products/basic'
-      fullPath: '/points/products/basic'
-      preLoaderRoute: typeof AppPointsProductsBasicRouteImport
-      parentRoute: typeof AppRoute
     }
     '/_app/outreach/products/$hs': {
       id: '/_app/outreach/products/$hs'
@@ -954,10 +780,7 @@ interface AppRouteChildren {
   AppOutreachSuppressionsRoute: typeof AppOutreachSuppressionsRoute
   AppOutreachUnlockedRoute: typeof AppOutreachUnlockedRoute
   AppOutreachUsersRoute: typeof AppOutreachUsersRoute
-  AppPointsAppsRoute: typeof AppPointsAppsRoute
-  AppPointsRechargesRoute: typeof AppPointsRechargesRoute
   AppOutreachIndexRoute: typeof AppOutreachIndexRoute
-  AppPointsIndexRoute: typeof AppPointsIndexRoute
   AppOutreachAdminEmailAccountsRoute: typeof AppOutreachAdminEmailAccountsRoute
   AppOutreachAdminEmailProvidersRoute: typeof AppOutreachAdminEmailProvidersRoute
   AppOutreachAdminInvoiceReviewRoute: typeof AppOutreachAdminInvoiceReviewRoute
@@ -965,13 +788,7 @@ interface AppRouteChildren {
   AppOutreachAdminSmsRoutingRoute: typeof AppOutreachAdminSmsRoutingRoute
   AppOutreachAdminSmsTemplatesRoute: typeof AppOutreachAdminSmsTemplatesRoute
   AppOutreachProductsHsRoute: typeof AppOutreachProductsHsRoute
-  AppPointsProductsBasicRoute: typeof AppPointsProductsBasicRoute
-  AppPointsProductsBundlesRoute: typeof AppPointsProductsBundlesRoute
-  AppPointsProductsCategoriesRoute: typeof AppPointsProductsCategoriesRoute
-  AppPointsProductsRechargeRoute: typeof AppPointsProductsRechargeRoute
-  AppPointsTenantsIdRoute: typeof AppPointsTenantsIdRoute
   AppOutreachProductsIndexRoute: typeof AppOutreachProductsIndexRoute
-  AppPointsTenantsIndexRoute: typeof AppPointsTenantsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -997,10 +814,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachSuppressionsRoute: AppOutreachSuppressionsRoute,
   AppOutreachUnlockedRoute: AppOutreachUnlockedRoute,
   AppOutreachUsersRoute: AppOutreachUsersRoute,
-  AppPointsAppsRoute: AppPointsAppsRoute,
-  AppPointsRechargesRoute: AppPointsRechargesRoute,
   AppOutreachIndexRoute: AppOutreachIndexRoute,
-  AppPointsIndexRoute: AppPointsIndexRoute,
   AppOutreachAdminEmailAccountsRoute: AppOutreachAdminEmailAccountsRoute,
   AppOutreachAdminEmailProvidersRoute: AppOutreachAdminEmailProvidersRoute,
   AppOutreachAdminInvoiceReviewRoute: AppOutreachAdminInvoiceReviewRoute,
@@ -1008,13 +822,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOutreachAdminSmsRoutingRoute: AppOutreachAdminSmsRoutingRoute,
   AppOutreachAdminSmsTemplatesRoute: AppOutreachAdminSmsTemplatesRoute,
   AppOutreachProductsHsRoute: AppOutreachProductsHsRoute,
-  AppPointsProductsBasicRoute: AppPointsProductsBasicRoute,
-  AppPointsProductsBundlesRoute: AppPointsProductsBundlesRoute,
-  AppPointsProductsCategoriesRoute: AppPointsProductsCategoriesRoute,
-  AppPointsProductsRechargeRoute: AppPointsProductsRechargeRoute,
-  AppPointsTenantsIdRoute: AppPointsTenantsIdRoute,
   AppOutreachProductsIndexRoute: AppOutreachProductsIndexRoute,
-  AppPointsTenantsIndexRoute: AppPointsTenantsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
