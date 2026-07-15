@@ -1,18 +1,24 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Search,
-  Lightbulb,
   Package,
   Building2,
-  ArrowRight,
   Globe2,
   Users2,
   X as XIcon,
   TrendingUp,
+  Hash,
+  User,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/outreach/search")({
@@ -57,108 +63,58 @@ function clearRecent() {
 const HOT_SEARCHES = ["花岗岩", "光伏组件", "新能源汽车", "锂电池", "680100", "germany"];
 
 /* ------------------------------- 搜索类型 ------------------------------- */
-type SearchScope = "leads" | "products" | "enterprise";
+type SearchScope = "product" | "hs" | "enterprise" | "person";
 
-type ScopeDef = {
+const SCOPES: {
   key: SearchScope;
   label: string;
-  desc: string;
-  icon: typeof Lightbulb;
-  iconBg: string;
-  iconColor: string;
-};
-
-const SCOPES: ScopeDef[] = [
-  {
-    key: "leads",
-    label: "搜索线索",
-    desc: "查找企业与关键联系人线索",
-    icon: Lightbulb,
-    iconBg: "bg-amber-50",
-    iconColor: "text-amber-500",
-  },
-  {
-    key: "products",
-    label: "搜索商品",
-    desc: "跳转商品目录并按关键词或 HS 编码过滤",
-    icon: Package,
-    iconBg: "bg-emerald-50",
-    iconColor: "text-emerald-500",
-  },
-  {
-    key: "enterprise",
-    label: "搜索企业",
-    desc: "在企业发现页按企业名搜索",
-    icon: Building2,
-    iconBg: "bg-sky-50",
-    iconColor: "text-sky-500",
-  },
+  icon: typeof Package;
+  placeholder: string;
+}[] = [
+  { key: "product", label: "商品描述", icon: Package, placeholder: "输入商品名称或描述关键词" },
+  { key: "hs", label: "HS编码", icon: Hash, placeholder: "输入 HS 编码（4 位及以上数字）" },
+  { key: "enterprise", label: "企业名称/描述", icon: Building2, placeholder: "输入企业名称或描述关键词" },
+  { key: "person", label: "人物姓名/描述", icon: User, placeholder: "输入联系人姓名或描述关键词" },
 ];
 
 /* ============================== 页面 ============================== */
 function SearchPage() {
   const navigate = useNavigate();
   const [kw, setKw] = useState("");
-  const [dismissed, setDismissed] = useState(false);
-  const [activeIdx, setActiveIdx] = useState(1); // 默认高亮"搜索商品"，与附图一致
+  const [scope, setScope] = useState<SearchScope>("product");
   const [recentTick, setRecentTick] = useState(0);
   const recent = useMemo(() => loadRecent(), [recentTick]);
-  const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // 点击页面其它区域收起下拉
-  useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
-      if (!wrapRef.current) return;
-      if (!wrapRef.current.contains(e.target as Node)) setDismissed(true);
-    };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, []);
+  const currentScope = SCOPES.find((s) => s.key === scope) ?? SCOPES[0];
 
-  const trimmed = kw.trim();
-  const hasKw = trimmed.length > 0;
-  const showDropdown = hasKw && !dismissed;
-
-  const go = (scope: SearchScope, keyword: string) => {
+  const go = (s: SearchScope, keyword: string) => {
     const k = keyword.trim();
     if (!k) {
       toast.error("请输入搜索关键词");
       return;
     }
+    if (s === "hs" && !/^\d{4,}$/.test(k)) {
+      toast.error("HS 编码需为 4 位及以上数字");
+      return;
+    }
     pushRecent(k);
     setRecentTick((n) => n + 1);
-    setDismissed(true);
-    if (scope === "leads") {
+    if (s === "person") {
       navigate({ to: "/outreach/leads" });
-    } else if (scope === "enterprise") {
+    } else if (s === "enterprise") {
       navigate({ to: "/outreach/enterprise", search: { q: k } as never });
+    } else if (s === "hs") {
+      navigate({ to: "/outreach/products/$hs", params: { hs: k } });
     } else {
-      // 商品：纯数字（>=4位）按 HS 编码直达
-      if (/^\d{4,}$/.test(k)) {
-        navigate({ to: "/outreach/products/$hs", params: { hs: k } });
-      } else {
-        navigate({ to: "/outreach/products" });
-      }
+      navigate({ to: "/outreach/products" });
     }
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showDropdown) {
-      if (e.key === "Enter") go(SCOPES[activeIdx].key, kw);
-      return;
-    }
-    if (e.key === "ArrowDown") {
+    if (e.key === "Enter") {
       e.preventDefault();
-      setActiveIdx((i) => (i + 1) % SCOPES.length);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setActiveIdx((i) => (i - 1 + SCOPES.length) % SCOPES.length);
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      go(SCOPES[activeIdx].key, kw);
-    } else if (e.key === "Escape") {
-      setDismissed(true);
+      go(scope, kw);
     }
   };
 
@@ -185,79 +141,55 @@ function SearchPage() {
         </div>
 
         {/* 搜索框 */}
-        <div ref={wrapRef} className="relative mx-auto mt-10 max-w-3xl">
-          <div
-            className={`flex items-center gap-3 rounded-2xl bg-white px-5 h-16 shadow-[0_18px_60px_-20px_rgba(56,189,248,0.45)] ring-1 transition-all ${
-              showDropdown ? "ring-primary/60" : "ring-white/80"
-            }`}
-          >
-            <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+        <div className="relative mx-auto mt-10 max-w-3xl">
+          <div className="flex items-center gap-2 rounded-2xl bg-white pl-2 pr-3 h-16 shadow-[0_18px_60px_-20px_rgba(56,189,248,0.45)] ring-1 ring-white/80 focus-within:ring-primary/60 transition-all">
+            <Select value={scope} onValueChange={(v) => setScope(v as SearchScope)}>
+              <SelectTrigger className="h-11 w-[160px] border-0 bg-slate-50 hover:bg-slate-100 focus:ring-0 focus:ring-offset-0 rounded-xl text-sm font-medium text-slate-700 shrink-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="start">
+                {SCOPES.map((s) => {
+                  const Icon = s.icon;
+                  return (
+                    <SelectItem key={s.key} value={s.key}>
+                      <span className="inline-flex items-center gap-2">
+                        <Icon className="h-4 w-4 text-muted-foreground" />
+                        {s.label}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            <div className="h-8 w-px bg-slate-200 shrink-0" />
+            <Search className="h-5 w-5 text-muted-foreground shrink-0 ml-1" />
             <Input
               ref={inputRef}
               value={kw}
-              onChange={(e) => {
-                setKw(e.target.value);
-                setActiveIdx(1);
-                setDismissed(false);
-              }}
-              onFocus={() => setDismissed(false)}
+              onChange={(e) => setKw(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder="搜索线索、商品或企业关键词，支持 HS 编码"
+              placeholder={currentScope.placeholder}
               className="border-0 shadow-none focus-visible:ring-0 text-base h-12 px-0 placeholder:text-muted-foreground/70"
             />
-            {hasKw && (
+            {kw && (
               <button
-                onClick={() => {
-                  setKw("");
-                  setActiveIdx(1);
-                }}
-                className="rounded-full p-1.5 text-muted-foreground hover:bg-muted/60"
+                onClick={() => setKw("")}
+                className="rounded-full p-1.5 text-muted-foreground hover:bg-muted/60 shrink-0"
                 aria-label="清空"
               >
                 <XIcon className="h-4 w-4" />
               </button>
             )}
+            <button
+              onClick={() => go(scope, kw)}
+              className="ml-1 h-11 rounded-xl bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0"
+            >
+              搜索
+            </button>
           </div>
 
-          {/* 类型联想下拉 */}
-          {showDropdown && (
-            <div className="absolute left-0 right-0 top-[calc(100%+12px)] z-20 rounded-2xl bg-white p-2 shadow-[0_24px_70px_-20px_rgba(15,23,42,0.18)] ring-1 ring-slate-100">
-              {SCOPES.map((s, i) => {
-                const Icon = s.icon;
-                const active = i === activeIdx;
-                return (
-                  <button
-                    key={s.key}
-                    onMouseEnter={() => setActiveIdx(i)}
-                    onClick={() => go(s.key, kw)}
-                    className={`group flex w-full items-center gap-4 rounded-xl px-4 py-3 text-left transition-colors ${
-                      active ? "bg-slate-50" : "hover:bg-slate-50/70"
-                    }`}
-                  >
-                    <span
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${s.iconBg}`}
-                    >
-                      <Icon className={`h-5 w-5 ${s.iconColor}`} />
-                    </span>
-                    <span className="flex-1 min-w-0">
-                      <div className="text-sm text-slate-800">
-                        <span>{s.label} </span>
-                        <span className="font-semibold text-slate-900">{trimmed}</span>
-                      </div>
-                      <div className="mt-0.5 text-xs text-muted-foreground truncate">
-                        {s.desc}
-                      </div>
-                    </span>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground/70 group-hover:text-foreground" />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
           {/* 最近搜索 / 热门 */}
-          {!showDropdown && (
-            <div className="mt-6 space-y-3">
+          <div className="mt-6 space-y-3">
               {recent.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm text-muted-foreground shrink-0">最近搜索：</span>
@@ -266,7 +198,6 @@ function SearchPage() {
                       key={r}
                       onClick={() => {
                         setKw(r);
-                        setDismissed(false);
                         inputRef.current?.focus();
                       }}
                       className="group inline-flex max-w-[280px] items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-sm text-slate-700 ring-1 ring-slate-200 hover:ring-primary/50 hover:text-primary transition-colors"
@@ -305,7 +236,6 @@ function SearchPage() {
                     key={h}
                     onClick={() => {
                       setKw(h);
-                      setDismissed(false);
                       inputRef.current?.focus();
                     }}
                     className="rounded-full bg-primary/8 px-3 py-1 text-sm text-primary/90 hover:bg-primary/12 transition-colors"
@@ -315,8 +245,7 @@ function SearchPage() {
                   </button>
                 ))}
               </div>
-            </div>
-          )}
+          </div>
         </div>
 
         {/* 数据指标卡片 */}
