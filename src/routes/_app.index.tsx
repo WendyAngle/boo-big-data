@@ -4,8 +4,8 @@ import { Compass, Sparkles, Wallet, Settings2 } from "lucide-react";
 export const Route = createFileRoute("/_app/")({
   head: () => ({
     meta: [
-      { title: "Boo数据平台" },
-      { name: "description", content: "Boo数据平台 - 数据驱动业务增长" },
+      { title: "悦意出海" },
+      { name: "description", content: "悦意出海 - 数据驱动业务增长" },
     ],
   }),
   component: Home,
@@ -42,7 +42,7 @@ function Home() {
     <div className="p-8 space-y-6">
       <section className="relative overflow-hidden rounded-2xl p-10 text-white" style={{ background: "var(--gradient-hero)" }}>
         <div className="relative z-10 max-w-2xl">
-          <h1 className="text-4xl font-bold tracking-tight">Boo数据平台</h1>
+          <h1 className="text-4xl font-bold tracking-tight">悦意出海</h1>
           <p className="mt-3 text-white/90 text-lg">从数据到决策，构建可信的业务底座</p>
         </div>
         <div className="absolute -right-10 -bottom-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />

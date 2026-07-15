@@ -91,7 +91,7 @@ import {
 export const Route = createFileRoute("/_app/outreach/admin/email-accounts")({
   head: () => ({
     meta: [
-      { title: "邮件账号 · 管理后台 | Boo数据平台" },
+      { title: "邮件账号 · 管理后台 | 悦意出海" },
       {
         name: "description",
         content:

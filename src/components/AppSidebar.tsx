@@ -87,7 +87,7 @@ export function AppSidebar() {
         <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground font-bold">
           B
         </div>
-        <span className="font-semibold text-sidebar-foreground tracking-wide">Boo数据平台</span>
+        <span className="font-semibold text-sidebar-foreground tracking-wide">悦意出海</span>
       </div>
       <nav className="p-3 space-y-1 flex-1 overflow-y-auto">
         {menu.map((item) => {

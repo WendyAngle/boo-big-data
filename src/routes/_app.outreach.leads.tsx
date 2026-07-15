@@ -110,7 +110,7 @@ const ENTERPRISES_LOOKUP = new Map(ENTERPRISES.map((e) => [e.id, e]));
 export const Route = createFileRoute("/_app/outreach/leads")({
   head: () => ({
     meta: [
-      { title: "线索 | Boo数据平台" },
+      { title: "线索 | 悦意出海" },
       {
         name: "description",
         content:

@@ -70,7 +70,7 @@ import type { DateRange } from "react-day-picker";
 export const Route = createFileRoute("/_app/outreach/unlocked")({
   head: () => ({
     meta: [
-      { title: "解锁记录 | Boo数据平台" },
+      { title: "解锁记录 | 悦意出海" },
       {
         name: "description",
         content:

@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_app/outreach/favorites-empty")({
   head: () => ({
-    meta: [{ title: "收藏 · 空状态演示 | Boo数据平台" }],
+    meta: [{ title: "收藏 · 空状态演示 | 悦意出海" }],
   }),
   component: FavoritesEmptyDemo,
 });

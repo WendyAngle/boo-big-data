@@ -44,7 +44,7 @@ import { ENTERPRISES } from "@/data/enterprises";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
 
 export const Route = createFileRoute("/_app/outreach/products/$hs")({
-  head: () => ({ meta: [{ title: "商品详情 | Boo数据平台" }] }),
+  head: () => ({ meta: [{ title: "商品详情 | 悦意出海" }] }),
   loader: ({ params }) => {
     const data = findByHs(params.hs);
     if (!data) throw notFound();

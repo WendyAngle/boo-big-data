@@ -52,7 +52,7 @@ import {
 export const Route = createFileRoute("/_app/outreach/suppressions")({
   head: () => ({
     meta: [
-      { title: "退订名单 | Boo数据平台" },
+      { title: "退订名单 | 悦意出海" },
       {
         name: "description",
         content: "统一维护邮件与短信的退订名单，避免向已退订用户重复触达。",

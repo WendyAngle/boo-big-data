@@ -90,7 +90,7 @@ import { useThreads, threadKeyFor, type Thread } from "@/lib/inbox-store";
 import { Inbox as InboxIcon, MessageCircleReply } from "lucide-react";
 
 export const Route = createFileRoute("/_app/outreach/reach")({
-  head: () => ({ meta: [{ title: "出海大数据平台 · 触达 | Boo数据平台" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 · 触达 | 悦意出海" }] }),
   component: ReachPage,
 });
 

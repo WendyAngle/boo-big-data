@@ -51,7 +51,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_app/outreach/admin/sms-providers")({
   head: () => ({
     meta: [
-      { title: "短信服务商 · 系统管理 | Boo数据平台" },
+      { title: "短信服务商 · 系统管理 | 悦意出海" },
       {
         name: "description",
         content: "查看已对接的短信服务商健康度、送达率与配额，并按国家/渠道分配容量。",

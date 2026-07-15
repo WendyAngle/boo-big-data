@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PagePlaceholder } from "@/components/PagePlaceholder";
 
 export const Route = createFileRoute("/_app/outreach/")({
-  head: () => ({ meta: [{ title: "出海大数据平台 | Boo数据平台" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 | 悦意出海" }] }),
   component: () => (
     <PagePlaceholder
       breadcrumb={["出海大数据平台"]}

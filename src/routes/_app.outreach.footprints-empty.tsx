@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_app/outreach/footprints-empty")({
   head: () => ({
-    meta: [{ title: "足迹 · 空状态演示 | Boo数据平台" }],
+    meta: [{ title: "足迹 · 空状态演示 | 悦意出海" }],
   }),
   component: FootprintsEmptyDemo,
 });

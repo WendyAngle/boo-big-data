@@ -51,7 +51,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_app/outreach/admin/email-providers")({
   head: () => ({
     meta: [
-      { title: "邮件服务商 · 管理后台 | Boo数据平台" },
+      { title: "邮件服务商 · 管理后台 | 悦意出海" },
       {
         name: "description",
         content: "统一管理平台侧对接的邮件发送服务商（SendGrid、Amazon SES、Mailgun 等），监控送达率、退信率与配额。",
