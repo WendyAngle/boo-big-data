@@ -179,15 +179,15 @@ function ProductsPage() {
 
       {/* Search */}
       <Card className="p-3 space-y-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 rounded-xl bg-white pl-1 pr-1 h-12 ring-1 ring-slate-200 focus-within:ring-primary/60 transition-all">
           <Select
             value={effectiveScope}
             onValueChange={(v) => setUserScope(v as "product" | "hs" | "enterprise")}
           >
-            <SelectTrigger className="w-[200px] min-w-[200px] h-10 shrink-0">
+            <SelectTrigger className="w-[200px] min-w-[200px] h-10 shrink-0 border-0 bg-transparent shadow-none focus:ring-0 focus:ring-offset-0 rounded-lg text-sm font-medium text-slate-700 whitespace-nowrap hover:bg-slate-50">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="w-[200px] min-w-[200px]">
+            <SelectContent align="start" className="w-[200px] min-w-[200px]">
               {(["product", "hs", "enterprise"] as const).map((s) => (
                 <SelectItem key={s} value={s} className="whitespace-nowrap">
                   {SCOPE_META[s].label}
@@ -195,19 +195,18 @@ function ProductsPage() {
               ))}
             </SelectContent>
           </Select>
-          <div className="relative flex-1">
-            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") onSearchSubmit();
-              }}
-              placeholder={meta.placeholder}
-              className="pl-9 h-10 border-0 shadow-none focus-visible:ring-0 bg-transparent"
-            />
-          </div>
-          <Button className="h-10 gap-1.5" onClick={onSearchSubmit}>
+          <div className="h-6 w-px bg-slate-200 shrink-0" />
+          <Search className="h-4 w-4 text-muted-foreground shrink-0 ml-2" />
+          <Input
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") onSearchSubmit();
+            }}
+            placeholder={meta.placeholder}
+            className="flex-1 h-10 border-0 shadow-none focus-visible:ring-0 bg-transparent px-2 placeholder:text-muted-foreground/70"
+          />
+          <Button className="h-9 gap-1.5 rounded-lg shrink-0" onClick={onSearchSubmit}>
             <Search className="h-4 w-4" />
             搜索
           </Button>
