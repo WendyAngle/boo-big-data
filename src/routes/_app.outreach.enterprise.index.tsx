@@ -176,8 +176,8 @@ function OutreachEnterprisePage() {
           className="gap-1.5 h-10 px-4"
           variant={advancedOpen ? "secondary" : "default"}
         >
-          <SlidersHorizontal className="h-4 w-4" />
-          高级搜索
+          <Search className="h-4 w-4" />
+          搜索
           {activeFilterCount > 0 && (
             <Badge
               variant="secondary"
