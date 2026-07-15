@@ -1215,6 +1215,7 @@ const HOT = [
 
 function SearchTab() {
   const [kw, setKw] = useState("");
+  const [scope, setScope] = useState<"product" | "hs">("product");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<LeadItem[]>([]);
   const [activeKws, setActiveKws] = useState<string[]>([]);
@@ -1237,6 +1238,13 @@ function SearchTab() {
     if (words.length === 0) {
       toast.error("请输入搜索关键词");
       return;
+    }
+    if (scope === "hs") {
+      const bad = words.filter((w) => !/^\d{4,}$/.test(w));
+      if (bad.length > 0) {
+        toast.error(`HS 编码需为 4 位及以上数字：${bad.join(", ")}`);
+        return;
+      }
     }
     words.forEach((w) => pushSearchHistory(w));
     setHistoryTick((n) => n + 1);
@@ -1283,6 +1291,25 @@ function SearchTab() {
     <div className="space-y-5">
       <Card className="p-5 space-y-4">
         <div className="flex items-start gap-2">
+          <Select value={scope} onValueChange={(v) => setScope(v as "product" | "hs")}>
+            <SelectTrigger className="h-10 w-[140px] shrink-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="start" className="min-w-[140px]">
+              <SelectItem value="product">
+                <span className="inline-flex items-center gap-2">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  商品关键词
+                </span>
+              </SelectItem>
+              <SelectItem value="hs">
+                <span className="inline-flex items-center gap-2">
+                  <Hash className="h-4 w-4 text-muted-foreground" />
+                  HS 编码
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
           <div className="relative flex-1">
             <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
             <Textarea
@@ -1294,7 +1321,11 @@ function SearchTab() {
                   submit();
                 }
               }}
-              placeholder="输入企业 / 商品 / HS 编码关键词，支持多关键词：逗号、分号、顿号、换行或空格分隔（如：花岗岩, 大理石；680100 钢材）"
+              placeholder={
+                scope === "hs"
+                  ? "输入 HS 编码，支持多个：逗号、分号、顿号、换行或空格分隔（如：680100, 720839）"
+                  : "输入商品关键词，支持多个：逗号、分号、顿号、换行或空格分隔（如：花岗岩, 大理石；石膏板）"
+              }
               className="pl-9 pt-2 min-h-[64px] resize-y"
               rows={2}
             />
