@@ -7,6 +7,8 @@ import {
   ChevronDown,
   Box,
   Sparkles,
+  Hash,
+  Building2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -188,11 +190,17 @@ function ProductsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent align="start" className="w-[200px] min-w-[200px]">
-              {(["product", "hs", "enterprise"] as const).map((s) => (
-                <SelectItem key={s} value={s} className="whitespace-nowrap">
-                  {SCOPE_META[s].label}
-                </SelectItem>
-              ))}
+              {(["product", "hs", "enterprise"] as const).map((s) => {
+                const Icon = s === "product" ? Package : s === "hs" ? Hash : Building2;
+                return (
+                  <SelectItem key={s} value={s} className="whitespace-nowrap">
+                    <span className="inline-flex items-center gap-2">
+                      <Icon className="h-4 w-4 text-muted-foreground" />
+                      {SCOPE_META[s].label}
+                    </span>
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
           <div className="h-6 w-px bg-slate-200 shrink-0" />
