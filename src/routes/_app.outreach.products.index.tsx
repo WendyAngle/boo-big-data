@@ -184,7 +184,7 @@ function ProductsPage() {
             value={effectiveScope}
             onValueChange={(v) => setUserScope(v as "product" | "hs" | "enterprise")}
           >
-            <SelectTrigger className="w-[200px] min-w-[200px] h-10 shrink-0 border-0 bg-transparent shadow-none focus:ring-0 focus:ring-offset-0 rounded-lg text-sm font-medium text-slate-700 whitespace-nowrap hover:bg-slate-50">
+            <SelectTrigger className="w-[200px] min-w-[200px] h-10 shrink-0 border-0 bg-transparent shadow-none focus:ring-0 focus:ring-offset-0 rounded-none text-sm font-medium text-slate-700 whitespace-nowrap hover:bg-transparent px-3">
               <SelectValue />
             </SelectTrigger>
             <SelectContent align="start" className="w-[200px] min-w-[200px]">
