@@ -142,7 +142,7 @@ function SearchPage() {
 
         {/* 搜索框 */}
         <div className="relative mx-auto mt-10 max-w-3xl">
-          <div className="flex items-stretch gap-2 rounded-2xl bg-white pl-2 h-16 overflow-hidden shadow-[0_18px_60px_-20px_rgba(56,189,248,0.45)] ring-1 ring-white/80 focus-within:ring-primary/60 transition-all">
+          <div className="flex items-center gap-2 rounded-2xl bg-white pl-2 h-16 overflow-hidden shadow-[0_18px_60px_-20px_rgba(56,189,248,0.45)] ring-1 ring-white/80 focus-within:ring-primary/60 transition-all">
             <Select value={scope} onValueChange={(v) => setScope(v as SearchScope)}>
               <SelectTrigger className="h-11 w-[200px] border-0 bg-transparent hover:bg-slate-50 focus:ring-0 focus:ring-offset-0 rounded-xl text-sm font-medium text-slate-700 shrink-0 whitespace-nowrap">
                 <SelectValue />
@@ -182,7 +182,7 @@ function SearchPage() {
             )}
             <button
               onClick={() => go(scope, kw)}
-              className="self-stretch rounded-none bg-primary px-8 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0"
+              className="h-full rounded-none bg-primary px-8 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0"
             >
               搜索
             </button>
