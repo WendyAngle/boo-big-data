@@ -55,17 +55,18 @@ const menu: Root[] = [
           { label: "询盘分派", to: "/outreach/inquiry-dispatch" },
         ],
       },
-      {
-        label: "管理后台",
-        children: [
-          { label: "邮件服务商", to: "/outreach/admin/email-providers" },
-          { label: "邮件账号", to: "/outreach/admin/email-accounts" },
-          { label: "短信服务商", to: "/outreach/admin/sms-providers" },
-          { label: "短信路由", to: "/outreach/admin/sms-routing" },
-          { label: "短信模板", to: "/outreach/admin/sms-templates" },
-          { label: "发票审核", to: "/outreach/admin/invoice-review" },
-        ],
-      },
+    ],
+  },
+  {
+    label: "管理后台",
+    icon: ShieldCheck,
+    children: [
+      { label: "邮件服务商", to: "/outreach/admin/email-providers", children: [] },
+      { label: "邮件账号", to: "/outreach/admin/email-accounts", children: [] },
+      { label: "短信服务商", to: "/outreach/admin/sms-providers", children: [] },
+      { label: "短信路由", to: "/outreach/admin/sms-routing", children: [] },
+      { label: "短信模板", to: "/outreach/admin/sms-templates", children: [] },
+      { label: "发票审核", to: "/outreach/admin/invoice-review", children: [] },
     ],
   },
 ];
@@ -79,6 +80,7 @@ export function AppSidebar() {
     出海大数据平台: true,
     客户发现: true,
     客户运营: true,
+    管理后台: true,
   });
 
   return (
