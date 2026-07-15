@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/outreach/search")({
-  head: () => ({ meta: [{ title: "出海大数据平台 · 搜索 | Boo数据平台" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 · 搜索 | 悦意出海" }] }),
   component: SearchPage,
 });
 

@@ -50,7 +50,7 @@ import {
 export const Route = createFileRoute("/_app/outreach/invoices")({
   head: () => ({
     meta: [
-      { title: "出海大数据平台 · 发票 | Boo数据平台" },
+      { title: "出海大数据平台 · 发票 | 悦意出海" },
       { name: "description", content: "发票申请、抬头管理与历史记录" },
     ],
   }),

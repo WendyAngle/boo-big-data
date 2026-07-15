@@ -75,7 +75,7 @@ import {
 } from "@/lib/footprints-store";
 
 export const Route = createFileRoute("/_app/outreach/footprints")({
-  head: () => ({ meta: [{ title: "出海大数据平台 · 足迹 | Boo数据平台" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 · 足迹 | 悦意出海" }] }),
   component: FootprintsPage,
 });
 

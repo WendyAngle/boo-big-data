@@ -36,7 +36,7 @@ import { ENTERPRISES } from "@/data/enterprises";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
 
 export const Route = createFileRoute("/_app/outreach/enterprise/")({
-  head: () => ({ meta: [{ title: "出海大数据平台 · 企业 | Boo数据平台" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 · 企业 | 悦意出海" }] }),
   validateSearch: (s: Record<string, unknown>) => ({
     hs: typeof s.hs === "string" ? s.hs : undefined,
     product: typeof s.product === "string" ? s.product : undefined,

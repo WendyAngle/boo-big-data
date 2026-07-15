@@ -40,7 +40,7 @@ import { RecentCommsCapsule } from "@/components/outreach/RecentCommsCapsule";
 
 export const Route = createFileRoute("/_app/outreach/enterprise/$id/")({
   head: ({ params }) => ({
-    meta: [{ title: `企业详情 · ${params.id} | Boo数据平台` }],
+    meta: [{ title: `企业详情 · ${params.id} | 悦意出海` }],
   }),
   loader: ({ params }): { enterprise: Enterprise } => {
     const data = findEnterprise(params.id);

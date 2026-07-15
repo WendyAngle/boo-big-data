@@ -24,7 +24,7 @@ import {
 } from "@/data/products-catalog";
 
 export const Route = createFileRoute("/_app/outreach/products/")({
-  head: () => ({ meta: [{ title: "出海大数据平台 · 商品 | Boo数据平台" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 · 商品 | 悦意出海" }] }),
   component: ProductsPage,
 });
 
