@@ -12,6 +12,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import heroBg from "@/assets/products-hero.jpg";
 import {
   CATALOG,
@@ -173,25 +180,21 @@ function ProductsPage() {
       {/* Search */}
       <Card className="p-3 space-y-2">
         <div className="flex items-center gap-2">
-          <div className="inline-flex items-center gap-0.5 rounded-lg bg-muted p-0.5 shrink-0">
-            {(["product", "hs", "enterprise"] as const).map((s) => {
-              const active = effectiveScope === s;
-              return (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setUserScope(s)}
-                  className={`px-3 h-8 rounded-md text-sm font-medium transition-colors ${
-                    active
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
+          <Select
+            value={effectiveScope}
+            onValueChange={(v) => setUserScope(v as "product" | "hs" | "enterprise")}
+          >
+            <SelectTrigger className="w-[200px] min-w-[200px] h-10 shrink-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="w-[200px] min-w-[200px]">
+              {(["product", "hs", "enterprise"] as const).map((s) => (
+                <SelectItem key={s} value={s} className="whitespace-nowrap">
                   {SCOPE_META[s].label}
-                </button>
-              );
-            })}
-          </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <div className="relative flex-1">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
