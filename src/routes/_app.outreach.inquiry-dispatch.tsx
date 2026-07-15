@@ -57,7 +57,7 @@ import {
 } from "@/lib/inbox-store";
 
 export const Route = createFileRoute("/_app/outreach/inquiry-dispatch")({
-  head: () => ({ meta: [{ title: "询盘分派 | 悦意出海" }] }),
+  head: () => ({ meta: [{ title: "询盘分派 | 出海大数据平台" }] }),
   component: InboxRoutingAdmin,
 });
 

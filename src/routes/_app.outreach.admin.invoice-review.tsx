@@ -49,7 +49,7 @@ import {
 export const Route = createFileRoute("/_app/outreach/admin/invoice-review")({
   head: () => ({
     meta: [
-      { title: "发票审核 | 悦意出海" },
+      { title: "发票审核 | 出海大数据平台" },
       { name: "description", content: "集中受理租户开票申请、审核抬头、上传发票并回传" },
     ],
   }),

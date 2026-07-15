@@ -110,7 +110,7 @@ const ENTERPRISES_LOOKUP = new Map(ENTERPRISES.map((e) => [e.id, e]));
 export const Route = createFileRoute("/_app/outreach/leads")({
   head: () => ({
     meta: [
-      { title: "线索 | 悦意出海" },
+      { title: "线索 | 出海大数据平台" },
       {
         name: "description",
         content:

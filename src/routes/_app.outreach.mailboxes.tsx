@@ -99,7 +99,7 @@ const STATUSES: MailboxStatus[] = ["正常", "停用", "异常"];
 const ENCRYPTIONS: MailboxEncryption[] = ["SSL", "TLS", "STARTTLS", "NONE"];
 
 export const Route = createFileRoute("/_app/outreach/mailboxes")({
-  head: () => ({ meta: [{ title: "出海大数据平台 · 邮箱 | 悦意出海" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 · 邮箱 | 出海大数据平台" }] }),
   component: MailboxesPage,
 });
 

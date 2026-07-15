@@ -50,7 +50,7 @@ const FROM_LABEL: Record<FromSource, { label: string; to: string }> = {
 export const Route = createFileRoute("/_app/outreach/recharge")({
   head: () => ({
     meta: [
-      { title: "出海大数据平台 · 充值 | 悦意出海" },
+      { title: "出海大数据平台 · 充值 | 出海大数据平台" },
       { name: "description", content: "积分充值 · 选择套餐与支付方式，立即到账" },
     ],
   }),

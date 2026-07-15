@@ -43,7 +43,7 @@ import { ENTERPRISES } from "@/data/enterprises";
 import { FavoriteToggle } from "@/components/FavoriteToggle";
 
 export const Route = createFileRoute("/_app/outreach/bills")({
-  head: () => ({ meta: [{ title: "出海大数据平台 · 提单 | 悦意出海" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 · 提单 | 出海大数据平台" }] }),
   component: BillsPage,
 });
 

@@ -71,7 +71,7 @@ import {
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/outreach/users")({
-  head: () => ({ meta: [{ title: "出海大数据平台 · 我的员工 | 悦意出海" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 · 我的员工 | 出海大数据平台" }] }),
   component: UserSideUsersPage,
 });
 

@@ -53,7 +53,7 @@ import {
 export const Route = createFileRoute("/_app/outreach/admin/sms-templates")({
   head: () => ({
     meta: [
-      { title: "短信模板 · 系统管理 | 悦意出海" },
+      { title: "短信模板 · 系统管理 | 出海大数据平台" },
       {
         name: "description",
         content: "维护并送审营销/通知/验证码短信模板，仅审批通过的模板可用于批量发送。",
