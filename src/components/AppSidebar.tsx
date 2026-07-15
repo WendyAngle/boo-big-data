@@ -55,14 +55,30 @@ const menu: Root[] = [
           { label: "询盘分派", to: "/outreach/inquiry-dispatch" },
         ],
       },
+    ],
+  },
+  {
+    label: "管理后台",
+    icon: ShieldCheck,
+    children: [
       {
-        label: "管理后台",
+        label: "邮件管理",
         children: [
           { label: "邮件服务商", to: "/outreach/admin/email-providers" },
           { label: "邮件账号", to: "/outreach/admin/email-accounts" },
+        ],
+      },
+      {
+        label: "短信管理",
+        children: [
           { label: "短信服务商", to: "/outreach/admin/sms-providers" },
           { label: "短信路由", to: "/outreach/admin/sms-routing" },
           { label: "短信模板", to: "/outreach/admin/sms-templates" },
+        ],
+      },
+      {
+        label: "财务审核",
+        children: [
           { label: "发票审核", to: "/outreach/admin/invoice-review" },
         ],
       },
