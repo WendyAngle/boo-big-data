@@ -179,7 +179,7 @@ function ProductsPage() {
 
       {/* Search */}
       <Card className="p-3 space-y-2">
-        <div className="flex items-center gap-1 rounded-xl bg-white pl-1 pr-1 h-12 ring-1 ring-slate-200 focus-within:ring-primary/60 transition-all">
+        <div className="flex items-center gap-1 rounded-xl bg-white pl-1 h-12 overflow-hidden ring-1 ring-slate-200 focus-within:ring-primary/60 transition-all">
           <Select
             value={effectiveScope}
             onValueChange={(v) => setUserScope(v as "product" | "hs" | "enterprise")}
@@ -206,7 +206,7 @@ function ProductsPage() {
             placeholder={meta.placeholder}
             className="flex-1 h-10 border-0 shadow-none focus-visible:ring-0 bg-transparent px-2 placeholder:text-muted-foreground/70"
           />
-          <Button className="h-9 gap-1.5 rounded-lg shrink-0" onClick={onSearchSubmit}>
+          <Button className="h-full gap-1.5 rounded-none shrink-0 px-6" onClick={onSearchSubmit}>
             <Search className="h-4 w-4" />
             搜索
           </Button>

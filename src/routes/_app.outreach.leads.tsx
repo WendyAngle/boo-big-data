@@ -1290,9 +1290,9 @@ function SearchTab() {
   return (
     <div className="space-y-5">
       <Card className="p-5 space-y-4">
-        <div className="flex items-start gap-2 rounded-2xl bg-white pl-2 pr-2 py-2 ring-1 ring-slate-200 focus-within:ring-primary/60 transition-all">
+        <div className="flex items-stretch gap-2 rounded-2xl bg-white pl-2 py-2 overflow-hidden ring-1 ring-slate-200 focus-within:ring-primary/60 transition-all">
           <Select value={scope} onValueChange={(v) => setScope(v as "product" | "hs")}>
-            <SelectTrigger className="h-11 w-[180px] min-w-[180px] border-0 bg-transparent hover:bg-slate-50 focus:ring-0 focus:ring-offset-0 rounded-xl text-sm font-medium text-slate-700 shrink-0 whitespace-nowrap">
+            <SelectTrigger className="h-11 w-[180px] min-w-[180px] border-0 bg-transparent hover:bg-slate-50 focus:ring-0 focus:ring-offset-0 rounded-xl text-sm font-medium text-slate-700 shrink-0 whitespace-nowrap self-start">
               <SelectValue />
             </SelectTrigger>
             <SelectContent align="start" className="w-[180px] min-w-[180px]">
@@ -1310,8 +1310,8 @@ function SearchTab() {
               </SelectItem>
             </SelectContent>
           </Select>
-          <div className="h-8 w-px bg-slate-200 shrink-0 self-center" />
-          <Search className="h-5 w-5 text-muted-foreground shrink-0 ml-1 mt-2.5" />
+          <div className="h-8 w-px bg-slate-200 shrink-0 self-start mt-1.5" />
+          <Search className="h-5 w-5 text-muted-foreground shrink-0 ml-1 mt-2.5 self-start" />
           <Textarea
             value={kw}
             onChange={(e) => setKw(e.target.value)}
@@ -1331,7 +1331,7 @@ function SearchTab() {
           />
           <button
             onClick={() => submit()}
-            className="ml-1 h-11 rounded-xl bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0 inline-flex items-center gap-1.5 self-start"
+            className="-my-2 self-stretch rounded-none bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0 inline-flex items-center gap-1.5"
           >
             <Search className="h-4 w-4" />
             搜索
