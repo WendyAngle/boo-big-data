@@ -1290,19 +1290,19 @@ function SearchTab() {
   return (
     <div className="space-y-5">
       <Card className="p-5 space-y-4">
-        <div className="flex items-start gap-2">
+        <div className="flex items-start gap-2 rounded-2xl bg-white pl-2 pr-2 py-2 ring-1 ring-slate-200 focus-within:ring-primary/60 transition-all">
           <Select value={scope} onValueChange={(v) => setScope(v as "product" | "hs")}>
-            <SelectTrigger className="h-10 w-[140px] shrink-0">
+            <SelectTrigger className="h-11 w-[180px] min-w-[180px] border-0 bg-slate-50 hover:bg-slate-100 focus:ring-0 focus:ring-offset-0 rounded-xl text-sm font-medium text-slate-700 shrink-0 whitespace-nowrap">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent align="start" className="min-w-[140px]">
-              <SelectItem value="product">
+            <SelectContent align="start" className="w-[180px] min-w-[180px]">
+              <SelectItem value="product" className="whitespace-nowrap">
                 <span className="inline-flex items-center gap-2">
                   <Package className="h-4 w-4 text-muted-foreground" />
                   商品关键词
                 </span>
               </SelectItem>
-              <SelectItem value="hs">
+              <SelectItem value="hs" className="whitespace-nowrap">
                 <span className="inline-flex items-center gap-2">
                   <Hash className="h-4 w-4 text-muted-foreground" />
                   HS 编码
@@ -1310,29 +1310,32 @@ function SearchTab() {
               </SelectItem>
             </SelectContent>
           </Select>
-          <div className="relative flex-1">
-            <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
-            <Textarea
-              value={kw}
-              onChange={(e) => setKw(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  submit();
-                }
-              }}
-              placeholder={
-                scope === "hs"
-                  ? "输入 HS 编码，支持多个：逗号、分号、顿号、换行或空格分隔（如：680100, 720839）"
-                  : "输入商品关键词，支持多个：逗号、分号、顿号、换行或空格分隔（如：花岗岩, 大理石；石膏板）"
+          <div className="h-8 w-px bg-slate-200 shrink-0 self-center" />
+          <Search className="h-5 w-5 text-muted-foreground shrink-0 ml-1 mt-2.5" />
+          <Textarea
+            value={kw}
+            onChange={(e) => setKw(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                submit();
               }
-              className="pl-9 pt-2 min-h-[64px] resize-y"
-              rows={2}
-            />
-          </div>
-          <Button onClick={() => submit()} className="h-10 px-5 gap-1.5 shrink-0">
-            <Search className="h-4 w-4" /> 搜索线索
-          </Button>
+            }}
+            placeholder={
+              scope === "hs"
+                ? "输入 HS 编码，支持多个：逗号、分号、顿号、换行或空格分隔（如：680100, 720839）"
+                : "输入商品关键词，支持多个：逗号、分号、顿号、换行或空格分隔（如：花岗岩, 大理石；石膏板）"
+            }
+            className="flex-1 border-0 shadow-none focus-visible:ring-0 text-base px-0 min-h-[44px] resize-y placeholder:text-muted-foreground/70"
+            rows={2}
+          />
+          <button
+            onClick={() => submit()}
+            className="ml-1 h-11 rounded-xl bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-primary/90 shrink-0 inline-flex items-center gap-1.5 self-start"
+          >
+            <Search className="h-4 w-4" />
+            搜索
+          </button>
         </div>
         <div className="text-[11px] text-muted-foreground -mt-2">
           支持多关键词：<span className="font-mono">,</span> <span className="font-mono">，</span>{" "}
