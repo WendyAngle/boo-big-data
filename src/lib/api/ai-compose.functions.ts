@@ -37,8 +37,8 @@ export const generateAiContent = createServerFn({ method: "POST" })
       isEmail
         ? `严格输出 JSON：{"subject": "邮件主题（≤60字）","content": "邮件正文（纯文本，含换行）"}。不要解释，不要 Markdown。`
         : isSocial
-          ? `严格输出 JSON：{"content": "${platform} 私信内容（${data.language === "zh" ? "≤500 字" : "≤1200 chars"}，语气自然口语化，可含 1-2 个 emoji，不含签名和链接）"}。不要解释，不要 Markdown。`
-          : `严格输出 JSON：{"content": "短信内容（${data.language === "zh" ? "≤140 字" : "≤300 chars"}，不含署名和退订）"}。不要解释，不要 Markdown。`,
+          ? `只输出 ${platform} 私信正文本身，${data.language === "zh" ? "≤500 字" : "≤1200 chars"}，语气自然口语化，可含 1-2 个 emoji，不含签名和链接。不要 JSON，不要 Markdown，不要解释，不要引号包裹。`
+          : `只输出短信正文本身，${data.language === "zh" ? "≤140 字" : "≤300 chars"}，不含署名和退订。不要 JSON，不要 Markdown，不要解释，不要引号包裹。`,
     ].join("\n");
 
     const userPrompt = [
@@ -62,7 +62,7 @@ export const generateAiContent = createServerFn({ method: "POST" })
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        response_format: { type: "json_object" },
+        ...(isEmail ? { response_format: { type: "json_object" } } : {}),
       }),
     });
 
@@ -76,15 +76,45 @@ export const generateAiContent = createServerFn({ method: "POST" })
       choices?: Array<{ message?: { content?: string } }>;
     };
     const raw = json.choices?.[0]?.message?.content ?? "";
-    let parsed: { subject?: string; content?: string } = {};
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      // 兜底：模型未严格输出 JSON 时，把全文当作正文
-      parsed = { content: raw };
+    if (isEmail) {
+      const parsed = extractJson(raw);
+      return {
+        subject: parsed.subject ?? "",
+        content: parsed.content ?? stripFences(raw),
+      };
     }
     return {
-      subject: isEmail ? parsed.subject ?? "" : undefined,
-      content: parsed.content ?? "",
+      subject: undefined,
+      content: stripFences(raw).trim().replace(/^["'`]|["'`]$/g, ""),
     };
   });
+
+function stripFences(s: string): string {
+  return s
+    .replace(/^\s*```(?:json|text)?\s*/i, "")
+    .replace(/\s*```\s*$/i, "")
+    .trim();
+}
+
+function extractJson(raw: string): { subject?: string; content?: string } {
+  const s = stripFences(raw);
+  try {
+    return JSON.parse(s);
+  } catch {}
+  const start = s.indexOf("{");
+  const end = s.lastIndexOf("}");
+  if (start >= 0 && end > start) {
+    try {
+      return JSON.parse(s.slice(start, end + 1));
+    } catch {}
+  }
+  const subj = s.match(/"subject"\s*:\s*"([^"]*)"/);
+  const cont = s.match(/"content"\s*:\s*"([\s\S]*?)"\s*[},]/);
+  if (subj || cont) {
+    return {
+      subject: subj?.[1],
+      content: cont?.[1]?.replace(/\\n/g, "\n"),
+    };
+  }
+  return {};
+}
