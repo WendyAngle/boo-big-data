@@ -93,7 +93,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/_app/outreach/favorites")({
-  head: () => ({ meta: [{ title: "出海大数据平台 · 收藏 | 悦意出海" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 · 收藏 | 出海大数据平台" }] }),
   component: FavoritesPage,
 });
 

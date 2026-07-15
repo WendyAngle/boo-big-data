@@ -6,7 +6,7 @@ import { useLeadProfile, profileCompleteness } from "@/lib/lead-profile";
 export const Route = createFileRoute("/_app/outreach/my-profile")({
   head: () => ({
     meta: [
-      { title: "我的画像 · 系统管理 | 悦意出海" },
+      { title: "我的画像 · 系统管理 | 出海大数据平台" },
       {
         name: "description",
         content:

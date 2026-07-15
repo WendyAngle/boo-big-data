@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_app/outreach/reach-empty")({
   head: () => ({
-    meta: [{ title: "触达 · 空状态演示 | 悦意出海" }],
+    meta: [{ title: "触达 · 空状态演示 | 出海大数据平台" }],
   }),
   component: ReachEmptyDemo,
 });

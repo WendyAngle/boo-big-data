@@ -144,7 +144,7 @@ function buildDetail(enterprise: Enterprise, idx: number): ContactDetail | null 
 
 export const Route = createFileRoute("/_app/outreach/enterprise/$id/contact/$idx")({
   head: ({ params }) => ({
-    meta: [{ title: `人物详情 · ${params.id}-${params.idx} | 悦意出海` }],
+    meta: [{ title: `人物详情 · ${params.id}-${params.idx} | 出海大数据平台` }],
   }),
   loader: ({ params }): { detail: ContactDetail } => {
     const ent = findEnterprise(params.id);

@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/outreach/search")({
-  head: () => ({ meta: [{ title: "出海大数据平台 · 搜索 | 悦意出海" }] }),
+  head: () => ({ meta: [{ title: "出海大数据平台 · 搜索 | 出海大数据平台" }] }),
   component: SearchPage,
 });
 
@@ -177,7 +177,7 @@ function SearchPage() {
         {/* 标题 */}
         <div className="text-center">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900">
-            悦意出海大数据平台
+            出海大数据平台大数据平台
           </h1>
           <p className="mt-4 text-base md:text-lg text-slate-500">
             从商品、市场到企业，发现全球贸易机会

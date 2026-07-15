@@ -225,7 +225,7 @@ function viewLabel(v: ViewKey) {
 
 export const Route = createFileRoute("/_app/outreach/conversations")({
   head: () => ({
-    meta: [{ title: "询盘与回复 | 悦意出海" }],
+    meta: [{ title: "询盘与回复 | 出海大数据平台" }],
   }),
   validateSearch: (s) => searchSchema.parse(s),
   component: InboxPage,

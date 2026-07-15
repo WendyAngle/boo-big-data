@@ -16,7 +16,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_app/outreach/admin/sms-routing")({
   head: () => ({
     meta: [
-      { title: "短信路由策略 · 系统管理 | 悦意出海" },
+      { title: "短信路由策略 · 系统管理 | 出海大数据平台" },
       {
         name: "description",
         content: "配置目的国家、渠道类型与合规状态对服务商的路由映射与 Failover 规则。",
